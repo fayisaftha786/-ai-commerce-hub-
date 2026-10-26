@@ -349,9 +349,16 @@ $("contentForm").addEventListener("submit", (event) => {
       platform: $("contentPlatform").value,
       type: $("contentType").value
     });
+    const variants = [
+      "HOOK OPTIONS (test one at a time)",
+      ...pack.hooks.map((hook, index) => (index + 1) + ". " + hook),
+      "",
+      "CALL-TO-ACTION OPTIONS",
+      ...pack.ctas.map((cta, index) => (index + 1) + ". " + cta)
+    ].join("\n");
     $("contentOutput").value = $("contentType").value === "Post"
-      ? pack.post + "\n\n---------------- VIDEO PLAN ----------------\n\n" + pack.video
-      : pack.video + "\n\n---------------- POST CAPTION ----------------\n\n" + pack.post;
+      ? pack.post + "\n\n---------------- VIDEO PLAN ----------------\n\n" + pack.video + "\n\n---------------- TESTABLE VARIANTS ----------------\n\n" + variants
+      : pack.video + "\n\n---------------- POST CAPTION ----------------\n\n" + pack.post + "\n\n---------------- TESTABLE VARIANTS ----------------\n\n" + variants;
     draftsCreated += 1;
     $("campaigns").textContent = String(draftsCreated);
     $("contentMessage").textContent = "Draft prepared. Review every product claim and link before posting.";

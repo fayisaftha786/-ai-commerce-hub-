@@ -112,3 +112,10 @@ test("campaign register CSV import validates the exported schema and protects ex
   assert.match(app, /Import could not be saved to browser storage\. Existing records were preserved/);
   assert.match(app, /safeCampaignUrl\(link\.trim\(\)\)/);
 });
+
+test("saved campaign cards offer a copy action only for validated affiliate links", () => {
+  assert.match(app, /copyLinkButton\.textContent = "Copy affiliate link"/);
+  assert.match(app, /navigator\.clipboard\.writeText\(safeLink\)/);
+  assert.match(app, /safeCampaignUrl\(campaign\.link\)/);
+  assert.match(app, /Clipboard unavailable\. Open the saved affiliate link and copy its address manually/);
+});

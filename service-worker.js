@@ -16,7 +16,8 @@ const ASSET_PATHS = [
   "./video-maker.js",
   "./social-center.js",
   "./app.js",
-  "./service-worker.js"
+  "./service-worker.js",
+  "./pwa-install.js"
 ];
 
 function assetUrl(path) {

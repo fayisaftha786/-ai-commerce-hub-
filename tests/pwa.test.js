@@ -60,3 +60,22 @@ test("install button handles browser prompts and gives a manual HTTPS fallback",
   assert.match(pwaInstall, /location\.protocol === "https:"/);
   assert.match(pwaInstall, /appinstalled/);
 });
+
+
+test("GitHub Pages deployment workflow publishes only the static runtime assets from main", () => {
+  const workflowPath = path.join(root, ".github", "workflows", "deploy-pages.yml");
+  const workflow = fs.readFileSync(workflowPath, "utf8");
+  assert.match(workflow, /push:\s*\n\s*branches: \[main\]/);
+  assert.match(workflow, /workflow_dispatch:/);
+  assert.match(workflow, /pages: write/);
+  assert.match(workflow, /id-token: write/);
+  assert.match(workflow, /github\.ref == 'refs\/heads\/main'/);
+  assert.match(workflow, /actions\/configure-pages@v5/);
+  assert.match(workflow, /actions\/upload-pages-artifact@v4/);
+  assert.match(workflow, /actions\/deploy-pages@v4/);
+  assert.match(workflow, /path: _site/);
+  for (const asset of ["index.html", "style.css", "manifest.webmanifest", "service-worker.js", "pwa-install.js", "app.js"]) {
+    assert.ok(workflow.includes(asset), "deployment is missing " + asset);
+  }
+  assert.match(r, /select \*\*GitHub Actions\*\*/);
+});

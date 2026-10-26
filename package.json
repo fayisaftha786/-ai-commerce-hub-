@@ -4,7 +4,7 @@
   "description": "Evidence-based affiliate workspace with CSV catalog ranking, offer intelligence and social content planning",
   "main": "app.js",
   "scripts": {
-    "check": "node --check app.js && node --check product-utils.js && node --check offer-engine.js && node --check discovery-engine.js && node --check tests/product-utils.test.js && node --check tests/offer-engine.test.js && node --check tests/discovery-engine.test.js && node --check catalog-import.js && node --check tests/catalog-import.test.js",
+    "check": "node --check app.js && node --check product-utils.js && node --check offer-engine.js && node --check discovery-engine.js && node --check tests/product-utils.test.js && node --check tests/offer-engine.test.js && node --check tests/discovery-engine.test.js && node --check catalog-import.js && node --check tests/catalog-import.test.js && node --check tests/app-wiring.test.js",
     "test": "node --test"
   },
   "keywords": [

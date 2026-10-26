@@ -53,6 +53,20 @@
       <div id="productList" aria-live="polite"></div>
     </section>
 
+    <section class="panel" aria-labelledby="marketplaceSearchHeading">
+      <h2 id="marketplaceSearchHeading">2. Find products across marketplaces</h2>
+      <p>Enter a product category or keyword to open matching searches on Amazon India, Flipkart and Meesho from one place.</p>
+      <form id="marketplaceSearchForm">
+        <label for="marketplaceSearchQuery">What type of product should we look for?
+          <input id="marketplaceSearchQuery" maxlength="120" required placeholder="Example: kitchen storage, home organiser, phone stand">
+        </label>
+        <button type="submit">Find on all 3 marketplaces</button>
+      </form>
+      <p id="marketplaceSearchStatus" role="status" aria-live="polite"></p>
+      <div id="marketplaceSearchResults" aria-live="polite"></div>
+      <p class="hint">This free prototype opens marketplace search pages; it cannot read private sales rankings or automatically import live product details from those pages. Use the catalogue CSV importer below to rank products with verified prices, ratings, clicks, orders, commissions and returns. Never treat popularity estimates as confirmed sales.</p>
+    </section>
+
     <section class="panel">
       <h2>2. Product Discovery & Buyer-Interest Score</h2>
       <p>Use evidence from your approved marketplace dashboard, recent reviews, search suggestions and audience questions. This score ranks the information you enter; it does not fetch live trends or guarantee sales.</p>
@@ -284,6 +298,7 @@
   <script src="offer-engine.js"></script>
   <script src="discovery-engine.js"></script>
   <script src="catalog-import.js"></script>
+  <script src="marketplace-search.js"></script>
   <script src="campaign-report.js"></script>
   <script src="video-maker.js"></script>
   <script src="social-center.js"></script>

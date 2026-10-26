@@ -7,6 +7,7 @@ const products = loadProducts();
 let clicks = 0;
 let draftsCreated = 0;
 let lastAnalyzedOffer = null;
+let latestCampaignReport = null;
 const CAMPAIGN_KEY = "ai-commerce-hub.campaigns.v1";
 
 const BACKUP_KEYS = [
@@ -774,6 +775,8 @@ render();
 
 $("campaignReportForm").addEventListener("submit", async (event) => {
   event.preventDefault();
+  latestCampaignReport = null;
+  $("exportCampaignReport").disabled = true;
   const file = $("campaignReportCsv").files?.[0];
   const root = $("campaignReportResults");
   root.replaceChildren();
@@ -796,6 +799,8 @@ $("campaignReportForm").addEventListener("submit", async (event) => {
       $("campaignReportMessage").textContent = result.error;
       return;
     }
+    latestCampaignReport = result;
+    $("exportCampaignReport").disabled = false;
     $("campaignReportMessage").textContent =
       "Data quality: " + (result.dataQuality.status === "clean" ? "no detected issues" : "review recommended") +
       ". Imported " + result.importedRows + " valid rows across " + result.reports.length +
@@ -847,4 +852,36 @@ $("campaignReportForm").addEventListener("submit", async (event) => {
   } finally {
     $("campaignReportCsv").value = "";
   }
+});
+
+$("exportCampaignReport").addEventListener("click", () => {
+  if (!latestCampaignReport || !Array.isArray(latestCampaignReport.reports)) {
+    $("campaignReportMessage").textContent = "Import a valid campaign report before exporting results.";
+    return;
+  }
+  const header = ["campaign_id", "period_start", "period_end", "matched_saved_campaign", "clicks", "orders", "conversion_rate_percent", "commission", "returns", "return_rate_percent", "warnings"];
+  const rows = latestCampaignReport.reports.map((report) => [
+    report.campaignId,
+    report.periodStart,
+    report.periodEnd,
+    report.matched ? "yes" : "no",
+    report.clicks,
+    report.orders,
+    report.conversionRate === null ? "" : (report.conversionRate * 100).toFixed(2),
+    report.commission === null ? "" : report.commission,
+    report.returns === null ? "" : report.returns,
+    report.returnRate === null ? "" : (report.returnRate * 100).toFixed(2),
+    report.warnings.join(" | ")
+  ]);
+  const csv = [header, ...rows].map((row) => row.map(csvCell).join(",")).join("\\r\\n") + "\\r\\n";
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "ai-commerce-hub-campaign-performance.csv";
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  $("campaignReportMessage").textContent = "Exported the imported report analysis. Values come from your CSV; unmatched attribution and warnings remain visible in the export.";
 });

@@ -94,3 +94,16 @@ test("flags overlapping date ranges for the same campaign", () => {
   assert.ok(result.reports.every((report) => report.warnings.some((warning) => /periods overlap/.test(warning))));
   assert.equal(result.dataQuality.status, "review");
 });
+
+
+test("campaign report analysis can be exported only after a valid import", () => {
+  const fs = require("node:fs");
+  const path = require("node:path");
+  const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
+  const app = fs.readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
+  assert.ok(html.includes('id="exportCampaignReport"'));
+  assert.match(app, /latestCampaignReport = result/);
+  assert.match(app, /exportCampaignReport.*disabled = false/);
+  assert.match(app, /ai-commerce-hub-campaign-performance\.csv/);
+  assert.match(app, /matched_saved_campaign/);
+});

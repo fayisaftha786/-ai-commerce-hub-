@@ -8,6 +8,98 @@ let clicks = 0;
 let draftsCreated = 0;
 let lastAnalyzedOffer = null;
 const CAMPAIGN_KEY = "ai-commerce-hub.campaigns.v1";
+
+const BACKUP_KEYS = [
+  "ai-commerce-hub.products.v1",
+  "ai-commerce-hub.campaigns.v1",
+  "ai-commerce-hub.candidates.v1",
+  "ai-commerce-hub.catalog.v1"
+];
+const MAX_BACKUP_BYTES = 2 * 1024 * 1024;
+
+function exportWorkspaceBackup() {
+  const payload = { format: "ai-commerce-hub-backup", version: 1, exportedAt: new Date().toISOString(), data: {} };
+  try {
+    for (const key of BACKUP_KEYS) {
+      const raw = localStorage.getItem(key);
+      if (raw !== null) {
+        // Refuse to export corrupt stored JSON rather than silently creating an incomplete backup.
+        payload.data[key] = JSON.parse(raw);
+      }
+    }
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = "ai-commerce-hub-backup-" + new Date().toISOString().slice(0, 10) + ".json";
+    anchor.hidden = true;
+    document.body.append(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+    $("backupMessage").textContent = "Backup exported. Keep the file somewhere safe; it may contain your saved product and campaign details.";
+  } catch {
+    $("backupMessage").textContent = "Backup could not be created. Check browser storage and try again.";
+  }
+}
+
+function validateBackup(payload) {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload) ||
+      payload.format !== "ai-commerce-hub-backup" || payload.version !== 1 ||
+      !payload.data || typeof payload.data !== "object" || Array.isArray(payload.data)) {
+    return { valid: false, error: "This is not a supported AI Commerce Hub backup file." };
+  }
+  const allowed = new Set(BACKUP_KEYS);
+  for (const [key, value] of Object.entries(payload.data)) {
+    if (!allowed.has(key)) return { valid: false, error: "Backup contains an unknown data section; nothing was restored." };
+    if (key === "ai-commerce-hub.products.v1" || key === "ai-commerce-hub.campaigns.v1" ||
+        key === "ai-commerce-hub.candidates.v1" || key === "ai-commerce-hub.catalog.v1") {
+      if (!Array.isArray(value)) return { valid: false, error: "Backup data is malformed; nothing was restored." };
+    }
+  }
+  return { valid: true };
+}
+
+$("exportWorkspaceBackup").addEventListener("click", exportWorkspaceBackup);
+$("importWorkspaceBackup").addEventListener("change", async () => {
+  const file = $("importWorkspaceBackup").files?.[0];
+  if (!file) return;
+  if (file.size > MAX_BACKUP_BYTES) {
+    $("backupMessage").textContent = "Backup file must be 2 MB or smaller.";
+    $("importWorkspaceBackup").value = "";
+    return;
+  }
+  try {
+    const payload = JSON.parse(await file.text());
+    const validation = validateBackup(payload);
+    if (!validation.valid) {
+      $("backupMessage").textContent = validation.error;
+      return;
+    }
+    if (!window.confirm("Restore this backup? Current saved workspace data will be replaced. Export a backup first if you want to keep it.")) return;
+    // Save previous values so a storage failure cannot leave a partially restored workspace.
+    const previous = new Map(BACKUP_KEYS.map((key) => [key, localStorage.getItem(key)]));
+    try {
+      for (const key of BACKUP_KEYS) {
+        if (Object.prototype.hasOwnProperty.call(payload.data, key)) localStorage.setItem(key, JSON.stringify(payload.data[key]));
+        else localStorage.removeItem(key);
+      }
+    } catch {
+      for (const [key, value] of previous) {
+        try { if (value === null) localStorage.removeItem(key); else localStorage.setItem(key, value); } catch { /* best-effort rollback */ }
+      }
+      $("backupMessage").textContent = "Restore failed because browser storage is unavailable or full. Existing data was preserved where possible.";
+      return;
+    }
+    $("backupMessage").textContent = "Backup restored. Reloading workspace…";
+    window.location.reload();
+  } catch {
+    $("backupMessage").textContent = "Could not read this backup file. Check that it is valid JSON.";
+  } finally {
+    $("importWorkspaceBackup").value = "";
+  }
+});
+
 const MAX_CAMPAIGNS = 200;
 const campaigns = loadCampaigns();
 

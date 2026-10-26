@@ -376,6 +376,117 @@ $("copyContent").addEventListener("click", async () => {
   }
 });
 
+
+const CATALOG_KEY = "ai-commerce-hub.catalog-import.v1";
+function renderImportedCatalog(records, errors = []) {
+  const root = $("catalogResults");
+  root.replaceChildren();
+  const summary = document.createElement("p");
+  summary.textContent = "Ranked " + records.length + " valid products. Highest scores first. Check any row warnings below; scores are not a sales guarantee.";
+  root.append(summary);
+  for (const record of records) {
+    const card = document.createElement("article");
+    card.className = "candidate-card";
+    const heading = document.createElement("h3");
+    heading.textContent = record.name + " — " + record.score + "/100";
+    const details = document.createElement("p");
+    const performance = record.orders !== null
+      ? record.orders + " orders" + (record.clicks !== null ? " / " + record.clicks + " clicks" : "")
+      : record.clicks !== null ? record.clicks + " clicks; orders not supplied" : "No sales metrics supplied";
+    const returnsText = record.returnRate !== null && record.returnRate !== undefined
+      ? " · " + Math.round(record.returnRate * 100) + "% returns" : "";
+    details.textContent = record.platform + " · ₹" + record.price.toLocaleString("en-IN") + " · " + performance +
+      (record.periodDays ? " · " + record.periodDays + "-day period" : " · period not confirmed") + returnsText;
+    const warnings = document.createElement("ul");
+    for (const warning of record.warnings) {
+      const li = document.createElement("li");
+      li.textContent = warning;
+      warnings.append(li);
+    }
+    card.append(heading, details);
+    if (record.url) {
+      const link = document.createElement("a");
+      link.href = record.url;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer sponsored";
+      link.textContent = "Open supplied product link";
+      card.append(link);
+    }
+    card.append(warnings);
+    root.append(card);
+  }
+  if (errors.length) {
+    const list = document.createElement("ul");
+    for (const error of errors.slice(0, 20)) {
+      const item = document.createElement("li");
+      item.textContent = error;
+      list.append(item);
+    }
+    const heading = document.createElement("h3");
+    heading.textContent = "Rows needing attention";
+    root.append(heading, list);
+  }
+  try {
+    localStorage.setItem(CATALOG_KEY, JSON.stringify(records));
+    $("catalogMessage").textContent = "Ranked on this device only. Keep the original CSV safe; this page does not upload it.";
+  } catch {
+    $("catalogMessage").textContent = "Ranked for this session; browser storage was unavailable.";
+  }
+}
+
+$("downloadCatalogTemplate").addEventListener("click", () => {
+  const template = "name,platform,url,price,commission,rating,reviews,clicks,orders,returns,period_days,stock\\n";
+  const blob = new Blob([template], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "ai-commerce-hub-catalog-template.csv";
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+});
+
+$("catalogForm").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const file = $("catalogCsv").files?.[0];
+  if (!file) {
+    $("catalogMessage").textContent = "Choose a CSV export first.";
+    return;
+  }
+  if (file.size > 2 * 1024 * 1024) {
+    $("catalogMessage").textContent = "CSV must be 2 MB or smaller.";
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    const importer = window.AICommerceCatalogImport;
+    if (typeof importer?.rankCatalogCsv !== "function") {
+      $("catalogMessage").textContent = "CSV importer did not load. Refresh and try again.";
+      return;
+    }
+    const result = importer.rankCatalogCsv(String(reader.result || ""));
+    if (!result.valid) {
+      $("catalogResults").replaceChildren();
+      $("catalogMessage").textContent = result.error;
+      return;
+    }
+    renderImportedCatalog(result.records, result.errors);
+  };
+  reader.onerror = () => { $("catalogMessage").textContent = "Could not read the selected CSV file."; };
+  reader.readAsText(file);
+});
+
+try {
+  const previousCatalog = JSON.parse(localStorage.getItem(CATALOG_KEY) || "[]");
+  if (Array.isArray(previousCatalog) && previousCatalog.length) {
+    renderImportedCatalog(previousCatalog);
+    $("catalogMessage").textContent = "Loaded the last imported shortlist from this device.";
+  }
+} catch {
+  // Ignore corrupted local cache; importing a fresh CSV remains available.
+}
+
 renderCandidates();
 
 render();

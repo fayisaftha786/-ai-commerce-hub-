@@ -1,13 +1,19 @@
 {
   "name": "ai-commerce-hub",
-  "version": "1.3.0",
-  "description": "Affiliate workspace with offer intelligence and social content planning",
+  "version": "1.4.0",
+  "description": "Evidence-based affiliate workspace with CSV catalog ranking, offer intelligence and social content planning",
   "main": "app.js",
   "scripts": {
-    "check": "node --check app.js && node --check product-utils.js && node --check offer-engine.js && node --check discovery-engine.js && node --check tests/product-utils.test.js && node --check tests/offer-engine.test.js && node --check tests/discovery-engine.test.js",
+    "check": "node --check app.js && node --check product-utils.js && node --check offer-engine.js && node --check discovery-engine.js && node --check tests/product-utils.test.js && node --check tests/offer-engine.test.js && node --check tests/discovery-engine.test.js && node --check catalog-import.js && node --check tests/catalog-import.test.js",
     "test": "node --test"
   },
-  "keywords": ["affiliate", "commerce", "offers", "product-discovery", "social-content"],
+  "keywords": [
+    "affiliate",
+    "commerce",
+    "offers",
+    "product-discovery",
+    "social-content"
+  ],
   "license": "MIT",
   "type": "commonjs",
   "private": true

@@ -65,3 +65,9 @@ button.secondary { background: #30394e; color: #edf1f8; border: 1px solid #53617
   background: #242b3c; border-left: 4px solid #f4d35e;
   border-radius: 8px; padding: 14px; margin-top: 16px;
 }
+
+#catalogResults article { margin: 12px 0; }
+#catalogResults h3 { margin-top: 0; overflow-wrap: anywhere; }
+#catalogResults ul { padding-left: 22px; }
+#catalogResults li { margin: 6px 0; }
+input[type="file"] { max-width: 100%; }

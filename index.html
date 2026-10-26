@@ -78,7 +78,23 @@
     </section>
 
     <section class="panel">
-      <h2>3. Smart Offer Intelligence</h2>
+      <h2>3. Import real catalogue / affiliate performance data</h2>
+      <p>For the strongest ranking, export a CSV from a dashboard you are authorised to access. This tool does not connect to or scrape Meesho. Import stays in this browser; it is not uploaded.</p>
+      <p class="hint">Recommended columns: <code>name, platform, url, price, commission, rating, reviews, clicks, orders, returns, period_days, stock</code>. Minimum required columns: <code>name, price</code>. If the dashboard has no CSV export, fill the template manually using only data you can verify. Use the same reporting period for every product.</p>
+      <button id="downloadCatalogTemplate" type="button" class="secondary">Download blank CSV template</button>
+      <form id="catalogForm">
+        <label for="catalogCsv">Choose catalogue / performance CSV (max 2 MB)
+          <input id="catalogCsv" type="file" accept=".csv,text/csv" required>
+        </label>
+        <button type="submit">Import and rank products</button>
+      </form>
+      <p id="catalogMessage" role="status" aria-live="polite"></p>
+      <div id="catalogResults" aria-live="polite"></div>
+      <p class="hint">Orders and clicks are useful only when their time window and definitions are comparable. If the file contains only product ratings, the app labels the result as catalogue quality—not evidence that people are buying.</p>
+    </section>
+
+    <section class="panel">
+      <h2>4. Smart Offer Intelligence</h2>
       <p>Check the price calculation and offer readiness. The original price is not independently verified.</p>
       <form id="offerForm">
         <label for="offerName">Product name<input id="offerName" maxlength="120" required placeholder="Example: Kitchen organiser"></label>
@@ -100,7 +116,7 @@
     </section>
 
     <section class="panel">
-      <h2>4. Post & Video Content Studio</h2>
+      <h2>5. Post & Video Content Studio</h2>
       <p>Create a post caption and a short vertical-video plan. Best results come from genuine product demonstrations and verified claims.</p>
       <form id="contentForm">
         <label for="contentName">Product name<input id="contentName" maxlength="120" required placeholder="Product name"></label>
@@ -125,7 +141,7 @@
     </section>
 
     <section class="panel">
-      <h2>5. Honest tracking</h2>
+      <h2>6. Honest tracking</h2>
       <p>The click count records link clicks in this open page only. It does not confirm successful page loads, purchases, conversions or commissions. Product lists are saved locally and are not synced to the cloud. Social posting is not automated.</p>
     </section>
   </main>
@@ -133,6 +149,7 @@
   <script src="product-utils.js"></script>
   <script src="offer-engine.js"></script>
   <script src="discovery-engine.js"></script>
+  <script src="catalog-import.js"></script>\n  <script src="catalog-import.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

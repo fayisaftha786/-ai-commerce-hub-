@@ -8,6 +8,7 @@ A lightweight affiliate workspace prototype for evaluating offer details, shortl
 - HTTPS product URL validation and local-only product storage
 - Smart Offer Intelligence: calculate listed discount, savings and entered shipping-inclusive price
 - Product Discovery shortlist: score candidate products using user-entered demand evidence, rating, review count, confirmed commission, price band, competition and stock status
+- CSV catalogue/performance import: rank products using supplied orders, clicks, reporting period, rating, commission, price and availability; unsafe links are ignored
 - Save and sort a local shortlist of up to 50 product candidates
 - Generate Malayalam, English or bilingual product captions
 - Generate a short vertical-video plan with hook, shot guidance, voice-over, CTA and affiliate disclosure
@@ -27,7 +28,7 @@ Open `index.html` in a modern browser to try the frontend. Clipboard access depe
 
 ## Product discovery: important limitations
 
-The candidate score is a transparent shortlist heuristic based on data entered by the user. This version does **not** scrape Meesho, fetch live trending products, read real-time search volume, verify product popularity or predict sales. Use data you are authorised to access from your marketplace/affiliate dashboard, recent reviews, buyer questions and audience feedback. Verify commission and availability before promotion. An entered commission estimate is not guaranteed earnings.
+The manual candidate score is a transparent shortlist heuristic based on data entered by the user. The CSV importer can use real orders/clicks from a dashboard export you are authorised to access, but it does **not** scrape Meesho, fetch live trending products, read real-time search volume, or predict future sales. Use comparable reporting periods and verify what each metric means. If orders/clicks are missing, the app clearly warns that a score is catalogue quality rather than sales evidence. Supplied return counts reduce the score when the return rate is high. Verify commission and availability before promotion. An entered commission estimate is not guaranteed earnings. CSV files are processed in the browser and stored locally; they are not uploaded to a server.
 
 ## Video and media rights
 
@@ -40,6 +41,7 @@ The content studio generates a storyboard/script and caption; it does not render
 - The click counter records link-click events in the current page session. It does not confirm successful page loads, purchases, conversions or commissions.
 - Content is template-generated; no live AI API is connected.
 - Live product feeds, affiliate link creation, commission data, video rendering and social publishing are not connected.
+- CSV imports are user-supplied only; the app does not authenticate to marketplace dashboards or fetch current sales data.
 - The app cannot verify that a URL is an official marketplace listing or that the user is approved for an affiliate programme.
 
 ## Safety and compliance

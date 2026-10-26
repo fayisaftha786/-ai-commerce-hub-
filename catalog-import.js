@@ -44,6 +44,21 @@ function parseCsvRows(text) {
   return { valid: true, rows };
 }
 
+function calculateEvidenceAgeDays(checkedAt, now = new Date()) {
+  if (typeof checkedAt !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(checkedAt)) return null;
+  const checkedDate = new Date(checkedAt + "T00:00:00Z");
+  if (!Number.isFinite(checkedDate.getTime()) || checkedDate.toISOString().slice(0, 10) !== checkedAt) return null;
+  // checked_at is a calendar date, not a timestamp. Compare calendar days in the
+  // viewer's local timezone so today's date is never treated as future before UTC midnight.
+  const localToday = [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, "0"),
+    String(now.getDate()).padStart(2, "0")
+  ].join("-");
+  const todayDate = new Date(localToday + "T00:00:00Z");
+  return Math.floor((todayDate.getTime() - checkedDate.getTime()) / 86400000);
+}
+
 function rankCatalogCsv(csvText) {
   if (typeof csvText !== "string" || !csvText.trim()) return { valid: false, error: "Choose a non-empty CSV file." };
   if (new TextEncoder().encode(csvText).length > MAX_CSV_BYTES) return { valid: false, error: "CSV must be 2 MB or smaller." };
@@ -112,7 +127,7 @@ function rankCatalogCsv(csvText) {
     if (checkedAt && /^\d{4}-\d{2}-\d{2}$/.test(checkedAt)) {
       const parsedDate = new Date(checkedAt + "T00:00:00Z");
       checkedAtValid = Number.isFinite(parsedDate.getTime()) && parsedDate.toISOString().slice(0, 10) === checkedAt;
-      if (checkedAtValid) evidenceAgeDays = Math.floor((Date.now() - parsedDate.getTime()) / 86400000);
+      if (checkedAtValid) evidenceAgeDays = calculateEvidenceAgeDays(checkedAt);
     }
     const rawPlatform = value(cells, "platform");
     const platform = rawPlatform ? rawPlatform[0].toUpperCase() + rawPlatform.slice(1).toLowerCase() : "Other";
@@ -340,6 +355,6 @@ function catalogRecordsToCsv(records) {
   return lines.join("\r\n") + "\r\n";
 }
 
-const api = { rankCatalogCsv, catalogRecordsToCsv };
+const api = { rankCatalogCsv, catalogRecordsToCsv, calculateEvidenceAgeDays };
 if (typeof module !== "undefined" && module.exports) module.exports = api;
 if (typeof window !== "undefined") window.AICommerceCatalogImport = api;

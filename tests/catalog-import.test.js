@@ -76,7 +76,7 @@ test("warns when supplied orders exceed clicks and rejects fractional reporting 
 
 test("labels evidence completeness and normalizes metrics by the supplied period", () => {
   const complete = rankCatalogCsv(
-    "name,price,clicks,orders,period_days\\nLamp,499,100,12,6"
+    "name,price,clicks,orders,period_days\nLamp,499,100,12,6"
   ).records[0];
   assert.equal(complete.evidenceQuality, "Complete");
   assert.equal(complete.ordersPerDay, 2);
@@ -84,18 +84,18 @@ test("labels evidence completeness and normalizes metrics by the supplied period
   assert.equal(complete.conversionRate, 0.12);
 
   const partial = rankCatalogCsv(
-    "name,price,clicks,orders\\nLamp,499,100,12"
+    "name,price,clicks,orders\nLamp,499,100,12"
   ).records[0];
   assert.equal(partial.evidenceQuality, "Partial");
   assert.equal(partial.ordersPerDay, null);
 
   const limited = rankCatalogCsv(
-    "name,price,clicks,orders,period_days\\nLamp,499,0,3,7"
+    "name,price,clicks,orders,period_days\nLamp,499,0,3,7"
   ).records[0];
   assert.equal(limited.evidenceQuality, "Limited");
   assert.equal(limited.conversionRate, null);
 
-  const unverified = rankCatalogCsv("name,price\\nLamp,499").records[0];
+  const unverified = rankCatalogCsv("name,price\nLamp,499").records[0];
   assert.equal(unverified.evidenceQuality, "Unverified");
   assert.equal(unverified.clicksPerDay, null);
 });

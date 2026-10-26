@@ -4,15 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#101522">
-  <meta name="description" content="A lightweight workspace for organizing product links and drafting affiliate content.">
-  <title>AI Commerce Hub — Product Workspace</title>
+  <meta name="description" content="Organize affiliate products, assess offer readiness and prepare honest promotional drafts.">
+  <title>AI Commerce Hub — Smart Offer Workspace</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header>
     <p class="eyebrow">YOUR PRIVATE BUSINESS WORKSPACE</p>
     <h1>AI Commerce Hub</h1>
-    <p>Organize products. Draft content. Review your workflow.</p>
+    <p>Understand offers. Create better promotions. Learn what works.</p>
   </header>
 
   <main>
@@ -27,8 +27,7 @@
       <p>Add products you are permitted to promote. Product details are saved in this browser on this device.</p>
       <form id="productForm">
         <label for="productName">Product name
-          <input id="productName" maxlength="120" required
-            autocomplete="off" placeholder="Example: Kitchen storage organiser">
+          <input id="productName" maxlength="120" required autocomplete="off" placeholder="Example: Kitchen storage organiser">
         </label>
         <label for="platform">Affiliate platform
           <select id="platform">
@@ -38,8 +37,7 @@
           </select>
         </label>
         <label for="productUrl">Product link (HTTPS only)
-          <input id="productUrl" type="url" maxlength="2048" required
-            inputmode="url" autocomplete="url" placeholder="https://...">
+          <input id="productUrl" type="url" maxlength="2048" required inputmode="url" autocomplete="url" placeholder="https://...">
         </label>
         <button type="submit">Add product</button>
       </form>
@@ -48,11 +46,58 @@
     </section>
 
     <section class="panel">
+      <h2>Smart Offer Intelligence</h2>
+      <p>Enter the price shown by the seller. This checks the arithmetic and offer-readiness signals; it cannot independently verify a seller's price history.</p>
+      <form id="offerForm">
+        <label for="offerName">Product name
+          <input id="offerName" maxlength="120" required placeholder="Example: Kitchen organiser">
+        </label>
+        <div class="form-grid">
+          <label for="offerCurrentPrice">Current price (₹)
+            <input id="offerCurrentPrice" type="number" min="0.01" step="0.01" required inputmode="decimal" placeholder="799">
+          </label>
+          <label for="offerOriginalPrice">Original/listed price (₹)
+            <input id="offerOriginalPrice" type="number" min="0.01" step="0.01" required inputmode="decimal" placeholder="999">
+          </label>
+          <label for="offerShipping">Shipping (₹)
+            <input id="offerShipping" type="number" min="0" step="0.01" value="0" inputmode="decimal">
+          </label>
+          <label for="offerExpiry">Expiry date (if confirmed)
+            <input id="offerExpiry" type="date">
+          </label>
+        </div>
+        <label for="offerUrl">Product / affiliate link (optional for analysis)
+          <input id="offerUrl" type="url" maxlength="2048" inputmode="url" placeholder="https://...">
+        </label>
+        <label for="offerLanguage">Promotion language
+          <select id="offerLanguage">
+            <option value="Malayalam">Malayalam</option>
+            <option value="English">English</option>
+            <option value="Both">Malayalam + English</option>
+          </select>
+        </label>
+        <label for="offerChannel">Promotion channel
+          <select id="offerChannel">
+            <option>WhatsApp</option>
+            <option>Instagram</option>
+            <option>Facebook</option>
+          </select>
+        </label>
+        <button type="submit">Analyze offer</button>
+      </form>
+      <div id="offerResult" aria-live="polite"></div>
+      <label for="offerDraft">Offer promotion draft
+        <textarea id="offerDraft" rows="8" placeholder="Analyze an offer to prepare a draft."></textarea>
+      </label>
+      <button id="copyOfferDraft" type="button">Copy offer draft</button>
+      <p id="offerMessage" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="panel">
       <h2>Content Draft Studio</h2>
-      <p>This version creates a template draft; live AI generation is not connected yet.</p>
+      <p>This general template tool is not connected to a live AI service yet.</p>
       <label for="topic">Product or topic
-        <input id="topic" maxlength="200"
-          placeholder="Example: affordable kitchen organiser">
+        <input id="topic" maxlength="200" placeholder="Example: affordable kitchen organiser">
       </label>
       <label for="language">Language
         <select id="language">
@@ -63,15 +108,14 @@
       </label>
       <button id="generate" type="button">Create draft</button>
       <label for="draft">Draft text
-        <textarea id="draft" rows="6"
-          placeholder="Your draft will appear here."></textarea>
+        <textarea id="draft" rows="6" placeholder="Your draft will appear here."></textarea>
       </label>
       <button id="copyDraft" type="button">Copy draft</button>
     </section>
 
     <section class="panel">
       <h2>Honest tracking</h2>
-      <p>The click count only counts link clicks in this open page. It does not confirm that a page loaded, a purchase happened, or a commission was earned. The product list is stored locally in this browser and is not synced to the cloud.</p>
+      <p>The click count only counts link clicks in this open page. It does not confirm that a page loaded, a purchase happened, or a commission was earned. Product data is stored locally in this browser and is not synced to the cloud.</p>
     </section>
   </main>
 
@@ -79,6 +123,7 @@
     Prototype only · Check each affiliate program's terms and disclose affiliate relationships clearly.
   </footer>
   <script src="product-utils.js"></script>
+  <script src="offer-engine.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

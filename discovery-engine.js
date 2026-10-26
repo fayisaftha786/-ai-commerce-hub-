@@ -93,9 +93,29 @@ function createContentPack(input) {
     "Link: " + linkLine
   ].join("\n\n");
   const post = language === "English" ? english : language === "Both" ? malayalam + "\n\n---\n\n" + english : malayalam;
-  const hook = language === "English"
-    ? "Need " + benefit.toLowerCase() + "? Take a quick look."
-    : "ഇത് നിങ്ങൾക്ക് ഉപകാരപ്പെടുമോ? ഒന്ന് കണ്ടുനോക്കൂ!";
+  const hooks = language === "English"
+    ? [
+        "Need " + benefit.toLowerCase() + "? Take a quick look.",
+        "Looking for " + benefit.toLowerCase() + "? Check these details first.",
+        "Before you decide, see whether " + name + " fits your needs."
+      ]
+    : [
+        "ഇത് നിങ്ങൾക്ക് ഉപകാരപ്പെടുമോ? ഒന്ന് കണ്ടുനോക്കൂ!",
+        benefit + " തേടുന്നുണ്ടോ? ആദ്യം വിവരങ്ങൾ പരിശോധിക്കൂ.",
+        "വാങ്ങുന്നതിന് മുമ്പ് " + name + " നിങ്ങളുടെ ആവശ്യത്തിന് അനുയോജ്യമാണോ എന്ന് നോക്കൂ."
+      ];
+  const ctas = language === "English"
+    ? [
+        "Check the current price and details using the link.",
+        "Save this for later and compare the details before buying.",
+        "Share this with someone who may find it useful."
+      ]
+    : [
+        "നിലവിലെ വിലയും വിവരങ്ങളും ലിങ്കിൽ പരിശോധിക്കൂ.",
+        "പിന്നീട് നോക്കാൻ സേവ് ചെയ്യൂ; വാങ്ങുന്നതിന് മുമ്പ് വിവരങ്ങൾ താരതമ്യം ചെയ്യൂ.",
+        "ഉപകാരപ്പെടുമെന്ന് തോന്നുന്ന ഒരാളുമായി പങ്കുവെക്കൂ."
+      ];
+  const hook = hooks[0];
   const voice = language === "English"
     ? "Here is " + name + ". " + benefit + ". " + proof + ". Check the current price and details through the link."
     : name + ". " + benefit + ". " + proof + ". നിലവിലെ വിലയും വിവരങ്ങളും ലിങ്കിൽ പരിശോധിച്ച ശേഷം തീരുമാനിക്കൂ.";
@@ -117,7 +137,7 @@ function createContentPack(input) {
     "CAPTION",
     post
   ].join("\n");
-  return { post, video, platform, type, language, disclosure };
+  return { post, video, platform, type, language, disclosure, hooks, ctas };
 }
 
 const api = { scoreCandidate, createContentPack };

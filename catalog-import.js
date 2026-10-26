@@ -153,10 +153,21 @@ function rankCatalogCsv(csvText) {
     if (inStock === false) warnings.push("Marked unavailable; do not promote until stock is confirmed.");
     if (inStock === null) warnings.push("Stock status missing or unrecognised; verify availability before promotion.");
     if (!url) warnings.push("No valid HTTPS product link supplied.");
+    const conversionIsPlausible = hasOrders && hasClicks && clicks > 0 && orders <= clicks;
+    const evidenceQuality = !hasPerformanceData
+      ? "Unverified"
+      : conversionIsPlausible && periodDays
+        ? "Complete"
+        : conversionIsPlausible
+          ? "Partial"
+          : "Limited";
+    const ordersPerDay = orders !== null && periodDays ? orders / periodDays : null;
+    const clicksPerDay = clicks !== null && periodDays ? clicks / periodDays : null;
     records.push({
       name, platform, url, price, commission, rating, reviews, clicks, orders, returns,
       periodDays, inStock, score,
       evidenceLabel: hasOrders ? "Orders supplied" : hasClicks ? "Clicks supplied" : "No sales evidence",
+      evidenceQuality, ordersPerDay, clicksPerDay,
       conversionRate, returnRate,
       warnings,
       rowNumber: i + 1

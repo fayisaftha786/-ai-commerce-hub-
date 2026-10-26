@@ -1,6 +1,6 @@
 {
   "name": "ai-commerce-hub",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "Evidence-based affiliate workspace with CSV catalog ranking, offer intelligence and social content planning",
   "main": "app.js",
   "scripts": {

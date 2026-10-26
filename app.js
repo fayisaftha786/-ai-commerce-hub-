@@ -631,6 +631,7 @@ function saveCandidates() {
 function renderCandidates() {
   const root = $("candidateList");
   root.replaceChildren();
+  $("exportCandidatesCsv").disabled = candidates.length === 0;
   if (!candidates.length) {
     const empty = document.createElement("p");
     empty.textContent = "No saved candidates yet. Score a product and save it to your shortlist.";
@@ -910,6 +911,56 @@ function useCatalogProductInContent(record) {
   $("contentForm").scrollIntoView({ behavior: "smooth", block: "start" });
   $("contentBenefit").focus({ preventScroll: true });
 }
+
+function exportCandidateShortlistCsv() {
+  const status = $("candidateExportStatus");
+  if (!candidates.length) {
+    status.textContent = "Score and save at least one candidate before exporting the shortlist.";
+    return;
+  }
+  const compareCandidates = window.AICommerceDiscovery?.compareCandidatesByReadiness;
+  const ordered = [...candidates].sort(typeof compareCandidates === "function" ? compareCandidates : (a, b) => Number(b.score || 0) - Number(a.score || 0));
+  const columns = [
+    ["rank", (candidate, index) => index + 1],
+    ["product_name", (candidate) => candidate.name],
+    ["price", (candidate) => candidate.price],
+    ["product_url", (candidate) => safeCampaignUrl(candidate.url)],
+    ["commission_percent", (candidate) => Number(candidate.commission) > 0 ? candidate.commission : ""],
+    ["rating", (candidate) => candidate.rating == null ? "" : candidate.rating],
+    ["review_count", (candidate) => candidate.reviews == null ? "" : candidate.reviews],
+    ["demand_signal_1_to_5", (candidate) => candidate.demand == null ? "" : candidate.demand],
+    ["competition_1_to_5", (candidate) => candidate.competition == null ? "" : candidate.competition],
+    ["stock", (candidate) => candidate.inStock === true ? "yes" : candidate.inStock === false ? "no" : ""],
+    ["evidence_source", (candidate) => candidate.source],
+    ["checked_at", (candidate) => candidate.checkedAt],
+    ["evidence_age_days", (candidate) => candidate.evidenceAgeDays == null ? "" : candidate.evidenceAgeDays],
+    ["evidence_freshness", (candidate) => candidate.evidenceFreshness || "unknown"],
+    ["evidence_traceable", (candidate) => candidate.evidenceTraceable === true ? "yes" : "no"],
+    ["score_out_of_100", (candidate) => candidate.score],
+    ["evidence_coverage_percent", (candidate) => candidate.evidenceCoverage],
+    ["confidence", (candidate) => candidate.confidence],
+    ["review_guidance", (candidate) => candidate.label || "Need more evidence"],
+    ["estimated_commission_per_order", (candidate) => candidate.estimatedCommission == null ? "" : candidate.estimatedCommission],
+    ["checks_and_warnings", (candidate) => Array.isArray(candidate.checks) ? candidate.checks.join(" | ") : ""]
+  ];
+  const lines = [
+    columns.map(([name]) => csvCell(name)).join(","),
+    ...ordered.map((candidate, index) => columns.map(([, value]) => csvCell(value(candidate, index))).join(","))
+  ];
+  const csv = "\uFEFF" + lines.join("\r\n") + "\r\n";
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "ai-commerce-hub-product-shortlist.csv";
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  status.textContent = "Product shortlist exported. It contains entered evidence and rule-based guidance, not verified sales predictions.";
+}
+
+$("exportCandidatesCsv").addEventListener("click", exportCandidateShortlistCsv);
 
 function useCandidateInContent(candidate) {
   if (!candidate || typeof candidate !== "object") return;

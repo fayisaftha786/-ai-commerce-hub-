@@ -105,7 +105,7 @@ function scoreCandidate(input) {
   return {
     valid: true,
     candidate: {
-      name, price, rating, reviews, commission, demand: hasDemand ? demand : null, competition: hasCompetition ? competition : null, inStock, stockKnown: hasStockStatus, url, source, checkedAt: evidenceFreshness === "current" || evidenceAgeDays !== null ? checkedAt : "", evidenceAgeDays, evidenceFreshness, evidenceTraceable, score,
+      name, price, rating: hasRating ? rating : null, reviews: hasReviews ? reviews : null, commission: hasCommission ? commission : null, demand: hasDemand ? demand : null, competition: hasCompetition ? competition : null, inStock, stockKnown: hasStockStatus, url, source, checkedAt: evidenceAgeDays !== null ? checkedAt : "", evidenceAgeDays, evidenceFreshness, evidenceTraceable, score,
       evidenceCount, evidenceTotal: evidenceFields.length, evidenceCoverage, confidence,
       label: inStock === false
         ? "Do not promote — out of stock"

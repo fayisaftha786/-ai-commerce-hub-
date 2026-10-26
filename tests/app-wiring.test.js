@@ -227,3 +227,16 @@ test("workflow section numbers run sequentially without duplicates", () => {
   const numbers = [...html.matchAll(/<h2\b[^>]*>(\d+)\./g)].map((match) => Number(match[1]));
   assert.deepEqual(numbers, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
 });
+
+
+test("manual candidate shortlist exports evidence, confidence and safety checks as CSV", () => {
+  assert.ok(html.includes('id="exportCandidatesCsv"'));
+  assert.ok(html.includes('id="candidateExportStatus"'));
+  assert.match(app, /function exportCandidateShortlistCsv\(\)/);
+  assert.match(app, /ai-commerce-hub-product-shortlist\.csv/);
+  assert.match(app, /const csv = "\\uFEFF" \+ lines\.join\("\\r\\n"\) \+ "\\r\\n"/);
+  assert.match(app, /columns\.map\(\(\[, value\]\) => csvCell\(value\(candidate, index\)\)\)/);
+  assert.match(app, /evidence_traceable/);
+  assert.match(app, /checks_and_warnings/);
+  assert.match(app, /\$\("exportCandidatesCsv"\)\.disabled = candidates\.length === 0/);
+});

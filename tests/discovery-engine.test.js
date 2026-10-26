@@ -77,6 +77,9 @@ test("does not recommend a product when key evidence is missing", () => {
   assert.equal(result.valid, true);
   assert.equal(result.candidate.label, "Need more evidence");
   assert.equal(result.candidate.estimatedCommission, null);
+  assert.equal(result.candidate.rating, null);
+  assert.equal(result.candidate.reviews, null);
+  assert.equal(result.candidate.commission, null);
   assert.equal(result.candidate.confidence, "Low");
   assert.ok(result.candidate.checks.some((line) => line.includes("Missing rating")));
   assert.ok(result.candidate.checks.some((line) => line.includes("Missing review count")));

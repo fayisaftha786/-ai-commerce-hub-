@@ -856,6 +856,7 @@ $("downloadContent").addEventListener("click", () => {
 
 
 const CATALOG_KEY = "ai-commerce-hub.catalog-import.v1";
+let latestImportedCatalogRecords = [];
 function useCatalogProductInContent(record) {
   $("contentName").value = record.name || "";
   $("contentPrice").value = record.price == null ? "" : String(record.price);
@@ -872,6 +873,7 @@ function useCatalogProductInContent(record) {
 }
 
 function renderImportedCatalog(records, errors = []) {
+  latestImportedCatalogRecords = Array.isArray(records) ? records : [];
   const root = $("catalogResults");
   root.replaceChildren();
   $("exportCatalogReport").disabled = !Array.isArray(records) || records.length === 0;
@@ -980,7 +982,9 @@ function renderImportedCatalog(records, errors = []) {
 function exportRankedCatalogReport() {
   const button = $("exportCatalogReport");
   try {
-    const records = JSON.parse(localStorage.getItem(CATALOG_KEY) || "[]");
+    const records = latestImportedCatalogRecords.length
+      ? latestImportedCatalogRecords
+      : JSON.parse(localStorage.getItem(CATALOG_KEY) || "[]");
     const exporter = window.AICommerceCatalogImport?.catalogRecordsToCsv;
     if (!Array.isArray(records) || records.length === 0 || typeof exporter !== "function") {
       $("catalogMessage").textContent = "Import and rank a valid product CSV before exporting a report.";
@@ -1043,13 +1047,14 @@ $("catalogForm").addEventListener("submit", (event) => {
     const result = importer.rankCatalogCsv(String(reader.result || ""));
     if (!result.valid) {
       $("catalogResults").replaceChildren();
+      latestImportedCatalogRecords = [];
       $("exportCatalogReport").disabled = true;
       $("catalogMessage").textContent = result.error;
       return;
     }
     renderImportedCatalog(result.records, result.errors);
   };
-  reader.onerror = () => { $("exportCatalogReport").disabled = true; $("catalogMessage").textContent = "Could not read the selected CSV file."; };
+  reader.onerror = () => { latestImportedCatalogRecords = []; $("exportCatalogReport").disabled = true; $("catalogMessage").textContent = "Could not read the selected CSV file."; };
   reader.readAsText(file);
 });
 

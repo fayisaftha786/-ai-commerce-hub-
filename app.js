@@ -464,6 +464,11 @@ function renderCandidates() {
     title.textContent = candidate.name + " — " + candidate.score + "/100";
     const details = document.createElement("p");
     details.textContent = candidate.label + " · ₹" + Number(candidate.price).toLocaleString("en-IN") + " · entered demand " + candidate.demand + "/5 · commission " + candidate.commission + "%";
+    const evidence = document.createElement("p");
+    evidence.className = "candidate-evidence";
+    evidence.textContent = Number.isFinite(candidate.evidenceCoverage) && Number.isFinite(candidate.evidenceCount) && Number.isFinite(candidate.evidenceTotal)
+      ? "Evidence coverage: " + candidate.evidenceCoverage + "% (" + candidate.evidenceCount + "/" + candidate.evidenceTotal + " fields) · Confidence: " + (candidate.confidence || "Not available") + ". This is based on entered information, not independently verified marketplace data."
+      : "Evidence coverage unavailable for this older saved record. Re-score the product to update its evidence details.";
     const remove = document.createElement("button");
     remove.type = "button";
     remove.className = "secondary";
@@ -474,7 +479,7 @@ function renderCandidates() {
       saveCandidates();
       renderCandidates();
     });
-    card.append(title, details, remove);
+    card.append(title, details, evidence, remove);
     root.append(card);
   }
 }

@@ -28,9 +28,10 @@ This repository includes a Progressive Web App manifest and a service worker for
 ### Publish on free GitHub Pages
 
 1. Open this repository on GitHub and choose **Settings → Pages**.
-2. Under **Build and deployment**, choose **Deploy from a branch**, select branch `main` and folder `/(root)`, then save.
-3. Wait until GitHub Pages shows the live site URL. For this repository the expected address is `https://fayisaftha786.github.io/-ai-commerce-hub-/`; use the URL that GitHub Pages actually reports.
-4. Open that HTTPS site in Chrome on Android, load it once while online, then use Chrome's menu and choose **Install app** or **Add to Home screen** (wording depends on the browser version).
+2. Under **Build and deployment → Source**, select **GitHub Actions** and save. This is the one-time setting an owner must enable; repository code cannot turn it on by itself.
+3. After that, every successful push to `main` triggers `.github/workflows/deploy-pages.yml`, which publishes only the files needed to run the static app. Check the **Actions** tab for deployment status.
+4. Wait until GitHub Pages shows the live HTTPS site URL. The expected address is `https://fayisaftha786.github.io/-ai-commerce-hub-/`; trust the actual URL reported by GitHub if it differs.
+5. Open that HTTPS site in Chrome on Android, load it once while online, then tap the app's **Install app** button. If the browser doesn't offer a prompt, use Chrome's menu and choose **Install app** or **Add to Home screen**.
 
 After the first successful online visit, the static HTML, CSS, JavaScript, manifest and icon can be served from the service-worker cache when offline. Marketplace search pages, current product data, external APIs, social login and publishing still need a connection and valid permissions. Saved workspace data remains in the browser's local storage on that device; keep using the backup/restore feature.
 

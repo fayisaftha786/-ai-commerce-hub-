@@ -10,6 +10,7 @@ const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const manifest = JSON.parse(fs.readFileSync(path.join(root, "manifest.webmanifest"), "utf8"));
 const serviceWorker = fs.readFileSync(path.join(root, "service-worker.js"), "utf8");
 const pwaInstall = fs.readFileSync(path.join(root, "pwa-install.js"), "utf8");
+const readme = fs.readFileSync(path.join(root, "README.md"), "utf8");
 
 test("PWA manifest is installable and uses relative scope for project subpaths", () => {
   assert.equal(manifest.name, "AI Commerce Hub");
@@ -59,4 +60,23 @@ test("install button handles browser prompts and gives a manual HTTPS fallback",
   assert.match(pwaInstall, /Install app or Add to Home screen/);
   assert.match(pwaInstall, /location\.protocol === "https:"/);
   assert.match(pwaInstall, /appinstalled/);
+});
+
+
+test("GitHub Pages deployment workflow publishes only the static runtime assets from main", () => {
+  const workflowPath = path.join(root, ".github", "workflows", "deploy-pages.yml");
+  const workflow = fs.readFileSync(workflowPath, "utf8");
+  assert.match(workflow, /push:\s*\n\s*branches: \[main\]/);
+  assert.match(workflow, /workflow_dispatch:/);
+  assert.match(workflow, /pages: write/);
+  assert.match(workflow, /id-token: write/);
+  assert.match(workflow, /github\.ref == 'refs\/heads\/main'/);
+  assert.match(workflow, /actions\/configure-pages@v5/);
+  assert.match(workflow, /actions\/upload-pages-artifact@v4/);
+  assert.match(workflow, /actions\/deploy-pages@v4/);
+  assert.match(workflow, /path: _site/);
+  for (const asset of ["index.html", "style.css", "manifest.webmanifest", "service-worker.js", "pwa-install.js", "app.js"]) {
+    assert.ok(workflow.includes(asset), "deployment is missing " + asset);
+  }
+  assert.match(readme, /select \*\*GitHub Actions\*\*/);
 });

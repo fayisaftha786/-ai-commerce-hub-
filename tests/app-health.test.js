@@ -30,6 +30,8 @@ function makeEnvironment(overrides = {}) {
     AICommerceDiscovery: {},
     AICommerceCatalogImport: {},
     AICommerceCampaignReport: {},
+    AICommerceMarketplaceSearch: {},
+    AICommerceSocialCenter: {},
     ...overrides
   };
 }
@@ -41,6 +43,8 @@ test("self-check passes when secure context, storage, modules, and key forms are
   assert.ok(checks.some((check) => check.title === "Secure browser context" && check.state === "pass"));
   assert.ok(checks.some((check) => check.title === "Browser storage" && check.state === "pass"));
   assert.ok(checks.some((check) => check.title === "Product discovery" && check.state === "pass"));
+  assert.ok(checks.some((check) => check.title === "Marketplace search" && check.state === "pass"));
+  assert.ok(checks.some((check) => check.title === "Social media workflow" && check.state === "pass"));
   assert.ok(checks.some((check) => check.title === "Manual product discovery form/control" && check.state === "pass"));
   assert.ok(checks.some((check) => check.title === "External integrations" && check.state === "info"));
 });
@@ -50,6 +54,8 @@ test("self-check surfaces missing modules, missing forms and insecure context", 
     isSecureContext: false,
     location: { protocol: "http:", hostname: "example.com" },
     AICommerceDiscovery: undefined,
+    AICommerceMarketplaceSearch: undefined,
+    AICommerceSocialCenter: undefined,
     document: {
       getElementById(id) { return id === "candidateForm" ? null : { id }; },
       querySelector() { return null; }
@@ -58,6 +64,8 @@ test("self-check surfaces missing modules, missing forms and insecure context", 
   const checks = collectEnvironmentChecks(environment);
   assert.ok(checks.some((check) => check.title === "Secure browser context" && check.state === "warn"));
   assert.ok(checks.some((check) => check.title === "Product discovery" && check.state === "fail"));
+  assert.ok(checks.some((check) => check.title === "Marketplace search" && check.state === "fail"));
+  assert.ok(checks.some((check) => check.title === "Social media workflow" && check.state === "fail"));
   assert.ok(checks.some((check) => check.title === "Manual product discovery form/control" && check.state === "fail"));
   assert.ok(checks.some((check) => check.title === "PWA manifest" && check.state === "warn"));
 });

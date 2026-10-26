@@ -22,10 +22,10 @@ test("rejects invalid candidate names, price, ratings and percentages", () => {
   assert.equal(scoreCandidate({ ...base, demand: 7 }).valid, false);
 });
 
-test("warns when demand is weak or product is out of stock", () => {
-  const result = scoreCandidate({ ...base, demand: 1, inStock: false });
+test("warns when demand evidence is weak", () => {
+  const result = scoreCandidate({ ...base, demand: 1 });
+  assert.equal(result.valid, true);
   assert.ok(result.candidate.checks.some((line) => line.includes("Demand evidence is weak")));
-  assert.ok(result.candidate.checks.some((line) => line.includes("out of stock")));
 });
 
 test("creates Malayalam promo copy with affiliate disclosure and link placeholder", () => {

@@ -35,3 +35,10 @@ test("rejects unclosed quoted CSV fields", () => {
   assert.equal(result.valid, false);
   assert.match(result.error, /unclosed quoted field/i);
 });
+
+test("penalises high returns and warns about return rate", () => {
+  const good = rankCatalogCsv("name,price,orders,clicks,returns,period_days\nLamp,499,50,200,2,30");
+  const poor = rankCatalogCsv("name,price,orders,clicks,returns,period_days\nLamp,499,50,200,15,30");
+  assert.ok(poor.records[0].score < good.records[0].score);
+  assert.ok(poor.records[0].warnings.some((warning) => warning.includes("return rate")));
+});

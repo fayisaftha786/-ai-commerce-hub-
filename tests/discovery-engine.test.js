@@ -97,6 +97,7 @@ test("does not treat a blank demand/competition estimate as a real signal", () =
 test("only reports estimated commission when a positive rate is supplied", () => {
   assert.equal(scoreCandidate({ ...base, commission: "" }).candidate.estimatedCommission, null);
   assert.equal(scoreCandidate({ ...base, commission: 0 }).candidate.estimatedCommission, null);
+  assert.equal(scoreCandidate({ ...base, commission: 0 }).candidate.label, "Need more evidence");
 });
 
 

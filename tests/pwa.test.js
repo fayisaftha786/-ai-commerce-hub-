@@ -32,7 +32,8 @@ test("service worker precaches the local app shell and uses offline fallback", (
     "./discovery-engine.js",
     "./catalog-import.js",
     "./app.js",
-    "./pwa-install.js"
+    "./pwa-install.js",
+    "./app-health.js"
   ]) {
     assert.ok(serviceWorker.includes('"' + asset + '"'), "missing cached asset " + asset);
   }
@@ -72,10 +73,14 @@ test("GitHub Pages deployment workflow publishes only the static runtime assets 
   assert.match(workflow, /id-token: write/);
   assert.match(workflow, /github\.ref == 'refs\/heads\/main'/);
   assert.match(workflow, /actions\/configure-pages@v5/);
+  assert.match(workflow, /id: pages[\s\S]*?continue-on-error: true/);
+  assert.match(workflow, /if: steps\.pages\.outcome == 'success'/);
+  assert.match(workflow, /Explain missing Pages setup/);
+  assert.match(workflow, /deployment was skipped safely/i);
   assert.match(workflow, /actions\/upload-pages-artifact@v4/);
   assert.match(workflow, /actions\/deploy-pages@v4/);
   assert.match(workflow, /path: _site/);
-  for (const asset of ["index.html", "style.css", "manifest.webmanifest", "service-worker.js", "pwa-install.js", "app.js"]) {
+  for (const asset of ["index.html", "style.css", "manifest.webmanifest", "service-worker.js", "pwa-install.js", "app-health.js", "app.js"]) {
     assert.ok(workflow.includes(asset), "deployment is missing " + asset);
   }
   assert.match(readme, /select \*\*GitHub Actions\*\*/);

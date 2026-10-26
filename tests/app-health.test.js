@@ -1,0 +1,82 @@
+"use strict";
+
+const test = require("node:test");
+const assert = require("node:assert/strict");
+const { collectEnvironmentChecks, checkServiceWorkerRegistration } = require("../app-health");
+
+function makeEnvironment(overrides = {}) {
+  const ids = new Set([
+    "productForm", "marketplaceSearchForm", "candidateForm", "catalogForm",
+    "contentForm", "campaignReportForm", "socialAnalyticsForm", "videoMakerForm",
+    "installAppButton"
+  ]);
+  const values = new Map();
+  const storage = {
+    setItem(key, value) { values.set(key, String(value)); },
+    getItem(key) { return values.has(key) ? values.get(key) : null; },
+    removeItem(key) { values.delete(key); }
+  };
+  return {
+    isSecureContext: true,
+    location: { protocol: "https:", hostname: "example.github.io" },
+    localStorage: storage,
+    navigator: { serviceWorker: { getRegistration: async () => ({ active: {} }) } },
+    document: {
+      getElementById(id) { return ids.has(id) ? { id } : null; },
+      querySelector(selector) { return selector === 'link[rel="manifest"]' ? {} : null; }
+    },
+    AICommerceProductUtils: {},
+    AICommerceOfferEngine: {},
+    AICommerceDiscovery: {},
+    AICommerceCatalogImport: {},
+    AICommerceCampaignReport: {},
+    ...overrides
+  };
+}
+
+test("self-check passes when secure context, storage, modules, and key forms are present", () => {
+  const checks = collectEnvironmentChecks(makeEnvironment());
+  assert.ok(checks.length >= 19);
+  assert.ok(checks.every((check) => ["pass", "warn", "fail", "info"].includes(check.state)));
+  assert.ok(checks.some((check) => check.title === "Secure browser context" && check.state === "pass"));
+  assert.ok(checks.some((check) => check.title === "Browser storage" && check.state === "pass"));
+  assert.ok(checks.some((check) => check.title === "Product discovery" && check.state === "pass"));
+  assert.ok(checks.some((check) => check.title === "Manual product discovery form/control" && check.state === "pass"));
+  assert.ok(checks.some((check) => check.title === "External integrations" && check.state === "info"));
+});
+
+test("self-check surfaces missing modules, missing forms and insecure context", () => {
+  const environment = makeEnvironment({
+    isSecureContext: false,
+    location: { protocol: "http:", hostname: "example.com" },
+    AICommerceDiscovery: undefined,
+    document: {
+      getElementById(id) { return id === "candidateForm" ? null : { id }; },
+      querySelector() { return null; }
+    }
+  });
+  const checks = collectEnvironmentChecks(environment);
+  assert.ok(checks.some((check) => check.title === "Secure browser context" && check.state === "warn"));
+  assert.ok(checks.some((check) => check.title === "Product discovery" && check.state === "fail"));
+  assert.ok(checks.some((check) => check.title === "Manual product discovery form/control" && check.state === "fail"));
+  assert.ok(checks.some((check) => check.title === "PWA manifest" && check.state === "warn"));
+});
+
+test("self-check warns if browser local storage is blocked", () => {
+  const environment = makeEnvironment({
+    localStorage: { setItem() { throw new Error("blocked"); }, getItem() { return null; }, removeItem() {} }
+  });
+  const checks = collectEnvironmentChecks(environment);
+  assert.ok(checks.some((check) => check.title === "Browser storage" && check.state === "warn"));
+});
+
+test("service-worker check distinguishes registered and missing offline setup", async () => {
+  const active = await checkServiceWorkerRegistration(makeEnvironment());
+  assert.equal(active.state, "pass");
+  assert.match(active.detail, /service worker is active/i);
+  const missing = await checkServiceWorkerRegistration(makeEnvironment({
+    navigator: { serviceWorker: { getRegistration: async () => undefined } }
+  }));
+  assert.equal(missing.state, "warn");
+  assert.match(missing.detail, /No service worker is registered/i);
+});

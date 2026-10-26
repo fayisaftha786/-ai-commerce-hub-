@@ -22,6 +22,13 @@
     <p id="installAppStatus" role="status" aria-live="polite">Publish this app over HTTPS before installing it on Android.</p>
   </header>
   <main>
+    <section class="panel" aria-labelledby="appHealthHeading">
+      <h2 id="appHealthHeading">App Self-Check</h2>
+      <p>Check the browser, local storage, essential app modules and offline setup. This checks local readiness only; it does not test marketplace credentials, fetch live product rankings or verify that a product will sell.</p>
+      <button id="runAppHealthCheck" type="button">Run self-check</button>
+      <p id="appHealthSummary" role="status" aria-live="polite">Run a self-check to see what is ready and what needs setup.</p>
+      <ul id="appHealthResults" aria-live="polite"></ul>
+    </section>
     <section class="panel" aria-labelledby="backupHeading">
       <h2 id="backupHeading">Workspace Backup & Restore</h2>
       <p>Export saved workspace data to a JSON file or restore a previous backup on this device. The file stays under your control and may contain product links and campaign details.</p>
@@ -329,6 +336,7 @@
   <script src="social-center.js"></script>
   <script src="app.js"></script>
   <script src="pwa-install.js"></script>
+  <script src="app-health.js"></script>
   <script>
     // Service-worker caching is optional; the app remains usable online if registration is blocked.
     if ("serviceWorker" in navigator && location.protocol !== "file:") {

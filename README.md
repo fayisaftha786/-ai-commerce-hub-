@@ -52,6 +52,10 @@ The manual candidate score is a transparent shortlist heuristic based on data en
 
 The content studio generates a storyboard/script and caption; it does not render a finished video or download media from Meesho. Use original footage you film or product assets/video explicitly supplied for your permitted promotional use. Do not assume that a listing image or video can be reused commercially. Check the current Meesho creator/affiliate programme terms and any platform-specific rules before publishing. A future media-import integration should use an authorised source or official API, not scrape private or protected media.
 
+## Marketplace API permission gate
+
+Live marketplace access will be enabled only after account eligibility, current API terms, intended-use permission, and credentials have been verified. The project is a cross-marketplace product-comparison tool, so the current Flipkart Affiliate API terms must be reviewed carefully before this use is enabled. Amazon Creators API access is conditional on current programme requirements. For Meesho, use authorised exports or documented/approved feeds only; do not scrape pages or reuse listing media without permission. See [docs/ROADMAP.md](docs/ROADMAP.md) for the provider-by-provider gate.
+
 ## Known limitations
 
 - This is a prototype, not a production affiliate platform.

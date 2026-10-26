@@ -492,7 +492,7 @@ $("candidateForm").addEventListener("submit", (event) => {
     reviews: $("candidateReviews").value,
     demand: $("candidateDemand").value,
     competition: $("candidateCompetition").value,
-    inStock: $("candidateStock").checked
+    inStock: $("candidateStock").value === "in-stock" ? true : $("candidateStock").value === "out-of-stock" ? false : undefined
   });
   $("candidateResult").replaceChildren();
   latestCandidate = null;

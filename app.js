@@ -320,6 +320,75 @@ function renderCampaigns() {
 
 $("campaignSearch").addEventListener("input", renderCampaigns);
 
+function parseCampaignCsv(text) {
+  const rows = [];
+  let row = [];
+  let field = "";
+  let quoted = false;
+  for (let i = 0; i < text.length; i += 1) {
+    const ch = text[i];
+    if (quoted) {
+      if (ch === '"') {
+        if (text[i + 1] === '"') {
+          field += '"';
+          i += 1;
+        } else {
+          quoted = false;
+        }
+      } else {
+        field += ch;
+      }
+    } else if (ch === '"' && field.length === 0) {
+      quoted = true;
+    } else if (ch === ",") {
+      row.push(field);
+      field = "";
+    } else if (ch === "\n" || ch === "\r") {
+      if (ch === "\r" && text[i + 1] === "\n") i += 1;
+      row.push(field);
+      if (row.some((value) => value.trim() !== "")) rows.push(row);
+      row = [];
+      field = "";
+    } else {
+      field += ch;
+    }
+  }
+  if (quoted) throw new Error("The CSV has an unclosed quoted field.");
+  if (field.length || row.length) {
+    row.push(field);
+    if (row.some((value) => value.trim() !== "")) rows.push(row);
+  }
+  if (!rows.length) throw new Error("The selected CSV is empty.");
+  const headers = rows.shift().map((value) => value.trim().replace(/^\uFEFF/, "").toLowerCase());
+  const required = ["campaign_id", "created_at", "product_name", "platform", "format", "affiliate_link"];
+  if (headers.length !== required.length || required.some((header, index) => headers[index] !== header)) {
+    throw new Error("CSV columns do not match the exported campaign register format.");
+  }
+  const records = [];
+  let skipped = 0;
+  for (const values of rows) {
+    if (values.length !== required.length) {
+      skipped += 1;
+      continue;
+    }
+    const [id, createdAt, productName, platform, format, link] = values;
+    if (!id.trim() || id.length > 100 || !productName.trim() || productName.trim().length > 120 ||
+        !Number.isFinite(Date.parse(createdAt)) || platform.length > 40 || format.length > 40) {
+      skipped += 1;
+      continue;
+    }
+    records.push({
+      id: id.trim(),
+      createdAt: new Date(createdAt).toISOString(),
+      productName: productName.trim(),
+      platform: platform.trim(),
+      format: format.trim(),
+      link: safeCampaignUrl(link.trim())
+    });
+  }
+  return { records, skipped };
+}
+
 function csvCell(value) {
   const text = String(value == null ? "" : value);
   return '"' + text.replace(/"/g, '""') + '"';
@@ -360,6 +429,50 @@ $("saveContentCampaign").addEventListener("click", () => {
   $("campaignMessage").textContent = saved
     ? "Campaign saved on this device. ID: " + campaign.id
     : "Campaign added for this session only; browser storage is unavailable. ID: " + campaign.id;
+});
+
+$("importCampaigns").addEventListener("click", async () => {
+  const file = $("importCampaignsCsv").files && $("importCampaignsCsv").files[0];
+  if (!file) {
+    $("campaignMessage").textContent = "Choose a campaign register CSV file first.";
+    return;
+  }
+  if (file.size > 1024 * 1024) {
+    $("campaignMessage").textContent = "CSV is larger than 1 MB. Split the export into smaller files and retry.";
+    return;
+  }
+  let parsed;
+  try {
+    parsed = parseCampaignCsv(await file.text());
+  } catch (error) {
+    $("campaignMessage").textContent = error.message || "Could not read this campaign CSV.";
+    return;
+  }
+  const existingIds = new Set(campaigns.map((item) => item.id));
+  const unique = parsed.records.filter((item) => !existingIds.has(item.id));
+  const available = Math.max(0, MAX_CAMPAIGNS - campaigns.length);
+  const accepted = unique.slice(0, available);
+  const duplicates = parsed.records.length - unique.length;
+  if (!accepted.length) {
+    $("campaignMessage").textContent = "No new valid campaign records to import. Duplicates: " + duplicates + "; skipped invalid rows: " + parsed.skipped + ".";
+    return;
+  }
+  if (!window.confirm("Import " + accepted.length + " new campaign records? Existing records will be kept.")) return;
+  campaigns.push(...accepted);
+  if (!saveCampaigns()) {
+    const importedIds = new Set(accepted.map((item) => item.id));
+    for (let index = campaigns.length - 1; index >= 0; index -= 1) {
+      if (importedIds.has(campaigns[index].id)) campaigns.splice(index, 1);
+    }
+    renderCampaigns();
+    $("campaignMessage").textContent = "Import could not be saved to browser storage. Existing records were preserved.";
+    return;
+  }
+  renderCampaigns();
+  $("campaignMessage").textContent = "Imported " + accepted.length + " campaign records. Duplicates: " + duplicates +
+    "; skipped invalid rows: " + parsed.skipped + (unique.length > accepted.length ? "; register limit reached, some records were not imported." : "") +
+    ". Imported data is campaign metadata, not sales analytics.";
+  $("importCampaignsCsv").value = "";
 });
 
 $("exportCampaigns").addEventListener("click", () => {

@@ -41,3 +41,9 @@ test("creates video plan with hook, voice-over and safe footage guidance", () =>
   assert.match(pack.video, /authorised to use/);
   assert.match(pack.video, /Affiliate disclosure/);
 });
+
+test("does not place non-HTTPS links into promotional copy", () => {
+  const pack = createContentPack({ name: "Storage organiser", link: "javascript:alert(1)" });
+  assert.ok(pack.post.includes("[Add your approved affiliate link]"));
+  assert.ok(!pack.post.includes("javascript:"));
+});

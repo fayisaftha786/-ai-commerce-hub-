@@ -216,7 +216,7 @@ $("saveContentCampaign").addEventListener("click", () => {
 $("exportCampaigns").addEventListener("click", () => {
   const header = ["campaign_id", "created_at", "product_name", "platform", "format", "affiliate_link"];
   const rows = campaigns.map((item) => [item.id, item.createdAt, item.productName, item.platform, item.format, item.link || ""]);
-  const csv = [header, ...rows].map((row) => row.map(csvCell).join(",")).join("\\r\\n") + "\\r\\n";
+  const csv = [header, ...rows].map((row) => row.map(csvCell).join(",")).join("\r\n") + "\r\n";
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");

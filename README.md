@@ -15,6 +15,7 @@ A lightweight affiliate workspace prototype for evaluating offer details, shortl
 - Generate Malayalam, English or bilingual product captions
 - Generate a short vertical-video plan with hook, shot guidance, voice-over, CTA and affiliate disclosure
 - Generate three distinct hook options and three CTA options for simple creative testing; compare results manually because the prototype does not track conversions
+- Save a local campaign register with a unique ID per content variant and export campaign metadata as CSV
 - Copy content for Instagram, Facebook, WhatsApp and YouTube Shorts workflows
 - Automated Node.js regression tests and GitHub Actions CI
 
@@ -46,6 +47,7 @@ The content studio generates a storyboard/script and caption; it does not render
 - This is a prototype, not a production affiliate platform.
 - Product and shortlist data are stored only in the current browser's local storage; there is no account, cloud backup or cross-device sync.
 - The click counter records link-click events in the current page session. It does not confirm successful page loads, purchases, conversions or commissions.
+- Campaign IDs are organisational labels only. The registry does not track external clicks or sales and does not modify affiliate URLs with tracking parameters. Use programme-approved campaign/sub-ID fields only if available, then compare authorised performance reports.
 - Content is template-generated; no live AI API is connected.
 - Live product feeds, affiliate link creation, commission data, video rendering and social publishing are not connected.
 - CSV imports are user-supplied only; the app does not authenticate to marketplace dashboards or fetch current sales data.

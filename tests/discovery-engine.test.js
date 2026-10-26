@@ -105,3 +105,20 @@ test("ranks ready candidates before incomplete and out-of-stock candidates", () 
   assert.ok(compare(incompleteHighScore, outOfStock) < 0);
   assert.ok(compare({ ...ready, score: 80 }, ready) < 0);
 });
+
+
+test("keeps missing demand and competition unknown in saved candidate data", () => {
+  const result = scoreCandidate({ ...base, demand: "", competition: "" });
+  assert.equal(result.valid, true);
+  assert.equal(result.candidate.demand, null);
+  assert.equal(result.candidate.competition, null);
+  assert.equal(result.candidate.label, "Need more evidence");
+  assert.ok(!result.candidate.checks.some((line) => line.includes("Demand evidence is weak")));
+});
+
+test("candidate cards label missing signals as not checked rather than numeric estimates", () => {
+  const app = require("node:fs").readFileSync(require("node:path").join(__dirname, "..", "app.js"), "utf8");
+  assert.match(app, /Number\.isFinite\(candidate\.demand\) \? candidate\.demand \+ "\/5" : "not checked"/);
+  assert.match(app, /Number\.isFinite\(candidate\.competition\) \? candidate\.competition \+ "\/5" : "not checked"/);
+  assert.match(app, /candidate\.commission > 0 \? candidate\.commission \+ "%" : "not confirmed"/);
+});

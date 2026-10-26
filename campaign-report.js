@@ -110,19 +110,23 @@ function parseCampaignReport(csvText, savedCampaigns = []) {
       continue;
     }
     const key = JSON.stringify([campaignId, start, end]);
-    if (!groups.has(key)) groups.set(key, { campaignId, periodStart: start, periodEnd: end, clicks: 0, orders: 0, returns: null, commission: null, rows: 0, warnings: [] });
+    if (!groups.has(key)) groups.set(key, { campaignId, periodStart: start, periodEnd: end, clicks: 0, orders: 0, returns: null, commission: null, rows: 0, commissionRows: 0, returnRows: 0, warnings: [] });
     const group = groups.get(key);
     group.clicks += clicks;
     group.orders += orders;
     group.rows += 1;
-    if (returns !== null) group.returns = (group.returns ?? 0) + returns;
-    if (commission !== null) group.commission = (group.commission ?? 0) + commission;
+    if (returns !== null) { group.returns = (group.returns ?? 0) + returns; group.returnRows += 1; }
+    if (commission !== null) { group.commission = (group.commission ?? 0) + commission; group.commissionRows += 1; }
   }
   if (!groups.size) return { valid: false, error: "No valid campaign performance rows found.", errors };
 
   const knownIds = new Set((Array.isArray(savedCampaigns) ? savedCampaigns : []).filter((item) => item && typeof item.id === "string").map((item) => item.id));
   const reports = [...groups.values()].map((group) => {
     const matched = knownIds.has(group.campaignId);
+    if (group.commissionRows !== group.rows) group.commission = null;
+    if (group.returnRows !== group.rows) group.returns = null;
+    if (!Number.isSafeInteger(group.clicks) || !Number.isSafeInteger(group.orders) ||
+        (group.returns !== null && !Number.isSafeInteger(group.returns))) group.warnings.push("Aggregated count exceeds safe numeric precision; verify source rows.");
     if (!matched) group.warnings.push("Attribution unavailable: this campaign ID does not match a saved campaign in this browser.");
     if (group.clicks === 0 && group.orders > 0) group.warnings.push("Orders are positive but clicks are zero; verify the source report.");
     if (group.clicks > 0 && group.orders > group.clicks) group.warnings.push("Orders exceed clicks; conversion rate is not shown until metrics are verified.");

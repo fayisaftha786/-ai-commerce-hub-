@@ -172,6 +172,26 @@ function parseCampaignReport(csvText, savedCampaigns = []) {
   };
 }
 
-const api = { parseCampaignReport };
+function compareCampaignReports(reports) {
+  if (!Array.isArray(reports)) return [];
+  const groups = new Map();
+  for (const report of reports) {
+    if (!report || report.matched !== true ||
+        typeof report.periodStart !== "string" || typeof report.periodEnd !== "string" ||
+        typeof report.campaignId !== "string") continue;
+    const key = JSON.stringify([report.periodStart, report.periodEnd]);
+    if (!groups.has(key)) groups.set(key, { periodStart: report.periodStart, periodEnd: report.periodEnd, campaigns: [] });
+    groups.get(key).campaigns.push(report);
+  }
+  return [...groups.values()]
+    .filter((group) => group.campaigns.length >= 2)
+    .map((group) => ({
+      ...group,
+      campaigns: group.campaigns.slice().sort((a, b) => a.campaignId.localeCompare(b.campaignId))
+    }))
+    .sort((a, b) => a.periodStart.localeCompare(b.periodStart) || a.periodEnd.localeCompare(b.periodEnd));
+}
+
+const api = { parseCampaignReport, compareCampaignReports };
 if (typeof module !== "undefined" && module.exports) module.exports = api;
 if (typeof window !== "undefined") window.AICommerceCampaignReport = api;

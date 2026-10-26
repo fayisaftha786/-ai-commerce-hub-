@@ -107,3 +107,30 @@ test("campaign report analysis can be exported only after a valid import", () =>
   assert.match(app, /ai-commerce-hub-campaign-performance\.csv/);
   assert.match(app, /matched_saved_campaign/);
 });
+
+
+test("compares only matched campaigns with exactly the same reporting period", () => {
+  const { compareCampaignReports } = require("../campaign-report");
+  const reports = [
+    { campaignId: "ACH-B", periodStart: "2026-10-01", periodEnd: "2026-10-07", matched: true, clicks: 50, orders: 2, conversionRate: 0.04, commission: 40, returns: 0 },
+    { campaignId: "unknown", periodStart: "2026-10-01", periodEnd: "2026-10-07", matched: false, clicks: 100, orders: 8, conversionRate: 0.08, commission: 90, returns: 0 },
+    { campaignId: "ACH-A", periodStart: "2026-10-01", periodEnd: "2026-10-07", matched: true, clicks: 20, orders: 1, conversionRate: 0.05, commission: null, returns: null },
+    { campaignId: "ACH-C", periodStart: "2026-10-08", periodEnd: "2026-10-14", matched: true, clicks: 30, orders: 1, conversionRate: null, commission: 10, returns: 0 }
+  ];
+  const comparisons = compareCampaignReports(reports);
+  assert.equal(comparisons.length, 1);
+  assert.equal(comparisons[0].periodStart, "2026-10-01");
+  assert.deepEqual(comparisons[0].campaigns.map((item) => item.campaignId), ["ACH-A", "ACH-B"]);
+  assert.equal(comparisons[0].campaigns[0].commission, null);
+});
+
+test("campaign comparison UI is wired and labels incomparable data", () => {
+  const fs = require("node:fs");
+  const path = require("node:path");
+  const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
+  const app = fs.readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
+  assert.ok(html.includes('id="campaignReportResults"'));
+  assert.match(app, /compareCampaignReports\(result\.reports\)/);
+  assert.match(app, /exact matching date ranges/);
+  assert.match(app, /Incomplete \/ unavailable/);
+});

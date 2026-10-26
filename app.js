@@ -836,6 +836,55 @@ $("campaignReportForm").addEventListener("submit", async (event) => {
       }
       root.append(card);
     }
+    const comparisons = importer.compareCampaignReports(result.reports);
+    if (comparisons.length) {
+      const comparisonHeading = document.createElement("h3");
+      comparisonHeading.textContent = "Comparable campaign periods";
+      const comparisonNote = document.createElement("p");
+      comparisonNote.textContent = "Only exact matching date ranges and campaign IDs saved in this workspace are shown. This is a side-by-side comparison, not proof that one campaign caused better results.";
+      root.append(comparisonHeading, comparisonNote);
+      for (const comparison of comparisons) {
+        const section = document.createElement("section");
+        section.className = "candidate-card";
+        const title = document.createElement("h4");
+        title.textContent = comparison.periodStart + " to " + comparison.periodEnd;
+        const table = document.createElement("table");
+        const head = document.createElement("thead");
+        const headerRow = document.createElement("tr");
+        for (const label of ["Campaign ID", "Clicks", "Orders", "Orders/clicks", "Reported commission", "Returns"]) {
+          const cell = document.createElement("th");
+          cell.scope = "col";
+          cell.textContent = label;
+          headerRow.append(cell);
+        }
+        head.append(headerRow);
+        const body = document.createElement("tbody");
+        for (const report of comparison.campaigns) {
+          const row = document.createElement("tr");
+          const values = [
+            report.campaignId,
+            String(report.clicks),
+            String(report.orders),
+            report.conversionRate === null ? "Unavailable" : (report.conversionRate * 100).toFixed(2) + "%",
+            report.commission === null ? "Incomplete / unavailable" : "₹" + report.commission.toLocaleString("en-IN", { maximumFractionDigits: 2 }),
+            report.returns === null ? "Incomplete / unavailable" : String(report.returns)
+          ];
+          for (const value of values) {
+            const cell = document.createElement("td");
+            cell.textContent = value;
+            row.append(cell);
+          }
+          body.append(row);
+        }
+        table.append(head, body);
+        section.append(title, table);
+        root.append(section);
+      }
+    } else {
+      const note = document.createElement("p");
+      note.textContent = "Campaign comparison will appear when at least two saved campaign IDs have reports for the exact same start and end dates. Unmatched IDs and different date ranges are not compared.";
+      root.append(note);
+    }
     if (result.errors.length) {
       const heading = document.createElement("h3");
       heading.textContent = "Rows needing attention";

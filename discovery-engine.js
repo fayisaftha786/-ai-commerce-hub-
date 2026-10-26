@@ -75,22 +75,22 @@ function createContentPack(input) {
   const disclosure = "Affiliate disclosure: I may earn a commission from eligible purchases at no extra cost to you.";
   const linkLine = link || "[Add your approved affiliate link]";
   const malayalam = [
+    disclosure,
     "✨ " + name,
     benefit + " — " + audience + "ക്കായി.",
     "🔎 " + proof,
     safePrice,
     "വാങ്ങുന്നതിന് മുമ്പ് വില, size/variant, delivery, return നിബന്ധനകൾ പരിശോധിക്കുക.",
-    "ലിങ്ക്: " + linkLine,
-    disclosure
+    "ലിങ്ക്: " + linkLine
   ].join("\n\n");
   const english = [
+    disclosure,
     "✨ " + name,
     benefit + " — worth a look if you are " + audience + ".",
     "🔎 " + proof,
     safePrice,
     "Check the current price, size/variant, delivery and return terms before buying.",
-    "Link: " + linkLine,
-    disclosure
+    "Link: " + linkLine
   ].join("\n\n");
   const post = language === "English" ? english : language === "Both" ? malayalam + "\n\n---\n\n" + english : malayalam;
   const hook = language === "English"
@@ -106,14 +106,13 @@ function createContentPack(input) {
     "2–6s — SHOW: Show the real product clearly; use your own footage or media you are authorised to use.",
     "6–12s — BENEFIT: Demonstrate " + benefit + " for " + audience + ". Do not claim features you cannot verify.",
     "12–17s — PROOF: Show only the verified detail: " + proof + ".",
-    "17–21s — PRICE + CTA: " + safePrice + " Tell viewers to check the link for current availability.",
-    "17–25s — CTA: Invite viewers to check the current price and availability; the affiliate label must already have been visible for at least 8 seconds.",
+    "17–25s — PRICE + CTA: " + safePrice + " Invite viewers to check the link for current availability; the affiliate label must already have been visible for at least 8 seconds.",
     "",
     "VOICE-OVER",
     voice,
     "",
     "ON-SCREEN TEXT",
-    hook + "\n" + benefit + "\nCheck current price • Link in bio/post",
+    "Affiliate" + "\n" + hook + "\n" + benefit + "\nCheck current price • Link in bio/post",
     "",
     "CAPTION",
     post

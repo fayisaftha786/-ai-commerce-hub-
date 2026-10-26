@@ -10,7 +10,7 @@ const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const source = fs.readFileSync(path.join(root, "video-maker.js"), "utf8");
 
 test("video maker controls exist and script loads before app initialisation", () => {
-  for (const id of ["videoMakerForm", "videoMakerImages", "videoMakerName", "videoMakerBenefit", "videoMakerPreview", "videoMakerDownload", "videoMakerStatus"]) {
+  for (const id of ["videoMakerForm", "videoMakerImages", "videoMakerName", "videoMakerBenefit", "videoMakerPreview", "videoMakerDownload", "videoMakerStatus", "videoMakerLanguage"]) {
     assert.match(html, new RegExp('id="' + id + '"'));
   }
   const scripts = [...html.matchAll(/<script\s+src="([^"]+)"/g)].map((match) => match[1]);
@@ -24,6 +24,13 @@ test("video maker validates image count and size and creates local WebM output",
   assert.match(source, /video\/webm/);
   assert.match(source, /URL\.createObjectURL/);
   assert.match(source, /URL\.revokeObjectURL/);
+});
+
+test("video maker embeds a language-specific affiliate disclosure on each slide", () => {
+  assert.match(html, /id="videoMakerLanguage"/);
+  assert.match(source, /Affiliate link • I may earn a commission/);
+  assert.match(source, /അഫിലിയേറ്റ് ലിങ്ക്/);
+  assert.match(source, /drawSlide\(ctx, images\[i\], title, benefit, price, cta, language, i, images\.length\)/);
 });
 
 test("video maker does not upload files or use external media services", () => {

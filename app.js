@@ -361,13 +361,32 @@ function renderImportedCatalog(records, errors = []) {
       ? " · " + Math.round(record.returnRate * 100) + "% returns" : "";
     details.textContent = record.platform + " · ₹" + record.price.toLocaleString("en-IN") + " · " + performance +
       (record.periodDays ? " · " + record.periodDays + "-day period" : " · period not confirmed") + returnsText;
+    const evidence = document.createElement("p");
+    const qualityLabels = {
+      Complete: "Data completeness: complete (clicks, orders and period supplied)",
+      Partial: "Data completeness: partial (reporting period missing)",
+      Limited: "Data completeness: limited (metrics missing or need verification)",
+      Unverified: "Data completeness: unverified (no clicks/orders supplied)"
+    };
+    const dailyMetrics = [];
+    if (record.ordersPerDay !== null && record.ordersPerDay !== undefined) {
+      dailyMetrics.push((Math.round(record.ordersPerDay * 100) / 100) + " orders/day");
+    }
+    if (record.clicksPerDay !== null && record.clicksPerDay !== undefined) {
+      dailyMetrics.push((Math.round(record.clicksPerDay * 100) / 100) + " clicks/day");
+    }
+    if (record.conversionRate !== null && record.conversionRate !== undefined && record.clicks > 0 && record.orders <= record.clicks) {
+      dailyMetrics.push((Math.round(record.conversionRate * 1000) / 10) + "% orders/clicks");
+    }
+    evidence.textContent = (qualityLabels[record.evidenceQuality] || qualityLabels.Limited) +
+      (dailyMetrics.length ? " · " + dailyMetrics.join(" · ") : "");
     const warnings = document.createElement("ul");
     for (const warning of record.warnings) {
       const li = document.createElement("li");
       li.textContent = warning;
       warnings.append(li);
     }
-    card.append(heading, details);
+    card.append(heading, details, evidence);
     if (record.url) {
       const link = document.createElement("a");
       link.href = record.url;

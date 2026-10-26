@@ -185,3 +185,10 @@ test("ranked catalog report export has a button and uses the safe CSV exporter",
   assert.match(app, /catalogRecordsToCsv/);
   assert.match(app, /ai-commerce-hub-ranked-catalog-report\.csv/);
 });
+
+
+test("catalog import UI states the link and commission prerequisites for shortlisting", () => {
+  assert.match(html, /valid HTTPS product\/approved affiliate link/);
+  assert.match(html, /positive confirmed commission rate/);
+  assert.match(app, /commission is missing or not confirmed/);
+});

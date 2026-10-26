@@ -889,7 +889,9 @@ function renderImportedCatalog(records, errors = []) {
     const returnsText = record.returnRate !== null && record.returnRate !== undefined
       ? " · " + Math.round(record.returnRate * 100) + "% returns" : "";
     details.textContent = record.platform + " · ₹" + record.price.toLocaleString("en-IN") + " · " + performance +
-      (record.periodDays ? " · " + record.periodDays + "-day period" : " · period not confirmed") + returnsText;
+      (record.periodDays ? " · " + record.periodDays + "-day period" : " · period not confirmed") + returnsText +
+      (record.source ? " · Source: " + record.source : " · Source not recorded") +
+      (record.checkedAt ? " · Checked: " + record.checkedAt : " · Check date not recorded");
     const evidence = document.createElement("p");
     const qualityLabels = {
       Complete: "Data completeness: complete (clicks, orders and period supplied)",
@@ -974,7 +976,7 @@ function renderImportedCatalog(records, errors = []) {
 }
 
 $("downloadCatalogTemplate").addEventListener("click", () => {
-  const template = "name,platform,url,price,commission,rating,reviews,clicks,orders,returns,period_days,stock\n";
+  const template = "name,platform,url,price,commission,rating,reviews,clicks,orders,returns,period_days,stock,source,checked_at\n";
   const blob = new Blob([template], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");

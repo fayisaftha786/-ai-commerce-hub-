@@ -292,6 +292,35 @@ function renderCampaigns() {
       link.rel = "noopener noreferrer sponsored";
       link.textContent = "Open saved affiliate link";
       card.append(link);
+      const copyLinkButton = document.createElement("button");
+      copyLinkButton.type = "button";
+      copyLinkButton.className = "secondary";
+      copyLinkButton.textContent = "Copy affiliate link";
+      copyLinkButton.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(safeLink);
+          $("campaignMessage").textContent = "Affiliate link copied. Check that the destination and disclosure are correct before publishing.";
+        } catch {
+          const temporary = document.createElement("textarea");
+          temporary.value = safeLink;
+          temporary.setAttribute("readonly", "");
+          temporary.style.position = "fixed";
+          temporary.style.opacity = "0";
+          document.body.append(temporary);
+          temporary.select();
+          let copied = false;
+          try {
+            copied = document.execCommand("copy");
+          } catch {
+            copied = false;
+          }
+          temporary.remove();
+          $("campaignMessage").textContent = copied
+            ? "Affiliate link copied. Check the destination and disclosure before publishing."
+            : "Clipboard unavailable. Open the saved affiliate link and copy its address manually.";
+        }
+      });
+      card.append(copyLinkButton);
     }
     card.append(idButton);
     const deleteButton = document.createElement("button");

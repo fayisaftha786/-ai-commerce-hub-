@@ -790,9 +790,11 @@ $("campaignReportForm").addEventListener("submit", async (event) => {
       return;
     }
     $("campaignReportMessage").textContent =
-      "Imported " + result.importedRows + " valid rows across " + result.reports.length +
-      " campaign/period group(s). Results come from your CSV and are not independently verified." +
-      (result.errors.length ? " " + result.errors.length + " row(s) were skipped." : "");
+      "Data quality: " + (result.dataQuality.status === "clean" ? "no detected issues" : "review recommended") +
+      ". Imported " + result.importedRows + " valid rows across " + result.reports.length +
+      " campaign/period group(s). " + result.dataQuality.duplicateRows + " exact duplicate row(s) skipped; " +
+      result.dataQuality.skippedRows + " row(s) skipped; " + result.dataQuality.warningCount +
+      " campaign warning(s). Results come from your CSV and are not independently verified.";
     for (const report of result.reports) {
       const card = document.createElement("article");
       card.className = "candidate-card";

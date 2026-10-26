@@ -160,3 +160,12 @@ test("Content Studio resets review whenever a draft or its inputs change", () =>
   assert.match(app, /\$\(id\)\.checked = false/);
   assert.match(app, /\$\("contentOutput"\)\.value = ""/);
 });
+
+
+test("product discovery does not prefill demand or competition as if they were verified", () => {
+  assert.match(html, /<select id="candidateDemand"><option value="" selected>Not checked yet<\/option>/);
+  assert.match(html, /<select id="candidateCompetition"><option value="" selected>Not checked yet<\/option>/);
+  assert.doesNotMatch(html, /id="candidateDemand"[\s\S]{0,300}value="3" selected/);
+  assert.doesNotMatch(html, /id="candidateCompetition"[\s\S]{0,300}value="3" selected/);
+  assert.match(html, /does not mistake an unreviewed default for evidence/);
+});

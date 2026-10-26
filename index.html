@@ -88,10 +88,10 @@
             <input id="candidateReviews" type="number" min="0" step="1" placeholder="Optional — enter review count">
           </label>
           <label for="candidateDemand">Demand evidence (1–5)
-            <select id="candidateDemand"><option value="1">1 — little evidence</option><option value="2">2 — weak</option><option value="3" selected>3 — some interest</option><option value="4">4 — strong signals</option><option value="5">5 — repeated buyer interest</option></select>
+            <select id="candidateDemand"><option value="" selected>Not checked yet</option><option value="1">1 — little evidence</option><option value="2">2 — weak</option><option value="3">3 — some interest</option><option value="4">4 — strong signals</option><option value="5">5 — repeated buyer interest</option></select>
           </label>
           <label for="candidateCompetition">Competition (1–5)
-            <select id="candidateCompetition"><option value="1">1 — low</option><option value="2">2 — manageable</option><option value="3" selected>3 — medium</option><option value="4">4 — high</option><option value="5">5 — very high</option></select>
+            <select id="candidateCompetition"><option value="" selected>Not checked yet</option><option value="1">1 — low</option><option value="2">2 — manageable</option><option value="3">3 — medium</option><option value="4">4 — high</option><option value="5">5 — very high</option></select>
           </label>
         </div>
         <label class="check-label" for="candidateStock"><input id="candidateStock" type="checkbox" checked> Seller currently shows in stock</label>
@@ -101,7 +101,7 @@
       <div id="candidateResult" aria-live="polite"></div>
       <h3>Saved shortlist</h3>
       <div id="candidateList" aria-live="polite"></div>
-      <p class="hint">The score uses your entered evidence. It is not a live popularity ranking. Confirm current price, stock, return terms and commission before publishing.</p>
+      <p class="hint">Demand and competition start as “Not checked yet” so the app does not mistake an unreviewed default for evidence. Choose a rating only after checking current signals. The score is not a live popularity ranking. Confirm current price, stock, return terms and commission before publishing.</p>
     </section>
 
     <section class="panel">

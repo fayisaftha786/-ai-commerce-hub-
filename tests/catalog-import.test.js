@@ -2,7 +2,7 @@
 
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { rankCatalogCsv, catalogRecordsToCsv } = require("../catalog-import");
+const { rankCatalogCsv, catalogRecordsToCsv, calculateEvidenceAgeDays } = require("../catalog-import");
 
 test("ranks imported products using supplied order and click evidence", () => {
   const csv = "name,platform,url,price,commission,rating,reviews,clicks,orders,period_days,stock\n" +
@@ -259,4 +259,19 @@ test("exports a ranked catalog report with evidence and safely escaped cells", (
   assert.match(csv, /"2026-10-26"/);
   assert.equal(catalogRecordsToCsv([]), "");
   assert.equal(catalogRecordsToCsv(null), "");
+});
+
+
+test("calculates checked_at freshness using local calendar dates rather than UTC clock time", () => {
+  const simulatedLocalDate = {
+    getFullYear: () => 2026,
+    getMonth: () => 9,
+    getDate: () => 26
+  };
+  assert.equal(calculateEvidenceAgeDays("2026-10-26", simulatedLocalDate), 0);
+  assert.equal(calculateEvidenceAgeDays("2026-10-25", simulatedLocalDate), 1);
+  assert.equal(calculateEvidenceAgeDays("2026-10-19", simulatedLocalDate), 7);
+  assert.equal(calculateEvidenceAgeDays("2026-10-18", simulatedLocalDate), 8);
+  assert.equal(calculateEvidenceAgeDays("2026-10-27", simulatedLocalDate), -1);
+  assert.equal(calculateEvidenceAgeDays("2026-02-30", simulatedLocalDate), null);
 });

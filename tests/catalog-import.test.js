@@ -196,19 +196,27 @@ test("records evidence source and flags stale or missing check dates", () => {
 
 test("requires a recorded source and current check date before shortlisting a product", () => {
   const today = new Date().toISOString().slice(0, 10);
+  const staleDate = new Date(Date.now() - 10 * 86400000).toISOString().slice(0, 10);
   const tomorrow = new Date(Date.now() + 2 * 86400000).toISOString().slice(0, 10);
-  const baseHeaders = "name,price,commission,clicks,orders,returns,period_days,stock,source,checked_at\\n";
+  const baseHeaders = "name,price,commission,clicks,orders,returns,period_days,stock,source,checked_at\n";
   const current = rankCatalogCsv(baseHeaders + "Lamp,500,10,100,20,2,14,yes,Official dashboard," + today).records[0];
   assert.equal(current.evidenceFreshness, "current");
   assert.equal(current.evidenceTraceable, true);
   assert.equal(current.promotionReadiness, "Shortlist for a small test");
 
   const missingSource = rankCatalogCsv(
-    "name,price,commission,clicks,orders,returns,period_days,stock,checked_at\\n" +
+    "name,price,commission,clicks,orders,returns,period_days,stock,checked_at\n" +
     "Lamp,500,10,100,20,2,14,yes," + today
   ).records[0];
   assert.equal(missingSource.promotionReadiness, "Verify before promotion");
   assert.ok(missingSource.recommendationReasons.some((reason) => reason.includes("source is missing")));
+
+  const stale = rankCatalogCsv(
+    baseHeaders + "Lamp,500,10,100,20,2,14,yes,Official dashboard," + staleDate
+  ).records[0];
+  assert.equal(stale.evidenceFreshness, "stale");
+  assert.equal(stale.promotionReadiness, "Verify before promotion");
+  assert.ok(stale.recommendationReasons.some((reason) => reason.includes("Evidence is stale")));
 
   const future = rankCatalogCsv(
     baseHeaders + "Lamp,500,10,100,20,2,14,yes,Official dashboard," + tomorrow

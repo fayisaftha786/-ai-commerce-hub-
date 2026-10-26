@@ -109,7 +109,7 @@ function rankCatalogCsv(csvText) {
     const checkedAt = value(cells, "checked_at");
     let evidenceAgeDays = null;
     let checkedAtValid = false;
-    if (checkedAt && /^\\d{4}-\\d{2}-\\d{2}$/.test(checkedAt)) {
+    if (checkedAt && /^\d{4}-\d{2}-\d{2}$/.test(checkedAt)) {
       const parsedDate = new Date(checkedAt + "T00:00:00Z");
       checkedAtValid = Number.isFinite(parsedDate.getTime()) && parsedDate.toISOString().slice(0, 10) === checkedAt;
       if (checkedAtValid) evidenceAgeDays = Math.floor((Date.now() - parsedDate.getTime()) / 86400000);

@@ -134,3 +134,30 @@ test("campaign comparison UI is wired and labels incomparable data", () => {
   assert.match(app, /exact matching date ranges/);
   assert.match(app, /Incomplete \/ unavailable/);
 });
+
+
+test("campaign comparison insights withhold claims when metrics are incomplete", () => {
+  const { summarizeCampaignComparison } = require("../campaign-report");
+  const observations = summarizeCampaignComparison({
+    campaigns: [
+      { campaignId: "A", clicks: 100, orders: 10, conversionRate: 0.1, commission: 100, returns: 1, returnRate: 0.1 },
+      { campaignId: "B", clicks: 200, orders: 10, conversionRate: 0.05, commission: null, returns: null, returnRate: null }
+    ]
+  });
+  assert.ok(observations.some((item) => item.includes("Highest observed orders/clicks: A")));
+  assert.ok(observations.some((item) => item.includes("Commission comparison withheld")));
+  assert.ok(observations.some((item) => item.includes("Return-rate comparison unavailable")));
+  assert.ok(observations.every((item) => !/guaranteed winner|will earn more/i.test(item)));
+});
+
+test("campaign comparison insights reject invalid conversion rates and require at least two reports", () => {
+  const { summarizeCampaignComparison } = require("../campaign-report");
+  assert.deepEqual(summarizeCampaignComparison({ campaigns: [{ campaignId: "A" }] }), []);
+  const observations = summarizeCampaignComparison({
+    campaigns: [
+      { campaignId: "A", clicks: 0, orders: 2, conversionRate: null, commission: 0, returns: 0, returnRate: null },
+      { campaignId: "B", clicks: 10, orders: 12, conversionRate: null, commission: 5, returns: 1, returnRate: 1 / 12 }
+    ]
+  });
+  assert.ok(observations.some((item) => item.includes("Not enough valid conversion-rate values")));
+});

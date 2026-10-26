@@ -609,7 +609,7 @@ $("downloadContent").addEventListener("click", () => {
     .replace(/[^a-zA-Z0-9_-]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 60) || "content-pack";
-  const blob = new Blob([output + "\\n"], { type: "text/plain;charset=utf-8" });
+  const blob = new Blob([output + "\n"], { type: "text/plain;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;

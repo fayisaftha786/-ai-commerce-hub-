@@ -253,7 +253,18 @@ function renderCampaigns() {
     root.append(empty);
     return;
   }
-  for (const campaign of [...campaigns].reverse()) {
+  const query = $("campaignSearch").value.trim().toLocaleLowerCase();
+  const visibleCampaigns = [...campaigns].reverse().filter((campaign) =>
+    [campaign.productName, campaign.platform, campaign.format, campaign.id]
+      .some((value) => String(value || "").toLocaleLowerCase().includes(query))
+  );
+  if (!visibleCampaigns.length) {
+    const empty = document.createElement("p");
+    empty.textContent = "No campaigns match this search. Try a product name, platform, format or campaign ID.";
+    root.append(empty);
+    return;
+  }
+  for (const campaign of visibleCampaigns) {
     const card = document.createElement("article");
     card.className = "candidate-card";
     const heading = document.createElement("h3");
@@ -306,6 +317,8 @@ function renderCampaigns() {
     root.append(card);
   }
 }
+
+$("campaignSearch").addEventListener("input", renderCampaigns);
 
 function csvCell(value) {
   const text = String(value == null ? "" : value);

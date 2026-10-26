@@ -76,3 +76,9 @@ test("date-only expiry remains valid through the selected calendar day", () => {
 });
 
 
+
+test("rejects impossible calendar dates and handles date-only expiry in local time", () => {
+  assert.equal(analyzeOffer({ ...validInput, expiresAt: "2030-02-31" }).valid, false);
+  const result = analyzeOffer({ ...validInput, expiresAt: "2030-12-31" }, new Date(2030, 11, 31, 23, 59, 0));
+  assert.equal(result.offer.expiryState, "upcoming");
+});

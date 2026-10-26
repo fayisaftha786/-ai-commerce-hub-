@@ -22,11 +22,12 @@ Help a solo affiliate marketer identify products worth testing, understand the e
 - Show “last checked”, freshness, source, and missing fields beside each product.
 - Acceptance: every displayed fact can be traced to a source and timestamp; stale or missing fields lower confidence and trigger re-check guidance.
 
-### 2. Add marketplace integrations one at a time
-- **First candidate: Flipkart Affiliate API**, if the account is registered and API credentials are available. Build a server-side provider adapter for product search/details/offers, handle pagination/rate limits, normalize responses, and never expose credentials in browser code.
-- **Amazon India: Creators API**, only after Associates enrollment and API access eligibility/credentials are confirmed. Keep it disabled until the account has access and the current license requirements are implemented.
-- **Meesho:** keep search links and user-authorized/manual CSV entry as the fallback unless Meesho supplies a documented API/feed or written permission for this use. Do not scrape pages or download assets from listings without authorization.
-- Acceptance: provider shows Connected / Not configured / Error explicitly; no sample/mock results are presented as live data; each integration has fixture-based tests and safe failure handling.
+### 2. Confirm marketplace permissions before integrations
+- Before writing a provider adapter, verify the exact current API/affiliate terms for this app's intended use, account eligibility, data display/storage rules, attribution requirements, and credentials. If terms are unclear, obtain written approval from the programme first and keep that provider disabled until resolved.
+- **Flipkart Affiliate API:** the official docs describe product/offer APIs for registered affiliates, but current terms include restrictions involving a “similar or competitive platform”. Because this project compares and analyses products, do not activate live Flipkart integration until Flipkart confirms this intended use is permitted. If approved, use a currently supported API/feed version, avoid deprecated endpoints, respect rate limits, and keep tokens server-side.
+- **Amazon India Creators API:** use only after Associates enrollment in the India marketplace, API registration, credentials, and eligibility are confirmed. Current official documentation describes qualifying-sales requirements for access. Verify the live requirement during implementation; keep integration disabled until prerequisites are met and license requirements are implemented.
+- **Meesho:** do not assume that a public developer API is available. Use only permitted creator-portal workflows, authorised exports, documented feeds, or written-approved access; do not scrape pages or reuse listing media without permission.
+- Acceptance: provider shows **Not configured / Permission pending / Ready / Error** accurately; credentials never appear in browser code or responses; no sample/mock results are presented as live data; each enabled integration has fixture-based tests and safe failure handling.
 
 ### 3. Build reliable product selection and comparison
 - Compare candidates using evidence coverage, current price, verified commission, availability, performance over comparable periods, returns/cancellations where available, and competition signals that have a named source.
@@ -72,4 +73,4 @@ Help a solo affiliate marketer identify products worth testing, understand the e
 - Amazon India Creators API prerequisites: https://affiliate-program.amazon.in/creatorsapi/docs/en-us/introduction
 - Amazon Associates operating agreement: https://affiliate-program.amazon.in/help/operating/agreement
 
-API availability and terms can change. Re-check official documentation at implementation time. Access to an API is conditional on programme enrollment, approval, account eligibility, and credentials; this code repository alone cannot grant it.
+API availability, versions, and terms can change. Re-check official docs and obtain any required written permission before implementation. Access depends on programme enrollment, approval, intended-use eligibility, and credentials; this repository cannot grant it.

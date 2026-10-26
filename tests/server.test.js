@@ -5,7 +5,12 @@ const assert = require("node:assert/strict");
 const { createServer } = require("../server.js");
 
 async function withServer(run) {
-  const server = createServer({ env: {} });
+  const server = createServer({
+    env: {
+      META_APP_SECRET: "sentinel-meta-secret-value",
+      GOOGLE_CLIENT_SECRET: "sentinel-google-secret-value"
+    }
+  });
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
   const address = server.address();
   try {
@@ -28,14 +33,16 @@ test("health endpoint confirms service status without claiming OAuth works", asy
   });
 });
 
-test("provider endpoint returns readiness without leaking credentials", async () => {
+test("provider endpoint returns readiness without leaking credential values", async () => {
   await withServer(async (base) => {
     const response = await fetch(base + "/api/social/providers");
     const data = await response.json();
+    const serialized = JSON.stringify(data);
     assert.equal(response.status, 200);
     assert.equal(data.providers.length, 2);
     assert.equal(data.providers[0].configured, false);
-    assert.equal(JSON.stringify(data).includes("APP_SECRET"), false);
+    assert.equal(serialized.includes("sentinel-meta-secret-value"), false);
+    assert.equal(serialized.includes("sentinel-google-secret-value"), false);
     assert.match(data.note, /no accounts are connected/i);
   });
 });

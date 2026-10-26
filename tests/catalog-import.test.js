@@ -42,3 +42,26 @@ test("penalises high returns and warns about return rate", () => {
   assert.ok(poor.records[0].score < good.records[0].score);
   assert.ok(poor.records[0].warnings.some((warning) => warning.includes("return rate")));
 });
+
+test("rejects malformed quotes, duplicate headers and mismatched row widths", () => {
+  assert.equal(rankCatalogCsv('name,price\n"lamp"x,499').valid, false);
+  assert.equal(rankCatalogCsv("name,product_name,price\nLamp,Lamp,499").valid, false);
+  const result = rankCatalogCsv("name,price,rating\nLamp,499");
+  assert.equal(result.valid, false);
+  assert.match(result.errors[0], /expected 3 columns/i);
+});
+
+test("accepts quoted thousands separators and rejects fractional counts", () => {
+  const good = rankCatalogCsv('name,price,orders,clicks,period_days\nLamp,"1,299",12,100,7');
+  assert.equal(good.valid, true);
+  assert.equal(good.records[0].price, 1299);
+  const bad = rankCatalogCsv("name,price,orders\nLamp,499,1.5");
+  assert.equal(bad.valid, false);
+});
+
+test("does not award stock points when stock is unknown", () => {
+  const result = rankCatalogCsv("name,price\nLamp,499");
+  assert.equal(result.valid, true);
+  assert.equal(result.records[0].inStock, null);
+  assert.ok(result.records[0].warnings.some((warning) => warning.includes("Stock status")));
+});

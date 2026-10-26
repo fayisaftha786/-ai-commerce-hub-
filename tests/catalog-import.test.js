@@ -102,8 +102,9 @@ test("labels evidence completeness and normalizes metrics by the supplied period
 
 
 test("gives cautious promotion guidance for stock, returns, and data quality", () => {
+  const today = new Date().toISOString().slice(0, 10);
   const ready = rankCatalogCsv(
-    "name,price,clicks,orders,returns,period_days,stock\nLamp,499,100,12,1,7,yes"
+    "name,price,clicks,orders,returns,period_days,stock,source,checked_at\nLamp,499,100,12,1,7,yes,Official dashboard," + today
   ).records[0];
   assert.equal(ready.promotionReadiness, "Shortlist for a small test");
 
@@ -120,7 +121,7 @@ test("gives cautious promotion guidance for stock, returns, and data quality", (
   const incomplete = rankCatalogCsv(
     "name,price,clicks,orders,stock\nLamp,499,100,12,yes"
   ).records[0];
-  assert.equal(incomplete.promotionReadiness, "Test cautiously");
+  assert.equal(incomplete.promotionReadiness, "Verify before promotion");
 
   const conflict = rankCatalogCsv(
     "name,price,clicks,orders,period_days,stock\nLamp,499,10,12,7,yes"
@@ -143,8 +144,9 @@ test("normalizes sales to a 30-day equivalent when reporting periods differ", ()
 });
 
 test("provides transparent reasons, next action and commission estimates", () => {
+  const today = new Date().toISOString().slice(0, 10);
   const ready = rankCatalogCsv(
-    "name,price,commission,clicks,orders,returns,period_days,stock\nLamp,500,10,100,20,2,14,yes"
+    "name,price,commission,clicks,orders,returns,period_days,stock,source,checked_at\nLamp,500,10,100,20,2,14,yes,Official dashboard," + today
   ).records[0];
   assert.equal(ready.estimatedCommissionPerOrder, 50);
   assert.equal(ready.estimatedCommissionAfterReturns, 45);
@@ -168,9 +170,10 @@ test("does not estimate commission after returns when return count exceeds order
 
 
 test("ranks promotion readiness before raw score when performance metrics conflict", () => {
-  const csv = "name,price,commission,rating,reviews,clicks,orders,returns,period_days,stock\n" +
-    "Conflicted,499,10,5,1000,1,100,0,30,yes\n" +
-    "Consistent,499,10,4.5,200,100,10,0,30,yes";
+  const today = new Date().toISOString().slice(0, 10);
+  const csv = "name,price,commission,rating,reviews,clicks,orders,returns,period_days,stock,source,checked_at\n" +
+    "Conflicted,499,10,5,1000,1,100,0,30,yes,Official dashboard," + today + "\n" +
+    "Consistent,499,10,4.5,200,100,10,0,30,yes,Official dashboard," + today;
   const result = rankCatalogCsv(csv);
   assert.equal(result.valid, true);
   assert.equal(result.records[0].name, "Consistent");

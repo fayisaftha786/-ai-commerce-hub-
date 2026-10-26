@@ -9,6 +9,7 @@ const root = path.join(__dirname, "..");
 const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const manifest = JSON.parse(fs.readFileSync(path.join(root, "manifest.webmanifest"), "utf8"));
 const serviceWorker = fs.readFileSync(path.join(root, "service-worker.js"), "utf8");
+const pwaInstall = fs.readFileSync(path.join(root, "pwa-install.js"), "utf8");
 
 test("PWA manifest is installable and uses relative scope for project subpaths", () => {
   assert.equal(manifest.name, "AI Commerce Hub");
@@ -29,7 +30,8 @@ test("service worker precaches the local app shell and uses offline fallback", (
     "./product-utils.js",
     "./discovery-engine.js",
     "./catalog-import.js",
-    "./app.js"
+    "./app.js",
+    "./pwa-install.js"
   ]) {
     assert.ok(serviceWorker.includes('"' + asset + '"'), "missing cached asset " + asset);
   }
@@ -44,4 +46,17 @@ test("HTML links the PWA manifest and registers service worker outside file URLs
   assert.match(html, /<link rel="manifest" href="\.\/manifest\.webmanifest">/);
   assert.match(html, /navigator\.serviceWorker\.register\("\.\/service-worker\.js"\)/);
   assert.match(html, /location\.protocol !== "file:"/);
+});
+
+
+test("install button handles browser prompts and gives a manual HTTPS fallback", () => {
+  assert.ok(html.includes('id="installAppButton"'));
+  assert.ok(html.includes('id="installAppStatus"'));
+  assert.match(html, /<script src="pwa-install\.js"><\/script>/);
+  assert.match(pwaInstall, /beforeinstallprompt/);
+  assert.match(pwaInstall, /promptEvent\.prompt\(\)/);
+  assert.match(pwaInstall, /promptEvent\.userChoice/);
+  assert.match(pwaInstall, /Install app or Add to Home screen/);
+  assert.match(pwaInstall, /location\.protocol === "https:"/);
+  assert.match(pwaInstall, /appinstalled/);
 });

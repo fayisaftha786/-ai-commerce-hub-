@@ -229,7 +229,42 @@
     </section>
 
     <section class="panel">
-      <h2>8. Honest tracking</h2>
+      
+    <section class="panel" aria-labelledby="socialHubHeading">
+      <h2 id="socialHubHeading">9. Social Media Hub</h2>
+      <p>Prepare media, organise a posting queue, and record results in one place. Queue and analytics are saved only in this browser on this device.</p>
+      <h3>Account connections</h3>
+      <div class="candidate-card"><p><strong>Instagram / Facebook</strong></p><p id="metaConnectionStatus">Not connected — secure Meta OAuth and a server-side token service are required for direct publishing and insights.</p><a href="https://developers.facebook.com/docs/instagram-platform/" target="_blank" rel="noopener noreferrer">Instagram Platform setup guide</a><p><a href="https://developers.facebook.com/docs/pages-api/" target="_blank" rel="noopener noreferrer">Facebook Pages API setup guide</a></p></div>
+      <div class="candidate-card"><p><strong>YouTube</strong></p><p id="youtubeConnectionStatus">Not connected — Google OAuth and YouTube API configuration are required for direct uploads and analytics.</p><a href="https://developers.google.com/youtube/v3/guides/authentication" target="_blank" rel="noopener noreferrer">YouTube API authentication guide</a></div>
+      <p class="hint">These are setup guides, not live account connections. Never paste passwords, access tokens, or client secrets into this page. Direct publishing cannot be enabled securely by a static browser-only app.</p>
+      <h3>Upload media & prepare a post</h3>
+      <form id="socialPostForm">
+        <label for="socialPlatform">Target platform<select id="socialPlatform"><option>Instagram</option><option>Facebook</option><option>YouTube Shorts</option><option>WhatsApp</option></select></label>
+        <label for="socialMediaUpload">Choose image or video (max 50 MB)<input id="socialMediaUpload" type="file" accept="image/*,video/*"></label>
+        <div id="socialMediaPreview" class="media-preview" aria-live="polite"><p>No media selected yet.</p></div>
+        <label for="socialCaption">Caption / post text<textarea id="socialCaption" rows="6" maxlength="5000" placeholder="Write or paste your reviewed caption. Include clear affiliate disclosure."></textarea></label>
+        <label for="socialScheduleAt">Planned posting time (optional)<input id="socialScheduleAt" type="datetime-local"></label>
+        <button type="submit">Save to posting queue</button><button id="downloadSocialCaption" type="button" class="secondary">Download caption (.txt)</button>
+      </form>
+      <p id="socialPostMessage" role="status" aria-live="polite"></p><h3>Posting queue</h3><div id="socialQueue" aria-live="polite"></div>
+      <p class="hint">Saving here does not publish or schedule with the social network. The queue stores caption and media filename, not the media file itself. Publish through the official platform app/site.</p>
+      <h3>Record social results</h3><p>Enter results from platform insights for the same reporting period. These are manually entered, not automatically fetched.</p>
+      <form id="socialAnalyticsForm">
+        <div class="form-grid">
+          <label for="socialAnalyticsPlatform">Platform<select id="socialAnalyticsPlatform"><option>Instagram</option><option>Facebook</option><option>YouTube Shorts</option><option>WhatsApp</option></select></label>
+          <label for="socialAnalyticsDate">Reporting date<input id="socialAnalyticsDate" type="date" required></label>
+          <label for="socialReach">Reach / views<input id="socialReach" type="number" min="0" max="1000000000" step="1" required value="0"></label>
+          <label for="socialLikes">Likes<input id="socialLikes" type="number" min="0" max="1000000000" step="1" required value="0"></label>
+          <label for="socialComments">Comments<input id="socialComments" type="number" min="0" max="1000000000" step="1" required value="0"></label>
+          <label for="socialShares">Shares<input id="socialShares" type="number" min="0" max="1000000000" step="1" required value="0"></label>
+          <label for="socialLinkClicks">Link clicks<input id="socialLinkClicks" type="number" min="0" max="1000000000" step="1" required value="0"></label>
+          <label for="socialOrders">Attributed orders (verified only)<input id="socialOrders" type="number" min="0" max="1000000000" step="1" required value="0"></label>
+        </div>
+        <button type="submit">Save analytics record</button><button id="exportSocialAnalytics" type="button" class="secondary">Export analytics CSV</button>
+      </form>
+      <p id="socialAnalyticsMessage" role="status" aria-live="polite"></p><div id="socialAnalyticsResults" aria-live="polite"></div>
+    </section>
+<h2>10. Honest tracking</h2>
       <p>The click count records link clicks in this open page only. It does not confirm successful page loads, purchases, conversions or commissions. Product lists are saved locally and are not synced to the cloud. Social posting is not automated.</p>
     </section>
   </main>

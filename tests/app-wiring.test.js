@@ -21,3 +21,12 @@ test("catalog importer is loaded exactly once before app.js", () => {
   assert.equal(scripts.filter((src) => src === "catalog-import.js").length, 1);
   assert.ok(scripts.indexOf("catalog-import.js") < scripts.indexOf("app.js"));
 });
+
+
+test("imported catalog products can be transferred to Content Studio without stale claims", () => {
+  assert.match(app, /contentButton\.textContent = "Use in Content Studio"/);
+  assert.match(app, /contentButton\.addEventListener\("click", \(\) => useCatalogProductInContent\(record\)\)/);
+  assert.match(app, /\$\("contentName"\)\.value = record\.name/);
+  assert.match(app, /\$\("contentBenefit"\)\.value = ""/);
+  assert.match(app, /\$\("contentProof"\)\.value = ""/);
+});

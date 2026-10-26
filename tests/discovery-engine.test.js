@@ -66,3 +66,31 @@ test("creates three distinct hooks and calls to action for simple content testin
   assert.ok(pack.hooks.every((item) => !/guaranteed|best-selling|number one/i.test(item)));
   assert.ok(pack.ctas.some((item) => /price|details/i.test(item)));
 });
+
+
+test("does not recommend a product when key evidence is missing", () => {
+  const result = scoreCandidate({
+    name: "Unverified product", price: 499, rating: "", reviews: "",
+    commission: "", demand: 4, competition: 2, inStock: true
+  });
+  assert.equal(result.valid, true);
+  assert.equal(result.candidate.label, "Need more evidence");
+  assert.equal(result.candidate.estimatedCommission, null);
+  assert.equal(result.candidate.confidence, "Low");
+  assert.ok(result.candidate.checks.some((line) => line.includes("Missing rating")));
+  assert.ok(result.candidate.checks.some((line) => line.includes("Missing review count")));
+  assert.ok(result.candidate.checks.some((line) => line.includes("Commission is missing")));
+});
+
+test("does not treat a blank demand/competition estimate as a real signal", () => {
+  const result = scoreCandidate({ ...base, demand: "", competition: "" });
+  assert.equal(result.valid, true);
+  assert.equal(result.candidate.label, "Need more evidence");
+  assert.ok(result.candidate.checks.some((line) => line.includes("Missing demand signal")));
+  assert.ok(result.candidate.checks.some((line) => line.includes("Missing competition estimate")));
+});
+
+test("only reports estimated commission when a positive rate is supplied", () => {
+  assert.equal(scoreCandidate({ ...base, commission: "" }).candidate.estimatedCommission, null);
+  assert.equal(scoreCandidate({ ...base, commission: 0 }).candidate.estimatedCommission, null);
+});

@@ -105,6 +105,15 @@ function rankCatalogCsv(csvText) {
       errors.push("Row " + (i + 1) + ": invalid price, commission, rating, review, click, order, return or period value.");
       continue;
     }
+    const source = value(cells, "source").slice(0, 160);
+    const checkedAt = value(cells, "checked_at");
+    let evidenceAgeDays = null;
+    let checkedAtValid = false;
+    if (checkedAt && /^\\d{4}-\\d{2}-\\d{2}$/.test(checkedAt)) {
+      const parsedDate = new Date(checkedAt + "T00:00:00Z");
+      checkedAtValid = Number.isFinite(parsedDate.getTime()) && parsedDate.toISOString().slice(0, 10) === checkedAt;
+      if (checkedAtValid) evidenceAgeDays = Math.floor((Date.now() - parsedDate.getTime()) / 86400000);
+    }
     const rawPlatform = value(cells, "platform");
     const platform = rawPlatform ? rawPlatform[0].toUpperCase() + rawPlatform.slice(1).toLowerCase() : "Other";
     if (!ALLOWED_PLATFORMS.has(platform)) {
@@ -158,6 +167,11 @@ function rankCatalogCsv(csvText) {
     if (inStock === false) warnings.push("Marked unavailable; do not promote until stock is confirmed.");
     if (inStock === null) warnings.push("Stock status missing or unrecognised; verify availability before promotion.");
     if (!url) warnings.push("No valid HTTPS product link supplied.");
+    if (!source) warnings.push("Evidence source missing; record where the product data came from.");
+    if (checkedAt && !checkedAtValid) warnings.push("Checked date is invalid; use YYYY-MM-DD.");
+    if (!checkedAt) warnings.push("Checked date missing; freshness cannot be assessed.");
+    else if (checkedAtValid && evidenceAgeDays < 0) warnings.push("Checked date is in the future; verify the date.");
+    else if (checkedAtValid && evidenceAgeDays > 7) warnings.push("Evidence is over 7 days old; re-check price, stock and performance before promotion.");
     const conversionIsPlausible = hasOrders && hasClicks && clicks > 0 && orders <= clicks;
     const evidenceQuality = !hasPerformanceData
       ? "Unverified"
@@ -200,6 +214,7 @@ function rankCatalogCsv(csvText) {
       ? estimatedCommissionPerOrder * (1 - returnRate) : null;
     records.push({
       name, platform, url, price, commission, rating, reviews, clicks, orders, returns,
+      source, checkedAt: checkedAtValid ? checkedAt : "", evidenceAgeDays,
       periodDays, inStock, score, normalizedOrders,
       estimatedCommissionPerOrder, estimatedCommissionAfterReturns,
       evidenceLabel: hasOrders ? "Orders supplied" : hasClicks ? "Clicks supplied" : "No sales evidence",

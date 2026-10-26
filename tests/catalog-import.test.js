@@ -228,3 +228,19 @@ test("requires a recorded source and current check date before shortlisting a pr
   assert.equal(future.promotionReadiness, "Verify before promotion");
   assert.ok(future.recommendationReasons.some((reason) => reason.includes("in the future")));
 });
+
+
+test("flags duplicate product URLs after removing common tracking parameters without deleting rows", () => {
+  const csv = "name,platform,url,price,source,checked_at\n" +
+    "Lamp A,Amazon,https://www.amazon.in/dp/B001?tag=first-20&utm_source=social,499,Official dashboard,2026-10-26\n" +
+    "Lamp A copy,Amazon,https://www.amazon.in/dp/B001/?utm_source=other&tag=second-20,499,Official dashboard,2026-10-26";
+  const result = rankCatalogCsv(csv);
+  assert.equal(result.valid, true);
+  assert.equal(result.records.length, 2);
+  const duplicate = result.records.find((record) => record.rowNumber === 3);
+  assert.equal(duplicate.duplicateOfRowNumber, 2);
+  assert.ok(duplicate.warnings.some((warning) => warning.includes("Possible duplicate product URL")));
+  assert.ok(duplicate.recommendationReasons.some((reason) => reason.includes("matches row 2")));
+  const original = result.records.find((record) => record.rowNumber === 2);
+  assert.equal(original.duplicateOfRowNumber, null);
+});

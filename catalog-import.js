@@ -243,6 +243,38 @@ function rankCatalogCsv(csvText) {
     });
   }
   if (!records.length) return { valid: false, error: "No valid product rows found.", errors };
+
+  // Detect repeated listing URLs while preserving rows: different seller/offer rows may be
+  // meaningful, so warn rather than silently deleting or merging data.
+  const seenProductUrls = new Map();
+  const trackingParameters = /^(?:utm_[a-z0-9_]+|tag|ref|ref_[a-z0-9_-]*|ascsubtag|linkcode|psc|pd_rd_[a-z0-9_]+|pf_rd_[a-z0-9_]+|mibextid|fbclid|gclid)$/i;
+  for (const record of records) {
+    if (!record.url) continue;
+    let identity;
+    try {
+      const parsedUrl = new URL(record.url);
+      parsedUrl.hash = "";
+      for (const key of [...parsedUrl.searchParams.keys()]) {
+        if (trackingParameters.test(key)) parsedUrl.searchParams.delete(key);
+      }
+      parsedUrl.searchParams.sort();
+      if (parsedUrl.pathname.length > 1) parsedUrl.pathname = parsedUrl.pathname.replace(/\/+$/, "");
+      identity = parsedUrl.href;
+    } catch {
+      continue;
+    }
+    if (seenProductUrls.has(identity)) {
+      record.duplicateOfRowNumber = seenProductUrls.get(identity);
+      record.warnings.push("Possible duplicate product URL after removing common tracking parameters; compare with row " +
+        record.duplicateOfRowNumber + " before ranking both entries separately.");
+      record.recommendationReasons.push("Product URL matches row " + record.duplicateOfRowNumber +
+        " after tracking parameters are removed; confirm whether these are the same listing or distinct offers.");
+    } else {
+      seenProductUrls.set(identity, record.rowNumber);
+      record.duplicateOfRowNumber = null;
+    }
+  }
+
   // Readiness is a safety gate: a high heuristic score must not put conflicted or unavailable
   // products above candidates whose supplied evidence supports a cautious test.
   const readinessPriority = {

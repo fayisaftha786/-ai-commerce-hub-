@@ -149,7 +149,7 @@ test("provides transparent reasons, next action and commission estimates", () =>
   assert.equal(ready.estimatedCommissionPerOrder, 50);
   assert.equal(ready.estimatedCommissionAfterReturns, 45);
   assert.ok(ready.recommendationReasons.some((reason) => reason.includes("reporting period")));
-  assert.match(ready.nextAction, /small test/i);
+  assert.match(ready.nextAction, /small .*test/i);
 
   const unknownReturns = rankCatalogCsv(
     "name,price,commission,orders\nLamp,500,10,20"

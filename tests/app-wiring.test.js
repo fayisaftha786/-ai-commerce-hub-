@@ -134,8 +134,8 @@ test("Content Studio includes an honest pre-publish review checklist", () => {
     assert.ok(html.includes('id="' + id + '"'));
   }
   assert.match(app, /function contentReviewComplete\(\)/);
-  assert.match(app, /Checklist marked complete\. This does not independently verify claims, prices or links/);
-  assert.match(app, /Before publishing, review all four items/);
+  assert.match(app, /Checklist marked complete by you\\. This does not independently verify claims, prices or links/);
+  assert.match(app, /Review all four items before copying, downloading, or saving this draft/);
 });
 
 test("Content Studio requires all four review checks before copy, download, or campaign save", () => {

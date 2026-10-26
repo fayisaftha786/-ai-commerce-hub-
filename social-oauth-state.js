@@ -5,7 +5,7 @@
 // Redis) and bind each state to an authenticated user/session. This module does
 // not perform OAuth, exchange tokens, or connect to any social platform.
 
-const { randomBytes, timingSafeEqual } = require("node:crypto");
+const { randomBytes } = require("node:crypto");
 
 const DEFAULT_TTL_MS = 10 * 60 * 1000;
 const MAX_PENDING_STATES = 10_000;
@@ -48,10 +48,7 @@ function consumeOAuthState(state, options = {}) {
   pendingStates.delete(state);
   if (expiresAt <= now) return false;
 
-  // Constant-time self-comparison avoids introducing a value-dependent comparison
-  // for the token format; unpredictability comes from crypto.randomBytes above.
-  const bytes = Buffer.from(state);
-  return timingSafeEqual(bytes, Buffer.from(state));
+  return true;
 }
 
 function clearPendingStatesForTests() {

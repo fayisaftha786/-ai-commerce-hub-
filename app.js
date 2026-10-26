@@ -1,15 +1,45 @@
-
 "use strict";
 
 const $ = (id) => document.getElementById(id);
-const products = [];
+const STORAGE_KEY = "ai-commerce-hub.products.v1";
+const MAX_PRODUCTS = 100;
+const products = loadProducts();
 let clicks = 0;
+let draftsCreated = 0;
+
+function loadProducts() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    const saved = JSON.parse(raw);
+    if (!Array.isArray(saved)) return [];
+
+    const validator = window.AICommerceProductUtils?.validateProduct;
+    if (typeof validator !== "function") return [];
+    return saved
+      .map((item) => validator(item))
+      .filter((result) => result.valid)
+      .slice(0, MAX_PRODUCTS)
+      .map((result) => result.product);
+  } catch {
+    // Storage may be disabled, full, or contain invalid data.
+    return [];
+  }
+}
+
+function saveProducts() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 function render() {
-  $("products").textContent = products.length;
-  $("campaigns").textContent = "0";
-  $("clicks").textContent = clicks;
-
+  $("products").textContent = String(products.length);
+  $("campaigns").textContent = String(draftsCreated);
+  $("clicks").textContent = String(clicks);
   $("productList").replaceChildren();
 
   for (const product of products) {
@@ -28,8 +58,8 @@ function render() {
     link.rel = "noopener noreferrer sponsored";
     link.textContent = "Open product link";
     link.addEventListener("click", () => {
-      clicks++;
-      $("clicks").textContent = clicks;
+      clicks += 1;
+      $("clicks").textContent = String(clicks);
     });
 
     item.append(title, detail, link);
@@ -40,32 +70,35 @@ function render() {
 $("productForm").addEventListener("submit", (event) => {
   event.preventDefault();
 
-  const name = $("productName").value.trim();
-  const platform = $("platform").value;
-  let url;
-
-  try {
-    url = new URL($("productUrl").value.trim());
-  } catch {
-    $("message").textContent = "Please enter a valid product URL.";
+  const validator = window.AICommerceProductUtils?.validateProduct;
+  if (typeof validator !== "function") {
+    $("message").textContent = "Product validation could not load. Refresh and try again.";
     return;
   }
 
-  if (!["https:", "http:"].includes(url.protocol)) {
-    $("message").textContent = "Only HTTP/HTTPS links are allowed.";
+  const result = validator({
+    name: $("productName").value,
+    platform: $("platform").value,
+    url: $("productUrl").value
+  });
+
+  if (!result.valid) {
+    $("message").textContent = result.error;
     return;
   }
 
-  if (products.length >= 100) {
+  if (products.length >= MAX_PRODUCTS) {
     $("message").textContent = "Prototype limit: 100 products.";
     return;
   }
 
-  products.push({ name, platform, url: url.href });
+  products.push(result.product);
+  const saved = saveProducts();
   $("productName").value = "";
   $("productUrl").value = "";
-  $("message").textContent =
-    "Product added to this session. Data is not yet saved permanently.";
+  $("message").textContent = saved
+    ? "Product added and saved on this device."
+    : "Product added for this session, but browser storage is unavailable.";
   render();
 });
 
@@ -74,33 +107,49 @@ $("generate").addEventListener("click", () => {
   const language = $("language").value;
 
   if (!topic) {
-    $("draft").value = "Enter a product or topic first.";
+    $("draft").value = "ആദ്യം ഒരു ഉൽപ്പന്നമോ വിഷയമോ നൽകുക.";
     return;
   }
 
   const intro = language === "English"
     ? `Discover ${topic}.`
     : language === "Both"
-      ? `${topic} — കണ്ടെത്തൂ / Discover ${topic}.`
+      ? `${topic} — പരിചയപ്പെടൂ / Discover ${topic}.`
       : `${topic} പരിചയപ്പെടൂ.`;
+
+  const disclosure = language === "English"
+    ? "If this is an affiliate link, clearly disclose that relationship. Prices and availability may change."
+    : language === "Both"
+      ? "Affiliate link ആണെങ്കിൽ അത് വ്യക്തമായി അറിയിക്കുക. Prices and availability may change."
+      : "ഇത് affiliate link ആണെങ്കിൽ ആ കാര്യം വ്യക്തമായി അറിയിക്കുക. വിലയും ലഭ്യതയും മാറാം.";
 
   $("draft").value =
     `${intro}\n\n` +
-    `പ്രധാന സവിശേഷതകൾ വാങ്ങുന്നതിന് മുമ്പ് പരിശോധിക്കുക.\n` +
-    `വിലയും ലഭ്യതയും മാറാം. ഈ ലിങ്ക് affiliate link ആണെങ്കിൽ ` +
-    `அதைத் தெளிவாக அறிவிக்கவும்.\n\n` +
-    `#ProductFinds #Shopping`;
+    "വാങ്ങുന്നതിന് മുമ്പ് ഉൽപ്പന്നത്തിന്റെ സവിശേഷതകളും വിലയും വിൽപ്പനക്കാരന്റെ വിവരങ്ങളും പരിശോധിക്കുക.\n\n" +
+    `${disclosure}\n\n` +
+    "#ProductFinds #Shopping";
+
+  draftsCreated += 1;
+  $("campaigns").textContent = String(draftsCreated);
+  $("message").textContent = "Template draft created. This is not AI-generated content yet.";
 });
 
 $("copyDraft").addEventListener("click", async () => {
+  const draft = $("draft").value;
+  if (!draft.trim()) {
+    $("message").textContent = "Create a draft first.";
+    return;
+  }
+
   try {
-    await navigator.clipboard.writeText($("draft").value);
+    await navigator.clipboard.writeText(draft);
     $("message").textContent = "Draft copied.";
   } catch {
+    $("draft").focus();
+    $("draft").select();
     $("message").textContent =
-      "Copy is unavailable here. Select and copy the draft manually.";
+      "Automatic copy is unavailable. The draft is selected; copy it manually.";
   }
 });
 
 render();
-

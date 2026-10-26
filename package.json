@@ -1,18 +1,14 @@
 {
   "name": "ai-commerce-hub",
-  "version": "1.0.0",
-  "description": "",
+  "version": "1.1.0",
+  "description": "A lightweight product-link and affiliate-content workspace prototype",
   "main": "app.js",
-  "directories": {
-    "test": "tests"
-  },
   "scripts": {
-    "test": "node --test",
-    "check": "node --check app.js"
+    "check": "node --check app.js && node --check product-utils.js && node --check tests/product-utils.test.js",
+    "test": "node --test"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": ["affiliate", "commerce", "productivity"],
+  "license": "MIT",
   "type": "commonjs",
-  "private": "true"
+  "private": true
 }

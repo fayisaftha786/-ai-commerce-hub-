@@ -2,7 +2,7 @@
 
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { validateProduct } = require("../product-utils");
+const { validateProduct, calculateCalendarDateAgeDays } = require("../product-utils");
 
 const validProduct = {
   name: "Kitchen organiser",
@@ -67,4 +67,16 @@ test("normalizes a valid HTTPS URL", () => {
   });
   assert.equal(result.valid, true);
   assert.equal(result.product.url, "https://example.com/product%20path");
+});
+
+
+test("calculates date-only evidence freshness by local calendar day", () => {
+  const localToday = { getFullYear: () => 2026, getMonth: () => 9, getDate: () => 26 };
+  assert.equal(calculateCalendarDateAgeDays("2026-10-26", localToday), 0);
+  assert.equal(calculateCalendarDateAgeDays("2026-10-25", localToday), 1);
+  assert.equal(calculateCalendarDateAgeDays("2026-10-19", localToday), 7);
+  assert.equal(calculateCalendarDateAgeDays("2026-10-18", localToday), 8);
+  assert.equal(calculateCalendarDateAgeDays("2026-10-27", localToday), -1);
+  assert.equal(calculateCalendarDateAgeDays("2026-02-30", localToday), null);
+  assert.equal(calculateCalendarDateAgeDays("", localToday), null);
 });

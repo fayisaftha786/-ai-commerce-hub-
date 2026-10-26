@@ -151,6 +151,15 @@
       <button id="copyContent" type="button">Copy content pack</button>
       <button id="downloadContent" type="button" class="secondary">Download content pack (.txt)</button>
       <p id="contentMessage" role="status" aria-live="polite"></p>
+      <details class="notice">
+        <summary>Pre-publish safety checklist</summary>
+        <p>Review these items before copying or publishing this draft.</p>
+        <label><input type="checkbox" id="reviewClaims"> Product claims are supported by the listing or seller.</label>
+        <label><input type="checkbox" id="reviewPrice"> Price, discount, stock and delivery details are current (or omitted).</label>
+        <label><input type="checkbox" id="reviewAffiliate"> Affiliate relationship is clearly disclosed.</label>
+        <label><input type="checkbox" id="reviewLink"> Affiliate link opens the intended product and is valid.</label>
+        <p id="contentReviewStatus" role="status" aria-live="polite">Checklist is a reminder; it does not independently verify claims or links.</p>
+      </details>
       <div class="notice"><strong>Meesho video note:</strong> This version does not download videos from Meesho. Use videos/assets supplied by the seller or programme for your approved use, or film your own original demonstration. Do not assume a listing photo or video is free to reuse. We can add an authorised media import workflow when the programme provides it.</div>
     </section>
 

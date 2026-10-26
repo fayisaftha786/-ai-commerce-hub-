@@ -67,3 +67,11 @@ test("saved candidate shortlist uses readiness-first sorting", () => {
   assert.match(app, /compareCandidatesByReadiness/);
   assert.match(app, /\.sort\(typeof compareCandidates === "function" \? compareCandidates/);
 });
+
+
+test("saved candidate cards explain evidence coverage and handle older records", () => {
+  assert.match(app, /Evidence coverage:/);
+  assert.match(app, /candidate\.evidenceCoverage/);
+  assert.match(app, /Evidence coverage unavailable for this older saved record/);
+  assert.match(app, /card\.append\(title, details, evidence, remove\)/);
+});

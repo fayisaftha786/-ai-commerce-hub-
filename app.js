@@ -455,7 +455,9 @@ function renderCandidates() {
     root.append(empty);
     return;
   }
-  for (const candidate of [...candidates].sort((a, b) => b.score - a.score)) {
+  const compareCandidates = window.AICommerceDiscovery?.compareCandidatesByReadiness;
+  const sortedCandidates = [...candidates].sort(typeof compareCandidates === "function" ? compareCandidates : (a, b) => b.score - a.score);
+  for (const candidate of sortedCandidates) {
     const card = document.createElement("div");
     card.className = "candidate-card";
     const title = document.createElement("strong");

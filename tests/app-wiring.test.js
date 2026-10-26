@@ -83,7 +83,7 @@ test("saved candidate cards explain evidence coverage and handle older records",
   assert.match(app, /candidate\.evidenceCoverage/);
   assert.match(app, /Evidence coverage unavailable for this older saved record/);
   assert.match(app, /card\.append\(title, details, provenance, evidence\)/);
-  assert.match(app, /card\.append\(remove\)/);
+  assert.match(app, /card\.append\(contentButton, remove\)/);
 });
 
 
@@ -207,4 +207,17 @@ test("manual product discovery captures link, source, checked date, and explicit
   assert.match(app, /\$\("candidateStock"\)\.value === "yes" \? true/);
   assert.match(app, /Evidence freshness:/);
   assert.match(app, /confirmed in stock/);
+});
+
+
+test("manual discovery results and saved candidates can be handed to Content Studio safely", () => {
+  assert.match(app, /function useCandidateInContent\(candidate\)/);
+  assert.match(app, /useCatalogProductInContent\(\{/);
+  assert.match(app, /const contentButton = document\.createElement\("button"\)/);
+  assert.match(app, /contentButton\.textContent = "Use in Content Studio"/);
+  assert.match(app, /contentButton\.addEventListener\("click", \(\) => useCandidateInContent\(candidate\)\)/);
+  assert.match(app, /contentButton\.addEventListener\("click", \(\) => useCandidateInContent\(result\.candidate\)\)/);
+  assert.match(app, /url: safeCampaignUrl\(candidate\.url\)/);
+  assert.match(app, /\$\("contentBenefit"\)\.value = ""/);
+  assert.match(app, /Product selection changed\. Generate a fresh draft/);
 });

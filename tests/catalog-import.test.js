@@ -104,7 +104,7 @@ test("labels evidence completeness and normalizes metrics by the supplied period
 test("gives cautious promotion guidance for stock, returns, and data quality", () => {
   const today = new Date().toISOString().slice(0, 10);
   const ready = rankCatalogCsv(
-    "name,price,clicks,orders,returns,period_days,stock,source,checked_at\nLamp,499,100,12,1,7,yes,Official dashboard," + today
+    "name,price,url,commission,clicks,orders,returns,period_days,stock,source,checked_at\nLamp,499,https://www.amazon.in/dp/B001,10,100,12,1,7,yes,Official dashboard," + today
   ).records[0];
   assert.equal(ready.promotionReadiness, "Shortlist for a small test");
 
@@ -146,7 +146,7 @@ test("normalizes sales to a 30-day equivalent when reporting periods differ", ()
 test("provides transparent reasons, next action and commission estimates", () => {
   const today = new Date().toISOString().slice(0, 10);
   const ready = rankCatalogCsv(
-    "name,price,commission,clicks,orders,returns,period_days,stock,source,checked_at\nLamp,500,10,100,20,2,14,yes,Official dashboard," + today
+    "name,price,url,commission,clicks,orders,returns,period_days,stock,source,checked_at\nLamp,500,https://www.amazon.in/dp/B002,10,100,20,2,14,yes,Official dashboard," + today
   ).records[0];
   assert.equal(ready.estimatedCommissionPerOrder, 50);
   assert.equal(ready.estimatedCommissionAfterReturns, 45);
@@ -171,9 +171,9 @@ test("does not estimate commission after returns when return count exceeds order
 
 test("ranks promotion readiness before raw score when performance metrics conflict", () => {
   const today = new Date().toISOString().slice(0, 10);
-  const csv = "name,price,commission,rating,reviews,clicks,orders,returns,period_days,stock,source,checked_at\n" +
-    "Conflicted,499,10,5,1000,1,100,0,30,yes,Official dashboard," + today + "\n" +
-    "Consistent,499,10,4.5,200,100,10,0,30,yes,Official dashboard," + today;
+  const csv = "name,price,url,commission,rating,reviews,clicks,orders,returns,period_days,stock,source,checked_at\n" +
+    "Conflicted,499,https://www.amazon.in/dp/B003,10,5,1000,1,100,0,30,yes,Official dashboard," + today + "\n" +
+    "Consistent,499,https://www.amazon.in/dp/B004,10,4.5,200,100,10,0,30,yes,Official dashboard," + today;
   const result = rankCatalogCsv(csv);
   assert.equal(result.valid, true);
   assert.equal(result.records[0].name, "Consistent");
@@ -201,28 +201,28 @@ test("requires a recorded source and current check date before shortlisting a pr
   const today = new Date().toISOString().slice(0, 10);
   const staleDate = new Date(Date.now() - 10 * 86400000).toISOString().slice(0, 10);
   const tomorrow = new Date(Date.now() + 2 * 86400000).toISOString().slice(0, 10);
-  const baseHeaders = "name,price,commission,clicks,orders,returns,period_days,stock,source,checked_at\n";
-  const current = rankCatalogCsv(baseHeaders + "Lamp,500,10,100,20,1,14,yes,Official dashboard," + today).records[0];
+  const baseHeaders = "name,price,url,commission,clicks,orders,returns,period_days,stock,source,checked_at\n";
+  const current = rankCatalogCsv(baseHeaders + "Lamp,500,https://www.amazon.in/dp/B005,10,100,20,1,14,yes,Official dashboard," + today).records[0];
   assert.equal(current.evidenceFreshness, "current");
   assert.equal(current.evidenceTraceable, true);
   assert.equal(current.promotionReadiness, "Shortlist for a small test");
 
   const missingSource = rankCatalogCsv(
-    "name,price,commission,clicks,orders,returns,period_days,stock,checked_at\n" +
-    "Lamp,500,10,100,20,1,14,yes," + today
+    "name,price,url,commission,clicks,orders,returns,period_days,stock,checked_at\n" +
+    "Lamp,500,https://www.amazon.in/dp/B006,10,100,20,1,14,yes," + today
   ).records[0];
   assert.equal(missingSource.promotionReadiness, "Verify before promotion");
   assert.ok(missingSource.recommendationReasons.some((reason) => reason.includes("source is missing")));
 
   const stale = rankCatalogCsv(
-    baseHeaders + "Lamp,500,10,100,20,1,14,yes,Official dashboard," + staleDate
+    baseHeaders + "Lamp,500,https://www.amazon.in/dp/B007,10,100,20,1,14,yes,Official dashboard," + staleDate
   ).records[0];
   assert.equal(stale.evidenceFreshness, "stale");
   assert.equal(stale.promotionReadiness, "Verify before promotion");
   assert.ok(stale.recommendationReasons.some((reason) => reason.includes("Evidence is stale")));
 
   const future = rankCatalogCsv(
-    baseHeaders + "Lamp,500,10,100,20,1,14,yes,Official dashboard," + tomorrow
+    baseHeaders + "Lamp,500,https://www.amazon.in/dp/B008,10,100,20,1,14,yes,Official dashboard," + tomorrow
   ).records[0];
   assert.equal(future.evidenceFreshness, "future");
   assert.equal(future.promotionReadiness, "Verify before promotion");
@@ -274,4 +274,21 @@ test("calculates checked_at freshness using local calendar dates rather than UTC
   assert.equal(calculateEvidenceAgeDays("2026-10-18", simulatedLocalDate), 8);
   assert.equal(calculateEvidenceAgeDays("2026-10-27", simulatedLocalDate), -1);
   assert.equal(calculateEvidenceAgeDays("2026-02-30", simulatedLocalDate), null);
+});
+
+
+test("requires a usable product link and positive commission before shortlisting", () => {
+  const today = new Date().toISOString().slice(0, 10);
+  const headers = "name,price,url,commission,clicks,orders,returns,period_days,stock,source,checked_at\n";
+  const missingLink = rankCatalogCsv(
+    headers + "Lamp,500,,10,100,20,1,14,yes,Official dashboard," + today
+  ).records[0];
+  assert.equal(missingLink.promotionReadiness, "Verify before promotion");
+  assert.ok(missingLink.recommendationReasons.some((reason) => reason.includes("No valid HTTPS product/affiliate link")));
+
+  const unknownCommission = rankCatalogCsv(
+    headers + "Lamp,500,https://www.amazon.in/dp/B009,,100,20,1,14,yes,Official dashboard," + today
+  ).records[0];
+  assert.equal(unknownCommission.promotionReadiness, "Verify before promotion");
+  assert.ok(unknownCommission.warnings.some((warning) => warning.includes("commission is missing or not confirmed")));
 });

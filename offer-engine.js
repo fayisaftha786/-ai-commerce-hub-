@@ -110,7 +110,7 @@ function createPromoCopy(offer, language = "Malayalam", channel = "WhatsApp") {
   const urgency = offer.expiryState === "upcoming" && offer.expiresAt
     ? `Offer expiry stated as: ${offer.expiresAt}. Please verify availability.`
     : "";
-  const disclosure = "Affiliate disclosure: I may earn a commission from eligible purchases at no extra cost to you. Prices and availability can change.";
+  const disclosure = "Affiliate: I may earn a commission from eligible purchases at no extra cost to you. Prices and availability can change.";
   const ml = [
     `🛍️ ${offer.productName}`,
     savingsLine,

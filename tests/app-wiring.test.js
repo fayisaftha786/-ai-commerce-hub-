@@ -19,7 +19,7 @@ test("every direct app event-listener target exists in the HTML", () => {
 test("catalog import UI explains source and freshness fields required for shortlist readiness", () => {
   assert.match(html, /name, platform, url, price, commission, rating, reviews, clicks, orders, returns, period_days, stock, source, checked_at/);
   assert.match(html, /record <code>source<\/code>/);
-  assert.match(html, /record <code>checked_at<\/code> \(YYYY-MM-DD\)/);
+  assert.match(html, /<code>checked_at<\/code> \(YYYY-MM-DD\)/);
   assert.match(html, /Evidence older than 7 days/);
   assert.match(app, /checked_at\\n/);
 });

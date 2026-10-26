@@ -61,7 +61,7 @@ function scoreCandidate(input) {
   return {
     valid: true,
     candidate: {
-      name, price, rating, reviews, commission, demand, competition, inStock, score,
+      name, price, rating, reviews, commission, demand: hasDemand ? demand : null, competition: hasCompetition ? competition : null, inStock, score,
       evidenceCount, evidenceTotal: evidenceFields.length, evidenceCoverage, confidence,
       label: !hasRating || !hasReviews || !hasCommission || commission <= 0 || !hasDemand || !hasCompetition
         ? "Need more evidence"

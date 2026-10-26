@@ -891,7 +891,8 @@ function renderImportedCatalog(records, errors = []) {
     details.textContent = record.platform + " · ₹" + record.price.toLocaleString("en-IN") + " · " + performance +
       (record.periodDays ? " · " + record.periodDays + "-day period" : " · period not confirmed") + returnsText +
       (record.source ? " · Source: " + record.source : " · Source not recorded") +
-      (record.checkedAt ? " · Checked: " + record.checkedAt : " · Check date not recorded");
+      (record.checkedAt ? " · Checked: " + record.checkedAt : " · Check date not recorded") +
+      " · Evidence freshness: " + (record.evidenceFreshness || "unknown");
     const evidence = document.createElement("p");
     const qualityLabels = {
       Complete: "Data completeness: complete (clicks, orders and period supplied)",

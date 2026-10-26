@@ -182,6 +182,7 @@ function rankCatalogCsv(csvText) {
     if (inStock === false) warnings.push("Marked unavailable; do not promote until stock is confirmed.");
     if (inStock === null) warnings.push("Stock status missing or unrecognised; verify availability before promotion.");
     if (!url) warnings.push("No valid HTTPS product link supplied.");
+    if (commission <= 0) warnings.push("Affiliate commission is missing or not confirmed; verify the rate and eligibility before promotion.");
     if (!source) warnings.push("Evidence source missing; record where the product data came from.");
     if (checkedAt && !checkedAtValid) warnings.push("Checked date is invalid; use YYYY-MM-DD.");
     if (!checkedAt) warnings.push("Checked date missing; freshness cannot be assessed.");
@@ -212,6 +213,9 @@ function rankCatalogCsv(csvText) {
     } else if (!evidenceTraceable) {
       // Strong performance numbers cannot compensate for missing provenance or stale data.
       promotionReadiness = "Verify before promotion";
+    } else if (!url || commission <= 0) {
+      // A high score does not make a product promotable without a usable link and commission rate.
+      promotionReadiness = "Verify before promotion";
     } else if (evidenceQuality !== "Complete" || orders === null || orders === 0 ||
         inStock !== true || (returnRate !== null && returnRate >= 0.1)) {
       promotionReadiness = "Test cautiously";
@@ -221,6 +225,8 @@ function rankCatalogCsv(csvText) {
     const recommendationReasons = [];
     if (inStock === false) recommendationReasons.push("Stock is marked unavailable.");
     if (metricConflict) recommendationReasons.push("Supplied click, order or return counts conflict; verify the report.");
+    if (!url) recommendationReasons.push("No valid HTTPS product/affiliate link is supplied; verify the approved link before promotion.");
+    if (commission <= 0) recommendationReasons.push("Affiliate commission is missing or not confirmed; verify programme eligibility and rate.");
     if (!source) recommendationReasons.push("Evidence source is missing; record the dashboard, listing or report used.");
     if (!checkedAt) recommendationReasons.push("Evidence check date is missing; freshness cannot be assessed.");
     else if (!checkedAtValid) recommendationReasons.push("Evidence check date is invalid; use YYYY-MM-DD.");

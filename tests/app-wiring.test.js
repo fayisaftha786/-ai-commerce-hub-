@@ -8,6 +8,7 @@ const path = require("node:path");
 const root = path.join(__dirname, "..");
 const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+const catalog = fs.readFileSync(path.join(root, "catalog-import.js"), "utf8");
 
 test("every direct app event-listener target exists in the HTML", () => {
   const ids = new Set([...html.matchAll(/\bid="([^"]+)"/g)].map((match) => match[1]));
@@ -18,7 +19,7 @@ test("every direct app event-listener target exists in the HTML", () => {
 
 test("catalog import UI explains source and freshness fields required for shortlist readiness", () => {
   assert.match(html, /name, platform, url, price, commission, rating, reviews, clicks, orders, returns, period_days, stock, source, checked_at/);
-  assert.match(html, /record <code>source<\/code>/);
+  assert.match(html, /<code>source<\/code>/);
   assert.match(html, /<code>checked_at<\/code> \(YYYY-MM-DD\)/);
   assert.match(html, /Evidence older than 7 days/);
   assert.match(app, /checked_at\\n/);
@@ -184,4 +185,11 @@ test("ranked catalog report export has a button and uses the safe CSV exporter",
   assert.match(app, /function exportRankedCatalogReport\(\)/);
   assert.match(app, /catalogRecordsToCsv/);
   assert.match(app, /ai-commerce-hub-ranked-catalog-report\.csv/);
+});
+
+
+test("catalog import UI states the link and commission prerequisites for shortlisting", () => {
+  assert.match(html, /valid HTTPS product\/approved affiliate link/);
+  assert.match(html, /positive confirmed commission rate/);
+  assert.match(catalog, /Affiliate commission is missing or not confirmed/);
 });

@@ -31,3 +31,6 @@ CSV files are parsed in the browser and saved in that browser's local storage. T
 A supplied catalogue score is not the same as permission to promote. Before an imported row can be labeled **Shortlist for a small test**, it must include a non-empty evidence source and a valid `checked_at` date that is not in the future and is no more than 7 days old. Missing, invalid, future-dated, or stale source/date information yields **Verify before promotion**, even if click/order metrics are strong. High-risk conflicts such as unavailable stock, orders exceeding clicks, or returns exceeding orders override a high score.
 
 This gate checks whether provenance metadata is present and recent; it does not independently verify that the named source is genuine or that the supplied numbers are truthful. Re-open the source and verify price, stock, commission eligibility, return terms, and reporting windows before publishing.
+
+
+Before a row can be shortlisted, its imported record must also include a valid HTTPS product/approved affiliate link and a positive commission rate. Missing either means **Verify before promotion** until the destination and affiliate eligibility/rate are confirmed. A URL check only validates HTTPS syntax; it does not prove that a link is an approved affiliate link.

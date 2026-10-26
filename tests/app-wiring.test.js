@@ -50,3 +50,14 @@ test("campaign records reject unsafe stored URLs and require a parseable timesta
   assert.match(app, /Number\.isFinite\(Date\.parse\(item\.createdAt\)\)/);
   assert.match(html, /not sales analytics/);
 });
+
+test("workspace backup and restore controls are present and validated", () => {
+  assert.ok(html.includes('id="exportWorkspaceBackup"'));
+  assert.ok(html.includes('id="importWorkspaceBackup"'));
+  assert.ok(html.includes('id="backupMessage"'));
+  assert.match(app, /format: "ai-commerce-hub-backup", version: 1/);
+  assert.match(app, /function validateBackup\(payload\)/);
+  assert.match(app, /MAX_BACKUP_BYTES = 2 \* 1024 \* 1024/);
+  assert.match(app, /window\.confirm\("Restore this backup\?/);
+  assert.match(app, /best-effort rollback/);
+});

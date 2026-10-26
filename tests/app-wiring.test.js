@@ -42,3 +42,11 @@ test("campaign registry controls exist and are wired to local campaign storage a
   assert.ok(html.includes("does not track external clicks"));
   assert.ok(app.includes('parsed.protocol === "https:"'));
 });
+
+test("campaign records reject unsafe stored URLs and require a parseable timestamp", () => {
+  assert.match(app, /function safeCampaignUrl\(value\)/);
+  assert.match(app, /parsed\.protocol === "https:" && parsed\.hostname && !parsed\.username && !parsed\.password/);
+  assert.match(app, /link\.href = safeLink/);
+  assert.match(app, /Number\.isFinite\(Date\.parse\(item\.createdAt\)\)/);
+  assert.match(html, /not sales analytics/);
+});

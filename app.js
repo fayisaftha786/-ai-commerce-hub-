@@ -99,15 +99,37 @@ $("productForm").addEventListener("submit", (event) => {
 });
 
 
+function safeCampaignUrl(value) {
+  if (typeof value !== "string" || !value.trim() || value.length > 2048) return "";
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === "https:" && parsed.hostname && !parsed.username && !parsed.password
+      ? parsed.href
+      : "";
+  } catch {
+    return "";
+  }
+}
+
 function loadCampaigns() {
   try {
     const saved = JSON.parse(localStorage.getItem(CAMPAIGN_KEY) || "[]");
     if (!Array.isArray(saved)) return [];
     return saved.filter((item) =>
-      item && typeof item.id === "string" && typeof item.productName === "string" &&
-      typeof item.createdAt === "string" && typeof item.platform === "string" &&
-      typeof item.format === "string"
-    ).slice(0, MAX_CAMPAIGNS);
+      item && typeof item.id === "string" && item.id.length <= 100 &&
+      typeof item.productName === "string" && item.productName.trim().length > 0 &&
+      item.productName.length <= 120 && typeof item.createdAt === "string" &&
+      Number.isFinite(Date.parse(item.createdAt)) &&
+      typeof item.platform === "string" && item.platform.length <= 40 &&
+      typeof item.format === "string" && item.format.length <= 40
+    ).slice(0, MAX_CAMPAIGNS).map((item) => ({
+      id: item.id,
+      createdAt: item.createdAt,
+      productName: item.productName.trim(),
+      platform: item.platform,
+      format: item.format,
+      link: safeCampaignUrl(item.link)
+    }));
   } catch {
     return [];
   }
@@ -158,9 +180,10 @@ function renderCampaigns() {
       }
     });
     card.append(heading, detail);
-    if (campaign.link) {
+    const safeLink = safeCampaignUrl(campaign.link);
+    if (safeLink) {
       const link = document.createElement("a");
-      link.href = campaign.link;
+      link.href = safeLink;
       link.target = "_blank";
       link.rel = "noopener noreferrer sponsored";
       link.textContent = "Open saved affiliate link";

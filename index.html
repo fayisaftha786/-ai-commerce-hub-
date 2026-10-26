@@ -1,59 +1,60 @@
-
 <!doctype html>
-<html lang="en">
+<html lang="ml">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#101522">
-  <title>AI Commerce Command Center</title>
+  <meta name="description" content="A lightweight workspace for organizing product links and drafting affiliate content.">
+  <title>AI Commerce Hub — Product Workspace</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header>
     <p class="eyebrow">YOUR PRIVATE BUSINESS WORKSPACE</p>
     <h1>AI Commerce Hub</h1>
-    <p>Discover products. Create content. Track performance.</p>
+    <p>Organize products. Draft content. Review your workflow.</p>
   </header>
 
   <main>
-    <section class="stats">
-      <article><span>Products</span><strong id="products">0</strong></article>
-      <article><span>Campaigns</span><strong id="campaigns">0</strong></article>
-      <article><span>Tracked clicks</span><strong id="clicks">0</strong></article>
+    <section class="stats" aria-label="Workspace summary">
+      <article><span>Saved products on this device</span><strong id="products">0</strong></article>
+      <article><span>Drafts created this session</span><strong id="campaigns">0</strong></article>
+      <article><span>Link clicks this session</span><strong id="clicks">0</strong></article>
     </section>
 
     <section class="panel">
       <h2>Product Workspace</h2>
-      <p>Add products you are permitted to promote.</p>
+      <p>Add products you are permitted to promote. Product details are saved in this browser on this device.</p>
       <form id="productForm">
-        <label>Product name
+        <label for="productName">Product name
           <input id="productName" maxlength="120" required
-            placeholder="Example: Kitchen storage organiser">
+            autocomplete="off" placeholder="Example: Kitchen storage organiser">
         </label>
-        <label>Affiliate platform
+        <label for="platform">Affiliate platform
           <select id="platform">
             <option>Amazon</option>
             <option>Flipkart</option>
             <option>Meesho</option>
           </select>
         </label>
-        <label>Product link
-          <input id="productUrl" type="url" required
-            placeholder="https://...">
+        <label for="productUrl">Product link (HTTPS only)
+          <input id="productUrl" type="url" maxlength="2048" required
+            inputmode="url" autocomplete="url" placeholder="https://...">
         </label>
         <button type="submit">Add product</button>
       </form>
-      <p id="message" role="status"></p>
-      <div id="productList"></div>
+      <p id="message" role="status" aria-live="polite"></p>
+      <div id="productList" aria-live="polite"></div>
     </section>
 
     <section class="panel">
-      <h2>AI Content Studio</h2>
-      <label>Product or topic
+      <h2>Content Draft Studio</h2>
+      <p>This version creates a template draft; live AI generation is not connected yet.</p>
+      <label for="topic">Product or topic
         <input id="topic" maxlength="200"
           placeholder="Example: affordable kitchen organiser">
       </label>
-      <label>Language
+      <label for="language">Language
         <select id="language">
           <option value="Malayalam">Malayalam</option>
           <option value="English">English</option>
@@ -61,17 +62,23 @@
         </select>
       </label>
       <button id="generate" type="button">Create draft</button>
-      <textarea id="draft" rows="6"
-        placeholder="Your draft will appear here."></textarea>
+      <label for="draft">Draft text
+        <textarea id="draft" rows="6"
+          placeholder="Your draft will appear here."></textarea>
+      </label>
       <button id="copyDraft" type="button">Copy draft</button>
+    </section>
+
+    <section class="panel">
+      <h2>Honest tracking</h2>
+      <p>The click count only counts link clicks in this open page. It does not confirm that a page loaded, a purchase happened, or a commission was earned. The product list is stored locally in this browser and is not synced to the cloud.</p>
     </section>
   </main>
 
   <footer>
-    Prototype only · Verify affiliate eligibility and disclosures
-    before publishing.
+    Prototype only · Check each affiliate program's terms and disclose affiliate relationships clearly.
   </footer>
+  <script src="product-utils.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
-

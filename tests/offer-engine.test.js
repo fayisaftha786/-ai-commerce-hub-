@@ -69,3 +69,8 @@ test("supports English and channel-specific hashtags", () => {
   assert.match(draft, /Check the seller page/);
   assert.match(draft, /#ShoppingDeals/);
 });
+
+test("date-only expiry remains valid through the selected calendar day", () => {
+  const result = analyzeOffer({ ...validInput, expiresAt: "2030-12-31" }, new Date("2030-12-31T12:00:00Z"));
+  assert.equal(result.offer.expiryState, "upcoming");
+});

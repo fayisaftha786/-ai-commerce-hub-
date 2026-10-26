@@ -67,3 +67,8 @@ Use affiliate links only after approval by the relevant programme. Follow market
 ### Product shortlist evidence checks
 
 The product discovery score is a transparent heuristic based on entered information, not a live trend feed or sales prediction. Blank rating, review count, commission, demand or competition fields are treated as unknown and do not earn score points. When key evidence is missing, the result is labelled **Need more evidence** instead of recommending the product for promotion. Estimated commission is shown only when a positive commission rate has been entered; it is not a payout guarantee. Verify current stock, price, eligibility and programme terms before publishing.
+
+
+## Development roadmap
+
+See [docs/ROADMAP.md](docs/ROADMAP.md) for phased delivery, marketplace API prerequisites, acceptance criteria, and the strategy for reducing rework.

@@ -12,6 +12,7 @@ A lightweight affiliate workspace prototype for evaluating offer details, shortl
 - Save and sort a local shortlist of up to 50 product candidates
 - Generate Malayalam, English or bilingual product captions
 - Generate a short vertical-video plan with hook, shot guidance, voice-over, CTA and affiliate disclosure
+- Generate three distinct hook options and three CTA options for simple creative testing; compare results manually because the prototype does not track conversions
 - Copy content for Instagram, Facebook, WhatsApp and YouTube Shorts workflows
 - Automated Node.js regression tests and GitHub Actions CI
 

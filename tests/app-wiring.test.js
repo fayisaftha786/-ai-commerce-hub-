@@ -61,3 +61,9 @@ test("workspace backup and restore controls are present and validated", () => {
   assert.match(app, /window\.confirm\("Restore this backup\?/);
   assert.match(app, /best-effort rollback/);
 });
+
+
+test("saved candidate shortlist uses readiness-first sorting", () => {
+  assert.match(app, /compareCandidatesByReadiness/);
+  assert.match(app, /\.sort\(typeof compareCandidates === "function" \? compareCandidates/);
+});

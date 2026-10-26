@@ -112,22 +112,22 @@ function createPromoCopy(offer, language = "Malayalam", channel = "WhatsApp") {
     : "";
   const disclosure = "Affiliate: I may earn a commission from eligible purchases at no extra cost to you. Prices and availability can change.";
   const ml = [
+    disclosure,
     `🛍️ ${offer.productName}`,
     savingsLine,
     shippingLine,
     urgency,
     "വാങ്ങുന്നതിന് മുമ്പ് വിൽപ്പനക്കാരന്റെ പേജിൽ വില, സ്റ്റോക്ക്, ഡെലിവറി, നിബന്ധനകൾ എന്നിവ പരിശോധിക്കുക.",
-    "[ഇവിടെ നിങ്ങളുടെ സ്ഥിരീകരിച്ച ഉൽപ്പന്ന ലിങ്ക് ചേർക്കുക]",
-    disclosure
+    "[ഇവിടെ നിങ്ങളുടെ സ്ഥിരീകരിച്ച ഉൽപ്പന്ന ലിങ്ക് ചേർക്കുക]"
   ].filter(Boolean).join("\n\n");
   const en = [
+    disclosure,
     `🛍️ ${offer.productName}`,
     savingsLine,
     shippingLine,
     urgency,
     "Check the seller page for current price, stock, delivery and terms before buying.",
-    "[Add your verified product link here]",
-    disclosure
+    "[Add your verified product link here]"
   ].filter(Boolean).join("\n\n");
   const body = language === "English" ? en : language === "Both" ? `${ml}\n\n---\n\n${en}` : ml;
   const channelHint = channel === "Instagram"

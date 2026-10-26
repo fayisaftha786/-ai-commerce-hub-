@@ -223,4 +223,157 @@ $("copyDraft").addEventListener("click", async () => {
   }
 });
 
+
+const CANDIDATE_KEY = "ai-commerce-hub.candidates.v1";
+let latestCandidate = null;
+
+function loadCandidates() {
+  try {
+    const value = JSON.parse(localStorage.getItem(CANDIDATE_KEY) || "[]");
+    return Array.isArray(value) ? value.filter((item) => item && typeof item.name === "string" && Number.isFinite(item.score)).slice(0, 50) : [];
+  } catch { return []; }
+}
+const candidates = loadCandidates();
+
+function saveCandidates() {
+  try { localStorage.setItem(CANDIDATE_KEY, JSON.stringify(candidates)); return true; }
+  catch { return false; }
+}
+
+function renderCandidates() {
+  const root = $("candidateList");
+  root.replaceChildren();
+  if (!candidates.length) {
+    const empty = document.createElement("p");
+    empty.textContent = "No saved candidates yet. Score a product and save it to your shortlist.";
+    root.append(empty);
+    return;
+  }
+  for (const candidate of [...candidates].sort((a, b) => b.score - a.score)) {
+    const card = document.createElement("div");
+    card.className = "candidate-card";
+    const title = document.createElement("strong");
+    title.textContent = candidate.name + " — " + candidate.score + "/100";
+    const details = document.createElement("p");
+    details.textContent = candidate.label + " · ₹" + Number(candidate.price).toLocaleString("en-IN") + " · entered demand " + candidate.demand + "/5 · commission " + candidate.commission + "%";
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "secondary";
+    remove.textContent = "Remove";
+    remove.addEventListener("click", () => {
+      const index = candidates.findIndex((item) => item.name === candidate.name && item.price === candidate.price);
+      if (index >= 0) candidates.splice(index, 1);
+      saveCandidates();
+      renderCandidates();
+    });
+    card.append(title, details, remove);
+    root.append(card);
+  }
+}
+
+$("candidateForm").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const engine = window.AICommerceDiscovery;
+  if (typeof engine?.scoreCandidate !== "function") {
+    $("candidateResult").textContent = "Product discovery module did not load. Refresh and try again.";
+    return;
+  }
+  const result = engine.scoreCandidate({
+    name: $("candidateName").value,
+    price: $("candidatePrice").value,
+    commission: $("candidateCommission").value,
+    rating: $("candidateRating").value,
+    reviews: $("candidateReviews").value,
+    demand: $("candidateDemand").value,
+    competition: $("candidateCompetition").value,
+    inStock: $("candidateStock").checked
+  });
+  $("candidateResult").replaceChildren();
+  latestCandidate = null;
+  if (!result.valid) {
+    $("candidateResult").textContent = result.error;
+    return;
+  }
+  latestCandidate = result.candidate;
+  const card = document.createElement("div");
+  card.className = "candidate-card";
+  const heading = document.createElement("h3");
+  heading.textContent = result.candidate.label + " · " + result.candidate.score + "/100";
+  const commission = document.createElement("p");
+  commission.textContent = "Estimated commission at entered rate: " + formatMoney(result.candidate.estimatedCommission) + " per qualifying order, before returns or adjustments.";
+  const list = document.createElement("ul");
+  for (const check of result.candidate.checks) {
+    const item = document.createElement("li");
+    item.textContent = check;
+    list.append(item);
+  }
+  card.append(heading, commission, list);
+  $("candidateResult").append(card);
+});
+
+$("saveCandidate").addEventListener("click", () => {
+  if (!latestCandidate) {
+    $("candidateResult").textContent = "Score a valid product candidate first.";
+    return;
+  }
+  if (candidates.some((item) => item.name.toLowerCase() === latestCandidate.name.toLowerCase())) {
+    $("candidateResult").textContent = "This product is already in your shortlist.";
+    return;
+  }
+  if (candidates.length >= 50) {
+    $("candidateResult").textContent = "Shortlist limit is 50 products.";
+    return;
+  }
+  candidates.push(latestCandidate);
+  const saved = saveCandidates();
+  renderCandidates();
+  $("candidateResult").append(document.createTextNode(saved ? " Saved to this device." : " Added for this session only; browser storage is unavailable."));
+});
+
+$("contentForm").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const engine = window.AICommerceDiscovery;
+  if (typeof engine?.createContentPack !== "function") {
+    $("contentMessage").textContent = "Content studio could not load. Refresh and try again.";
+    return;
+  }
+  try {
+    const pack = engine.createContentPack({
+      name: $("contentName").value,
+      benefit: $("contentBenefit").value,
+      audience: $("contentAudience").value,
+      proof: $("contentProof").value,
+      price: $("contentPrice").value,
+      link: $("contentLink").value,
+      language: $("contentLanguage").value,
+      platform: $("contentPlatform").value,
+      type: $("contentType").value
+    });
+    $("contentOutput").value = $("contentType").value === "Post" ? pack.post : pack.video;
+    draftsCreated += 1;
+    $("campaigns").textContent = String(draftsCreated);
+    $("contentMessage").textContent = "Draft prepared. Review every product claim and link before posting.";
+  } catch (error) {
+    $("contentMessage").textContent = error instanceof Error ? error.message : "Could not create content.";
+  }
+});
+
+$("copyContent").addEventListener("click", async () => {
+  const output = $("contentOutput").value;
+  if (!output.trim()) {
+    $("contentMessage").textContent = "Create a post or video plan first.";
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(output);
+    $("contentMessage").textContent = "Content pack copied.";
+  } catch {
+    $("contentOutput").focus();
+    $("contentOutput").select();
+    $("contentMessage").textContent = "Automatic copy is unavailable. The text is selected; copy it manually.";
+  }
+});
+
+renderCandidates();
+
 render();

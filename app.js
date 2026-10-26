@@ -758,6 +758,19 @@ $("contentForm").addEventListener("submit", (event) => {
   }
 });
 
+
+function contentReviewComplete() {
+  const ids = ["reviewClaims", "reviewPrice", "reviewAffiliate", "reviewLink"];
+  const complete = ids.every((id) => $(id).checked);
+  $("contentReviewStatus").textContent = complete
+    ? "Checklist marked complete. This does not independently verify claims, prices or links."
+    : "Before publishing, review all four items. This checklist does not independently verify them.";
+  return complete;
+}
+["reviewClaims", "reviewPrice", "reviewAffiliate", "reviewLink"].forEach((id) => {
+  $(id).addEventListener("change", contentReviewComplete);
+});
+
 $("copyContent").addEventListener("click", async () => {
   const output = $("contentOutput").value;
   if (!output.trim()) {

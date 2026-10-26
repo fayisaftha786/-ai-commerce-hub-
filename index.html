@@ -162,12 +162,18 @@
             <input id="videoMakerCta" maxlength="100" value="Check details and current price">
           </label>
         </div>
+        <label for="videoMakerLanguage">Video language / affiliate disclosure
+          <select id="videoMakerLanguage">
+            <option value="Malayalam">Malayalam</option>
+            <option value="English">English</option>
+          </select>
+        </label>
         <button id="createVideo" type="submit">Create vertical video</button>
       </form>
       <p id="videoMakerStatus" role="status" aria-live="polite"></p>
       <video id="videoMakerPreview" controls playsinline hidden style="width:100%;max-width:360px;border-radius:12px;background:#000"></video>
       <p id="videoMakerDownload"></p>
-      <p class="hint">Exports WebM where your browser supports MediaRecorder. This is a simple slideshow, not a finished AI-generated video; it does not add music or voice-over. Check media permissions and price before publishing.</p>
+      <p class="hint">Exports WebM where your browser supports MediaRecorder. Every slide includes an affiliate disclosure in the selected language. This is a simple slideshow, not a finished AI-generated video; it does not add music or voice-over. Check media permissions and price before publishing.</p>
     </section>
 
     <section class="panel">

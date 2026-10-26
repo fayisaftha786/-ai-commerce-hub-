@@ -29,7 +29,7 @@
     });
   }
 
-  function drawSlide(ctx, image, title, benefit, price, cta, index, total) {
+  function drawSlide(ctx, image, title, benefit, price, cta, language, index, total) {
     ctx.fillStyle = "#101522";
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
     const maxW = WIDTH - 64;
@@ -68,6 +68,14 @@
     ctx.fillStyle = "#85d8bd";
     ctx.font = "bold 22px system-ui, sans-serif";
     ctx.fillText(cta, 36, 1245, WIDTH - 72);
+    ctx.fillStyle = "#101522";
+    ctx.fillRect(24, 8, WIDTH - 48, 34);
+    ctx.fillStyle = "#f4d35e";
+    ctx.font = "bold 17px system-ui, sans-serif";
+    const disclosure = language === "Malayalam"
+      ? "അഫിലിയേറ്റ് ലിങ്ക് • വാങ്ങിയാൽ കമ്മീഷൻ ലഭിക്കാം"
+      : "Affiliate link • I may earn a commission";
+    ctx.fillText(disclosure, 36, 30, WIDTH - 140);
     ctx.fillStyle = "#aab4c7";
     ctx.font = "16px system-ui, sans-serif";
     ctx.fillText((index + 1) + " / " + total, WIDTH - 90, 30);
@@ -117,6 +125,7 @@
     const benefit = cleanText(byId("videoMakerBenefit").value, 140);
     const price = cleanText(byId("videoMakerPrice").value, 30);
     const cta = cleanText(byId("videoMakerCta").value || "Check details and current price", 100);
+    const language = byId("videoMakerLanguage").value === "Malayalam" ? "Malayalam" : "English";
     if (!title || !benefit || !cta) {
       status.textContent = "Enter a product name, benefit and call to action.";
       return;
@@ -143,7 +152,7 @@
       });
       recorder.start();
       for (let i = 0; i < images.length; i++) {
-        drawSlide(ctx, images[i], title, benefit, price, cta, i, images.length);
+        drawSlide(ctx, images[i], title, benefit, price, cta, language, i, images.length);
         status.textContent = "Creating video… slide " + (i + 1) + " of " + images.length;
         await new Promise((resolve) => setTimeout(resolve, SLIDE_MS));
       }

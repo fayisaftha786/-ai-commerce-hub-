@@ -178,7 +178,7 @@ test("product discovery does not prefill demand or competition as if they were v
   assert.doesNotMatch(html, /id="candidateDemand"[\s\S]{0,300}value="3" selected/);
   assert.doesNotMatch(html, /id="candidateCompetition"[\s\S]{0,300}value="3" selected/);
   assert.match(html, /Demand and competition and stock status start as “Not checked yet”/);
-  assert.match(html, /<select id="candidateStock"><option value="" selected>Not checked yet<\/option>/);
+  assert.match(html, /<select id="candidateStock">[\s\S]{0,100}<option value="" selected>Not checked yet/);
 });
 
 

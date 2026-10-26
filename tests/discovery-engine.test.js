@@ -52,4 +52,17 @@ test("video plan places affiliate disclosure visibly at the start", () => {
   const pack = createContentPack({ name: "Storage organiser", language: "English" });
   assert.match(pack.video, /0–9s — AFFILIATE DISCLOSURE/);
   assert.match(pack.video, /"Affiliate"/);
+  assert.equal(pack.hooks.length, 3);
+  assert.equal(pack.ctas.length, 3);
+  assert.ok(pack.hooks.every((hook) => hook.length > 10));
+  assert.ok(pack.ctas.every((cta) => cta.length > 10));
+});
+
+
+test("creates three distinct hooks and calls to action for simple content testing", () => {
+  const pack = createContentPack({ name: "Storage organiser", benefit: "keeps shelves tidy", language: "English" });
+  assert.equal(new Set(pack.hooks).size, 3);
+  assert.equal(new Set(pack.ctas).size, 3);
+  assert.ok(pack.hooks.every((item) => !/guaranteed|best-selling|number one/i.test(item)));
+  assert.ok(pack.ctas.some((item) => /price|details/i.test(item)));
 });

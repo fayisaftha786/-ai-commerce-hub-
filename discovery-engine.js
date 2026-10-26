@@ -161,6 +161,15 @@ function createContentPack(input) {
   return { post, video, platform, type, language, disclosure, hooks, ctas };
 }
 
-const api = { scoreCandidate, createContentPack };
+function compareCandidatesByReadiness(a, b) {
+  const readinessRank = (candidate) => {
+    if (candidate?.inStock === false) return 2;
+    if (!candidate?.label || candidate.label === "Need more evidence") return 1;
+    return 0;
+  };
+  return readinessRank(a) - readinessRank(b) || Number(b?.score || 0) - Number(a?.score || 0);
+}
+
+const api = { scoreCandidate, createContentPack, compareCandidatesByReadiness };
 if (typeof module !== "undefined" && module.exports) module.exports = api;
 if (typeof window !== "undefined") window.AICommerceDiscovery = api;

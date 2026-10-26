@@ -394,7 +394,7 @@ function renderImportedCatalog(records, errors = []) {
       ? record.orders + " orders" + (record.clicks !== null ? " / " + record.clicks + " clicks" : "")
       : record.clicks !== null ? record.clicks + " clicks; orders not supplied" : "No sales metrics supplied";
     details.textContent = record.platform + " · ₹" + record.price.toLocaleString("en-IN") + " · " + performance +
-      (record.periodDays ? " · " + record.periodDays + "-day period" : " · period not confirmed");
+      (record.periodDays ? " · " + record.periodDays + "-day period" : " · period not confirmed") + returnsText;
     const warnings = document.createElement("ul");
     for (const warning of record.warnings) {
       const li = document.createElement("li");
@@ -432,7 +432,7 @@ function renderImportedCatalog(records, errors = []) {
   }
 }
 
-$("catalogForm").addEventListener("submit", (event) => {
+$("downloadCatalogTemplate").addEventListener("click", () => {\n  const template = "name,platform,url,price,commission,rating,reviews,clicks,orders,returns,period_days,stock\\n";\n  const blob = new Blob([template], { type: "text/csv;charset=utf-8" });\n  const url = URL.createObjectURL(blob);\n  const link = document.createElement("a");\n  link.href = url;\n  link.download = "ai-commerce-hub-catalog-template.csv";\n  document.body.append(link);\n  link.click();\n  link.remove();\n  URL.revokeObjectURL(url);\n});\n\n$("catalogForm").addEventListener("submit", (event) => {
   event.preventDefault();
   const file = $("catalogCsv").files?.[0];
   if (!file) {

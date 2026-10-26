@@ -69,3 +69,9 @@ test("candidate stock checkbox wiring passes a boolean to the discovery engine",
   assert.match(stockInput[1], /\btype="checkbox"/i);
   assert.match(app, /inStock:\s*\$\("candidateStock"\)\.checked/);
 });
+
+test("saved candidate shortlist uses readiness-first sorting", () => {
+  assert.match(app, /compareCandidatesByReadiness/);
+  assert.match(app, /\.sort\(typeof compareCandidates === "function" \? compareCandidates/);
+});
+

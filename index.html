@@ -239,6 +239,42 @@
       <p class="hint">Engagement rate uses (likes + comments + shares/saves) ÷ reach. Click-through rate uses clicks ÷ reach. Order rate uses attributed orders ÷ clicks. These calculations are only as reliable as the figures you enter; orders require platform/affiliate attribution.</p>
     </section>
 
+    <section class="panel" aria-labelledby="videoScriptHeading">
+      <h2 id="videoScriptHeading">8. Product Video Script Studio</h2>
+      <p>Create a short Malayalam or English voice-over script with shot guidance, a hook, a call to action and affiliate disclosure. This uses local templates, not a generative AI service.</p>
+      <form id="videoScriptForm">
+        <label for="videoScriptProduct">Product name
+          <input id="videoScriptProduct" maxlength="100" required placeholder="Example: Kitchen organiser">
+        </label>
+        <label for="videoScriptBenefit">Verified product benefit
+          <textarea id="videoScriptBenefit" maxlength="180" required rows="2" placeholder="Describe a real, verifiable benefit"></textarea>
+        </label>
+        <div class="form-grid">
+          <label for="videoScriptPrice">Verified price (optional)
+            <input id="videoScriptPrice" maxlength="40" placeholder="₹599">
+          </label>
+          <label for="videoScriptAudience">Intended audience (optional)
+            <input id="videoScriptAudience" maxlength="100" placeholder="Example: people in small homes">
+          </label>
+        </div>
+        <label for="videoScriptCta">Call to action
+          <input id="videoScriptCta" maxlength="120" placeholder="വിലയും വിവരങ്ങളും പരിശോധിക്കാൻ ലിങ്ക് തുറക്കൂ">
+        </label>
+        <label for="videoScriptLanguage">Script language
+          <select id="videoScriptLanguage">
+            <option value="Malayalam">Malayalam</option>
+            <option value="English">English</option>
+          </select>
+        </label>
+        <button type="submit">Generate video script</button>
+      </form>
+      <p id="videoScriptStatus" role="status" aria-live="polite"></p>
+      <div id="videoScriptOutput" aria-live="polite"></div>
+      <button id="copyVideoScript" type="button" class="secondary">Copy script</button>
+      <button id="downloadVideoScript" type="button" class="secondary">Download script (.txt)</button>
+      <p class="hint">The generated script is a template, not an AI-verified product review. Only state benefits and prices you have verified. Record the voice-over yourself or use a permitted voice tool; video export with embedded voice is not included yet.</p>
+    </section>
+
     <section class="panel">
       <h2>8. Browser Video Maker</h2>
       <p>Turn product images you are authorised to use into a vertical slideshow video. This runs on your device; images are not uploaded.</p>

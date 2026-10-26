@@ -419,7 +419,9 @@ function parseCampaignCsv(text) {
 }
 
 function csvCell(value) {
-  const text = String(value == null ? "" : value);
+  let text = String(value == null ? "" : value);
+  // Neutralize spreadsheet formulas in untrusted text before CSV quoting.
+  if (/^[\u0000-\u0020]*[=+\-@]/.test(text)) text = "'" + text;
   return '"' + text.replace(/"/g, '""') + '"';
 }
 

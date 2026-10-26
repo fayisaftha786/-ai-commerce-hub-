@@ -82,7 +82,8 @@ test("saved candidate cards explain evidence coverage and handle older records",
   assert.match(app, /Evidence coverage:/);
   assert.match(app, /candidate\.evidenceCoverage/);
   assert.match(app, /Evidence coverage unavailable for this older saved record/);
-  assert.match(app, /card\.append\(title, details, evidence, remove\)/);
+  assert.match(app, /card\.append\(title, details, provenance, evidence\)/);
+  assert.match(app, /card\.append\(remove\)/);
 });
 
 
@@ -176,7 +177,7 @@ test("product discovery does not prefill demand or competition as if they were v
   assert.match(html, /<select id="candidateCompetition"><option value="" selected>Not checked yet<\/option>/);
   assert.doesNotMatch(html, /id="candidateDemand"[\s\S]{0,300}value="3" selected/);
   assert.doesNotMatch(html, /id="candidateCompetition"[\s\S]{0,300}value="3" selected/);
-  assert.match(html, /does not mistake an unreviewed default for evidence/);
+  assert.match(html, /Demand and competition and stock status start as “Not checked yet”/);
   assert.match(html, /<select id="candidateStock"><option value="" selected>Not checked yet<\/option>/);
 });
 
@@ -200,10 +201,10 @@ test("manual product discovery captures link, source, checked date, and explicit
   for (const id of ["candidateUrl", "candidateSource", "candidateCheckedAt", "candidateStock"]) {
     assert.ok(html.includes('id="' + id + '"'), "missing manual evidence control: " + id);
   }
-  assert.match(app, /\$\\("candidateUrl"\\)\\.value/);
-  assert.match(app, /\$\\("candidateSource"\\)\\.value/);
-  assert.match(app, /\$\\("candidateCheckedAt"\\)\\.value/);
-  assert.match(app, /\$\\("candidateStock"\\)\\.value === "yes" \\? true/);
+  assert.match(app, /\$\("candidateUrl"\)\.value/);
+  assert.match(app, /\$\("candidateSource"\)\.value/);
+  assert.match(app, /\$\("candidateCheckedAt"\)\.value/);
+  assert.match(app, /\$\("candidateStock"\)\.value === "yes" \? true/);
   assert.match(app, /Evidence freshness:/);
   assert.match(app, /confirmed in stock/);
 });

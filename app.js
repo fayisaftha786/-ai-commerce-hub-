@@ -435,7 +435,7 @@ function renderImportedCatalog(records, errors = []) {
 }
 
 $("downloadCatalogTemplate").addEventListener("click", () => {
-  const template = "name,platform,url,price,commission,rating,reviews,clicks,orders,returns,period_days,stock\\n";
+  const template = "name,platform,url,price,commission,rating,reviews,clicks,orders,returns,period_days,stock\n";
   const blob = new Blob([template], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");

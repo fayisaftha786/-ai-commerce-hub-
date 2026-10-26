@@ -26,6 +26,10 @@ npm test
 
 Open `index.html` in a modern browser to try the frontend. Clipboard access depends on browser security settings.
 
+## CSV import validation
+
+The importer rejects malformed quoting, duplicate normalised headers, mismatched row widths, invalid numeric values, non-integer count metrics and files larger than 2 MB or 5,000 product rows. Quoted thousands separators such as `\"1,299\"` are supported. Unknown stock status receives no stock bonus and produces a warning. Date-only offer expiry is interpreted in the viewer's local calendar time and impossible calendar dates are rejected.
+
 ## Product discovery: important limitations
 
 The manual candidate score is a transparent shortlist heuristic based on data entered by the user. The CSV importer can use real orders/clicks from a dashboard export you are authorised to access, but it does **not** scrape Meesho, fetch live trending products, read real-time search volume, or predict future sales. Use comparable reporting periods and verify what each metric means. If orders/clicks are missing, the app clearly warns that a score is catalogue quality rather than sales evidence. Supplied return counts reduce the score when the return rate is high. Verify commission and availability before promotion. An entered commission estimate is not guaranteed earnings. CSV files are processed in the browser and stored locally; they are not uploaded to a server.

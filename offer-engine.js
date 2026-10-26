@@ -34,7 +34,16 @@ function analyzeOffer(input, now = new Date()) {
   if (expiryText) {
     // A date-only expiry means the offer is valid through that calendar day.
     const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(expiryText);
-    expiryTime = Date.parse(dateOnly ? expiryText + "T23:59:59.999Z" : expiryText);
+    if (dateOnly) {
+      const [year, month, day] = expiryText.split("-").map(Number);
+      const start = new Date(year, month - 1, day);
+      if (start.getFullYear() !== year || start.getMonth() !== month - 1 || start.getDate() !== day) {
+        return { valid: false, error: "Enter a valid offer expiry date or leave it blank." };
+      }
+      expiryTime = new Date(year, month - 1, day + 1).getTime() - 1;
+    } else {
+      expiryTime = Date.parse(expiryText);
+    }
     if (!Number.isFinite(expiryTime)) {
       return { valid: false, error: "Enter a valid offer expiry date or leave it blank." };
     }

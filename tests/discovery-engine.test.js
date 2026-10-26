@@ -50,6 +50,6 @@ test("does not place non-HTTPS links into promotional copy", () => {
 
 test("video plan places affiliate disclosure visibly at the start", () => {
   const pack = createContentPack({ name: "Storage organiser", language: "English" });
-  assert.match(pack.video, /0–8s — AFFILIATE DISCLOSURE/);
+  assert.match(pack.video, /0–9s — AFFILIATE DISCLOSURE/);
   assert.match(pack.video, /"Affiliate"/);
 });

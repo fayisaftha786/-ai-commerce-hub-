@@ -119,3 +119,11 @@ test("saved campaign cards offer a copy action only for validated affiliate link
   assert.match(app, /safeCampaignUrl\(campaign\.link\)/);
   assert.match(app, /Clipboard unavailable\. Open the saved affiliate link and copy its address manually/);
 });
+
+
+test("CSV exports neutralize formula-like cells before quoting", () => {
+  assert.match(app, /function csvCell\(value\)/);
+  assert.match(app, /\^\[\\u0000-\\u0020\]\*\[=\+\\-@\]/);
+  assert.match(app, /text = "'" \+ text/);
+  assert.match(app, /text\.replace\(\/"\/g, '""'\)/);
+});

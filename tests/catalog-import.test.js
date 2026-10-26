@@ -67,8 +67,8 @@ test("does not award stock points when stock is unknown", () => {
 });
 
 test("warns when supplied orders exceed clicks and rejects fractional reporting periods", () => {
-  const result = rankCatalogCsv("name,price,clicks,orders,period_days\\nLamp,499,10,12,7");
+  const result = rankCatalogCsv("name,price,clicks,orders,period_days\nLamp,499,10,12,7");
   assert.equal(result.valid, true);
   assert.ok(result.records[0].warnings.some((warning) => warning.includes("Orders exceed clicks")));
-  assert.equal(rankCatalogCsv("name,price,orders,period_days\\nLamp,499,12,7.5").valid, false);
+  assert.equal(rankCatalogCsv("name,price,orders,period_days\nLamp,499,12,7.5").valid, false);
 });

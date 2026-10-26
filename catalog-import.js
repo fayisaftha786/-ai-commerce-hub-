@@ -210,7 +210,19 @@ function rankCatalogCsv(csvText) {
     });
   }
   if (!records.length) return { valid: false, error: "No valid product rows found.", errors };
-  records.sort((a, b) => b.score - a.score || (b.orders ?? -1) - (a.orders ?? -1));
+  // Readiness is a safety gate: a high heuristic score must not put conflicted or unavailable
+  // products above candidates whose supplied evidence supports a cautious test.
+  const readinessPriority = {
+    "Shortlist for a small test": 0,
+    "Test cautiously": 1,
+    "Verify before promotion": 2,
+    "Do not promote yet": 3
+  };
+  records.sort((a, b) =>
+    (readinessPriority[a.promotionReadiness] ?? 2) - (readinessPriority[b.promotionReadiness] ?? 2) ||
+    b.score - a.score ||
+    (b.orders ?? -1) - (a.orders ?? -1)
+  );
   return { valid: true, records, errors, importedRows: records.length, totalRows: parsed.rows.length - 1 };
 }
 

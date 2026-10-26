@@ -172,6 +172,14 @@ function rankCatalogCsv(csvText) {
     if (!checkedAt) warnings.push("Checked date missing; freshness cannot be assessed.");
     else if (checkedAtValid && evidenceAgeDays < 0) warnings.push("Checked date is in the future; verify the date.");
     else if (checkedAtValid && evidenceAgeDays > 7) warnings.push("Evidence is over 7 days old; re-check price, stock and performance before promotion.");
+    const evidenceFreshness = !checkedAtValid
+      ? "unknown"
+      : evidenceAgeDays < 0
+        ? "future"
+        : evidenceAgeDays > 7
+          ? "stale"
+          : "current";
+    const evidenceTraceable = Boolean(source) && evidenceFreshness === "current";
     const conversionIsPlausible = hasOrders && hasClicks && clicks > 0 && orders <= clicks;
     const evidenceQuality = !hasPerformanceData
       ? "Unverified"
@@ -186,6 +194,9 @@ function rankCatalogCsv(csvText) {
     let promotionReadiness = "Verify before promotion";
     if (inStock === false || metricConflict || (returnRate !== null && returnRate >= 0.2)) {
       promotionReadiness = "Do not promote yet";
+    } else if (!evidenceTraceable) {
+      // Strong performance numbers cannot compensate for missing provenance or stale data.
+      promotionReadiness = "Verify before promotion";
     } else if (evidenceQuality !== "Complete" || orders === null || orders === 0 ||
         inStock !== true || (returnRate !== null && returnRate >= 0.1)) {
       promotionReadiness = "Test cautiously";
@@ -195,6 +206,12 @@ function rankCatalogCsv(csvText) {
     const recommendationReasons = [];
     if (inStock === false) recommendationReasons.push("Stock is marked unavailable.");
     if (metricConflict) recommendationReasons.push("Supplied click, order or return counts conflict; verify the report.");
+    if (!source) recommendationReasons.push("Evidence source is missing; record the dashboard, listing or report used.");
+    if (!checkedAt) recommendationReasons.push("Evidence check date is missing; freshness cannot be assessed.");
+    else if (!checkedAtValid) recommendationReasons.push("Evidence check date is invalid; use YYYY-MM-DD.");
+    else if (evidenceAgeDays < 0) recommendationReasons.push("Evidence check date is in the future; verify it.");
+    else if (evidenceAgeDays > 7) recommendationReasons.push("Evidence is stale; re-check price, stock and performance before promotion.");
+    if (evidenceFreshness === "current" && source) recommendationReasons.push("Evidence source is recorded and the check date is within 7 days.");
     if (evidenceQuality === "Complete") recommendationReasons.push("Clicks, orders and reporting period support a comparable performance check.");
     else if (evidenceQuality === "Partial") recommendationReasons.push("Performance metrics are supplied, but the reporting period is missing.");
     else if (evidenceQuality === "Unverified") recommendationReasons.push("No click/order evidence was supplied; ranking relies on catalogue details.");
@@ -215,6 +232,7 @@ function rankCatalogCsv(csvText) {
     records.push({
       name, platform, url, price, commission, rating, reviews, clicks, orders, returns,
       source, checkedAt: checkedAtValid ? checkedAt : "", evidenceAgeDays,
+      evidenceFreshness, evidenceTraceable,
       periodDays, inStock, score, normalizedOrders,
       estimatedCommissionPerOrder, estimatedCommissionAfterReturns,
       evidenceLabel: hasOrders ? "Orders supplied" : hasClicks ? "Clicks supplied" : "No sales evidence",

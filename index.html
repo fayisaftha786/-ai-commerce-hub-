@@ -74,13 +74,15 @@
             <input id="candidateReviews" type="number" min="0" step="1" placeholder="Optional — enter review count">
           </label>
           <label for="candidateDemand">Demand evidence (1–5)
-            <select id="candidateDemand"><option value="1">1 — little evidence</option><option value="2">2 — weak</option><option value="3" selected>3 — some interest</option><option value="4">4 — strong signals</option><option value="5">5 — repeated buyer interest</option></select>
+            <select id="candidateDemand"><option value="" selected>Choose verified signal</option><option value="1">1 — little evidence</option><option value="2">2 — weak</option><option value="3">3 — some interest</option><option value="4">4 — strong signals</option><option value="5">5 — repeated buyer interest</option></select>
           </label>
           <label for="candidateCompetition">Competition (1–5)
-            <select id="candidateCompetition"><option value="1">1 — low</option><option value="2">2 — manageable</option><option value="3" selected>3 — medium</option><option value="4">4 — high</option><option value="5">5 — very high</option></select>
+            <select id="candidateCompetition"><option value="" selected>Choose verified estimate</option><option value="1">1 — low</option><option value="2">2 — manageable</option><option value="3">3 — medium</option><option value="4">4 — high</option><option value="5">5 — very high</option></select>
           </label>
         </div>
-        <label class="check-label" for="candidateStock"><input id="candidateStock" type="checkbox" checked> Seller currently shows in stock</label>
+        <label for="candidateStock">Verified stock status
+          <select id="candidateStock"><option value="" selected>Choose current stock status</option><option value="in-stock">In stock — verified</option><option value="out-of-stock">Out of stock</option></select>
+        </label>
         <button type="submit">Score product candidate</button>
         <button id="saveCandidate" type="button" class="secondary">Save to shortlist</button>
       </form>

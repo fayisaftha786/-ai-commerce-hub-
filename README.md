@@ -20,6 +20,7 @@ A lightweight affiliate workspace prototype for evaluating offer details, shortl
 - Export/restore a versioned JSON backup of local products, campaigns, shortlist and imported catalogue data
 - Copy content for Instagram, Facebook, WhatsApp and YouTube Shorts workflows
 - Automated Node.js regression tests and GitHub Actions CI
+- App Self-Check: local diagnostics for secure context, browser storage, critical modules, required forms and service-worker readiness; it clearly distinguishes local checks from live API connectivity
 
 ## Installable Android app (PWA)
 
@@ -51,6 +52,10 @@ Open `index.html` in a modern browser to try the frontend. Clipboard access depe
 ## CSV import validation
 
 The importer rejects malformed quoting, duplicate normalised headers, mismatched row widths, invalid numeric values, non-integer count metrics and files larger than 2 MB or 5,000 product rows. Quoted thousands separators such as `\"1,299\"` are supported. Unknown stock status receives no stock bonus and produces a warning. Date-only offer expiry is interpreted in the viewer's local calendar time and impossible calendar dates are rejected.
+
+## App Self-Check
+
+Use the **Run self-check** button in the app to inspect HTTPS/secure-context support, browser storage, critical JavaScript modules, key forms, manifest presence and service-worker registration. The diagnostic reports local readiness only. It does not authenticate to marketplace programmes, test live API credentials, or verify sales predictions. A green self-check is not proof that every external service is connected.
 
 ## Campaign performance report
 

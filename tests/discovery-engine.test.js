@@ -4,7 +4,8 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const { scoreCandidate, createContentPack } = require("../discovery-engine");
 
-const base = { name: "Storage organiser", price: 599, rating: 4.4, reviews: 250, commission: 10, demand: 4, competition: 2, inStock: true };
+const today = () => new Date().getFullYear() + "-" + String(new Date().getMonth() + 1).padStart(2, "0") + "-" + String(new Date().getDate()).padStart(2, "0");
+const base = { name: "Storage organiser", price: 599, rating: 4.4, reviews: 250, commission: 10, demand: 4, competition: 2, inStock: true, url: "https://www.amazon.in/dp/B001", source: "Official dashboard", checkedAt: today() };
 
 test("scores a candidate with entered signals and estimated commission", () => {
   const result = scoreCandidate(base);
@@ -98,7 +99,7 @@ test("only reports estimated commission when a positive rate is supplied", () =>
 
 test("ranks ready candidates before incomplete and out-of-stock candidates", () => {
   const compare = require("../discovery-engine").compareCandidatesByReadiness;
-  const ready = { label: "Prioritize for review", inStock: true, score: 60 };
+  const ready = { label: "Prioritize for review", inStock: true, score: 60, evidenceTraceable: true, url: "https://www.amazon.in/dp/B010", commission: 10 };
   const incompleteHighScore = { label: "Need more evidence", inStock: true, score: 99 };
   const outOfStock = { label: "Do not promote — out of stock", inStock: false, score: 100 };
   assert.ok(compare(ready, incompleteHighScore) < 0);
@@ -121,4 +122,43 @@ test("candidate cards label missing signals as not checked rather than numeric e
   assert.match(app, /Number\.isFinite\(candidate\.demand\) \? candidate\.demand \+ "\/5" : "not checked"/);
   assert.match(app, /Number\.isFinite\(candidate\.competition\) \? candidate\.competition \+ "\/5" : "not checked"/);
   assert.match(app, /candidate\.commission > 0 \? candidate\.commission \+ "%" : "not confirmed"/);
+});
+
+
+test("requires a current source, date, link, commission and known stock before prioritising", () => {
+  const complete = scoreCandidate(base);
+  assert.equal(complete.valid, true);
+  assert.equal(complete.candidate.evidenceFreshness, "current");
+  assert.equal(complete.candidate.evidenceTraceable, true);
+  assert.equal(complete.candidate.label, "Prioritize for review");
+  assert.equal(complete.candidate.inStock, true);
+  assert.equal(complete.candidate.evidenceCoverage, 100);
+
+  const noLink = scoreCandidate({ ...base, url: "" });
+  assert.equal(noLink.candidate.label, "Need more evidence");
+  assert.ok(noLink.candidate.checks.some((line) => line.includes("Missing valid HTTPS")));
+
+  const noCommission = scoreCandidate({ ...base, commission: "" });
+  assert.equal(noCommission.candidate.label, "Need more evidence");
+  assert.ok(noCommission.candidate.checks.some((line) => line.includes("Commission is missing")));
+
+  const unknownStock = scoreCandidate({ ...base, inStock: null });
+  assert.equal(unknownStock.candidate.inStock, null);
+  assert.equal(unknownStock.candidate.label, "Need more evidence");
+  assert.ok(unknownStock.candidate.checks.some((line) => line.includes("Stock status is not checked")));
+
+  const staleDate = new Date(Date.now() - 10 * 86400000);
+  const staleCheckedAt = staleDate.getFullYear() + "-" + String(staleDate.getMonth() + 1).padStart(2, "0") + "-" + String(staleDate.getDate()).padStart(2, "0");
+  const stale = scoreCandidate({ ...base, checkedAt: staleCheckedAt });
+  assert.equal(stale.candidate.evidenceFreshness, "stale");
+  assert.equal(stale.candidate.label, "Need more evidence");
+
+  const futureDate = new Date(Date.now() + 2 * 86400000);
+  const futureCheckedAt = futureDate.getFullYear() + "-" + String(futureDate.getMonth() + 1).padStart(2, "0") + "-" + String(futureDate.getDate()).padStart(2, "0");
+  const future = scoreCandidate({ ...base, checkedAt: futureCheckedAt });
+  assert.equal(future.candidate.evidenceFreshness, "future");
+  assert.equal(future.candidate.label, "Need more evidence");
+
+  const outOfStock = scoreCandidate({ ...base, inStock: false });
+  assert.equal(outOfStock.candidate.label, "Do not promote — out of stock");
 });

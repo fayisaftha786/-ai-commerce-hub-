@@ -160,3 +160,21 @@ test("Content Studio resets review whenever a draft or its inputs change", () =>
   assert.match(app, /\$\(id\)\.checked = false/);
   assert.match(app, /\$\("contentOutput"\)\.value = ""/);
 });
+
+test("Social Media Hub provides account setup guidance and media upload preview", () => {
+  for (const id of ["socialPostForm","socialMediaUpload","socialMediaPreview","socialCaption","socialScheduleAt","socialQueue","socialPostMessage"]) assert.ok(html.includes('id="' + id + '"'));
+  assert.match(html,/Not connected — secure Meta OAuth/);
+  assert.match(html,/Not connected — Google OAuth/);
+  assert.match(app,/MAX_SOCIAL_MEDIA_BYTES = 50 \* 1024 \* 1024/);
+  assert.match(app,/URL\.createObjectURL\(file\)/);
+  assert.match(app,/no post was published/);
+});
+test("Social Media Hub stores a local posting queue and manually entered analytics honestly", () => {
+  assert.match(app,/SOCIAL_QUEUE_KEY = "ai-commerce-hub\.social-queue\.v1"/);
+  assert.match(app,/SOCIAL_ANALYTICS_KEY = "ai-commerce-hub\.social-analytics\.v1"/);
+  assert.match(app,/function renderSocialQueue\(\)/);
+  assert.match(app,/function renderSocialAnalytics\(\)/);
+  assert.match(app,/not automatically verified/);
+  assert.ok(html.includes('id="exportSocialAnalytics"'));
+  assert.ok(html.includes('id="downloadSocialCaption"'));
+});

@@ -342,6 +342,19 @@ $("copyContent").addEventListener("click", async () => {
 
 
 const CATALOG_KEY = "ai-commerce-hub.catalog-import.v1";
+function useCatalogProductInContent(record) {
+  $("contentName").value = record.name || "";
+  $("contentPrice").value = record.price == null ? "" : String(record.price);
+  $("contentLink").value = record.url || "";
+  // Clear product-specific claims so text from a previously selected item cannot carry over.
+  $("contentBenefit").value = "";
+  $("contentAudience").value = "";
+  $("contentProof").value = "";
+  $("contentMessage").textContent = "Product name, price and available link copied. Add a real, verified benefit and feature before generating content.";
+  $("contentForm").scrollIntoView({ behavior: "smooth", block: "start" });
+  $("contentBenefit").focus({ preventScroll: true });
+}
+
 function renderImportedCatalog(records, errors = []) {
   const root = $("catalogResults");
   root.replaceChildren();
@@ -417,6 +430,12 @@ function renderImportedCatalog(records, errors = []) {
       card.append(link);
     }
     card.append(warnings);
+    const contentButton = document.createElement("button");
+    contentButton.type = "button";
+    contentButton.className = "secondary";
+    contentButton.textContent = "Use in Content Studio";
+    contentButton.addEventListener("click", () => useCatalogProductInContent(record));
+    card.append(contentButton);
     root.append(card);
   }
   if (errors.length) {

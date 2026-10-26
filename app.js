@@ -645,7 +645,7 @@ function renderCandidates() {
     const title = document.createElement("strong");
     title.textContent = candidate.name + " — " + candidate.score + "/100";
     const details = document.createElement("p");
-    details.textContent = candidate.label + " · ₹" + Number(candidate.price).toLocaleString("en-IN") + " · entered demand " + candidate.demand + "/5 · commission " + candidate.commission + "%";
+    details.textContent = candidate.label + " · ₹" + Number(candidate.price).toLocaleString("en-IN") + " · demand " + (Number.isFinite(candidate.demand) ? candidate.demand + "/5" : "not checked") + " · competition " + (Number.isFinite(candidate.competition) ? candidate.competition + "/5" : "not checked") + " · commission " + (Number.isFinite(candidate.commission) && candidate.commission > 0 ? candidate.commission + "%" : "not confirmed");
     const evidence = document.createElement("p");
     evidence.className = "candidate-evidence";
     evidence.textContent = Number.isFinite(candidate.evidenceCoverage) && Number.isFinite(candidate.evidenceCount) && Number.isFinite(candidate.evidenceTotal)

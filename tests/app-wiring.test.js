@@ -100,3 +100,15 @@ test("campaign register search filters by product, platform, format, and campaig
   assert.match(app, /\[campaign\.productName, campaign\.platform, campaign\.format, campaign\.id\]/);
   assert.match(app, /No campaigns match this search/);
 });
+
+test("campaign register CSV import validates the exported schema and protects existing records", () => {
+  assert.ok(html.includes('id="importCampaignsCsv"'));
+  assert.ok(html.includes('id="importCampaigns"'));
+  assert.match(app, /function parseCampaignCsv\(text\)/);
+  assert.match(app, /CSV columns do not match the exported campaign register format/);
+  assert.match(app, /file\.size > 1024 \* 1024/);
+  assert.match(app, /const duplicates = parsed\.records\.length - unique\.length/);
+  assert.match(app, /Existing records will be kept/);
+  assert.match(app, /Import could not be saved to browser storage\. Existing records were preserved/);
+  assert.match(app, /safeCampaignUrl\(link\.trim\(\)\)/);
+});

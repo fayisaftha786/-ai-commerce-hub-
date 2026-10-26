@@ -432,6 +432,10 @@ $("saveContentCampaign").addEventListener("click", () => {
     $("campaignMessage").textContent = "Create a content pack and enter its product name before saving a campaign.";
     return;
   }
+  if (!requireContentReview("save this campaign")) {
+    $("campaignMessage").textContent = "Review and check all four Content Studio checklist items before saving this campaign.";
+    return;
+  }
   if (campaigns.length >= MAX_CAMPAIGNS) {
     $("campaignMessage").textContent = "Campaign register limit is 200. Export your register before clearing old entries.";
     return;
@@ -759,15 +763,25 @@ $("contentForm").addEventListener("submit", (event) => {
 });
 
 
+const CONTENT_REVIEW_IDS = ["reviewClaims", "reviewPrice", "reviewAffiliate", "reviewLink"];
+
 function contentReviewComplete() {
-  const ids = ["reviewClaims", "reviewPrice", "reviewAffiliate", "reviewLink"];
-  const complete = ids.every((id) => $(id).checked);
+  const complete = CONTENT_REVIEW_IDS.every((id) => $(id).checked);
   $("contentReviewStatus").textContent = complete
-    ? "Checklist marked complete. This does not independently verify claims, prices or links."
-    : "Before publishing, review all four items. This checklist does not independently verify them.";
+    ? "Checklist marked complete by you. This does not independently verify claims, prices or links."
+    : "Review all four items before copying, downloading, or saving this draft. This checklist does not independently verify them.";
   return complete;
 }
-["reviewClaims", "reviewPrice", "reviewAffiliate", "reviewLink"].forEach((id) => {
+
+function requireContentReview(action) {
+  if (contentReviewComplete()) return true;
+  $("contentMessage").textContent = "Cannot " + action + " yet. Review and check all four items first.";
+  const firstUnchecked = CONTENT_REVIEW_IDS.find((id) => !$(id).checked);
+  if (firstUnchecked) $(firstUnchecked).focus();
+  return false;
+}
+
+CONTENT_REVIEW_IDS.forEach((id) => {
   $(id).addEventListener("change", contentReviewComplete);
 });
 
@@ -777,6 +791,7 @@ $("copyContent").addEventListener("click", async () => {
     $("contentMessage").textContent = "Create a post or video plan first.";
     return;
   }
+  if (!requireContentReview("copy this content")) return;
   try {
     await navigator.clipboard.writeText(output);
     $("contentMessage").textContent = "Content pack copied.";
@@ -793,6 +808,7 @@ $("downloadContent").addEventListener("click", () => {
     $("contentMessage").textContent = "Create a post or video plan before downloading.";
     return;
   }
+  if (!requireContentReview("download this content")) return;
   const rawName = $("contentName").value.trim() || "content-pack";
   const safeName = rawName.normalize("NFKD")
     .replace(/[\u0300-\u036f]/g, "")

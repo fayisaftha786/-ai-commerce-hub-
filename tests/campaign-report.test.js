@@ -73,3 +73,24 @@ test("campaign report controls are wired and module is loaded before app.js", ()
   assert.ok(scripts.indexOf("campaign-report.js") < scripts.indexOf("app.js"));
   assert.match(app, /parseCampaignReport\(await file\.text\(\), campaigns\)/);
 });
+
+test("skips exact duplicate source rows to prevent double-counting", () => {
+  const row = "ACH-demo-123,2026-10-01,2026-10-07,10,2,20,0";
+  const result = parseCampaignReport(header + "\n" + row + "\n" + row, campaigns);
+  assert.equal(result.valid, true);
+  assert.equal(result.totalRows, 2);
+  assert.equal(result.duplicateRows, 1);
+  assert.equal(result.importedRows, 1);
+  assert.equal(result.reports[0].clicks, 10);
+  assert.equal(result.reports[0].orders, 2);
+  assert.equal(result.dataQuality.status, "review");
+  assert.equal(result.dataQuality.skippedRows, 1);
+});
+
+test("flags overlapping date ranges for the same campaign", () => {
+  const csv = header + "\nACH-demo-123,2026-10-01,2026-10-07,10,1,20,0\nACH-demo-123,2026-10-07,2026-10-14,20,2,40,0";
+  const result = parseCampaignReport(csv, campaigns);
+  assert.equal(result.valid, true);
+  assert.ok(result.reports.every((report) => report.warnings.some((warning) => /periods overlap/.test(warning))));
+  assert.equal(result.dataQuality.status, "review");
+});

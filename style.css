@@ -51,3 +51,17 @@ footer { color: #aab4c7; font-size: 12px; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; }
 }
+
+.check-label { display: flex; align-items: center; gap: 10px; }
+.check-label input { width: auto; margin: 0; }
+.candidate-card {
+  border: 1px solid #414c63; border-radius: 10px;
+  padding: 14px; margin: 12px 0; overflow-wrap: anywhere;
+}
+.candidate-card h3 { margin-top: 0; }
+button.secondary { background: #30394e; color: #edf1f8; border: 1px solid #53617c; }
+.hint { color: #aab4c7; font-size: 13px; }
+.notice {
+  background: #242b3c; border-left: 4px solid #f4d35e;
+  border-radius: 8px; padding: 14px; margin-top: 16px;
+}

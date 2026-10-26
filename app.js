@@ -180,49 +180,6 @@ $("copyOfferDraft").addEventListener("click", async () => {
   }
 });
 
-$("generate").addEventListener("click", () => {
-  const topic = $("topic").value.trim();
-  const language = $("language").value;
-  if (!topic) {
-    $("draft").value = "ആദ്യം ഒരു ഉൽപ്പന്നമോ വിഷയമോ നൽകുക.";
-    return;
-  }
-  const intro = language === "English"
-    ? `Discover ${topic}.`
-    : language === "Both"
-      ? `${topic} — പരിചയപ്പെടൂ / Discover ${topic}.`
-      : `${topic} പരിചയപ്പെടൂ.`;
-  const disclosure = language === "English"
-    ? "If this is an affiliate link, clearly disclose that relationship. Prices and availability may change."
-    : language === "Both"
-      ? "Affiliate link ആണെങ്കിൽ അത് വ്യക്തമായി അറിയിക്കുക. Prices and availability may change."
-      : "ഇത് affiliate link ആണെങ്കിൽ ആ കാര്യം വ്യക്തമായി അറിയിക്കുക. വിലയും ലഭ്യതയും മാറാം.";
-  $("draft").value =
-    `${intro}\n\n` +
-    "വാങ്ങുന്നതിന് മുമ്പ് ഉൽപ്പന്നത്തിന്റെ സവിശേഷതകളും വിലയും വിൽപ്പനക്കാരന്റെ വിവരങ്ങളും പരിശോധിക്കുക.\n\n" +
-    `${disclosure}\n\n` +
-    "#ProductFinds #Shopping";
-  draftsCreated += 1;
-  $("campaigns").textContent = String(draftsCreated);
-  $("message").textContent = "Template draft created. This is not AI-generated content yet.";
-});
-
-$("copyDraft").addEventListener("click", async () => {
-  const draft = $("draft").value;
-  if (!draft.trim()) {
-    $("message").textContent = "Create a draft first.";
-    return;
-  }
-  try {
-    await navigator.clipboard.writeText(draft);
-    $("message").textContent = "Draft copied.";
-  } catch {
-    $("draft").focus();
-    $("draft").select();
-    $("message").textContent = "Automatic copy is unavailable. The draft is selected; copy it manually.";
-  }
-});
-
 
 const CANDIDATE_KEY = "ai-commerce-hub.candidates.v1";
 let latestCandidate = null;

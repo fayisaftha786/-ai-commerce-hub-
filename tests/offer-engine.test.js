@@ -44,7 +44,7 @@ test("rejects malformed expiry dates", () => {
   assert.equal(analyzeOffer({ ...validInput, expiresAt: "not-a-date" }).valid, false);
 });
 
-test("marks expired offers and reduces their readiness score", () => {
+test("marks expired offers and recommends verification", () => {
   const result = analyzeOffer({ ...validInput, expiresAt: "2020-01-01" }, new Date("2030-01-01"));
   assert.equal(result.offer.expiryState, "expired");
   assert.ok(result.offer.recommendations.some((item) => item.includes("expired")));
@@ -59,7 +59,7 @@ test("creates a promo draft with disclosure and no fake urgency", () => {
   const result = analyzeOffer({ ...validInput, expiresAt: "" }, new Date("2030-01-01"));
   const draft = createPromoCopy(result.offer, "Malayalam", "WhatsApp");
   assert.match(draft, /Affiliate disclosure/);
-  assert.match(draft, /[ഇവിടെ നിങ്ങളുടെ സ്ഥിരീകരിച്ച ഉൽപ്പന്ന ലിങ്ക് ചേർക്കുക]/);
+  assert.ok(draft.includes("[ഇവിടെ നിങ്ങളുടെ സ്ഥിരീകരിച്ച ഉൽപ്പന്ന ലിങ്ക് ചേർക്കുക]"));
   assert.doesNotMatch(draft, /Offer expiry stated as/);
 });
 

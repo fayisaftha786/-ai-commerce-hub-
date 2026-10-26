@@ -71,3 +71,7 @@ button.secondary { background: #30394e; color: #edf1f8; border: 1px solid #53617
 #catalogResults ul { padding-left: 22px; }
 #catalogResults li { margin: 6px 0; }
 input[type="file"] { max-width: 100%; }
+
+.media-preview { border:1px dashed #53617c; border-radius:10px; min-height:80px; padding:12px; margin:12px 0; overflow-wrap:anywhere; }
+.media-preview img, .media-preview video { display:block; max-width:100%; max-height:420px; margin:auto; border-radius:8px; background:#000; }
+#socialQueue article, #socialAnalyticsResults article { margin:12px 0; }

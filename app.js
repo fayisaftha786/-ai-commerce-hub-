@@ -497,7 +497,16 @@ $("candidateForm").addEventListener("submit", (event) => {
   $("candidateResult").replaceChildren();
   latestCandidate = null;
   if (!result.valid) {
-    $("candidateResult").textContent = result.error;
+    const message = document.createElement("p");
+    message.textContent = result.error;
+    $("candidateResult").append(message);
+    if (Number.isFinite(result.evidenceCoverage)) {
+      const evidence = document.createElement("p");
+      evidence.textContent = "Evidence supplied: " + result.evidenceCount + "/" + result.evidenceTotal +
+        " (" + result.evidenceCoverage + "%) · Confidence: " + result.confidence +
+        ". This candidate was not scored or saved.";
+      $("candidateResult").append(evidence);
+    }
     return;
   }
   latestCandidate = result.candidate;

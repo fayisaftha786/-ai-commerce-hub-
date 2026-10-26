@@ -349,7 +349,7 @@ $("contentForm").addEventListener("submit", (event) => {
       platform: $("contentPlatform").value,
       type: $("contentType").value
     });
-    $("contentOutput").value = $("contentType").value === "Post" ? pack.post : pack.video;
+    $("contentOutput").value = $("contentType").value === "Post"\n      ? pack.post + "\\n\\n---------------- VIDEO PLAN ----------------\\n\\n" + pack.video\n      : pack.video + "\\n\\n---------------- POST CAPTION ----------------\\n\\n" + pack.post;
     draftsCreated += 1;
     $("campaigns").textContent = String(draftsCreated);
     $("contentMessage").textContent = "Draft prepared. Review every product claim and link before posting.";

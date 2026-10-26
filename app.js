@@ -13,7 +13,7 @@ const BACKUP_KEYS = [
   "ai-commerce-hub.products.v1",
   "ai-commerce-hub.campaigns.v1",
   "ai-commerce-hub.candidates.v1",
-  "ai-commerce-hub.catalog.v1"
+  "ai-commerce-hub.catalog-import.v1"
 ];
 const MAX_BACKUP_BYTES = 2 * 1024 * 1024;
 
@@ -53,7 +53,7 @@ function validateBackup(payload) {
   for (const [key, value] of Object.entries(payload.data)) {
     if (!allowed.has(key)) return { valid: false, error: "Backup contains an unknown data section; nothing was restored." };
     if (key === "ai-commerce-hub.products.v1" || key === "ai-commerce-hub.campaigns.v1" ||
-        key === "ai-commerce-hub.candidates.v1" || key === "ai-commerce-hub.catalog.v1") {
+        key === "ai-commerce-hub.candidates.v1" || key === "ai-commerce-hub.catalog-import.v1") {
       if (!Array.isArray(value)) return { valid: false, error: "Backup data is malformed; nothing was restored." };
     }
   }

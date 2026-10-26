@@ -258,7 +258,7 @@ function rankCatalogCsv(csvText) {
         if (trackingParameters.test(key)) parsedUrl.searchParams.delete(key);
       }
       parsedUrl.searchParams.sort();
-      if (parsedUrl.pathname.length > 1) parsedUrl.pathname = parsedUrl.pathname.replace(/\\/+$/, "");
+      if (parsedUrl.pathname.length > 1) parsedUrl.pathname = parsedUrl.pathname.replace(/\/+$/, "");
       identity = parsedUrl.href;
     } catch {
       continue;

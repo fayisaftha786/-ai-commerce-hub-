@@ -193,6 +193,52 @@
       <p class="hint">Use the same reporting period and metric definitions when comparing campaigns. Report totals are supplied by your source, not independently verified. This import does not prove commission has been approved or paid.</p>
     </section>
 
+    <section class="panel" aria-labelledby="socialDeskHeading">
+      <h2 id="socialDeskHeading">8. Social Media Desk</h2>
+      <p>Prepare a post, preview authorised media, open the platform, and analyze metrics you enter from its official insights. This browser-only version does not sign in to accounts or publish automatically.</p>
+      <div class="social-status notice">
+        <strong>Account connection status: Not connected</strong>
+        <p>Secure OAuth/API connection is not configured in this prototype. Never enter your social-media password here. Use the official platform site below.</p>
+      </div>
+      <div class="form-grid">
+        <label for="socialPlatform">Target platform
+          <select id="socialPlatform">
+            <option value="instagram">Instagram</option>
+            <option value="facebook">Facebook</option>
+            <option value="youtube">YouTube</option>
+            <option value="whatsapp">WhatsApp</option>
+          </select>
+        </label>
+        <label for="socialMediaFiles">Upload image/video (up to 5 files, 50 MB each)
+          <input id="socialMediaFiles" type="file" accept="image/*,video/*" multiple>
+        </label>
+      </div>
+      <p id="socialUploadStatus" role="status" aria-live="polite">Choose media to preview it on this device. Files are not uploaded to this app.</p>
+      <div id="socialMediaPreview" class="social-media-preview" aria-live="polite"></div>
+      <label for="socialCaption">Post caption / description
+        <textarea id="socialCaption" rows="6" maxlength="5000" placeholder="Write your post caption. Include a clear affiliate disclosure when relevant."></textarea>
+      </label>
+      <button id="copySocialCaption" type="button">Copy caption</button>
+      <button id="openSocialPlatform" type="button" class="secondary">Open official platform</button>
+      <p id="socialPostStatus" role="status" aria-live="polite"></p>
+      <p class="hint">Posting workflow: copy the caption, open the official platform, select/upload the media there, review the preview and publish yourself. Actual automatic posting requires approved API access and account permissions.</p>
+      <h3>Social Media Analytics</h3>
+      <p>Enter numbers from the platform's official insights for one post and one consistent reporting period.</p>
+      <form id="socialAnalyticsForm">
+        <div class="form-grid">
+          <label for="socialReach">Reach / viewers<input id="socialReach" type="number" min="0" step="1" required value="0"></label>
+          <label for="socialLikes">Likes<input id="socialLikes" type="number" min="0" step="1" required value="0"></label>
+          <label for="socialComments">Comments<input id="socialComments" type="number" min="0" step="1" required value="0"></label>
+          <label for="socialShares">Shares / saves<input id="socialShares" type="number" min="0" step="1" required value="0"></label>
+          <label for="socialClicks">Link clicks<input id="socialClicks" type="number" min="0" step="1" required value="0"></label>
+          <label for="socialOrders">Attributed orders<input id="socialOrders" type="number" min="0" step="1" required value="0"></label>
+        </div>
+        <button type="submit">Analyze performance</button>
+      </form>
+      <div id="socialAnalyticsResults" aria-live="polite"></div>
+      <p class="hint">Engagement rate uses (likes + comments + shares/saves) ÷ reach. Click-through rate uses clicks ÷ reach. Order rate uses attributed orders ÷ clicks. These calculations are only as reliable as the figures you enter; orders require platform/affiliate attribution.</p>
+    </section>
+
     <section class="panel">
       <h2>8. Browser Video Maker</h2>
       <p>Turn product images you are authorised to use into a vertical slideshow video. This runs on your device; images are not uploaded.</p>
@@ -240,6 +286,7 @@
   <script src="catalog-import.js"></script>
   <script src="campaign-report.js"></script>
   <script src="video-maker.js"></script>
+  <script src="social-center.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

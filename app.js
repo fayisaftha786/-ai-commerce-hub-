@@ -492,21 +492,12 @@ $("candidateForm").addEventListener("submit", (event) => {
     reviews: $("candidateReviews").value,
     demand: $("candidateDemand").value,
     competition: $("candidateCompetition").value,
-    inStock: $("candidateStock").value === "in-stock" ? true : $("candidateStock").value === "out-of-stock" ? false : undefined
+    inStock: $("candidateStock").checked
   });
   $("candidateResult").replaceChildren();
   latestCandidate = null;
   if (!result.valid) {
-    const message = document.createElement("p");
-    message.textContent = result.error;
-    $("candidateResult").append(message);
-    if (Number.isFinite(result.evidenceCoverage)) {
-      const evidence = document.createElement("p");
-      evidence.textContent = "Evidence supplied: " + result.evidenceCount + "/" + result.evidenceTotal +
-        " (" + result.evidenceCoverage + "%) · Confidence: " + result.confidence +
-        ". This candidate was not scored or saved.";
-      $("candidateResult").append(evidence);
-    }
+    $("candidateResult").textContent = result.error;
     return;
   }
   latestCandidate = result.candidate;

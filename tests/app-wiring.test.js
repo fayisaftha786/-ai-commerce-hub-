@@ -177,6 +177,7 @@ test("product discovery does not prefill demand or competition as if they were v
   assert.doesNotMatch(html, /id="candidateDemand"[\s\S]{0,300}value="3" selected/);
   assert.doesNotMatch(html, /id="candidateCompetition"[\s\S]{0,300}value="3" selected/);
   assert.match(html, /does not mistake an unreviewed default for evidence/);
+  assert.match(html, /<select id="candidateStock"><option value="" selected>Not checked yet<\/option>/);
 });
 
 
@@ -192,4 +193,17 @@ test("catalog import UI states the link and commission prerequisites for shortli
   assert.match(html, /valid HTTPS product\/approved affiliate link/);
   assert.match(html, /positive confirmed commission rate/);
   assert.match(catalog, /Affiliate commission is missing or not confirmed/);
+});
+
+
+test("manual product discovery captures link, source, checked date, and explicit stock state", () => {
+  for (const id of ["candidateUrl", "candidateSource", "candidateCheckedAt", "candidateStock"]) {
+    assert.ok(html.includes('id="' + id + '"'), "missing manual evidence control: " + id);
+  }
+  assert.match(app, /\$\\("candidateUrl"\\)\\.value/);
+  assert.match(app, /\$\\("candidateSource"\\)\\.value/);
+  assert.match(app, /\$\\("candidateCheckedAt"\\)\\.value/);
+  assert.match(app, /\$\\("candidateStock"\\)\\.value === "yes" \\? true/);
+  assert.match(app, /Evidence freshness:/);
+  assert.match(app, /confirmed in stock/);
 });

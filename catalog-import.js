@@ -72,7 +72,12 @@ function rankCatalogCsv(csvText) {
   const numeric = (cells, key, options = {}) => {
     const raw = value(cells, key);
     if (raw === "") return options.optional ? null : options.defaultValue;
-    const parsedValue = Number(raw.replace(/[₹,%\s]/g, ""));
+    let normalized = raw.replace(/[₹%\s]/g, "");
+    if (normalized.includes(",")) {
+      if (!/^\d{1,3}(,\d{3})*(\.\d+)?$/.test(normalized)) return NaN;
+      normalized = normalized.replace(/,/g, "");
+    }
+    const parsedValue = Number(normalized);
     if (!Number.isFinite(parsedValue) || parsedValue < 0 || (options.max != null && parsedValue > options.max)) return NaN;
     return parsedValue;
   };

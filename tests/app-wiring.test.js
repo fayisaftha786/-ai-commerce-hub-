@@ -61,3 +61,11 @@ test("workspace backup and restore controls are present and validated", () => {
   assert.match(app, /window\.confirm\("Restore this backup\?/);
   assert.match(app, /best-effort rollback/);
 });
+
+
+test("candidate stock checkbox wiring passes a boolean to the discovery engine", () => {
+  const stockInput = html.match(/<input\b(?=[^>]*\bid="candidateStock")([^>]*)>/i);
+  assert.ok(stockInput, "candidate stock input must exist");
+  assert.match(stockInput[1], /\btype="checkbox"/i);
+  assert.match(app, /inStock:\s*\$\("candidateStock"\)\.checked/);
+});

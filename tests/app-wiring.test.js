@@ -127,3 +127,13 @@ test("CSV exports neutralize formula-like cells before quoting", () => {
   assert.match(app, /text = "'" \+ text/);
   assert.match(app, /text\.replace\(\/"\/g, '""'\)/);
 });
+
+
+test("Content Studio includes an honest pre-publish review checklist", () => {
+  for (const id of ["reviewClaims", "reviewPrice", "reviewAffiliate", "reviewLink", "contentReviewStatus"]) {
+    assert.ok(html.includes('id="' + id + '"'));
+  }
+  assert.match(app, /function contentReviewComplete\(\)/);
+  assert.match(app, /Checklist marked complete\. This does not independently verify claims, prices or links/);
+  assert.match(app, /Before publishing, review all four items/);
+});

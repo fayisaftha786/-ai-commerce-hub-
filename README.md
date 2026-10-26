@@ -62,3 +62,8 @@ The content studio generates a storyboard/script and caption; it does not render
 ## Safety and compliance
 
 Use affiliate links only after approval by the relevant programme. Follow marketplace and social platform rules, clearly disclose affiliate relationships, and do not make unsupported product or discount claims. Never commit API keys, access tokens or passwords. Before public production use, add server-side validation, privacy controls, backups and security review.
+
+
+### Product shortlist evidence checks
+
+The product discovery score is a transparent heuristic based on entered information, not a live trend feed or sales prediction. Blank rating, review count, commission, demand or competition fields are treated as unknown and do not earn score points. When key evidence is missing, the result is labelled **Need more evidence** instead of recommending the product for promotion. Estimated commission is shown only when a positive commission rate has been entered; it is not a payout guarantee. Verify current stock, price, eligibility and programme terms before publishing.

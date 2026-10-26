@@ -101,7 +101,7 @@ function createContentPack(input) {
     : name + ". " + benefit + ". " + proof + ". നിലവിലെ വിലയും വിവരങ്ങളും ലിങ്കിൽ പരിശോധിച്ച ശേഷം തീരുമാനിക്കൂ.";
   const video = [
     "SHORT VIDEO PLAN (20–25 seconds)",
-    "0–8s — AFFILIATE DISCLOSURE: Show a clear, readable \"Affiliate\" label on-screen for at least 8 seconds in this 20–25 second video. Do not hide it among hashtags.",
+    "0–8s — AFFILIATE DISCLOSURE: Show a clear, readable \"Affiliate\" label on-screen for at least 9 seconds in this 20–25 second video. Do not hide it among hashtags.",
     "0–2s — HOOK: " + hook,
     "2–6s — SHOW: Show the real product clearly; use your own footage or media you are authorised to use.",
     "6–12s — BENEFIT: Demonstrate " + benefit + " for " + audience + ". Do not claim features you cannot verify.",

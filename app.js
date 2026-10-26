@@ -646,6 +646,8 @@ function renderCandidates() {
     title.textContent = candidate.name + " — " + candidate.score + "/100";
     const details = document.createElement("p");
     details.textContent = candidate.label + " · ₹" + Number(candidate.price).toLocaleString("en-IN") + " · demand " + (Number.isFinite(candidate.demand) ? candidate.demand + "/5" : "not checked") + " · competition " + (Number.isFinite(candidate.competition) ? candidate.competition + "/5" : "not checked") + " · commission " + (Number.isFinite(candidate.commission) && candidate.commission > 0 ? candidate.commission + "%" : "not confirmed");
+    const provenance = document.createElement("p");
+    provenance.textContent = "Stock: " + (candidate.inStock === true ? "confirmed in stock" : candidate.inStock === false ? "out of stock" : "not checked") + " · Evidence: " + (candidate.evidenceFreshness || "unknown") + " · Source: " + (candidate.source || "not recorded") + " · Checked: " + (candidate.checkedAt || "not recorded");
     const evidence = document.createElement("p");
     evidence.className = "candidate-evidence";
     evidence.textContent = Number.isFinite(candidate.evidenceCoverage) && Number.isFinite(candidate.evidenceCount) && Number.isFinite(candidate.evidenceTotal)
@@ -661,7 +663,17 @@ function renderCandidates() {
       saveCandidates();
       renderCandidates();
     });
-    card.append(title, details, evidence, remove);
+    card.append(title, details, provenance, evidence);
+    const savedUrl = safeCampaignUrl(candidate.url);
+    if (savedUrl) {
+      const productLink = document.createElement("a");
+      productLink.href = savedUrl;
+      productLink.target = "_blank";
+      productLink.rel = "noopener noreferrer sponsored";
+      productLink.textContent = "Open supplied product link";
+      card.append(productLink);
+    }
+    card.append(remove);
     root.append(card);
   }
 }
@@ -681,7 +693,10 @@ $("candidateForm").addEventListener("submit", (event) => {
     reviews: $("candidateReviews").value,
     demand: $("candidateDemand").value,
     competition: $("candidateCompetition").value,
-    inStock: $("candidateStock").checked
+    inStock: $("candidateStock").value === "yes" ? true : $("candidateStock").value === "no" ? false : null,
+    url: $("candidateUrl").value,
+    source: $("candidateSource").value,
+    checkedAt: $("candidateCheckedAt").value
   });
   $("candidateResult").replaceChildren();
   latestCandidate = null;
@@ -696,13 +711,27 @@ $("candidateForm").addEventListener("submit", (event) => {
   heading.textContent = result.candidate.label + " · " + result.candidate.score + "/100";
   const commission = document.createElement("p");
   commission.textContent = "Estimated commission at entered rate: " + formatMoney(result.candidate.estimatedCommission) + " per qualifying order, before returns or adjustments.";
+  const provenance = document.createElement("p");
+  provenance.textContent = "Evidence freshness: " + result.candidate.evidenceFreshness + " · Source: " +
+    (result.candidate.source || "not recorded") + " · Checked: " + (result.candidate.checkedAt || "not recorded") +
+    " · Stock: " + (result.candidate.inStock === true ? "confirmed in stock" : result.candidate.inStock === false ? "out of stock" : "not checked");
   const list = document.createElement("ul");
   for (const check of result.candidate.checks) {
     const item = document.createElement("li");
     item.textContent = check;
     list.append(item);
   }
-  card.append(heading, commission, list);
+  card.append(heading, commission, provenance);
+  const candidateUrl = safeCampaignUrl(result.candidate.url);
+  if (candidateUrl) {
+    const productLink = document.createElement("a");
+    productLink.href = candidateUrl;
+    productLink.target = "_blank";
+    productLink.rel = "noopener noreferrer sponsored";
+    productLink.textContent = "Open supplied product link";
+    card.append(productLink);
+  }
+  card.append(list);
   $("candidateResult").append(card);
 });
 

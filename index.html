@@ -94,14 +94,29 @@
             <select id="candidateCompetition"><option value="" selected>Not checked yet</option><option value="1">1 — low</option><option value="2">2 — manageable</option><option value="3">3 — medium</option><option value="4">4 — high</option><option value="5">5 — very high</option></select>
           </label>
         </div>
-        <label class="check-label" for="candidateStock"><input id="candidateStock" type="checkbox" checked> Seller currently shows in stock</label>
+        <label for="candidateUrl">Approved product / affiliate link (HTTPS)
+          <input id="candidateUrl" type="url" maxlength="2048" inputmode="url" placeholder="https://...">
+        </label>
+        <label for="candidateSource">Evidence source
+          <input id="candidateSource" maxlength="160" placeholder="Official product listing or affiliate dashboard">
+        </label>
+        <label for="candidateCheckedAt">Date checked
+          <input id="candidateCheckedAt" type="date">
+        </label>
+        <label for="candidateStock">Stock status
+          <select id="candidateStock">
+            <option value="" selected>Not checked yet</option>
+            <option value="yes">In stock — confirmed</option>
+            <option value="no">Out of stock</option>
+          </select>
+        </label>
         <button type="submit">Score product candidate</button>
         <button id="saveCandidate" type="button" class="secondary">Save to shortlist</button>
       </form>
       <div id="candidateResult" aria-live="polite"></div>
       <h3>Saved shortlist</h3>
       <div id="candidateList" aria-live="polite"></div>
-      <p class="hint">Demand and competition start as “Not checked yet” so the app does not mistake an unreviewed default for evidence. Choose a rating only after checking current signals. The score is not a live popularity ranking. Confirm current price, stock, return terms and commission before publishing.</p>
+      <p class="hint">Demand and competition and stock status start as “Not checked yet”. To qualify for priority review, provide a valid HTTPS product/affiliate link, positive confirmed commission, evidence source, and a real check date within the last 7 days. The app checks metadata completeness only; it does not verify the source or fetch live sales data. Confirm current price, stock, return terms and affiliate eligibility before publishing.</p>
     </section>
 
     <section class="panel">

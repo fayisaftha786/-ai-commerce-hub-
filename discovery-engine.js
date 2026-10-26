@@ -1,5 +1,14 @@
 "use strict";
 
+function calculateManualCandidateAgeDays(checkedAt) {
+  const utils = typeof module !== "undefined" && module.exports
+    ? require("./product-utils")
+    : typeof window !== "undefined" ? window.AICommerceProductUtils : null;
+  return typeof utils?.calculateCalendarDateAgeDays === "function"
+    ? utils.calculateCalendarDateAgeDays(checkedAt)
+    : null;
+}
+
 function scoreCandidate(input) {
   if (!input || typeof input !== "object" || Array.isArray(input)) {
     return { valid: false, error: "Enter product details first." };
@@ -14,7 +23,31 @@ function scoreCandidate(input) {
   const commission = number(input.commission, 0);
   const demand = number(input.demand, 3);
   const competition = number(input.competition, 3);
-  const inStock = input.inStock !== false;
+  const hasStockStatus = input.inStock === true || input.inStock === false;
+  const inStock = input.inStock === true ? true : input.inStock === false ? false : null;
+  const rawUrl = typeof input.url === "string" ? input.url.trim() : "";
+  let url = "";
+  if (rawUrl && rawUrl.length <= 2048) {
+    try {
+      const parsedUrl = new URL(rawUrl);
+      if (parsedUrl.protocol === "https:" && parsedUrl.hostname && !parsedUrl.username && !parsedUrl.password) {
+        url = parsedUrl.href;
+      }
+    } catch {
+      url = "";
+    }
+  }
+  const source = typeof input.source === "string" ? input.source.trim().slice(0, 160) : "";
+  const checkedAt = typeof input.checkedAt === "string" ? input.checkedAt.trim() : "";
+  const evidenceAgeDays = calculateManualCandidateAgeDays(checkedAt);
+  const evidenceFreshness = evidenceAgeDays === null
+    ? "unknown"
+    : evidenceAgeDays < 0
+      ? "future"
+      : evidenceAgeDays > 7
+        ? "stale"
+        : "current";
+  const evidenceTraceable = Boolean(url) && Boolean(source) && evidenceFreshness === "current";
   if (!Number.isFinite(price) || price <= 0) return { valid: false, error: "Enter a valid product price greater than zero." };
   if (!Number.isFinite(rating) || rating < 0 || rating > 5) return { valid: false, error: "Rating must be from 0 to 5." };
   if (!Number.isFinite(reviews) || reviews < 0 || reviews > 100000000) return { valid: false, error: "Review count must be a non-negative number." };
@@ -35,14 +68,17 @@ function scoreCandidate(input) {
   const commissionPoints = hasCommission ? Math.min(15, commission / 2) : 0;
   const pricePoints = price >= 199 && price <= 1999 ? 10 : price < 199 || price <= 3999 ? 6 : 3;
   const competitionPoints = hasCompetition ? (5 - competition) * 3 : 0; // max 12
-  const stockPoints = inStock ? 3 : 0;
+  const stockPoints = inStock === true ? 3 : 0;
+  const hasUrl = Boolean(url);
+  const hasSource = Boolean(source);
   const evidenceFields = [
     true, hasRating, hasReviews, hasCommission && commission > 0,
-    hasDemand, hasCompetition, input.inStock !== undefined
+    hasDemand, hasCompetition, hasStockStatus, hasUrl, hasSource,
+    evidenceFreshness === "current"
   ];
   const evidenceCount = evidenceFields.filter(Boolean).length;
   const evidenceCoverage = Math.round((evidenceCount / evidenceFields.length) * 100);
-  const confidence = evidenceCoverage >= 85 ? "High" : evidenceCoverage >= 65 ? "Medium" : "Low";
+  const confidence = evidenceCoverage === 100 ? "High" : evidenceCoverage >= 70 ? "Medium" : "Low";
   const score = Math.round(Math.max(0, Math.min(100,
     demandPoints + ratingPoints + reviewPoints + commissionPoints + pricePoints + competitionPoints + stockPoints
   )));
@@ -52,21 +88,31 @@ function scoreCandidate(input) {
   if (!hasCommission || commission <= 0) checks.push("Commission is missing or zero; verify the approved affiliate dashboard before prioritising this product.");
   if (!hasDemand) checks.push("Missing demand signal: review recent search suggestions, audience questions or marketplace activity.");
   if (!hasCompetition) checks.push("Missing competition estimate: compare similar listings and competing posts.");
-  if (demand <= 2) checks.push("Demand evidence is weak; check search suggestions, social comments or recent marketplace activity.");
-  if (rating < 4) checks.push("Rating is below 4/5; read recent negative reviews before recommending.");
-  if (reviews < 30) checks.push("Few reviews: verify product quality and seller reliability carefully.");
-  if (!inStock) checks.push("Marked out of stock; do not promote until availability is confirmed.");
+  if (!hasUrl) checks.push("Missing valid HTTPS product/affiliate link; verify the approved link before promotion.");
+  if (!hasSource) checks.push("Evidence source is missing; record the listing or dashboard used.");
+  if (!checkedAt) checks.push("Date checked is missing; enter the date you last verified the evidence.");
+  else if (evidenceAgeDays === null) checks.push("Date checked is invalid; use a real date in YYYY-MM-DD format.");
+  else if (evidenceAgeDays < 0) checks.push("Date checked is in the future; correct it before promotion.");
+  else if (evidenceAgeDays > 7) checks.push("Evidence is over 7 days old; re-check price, stock and commission before promotion.");
+  if (evidenceFreshness === "current" && source && url) checks.push("Evidence source/date are recorded; this does not independently verify the source or data.");
+  if (demand <= 2 && hasDemand) checks.push("Demand evidence is weak; check search suggestions, social comments or recent marketplace activity.");
+  if (hasRating && rating < 4) checks.push("Rating is below 4/5; read recent negative reviews before recommending.");
+  if (hasReviews && reviews < 30) checks.push("Few reviews: verify product quality and seller reliability carefully.");
+  if (inStock === false) checks.push("Marked out of stock; do not promote until availability is confirmed.");
+  else if (inStock === null) checks.push("Stock status is not checked; verify current availability.");
   checks.push("Demand and competition are user-entered estimates, not live marketplace statistics.");
   checks.push("Verify current price, shipping, returns, product variants and affiliate eligibility before posting.");
   return {
     valid: true,
     candidate: {
-      name, price, rating, reviews, commission, demand: hasDemand ? demand : null, competition: hasCompetition ? competition : null, inStock, score,
+      name, price, rating, reviews, commission, demand: hasDemand ? demand : null, competition: hasCompetition ? competition : null, inStock, stockKnown: hasStockStatus, url, source, checkedAt: evidenceFreshness === "current" || evidenceAgeDays !== null ? checkedAt : "", evidenceAgeDays, evidenceFreshness, evidenceTraceable, score,
       evidenceCount, evidenceTotal: evidenceFields.length, evidenceCoverage, confidence,
-      label: !hasRating || !hasReviews || !hasCommission || commission <= 0 || !hasDemand || !hasCompetition
-        ? "Need more evidence"
-        : !inStock ? "Do not promote — out of stock"
-        : score >= 75 ? "Prioritize for review" : score >= 55 ? "Test with a small post" : "Research more first",
+      label: inStock === false
+        ? "Do not promote — out of stock"
+        : !hasRating || !hasReviews || !hasCommission || commission <= 0 || !hasDemand || !hasCompetition ||
+          !hasStockStatus || !hasUrl || !hasSource || evidenceFreshness !== "current"
+          ? "Need more evidence"
+          : score >= 75 ? "Prioritize for review" : score >= 55 ? "Test with a small post" : "Research more first",
       estimatedCommission: hasCommission && commission > 0 ? Math.round(price * commission) / 100 : null,
       checks
     }
@@ -163,8 +209,11 @@ function createContentPack(input) {
 
 function compareCandidatesByReadiness(a, b) {
   const readinessRank = (candidate) => {
-    if (candidate?.inStock === false) return 2;
-    if (!candidate?.label || candidate.label === "Need more evidence") return 1;
+    if (candidate?.inStock === false) return 3;
+    if (!candidate?.label || candidate.label === "Need more evidence" ||
+        candidate?.evidenceTraceable !== true || !candidate?.url ||
+        !(Number(candidate?.commission) > 0) || candidate?.inStock !== true) return 2;
+    if (candidate.label === "Research more first") return 1;
     return 0;
   };
   return readinessRank(a) - readinessRank(b) || Number(b?.score || 0) - Number(a?.score || 0);

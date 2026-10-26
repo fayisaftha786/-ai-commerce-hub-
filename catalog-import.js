@@ -45,18 +45,12 @@ function parseCsvRows(text) {
 }
 
 function calculateEvidenceAgeDays(checkedAt, now = new Date()) {
-  if (typeof checkedAt !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(checkedAt)) return null;
-  const checkedDate = new Date(checkedAt + "T00:00:00Z");
-  if (!Number.isFinite(checkedDate.getTime()) || checkedDate.toISOString().slice(0, 10) !== checkedAt) return null;
-  // checked_at is a calendar date, not a timestamp. Compare calendar days in the
-  // viewer's local timezone so today's date is never treated as future before UTC midnight.
-  const localToday = [
-    now.getFullYear(),
-    String(now.getMonth() + 1).padStart(2, "0"),
-    String(now.getDate()).padStart(2, "0")
-  ].join("-");
-  const todayDate = new Date(localToday + "T00:00:00Z");
-  return Math.floor((todayDate.getTime() - checkedDate.getTime()) / 86400000);
+  const utils = typeof module !== "undefined" && module.exports
+    ? require("./product-utils")
+    : typeof window !== "undefined" ? window.AICommerceProductUtils : null;
+  return typeof utils?.calculateCalendarDateAgeDays === "function"
+    ? utils.calculateCalendarDateAgeDays(checkedAt, now)
+    : null;
 }
 
 function rankCatalogCsv(csvText) {

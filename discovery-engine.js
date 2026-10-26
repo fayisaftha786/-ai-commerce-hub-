@@ -106,7 +106,7 @@ function createContentPack(input) {
     "2–6s — SHOW: Show the real product clearly; use your own footage or media you are authorised to use.",
     "6–12s — BENEFIT: Demonstrate " + benefit + " for " + audience + ". Do not claim features you cannot verify.",
     "12–17s — PROOF: Show only the verified detail: " + proof + ".",
-    "17–25s — PRICE + CTA: " + safePrice + " Invite viewers to check the link for current availability; the affiliate label must already have been visible for at least 8 seconds.",
+    "17–25s — PRICE + CTA: " + safePrice + " Invite viewers to check the link for current availability; the affiliate label must already have been visible for at least 9 seconds.",
     "",
     "VOICE-OVER",
     voice,

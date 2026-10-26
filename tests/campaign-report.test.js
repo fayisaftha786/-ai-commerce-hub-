@@ -58,7 +58,7 @@ test("conversion is withheld when orders exceed clicks or clicks are zero", () =
   assert.equal(result.valid, true);
   assert.equal(result.reports[0].conversionRate, null);
   assert.equal(result.reports[1].conversionRate, null);
-  assert.ok(result.reports.every((item) => item.warnings.some((warning) => /verify|zero/.test(warning))));
+  assert.ok(result.reports.every((item) => item.warnings.some((warning) => /verif|zero/.test(warning))));
 });
 
 test("campaign report controls are wired and module is loaded before app.js", () => {

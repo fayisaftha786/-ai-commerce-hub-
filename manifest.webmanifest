@@ -1,0 +1,19 @@
+{
+  "name": "AI Commerce Hub",
+  "short_name": "AI Commerce",
+  "description": "Research affiliate products, compare evidence and prepare responsible promotional content.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#101522",
+  "theme_color": "#101522",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

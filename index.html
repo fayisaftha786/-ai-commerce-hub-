@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#101522">
   <meta name="description" content="Evaluate affiliate offers, shortlist products and create responsible promotional posts and video plans.">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>AI Commerce Hub — Product & Content Studio</title>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -321,5 +326,13 @@
   <script src="video-maker.js"></script>
   <script src="social-center.js"></script>
   <script src="app.js"></script>
+  <script>
+    // Service-worker caching is optional; the app remains usable online if registration is blocked.
+    if ("serviceWorker" in navigator && location.protocol !== "file:") {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+      });
+    }
+  </script>
 </body>
 </html>

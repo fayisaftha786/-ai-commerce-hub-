@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="AI Commerce Hub">
+  <rect width="512" height="512" rx="104" fill="#101522"/>
+  <path d="M114 143h42l34 179a30 30 0 0 0 29 24h139a30 30 0 0 0 29-23l31-117H178" fill="none" stroke="#f5f7fb" stroke-width="25" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="236" cy="393" r="22" fill="#44d7b6"/>
+  <circle cx="354" cy="393" r="22" fill="#44d7b6"/>
+  <path d="M256 105v82m-41-41h82" stroke="#44d7b6" stroke-width="22" stroke-linecap="round"/>
+</svg>

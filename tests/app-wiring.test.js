@@ -137,3 +137,12 @@ test("Content Studio includes an honest pre-publish review checklist", () => {
   assert.match(app, /Checklist marked complete\. This does not independently verify claims, prices or links/);
   assert.match(app, /Before publishing, review all four items/);
 });
+
+test("Content Studio requires all four review checks before copy, download, or campaign save", () => {
+  assert.match(app, /function requireContentReview\(action\)/);
+  assert.match(app, /CONTENT_REVIEW_IDS\.find\(\(id\) => !\$\(id\)\.checked\)/);
+  assert.match(app, /if \(!requireContentReview\("copy this content"\)\) return/);
+  assert.match(app, /if \(!requireContentReview\("download this content"\)\) return/);
+  assert.match(app, /if \(!requireContentReview\("save this campaign"\)\)/);
+  assert.match(html, /All four items must be reviewed and checked before copying, downloading, or saving this draft/);
+});

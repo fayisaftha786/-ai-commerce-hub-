@@ -33,7 +33,7 @@ function analyzeOffer(input, now = new Date()) {
   let expiryTime = null;
   if (expiryText) {
     // A date-only expiry means the offer is valid through that calendar day.
-    const dateOnly = /^\\d{4}-\\d{2}-\\d{2}$/.test(expiryText);
+    const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(expiryText);
     expiryTime = Date.parse(dateOnly ? expiryText + "T23:59:59.999Z" : expiryText);
     if (!Number.isFinite(expiryTime)) {
       return { valid: false, error: "Enter a valid offer expiry date or leave it blank." };
@@ -110,7 +110,7 @@ function createPromoCopy(offer, language = "Malayalam", channel = "WhatsApp") {
   const urgency = offer.expiryState === "upcoming" && offer.expiresAt
     ? `Offer expiry stated as: ${offer.expiresAt}. Please verify availability.`
     : "";
-  const disclosure = "Affiliate: I may earn a commission from eligible purchases at no extra cost to you. Prices and availability can change.";
+  const disclosure = "Affiliate disclosure: I may earn a commission from eligible purchases at no extra cost to you. Prices and availability can change.";
   const ml = [
     disclosure,
     `🛍️ ${offer.productName}`,

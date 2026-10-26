@@ -83,7 +83,7 @@ test("saved candidate cards explain evidence coverage and handle older records",
   assert.match(app, /candidate\.evidenceCoverage/);
   assert.match(app, /Evidence coverage unavailable for this older saved record/);
   assert.match(app, /card\.append\(title, details, provenance, evidence\)/);
-  assert.match(app, /card\.append\(remove\)/);
+  assert.match(app, /card\.append\(contentButton, remove\)/);
 });
 
 

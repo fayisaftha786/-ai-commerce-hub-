@@ -30,3 +30,16 @@ test("imported catalog products can be transferred to Content Studio without sta
   assert.match(app, /\$\("contentBenefit"\)\.value = ""/);
   assert.match(app, /\$\("contentProof"\)\.value = ""/);
 });
+
+
+test("campaign registry controls exist and are wired to local campaign storage and CSV export", () => {
+  const ids = new Set([...html.matchAll(/\\bid="([^"]+)"/g)].map((match) => match[1]));
+  for (const id of ["saveContentCampaign", "exportCampaigns", "campaignList", "campaignMessage"]) {
+    assert.ok(ids.has(id), "missing campaign UI id: " + id);
+  }
+  assert.match(app, /const CAMPAIGN_KEY = "ai-commerce-hub\\.campaigns\\.v1"/);
+  assert.match(app, /campaigns\\.push\\(campaign\\)/);
+  assert.match(app, /campaign_id/);
+  assert.match(app, /does not attach tracking to an affiliate link|does not track external clicks/i);
+  assert.match(app, /parsed\\.protocol === "https:"/);
+});

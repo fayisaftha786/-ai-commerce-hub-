@@ -383,13 +383,31 @@ function renderImportedCatalog(records, errors = []) {
     const readiness = document.createElement("p");
     readiness.textContent = "Promotion guidance: " + record.promotionReadiness +
       ". This is a rule-based caution, not a sales prediction.";
+    const estimate = document.createElement("p");
+    estimate.textContent = "Estimated commission per qualifying order: ₹" +
+      Number(record.estimatedCommissionPerOrder || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 }) +
+      (record.estimatedCommissionAfterReturns !== null && record.estimatedCommissionAfterReturns !== undefined
+        ? " · Illustrative estimate after supplied returns: ₹" + Number(record.estimatedCommissionAfterReturns).toLocaleString("en-IN", { maximumFractionDigits: 2 })
+        : " · After-return estimate unavailable");
+    const estimateNote = document.createElement("p");
+    estimateNote.textContent = "Estimates use entered price and commission; actual payouts depend on affiliate rules, cancellations and attribution.";
+    const rationaleHeading = document.createElement("strong");
+    rationaleHeading.textContent = "Why this guidance?";
+    const rationale = document.createElement("ul");
+    for (const reason of (record.recommendationReasons || [])) {
+      const li = document.createElement("li");
+      li.textContent = reason;
+      rationale.append(li);
+    }
+    const nextAction = document.createElement("p");
+    nextAction.textContent = "Next step: " + (record.nextAction || "Verify the product details before promotion.");
     const warnings = document.createElement("ul");
     for (const warning of record.warnings) {
       const li = document.createElement("li");
       li.textContent = warning;
       warnings.append(li);
     }
-    card.append(heading, details, evidence, readiness);
+    card.append(heading, details, evidence, readiness, estimate, estimateNote, rationaleHeading, rationale, nextAction);
     if (record.url) {
       const link = document.createElement("a");
       link.href = record.url;

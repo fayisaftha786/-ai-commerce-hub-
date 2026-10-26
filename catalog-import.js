@@ -126,7 +126,12 @@ function rankCatalogCsv(csvText) {
     const inStock = positiveStock.includes(rawStock) ? true : negativeStock.includes(rawStock) ? false : null;
     const hasOrders = orders !== null;
     const hasClicks = clicks !== null;
-    const salesPoints = hasOrders ? Math.min(35, Math.log10(orders + 1) * 12) : 0;
+    const ordersPerDay = orders !== null && periodDays ? orders / periodDays : null;
+    const clicksPerDay = clicks !== null && periodDays ? clicks / periodDays : null;
+    // A 30-day equivalent makes different reporting windows more comparable;
+    // it is a normalization, not a forecast of future sales.
+    const normalizedOrders = orders === null ? null : periodDays ? ordersPerDay * 30 : orders;
+    const salesPoints = normalizedOrders !== null ? Math.min(35, Math.log10(normalizedOrders + 1) * 12) : 0;
     const returnRate = returns !== null && orders !== null && orders > 0 ? returns / orders : null;
     const returnPenalty = returnRate === null ? 0 : Math.min(20, returnRate * 100);
     const conversionRate = hasOrders && hasClicks && clicks > 0 ? orders / clicks : null;
@@ -161,8 +166,6 @@ function rankCatalogCsv(csvText) {
         : conversionIsPlausible
           ? "Partial"
           : "Limited";
-    const ordersPerDay = orders !== null && periodDays ? orders / periodDays : null;
-    const clicksPerDay = clicks !== null && periodDays ? clicks / periodDays : null;
     const metricConflict = (hasOrders && hasClicks && clicks === 0 && orders > 0) ||
       (hasOrders && hasClicks && clicks > 0 && orders > clicks) ||
       (returns !== null && orders !== null && returns > orders);
@@ -175,11 +178,32 @@ function rankCatalogCsv(csvText) {
     } else {
       promotionReadiness = "Shortlist for a small test";
     }
+    const recommendationReasons = [];
+    if (inStock === false) recommendationReasons.push("Stock is marked unavailable.");
+    if (metricConflict) recommendationReasons.push("Supplied click, order or return counts conflict; verify the report.");
+    if (evidenceQuality === "Complete") recommendationReasons.push("Clicks, orders and reporting period support a comparable performance check.");
+    else if (evidenceQuality === "Partial") recommendationReasons.push("Performance metrics are supplied, but the reporting period is missing.");
+    else if (evidenceQuality === "Unverified") recommendationReasons.push("No click/order evidence was supplied; ranking relies on catalogue details.");
+    else recommendationReasons.push("Performance evidence is incomplete or needs verification.");
+    if (returnRate !== null && returnRate >= 0.1) recommendationReasons.push("Return rate is elevated and should be investigated.");
+    if (inStock === null) recommendationReasons.push("Stock status needs confirmation.");
+    if (commission > 0) recommendationReasons.push("Estimated commission is based on the entered rate, not a guaranteed payout.");
+    const nextAction = promotionReadiness === "Do not promote yet"
+      ? "Resolve stock, metric or return concerns before publishing."
+      : promotionReadiness === "Test cautiously"
+        ? "Verify missing details, then run a small measured test."
+        : promotionReadiness === "Shortlist for a small test"
+          ? "Run a small test and compare results over a consistent reporting period."
+          : "Verify product details and fill the missing evidence before promotion.";
+    const estimatedCommissionPerOrder = price * commission / 100;
+    const estimatedCommissionAfterReturns = returnRate !== null && returns <= orders
+      ? estimatedCommissionPerOrder * (1 - returnRate) : null;
     records.push({
       name, platform, url, price, commission, rating, reviews, clicks, orders, returns,
-      periodDays, inStock, score,
+      periodDays, inStock, score, normalizedOrders,
+      estimatedCommissionPerOrder, estimatedCommissionAfterReturns,
       evidenceLabel: hasOrders ? "Orders supplied" : hasClicks ? "Clicks supplied" : "No sales evidence",
-      evidenceQuality, promotionReadiness, ordersPerDay, clicksPerDay,
+      evidenceQuality, promotionReadiness, recommendationReasons, nextAction, ordersPerDay, clicksPerDay,
       conversionRate, returnRate,
       warnings,
       rowNumber: i + 1

@@ -127,3 +127,41 @@ test("gives cautious promotion guidance for stock, returns, and data quality", (
   ).records[0];
   assert.equal(conflict.promotionReadiness, "Do not promote yet");
 });
+
+
+test("normalizes sales to a 30-day equivalent when reporting periods differ", () => {
+  const csv = "name,price,orders,clicks,period_days\n" +
+    "Seven day,499,14,100,7\n" +
+    "Thirty day,499,30,200,30";
+  const result = rankCatalogCsv(csv);
+  assert.equal(result.valid, true);
+  const sevenDay = result.records.find((record) => record.name === "Seven day");
+  const thirtyDay = result.records.find((record) => record.name === "Thirty day");
+  assert.equal(sevenDay.normalizedOrders, 60);
+  assert.equal(thirtyDay.normalizedOrders, 30);
+  assert.ok(sevenDay.score > thirtyDay.score);
+});
+
+test("provides transparent reasons, next action and commission estimates", () => {
+  const ready = rankCatalogCsv(
+    "name,price,commission,clicks,orders,returns,period_days,stock\nLamp,500,10,100,20,2,14,yes"
+  ).records[0];
+  assert.equal(ready.estimatedCommissionPerOrder, 50);
+  assert.equal(ready.estimatedCommissionAfterReturns, 45);
+  assert.ok(ready.recommendationReasons.some((reason) => reason.includes("reporting period")));
+  assert.match(ready.nextAction, /small .*test/i);
+
+  const unknownReturns = rankCatalogCsv(
+    "name,price,commission,orders\nLamp,500,10,20"
+  ).records[0];
+  assert.equal(unknownReturns.estimatedCommissionAfterReturns, null);
+  assert.ok(unknownReturns.recommendationReasons.length > 0);
+});
+
+test("does not estimate commission after returns when return count exceeds orders", () => {
+  const record = rankCatalogCsv(
+    "name,price,commission,orders,returns\nLamp,500,10,10,12"
+  ).records[0];
+  assert.equal(record.estimatedCommissionAfterReturns, null);
+  assert.ok(record.warnings.some((warning) => warning.includes("Returns exceed orders")));
+});

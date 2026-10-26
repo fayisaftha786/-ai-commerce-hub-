@@ -99,3 +99,31 @@ test("labels evidence completeness and normalizes metrics by the supplied period
   assert.equal(unverified.evidenceQuality, "Unverified");
   assert.equal(unverified.clicksPerDay, null);
 });
+
+
+test("gives cautious promotion guidance for stock, returns, and data quality", () => {
+  const ready = rankCatalogCsv(
+    "name,price,clicks,orders,returns,period_days,stock\nLamp,499,100,12,1,7,yes"
+  ).records[0];
+  assert.equal(ready.promotionReadiness, "Shortlist for a small test");
+
+  const outOfStock = rankCatalogCsv(
+    "name,price,clicks,orders,returns,period_days,stock\nLamp,499,100,12,1,7,no"
+  ).records[0];
+  assert.equal(outOfStock.promotionReadiness, "Do not promote yet");
+
+  const highReturns = rankCatalogCsv(
+    "name,price,clicks,orders,returns,period_days,stock\nLamp,499,100,12,3,7,yes"
+  ).records[0];
+  assert.equal(highReturns.promotionReadiness, "Do not promote yet");
+
+  const incomplete = rankCatalogCsv(
+    "name,price,clicks,orders,stock\nLamp,499,100,12,yes"
+  ).records[0];
+  assert.equal(incomplete.promotionReadiness, "Test cautiously");
+
+  const conflict = rankCatalogCsv(
+    "name,price,clicks,orders,period_days,stock\nLamp,499,10,12,7,yes"
+  ).records[0];
+  assert.equal(conflict.promotionReadiness, "Do not promote yet");
+});

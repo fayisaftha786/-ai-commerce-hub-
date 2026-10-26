@@ -380,13 +380,16 @@ function renderImportedCatalog(records, errors = []) {
     }
     evidence.textContent = (qualityLabels[record.evidenceQuality] || qualityLabels.Limited) +
       (dailyMetrics.length ? " · " + dailyMetrics.join(" · ") : "");
+    const readiness = document.createElement("p");
+    readiness.textContent = "Promotion guidance: " + record.promotionReadiness +
+      ". This is a rule-based caution, not a sales prediction.";
     const warnings = document.createElement("ul");
     for (const warning of record.warnings) {
       const li = document.createElement("li");
       li.textContent = warning;
       warnings.append(li);
     }
-    card.append(heading, details, evidence);
+    card.append(heading, details, evidence, readiness);
     if (record.url) {
       const link = document.createElement("a");
       link.href = record.url;

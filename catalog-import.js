@@ -163,11 +163,23 @@ function rankCatalogCsv(csvText) {
           : "Limited";
     const ordersPerDay = orders !== null && periodDays ? orders / periodDays : null;
     const clicksPerDay = clicks !== null && periodDays ? clicks / periodDays : null;
+    const metricConflict = (hasOrders && hasClicks && clicks === 0 && orders > 0) ||
+      (hasOrders && hasClicks && clicks > 0 && orders > clicks) ||
+      (returns !== null && orders !== null && returns > orders);
+    let promotionReadiness = "Verify before promotion";
+    if (inStock === false || metricConflict || (returnRate !== null && returnRate >= 0.2)) {
+      promotionReadiness = "Do not promote yet";
+    } else if (evidenceQuality !== "Complete" || orders === null || orders === 0 ||
+        inStock !== true || (returnRate !== null && returnRate >= 0.1)) {
+      promotionReadiness = "Test cautiously";
+    } else {
+      promotionReadiness = "Shortlist for a small test";
+    }
     records.push({
       name, platform, url, price, commission, rating, reviews, clicks, orders, returns,
       periodDays, inStock, score,
       evidenceLabel: hasOrders ? "Orders supplied" : hasClicks ? "Clicks supplied" : "No sales evidence",
-      evidenceQuality, ordersPerDay, clicksPerDay,
+      evidenceQuality, promotionReadiness, ordersPerDay, clicksPerDay,
       conversionRate, returnRate,
       warnings,
       rowNumber: i + 1

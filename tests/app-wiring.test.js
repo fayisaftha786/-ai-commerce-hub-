@@ -8,6 +8,7 @@ const path = require("node:path");
 const root = path.join(__dirname, "..");
 const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+const appHealth = fs.readFileSync(path.join(root, "app-health.js"), "utf8");
 const catalog = fs.readFileSync(path.join(root, "catalog-import.js"), "utf8");
 
 test("every direct app event-listener target exists in the HTML", () => {
@@ -239,4 +240,17 @@ test("manual candidate shortlist exports evidence, confidence and safety checks 
   assert.match(app, /evidence_traceable/);
   assert.match(app, /checks_and_warnings/);
   assert.match(app, /\$\("exportCandidatesCsv"\)\.disabled = candidates\.length === 0/);
+});
+
+
+test("App Self-Check panel loads its diagnostic script and labels external integrations honestly", () => {
+  assert.ok(html.includes('id="runAppHealthCheck"'));
+  assert.ok(html.includes('id="appHealthSummary"'));
+  assert.ok(html.includes('id="appHealthResults"'));
+  assert.match(html, /<script src="app-health\.js"><\/script>/);
+  assert.match(appHealth, /function collectEnvironmentChecks\(environment\)/);
+  assert.match(appHealth, /Browser storage/);
+  assert.match(appHealth, /Secure browser context/);
+  assert.match(appHealth, /External integrations/);
+  assert.match(appHealth, /Live marketplace data APIs, a live AI text API, and automatic social publishing are not connected/);
 });

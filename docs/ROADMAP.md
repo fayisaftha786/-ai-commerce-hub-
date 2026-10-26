@@ -11,9 +11,9 @@ Help a solo affiliate marketer identify products worth testing, understand the e
 ### 0. Stabilize the current prototype — in progress
 - [x] Keep product scores explainable and mark missing demand, competition, stock, commission, and performance as unknown.
 - [x] Import user-authorized catalogue/performance CSVs and flag suspicious click/order/return data.
-- [ ] Track where product evidence came from and when it was checked.
+- [x] Track where product evidence came from and when it was checked, and block shortlist readiness when the source is missing or the check date is stale/invalid/future-dated.
 - [ ] Keep syntax checks and regression tests green before merging.
-- Acceptance: imported rows show evidence completeness and freshness warnings; unknown data is never silently converted to a positive signal.
+- Acceptance: imported rows show evidence completeness and freshness warnings; unknown data is never silently converted to a positive signal; a high score cannot overcome missing or stale evidence.
 
 ### 1. Make product research a reusable data model
 - Normalize product title, marketplace, canonical product URL/ID, price, currency, rating/review count, stock, commission, delivery/return facts, source, source timestamp, and permitted media references.

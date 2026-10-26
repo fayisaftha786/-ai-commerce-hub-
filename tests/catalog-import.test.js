@@ -180,3 +180,15 @@ test("ranks promotion readiness before raw score when performance metrics confli
   assert.ok(result.records[1].warnings.some((warning) => warning.includes("Orders exceed clicks")));
   assert.ok(result.records[1].score > result.records[0].score);
 });
+
+
+test("records evidence source and flags stale or missing check dates", () => {
+  const stale = rankCatalogCsv("name,price,source,checked_at\nLamp,499,Official dashboard,2026-10-01");
+  assert.equal(stale.valid, true);
+  assert.equal(stale.records[0].source, "Official dashboard");
+  assert.equal(stale.records[0].checkedAt, "2026-10-01");
+  assert.ok(stale.records[0].warnings.some((warning) => warning.includes("over 7 days old")));
+  const missing = rankCatalogCsv("name,price\nLamp,499");
+  assert.ok(missing.records[0].warnings.some((warning) => warning.includes("Evidence source missing")));
+  assert.ok(missing.records[0].warnings.some((warning) => warning.includes("Checked date missing")));
+});

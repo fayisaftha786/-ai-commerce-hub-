@@ -10,6 +10,7 @@ const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const manifest = JSON.parse(fs.readFileSync(path.join(root, "manifest.webmanifest"), "utf8"));
 const serviceWorker = fs.readFileSync(path.join(root, "service-worker.js"), "utf8");
 const pwaInstall = fs.readFileSync(path.join(root, "pwa-install.js"), "utf8");
+const readme = fs.readFileSync(path.join(root, "README.md"), "utf8");
 
 test("PWA manifest is installable and uses relative scope for project subpaths", () => {
   assert.equal(manifest.name, "AI Commerce Hub");
@@ -77,5 +78,5 @@ test("GitHub Pages deployment workflow publishes only the static runtime assets 
   for (const asset of ["index.html", "style.css", "manifest.webmanifest", "service-worker.js", "pwa-install.js", "app.js"]) {
     assert.ok(workflow.includes(asset), "deployment is missing " + asset);
   }
-  assert.match(r, /select \*\*GitHub Actions\*\*/);
+  assert.match(readme, /select \*\*GitHub Actions\*\*/);
 });

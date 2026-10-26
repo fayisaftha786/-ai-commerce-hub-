@@ -16,6 +16,14 @@ test("every direct app event-listener target exists in the HTML", () => {
   assert.deepEqual([...new Set(targets.filter((id) => !ids.has(id)))], []);
 });
 
+test("catalog import UI explains source and freshness fields required for shortlist readiness", () => {
+  assert.match(html, /name, platform, url, price, commission, rating, reviews, clicks, orders, returns, period_days, stock, source, checked_at/);
+  assert.match(html, /record <code>source<\/code>/);
+  assert.match(html, /<code>checked_at<\/code> \(YYYY-MM-DD\)/);
+  assert.match(html, /Evidence older than 7 days/);
+  assert.match(app, /checked_at\\n/);
+});
+
 test("catalog importer is loaded exactly once before app.js", () => {
   const scripts = [...html.matchAll(/<script\s+src="([^"]+)"/g)].map((match) => match[1]);
   assert.equal(scripts.filter((src) => src === "catalog-import.js").length, 1);

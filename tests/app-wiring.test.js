@@ -148,13 +148,15 @@ test("Content Studio requires all four review checks before copy, download, or c
 });
 
 test("Content Studio resets review whenever a draft or its inputs change", () => {
-  assert.match(app, /function resetContentReview\\(message\\)/);
-  assert.match(app, /function invalidateContentDraftOnInput\\(\\)/);
-  assert.match(app, /\$\\("contentForm"\\)\\.addEventListener\\("input", invalidateContentDraftOnInput\\)/);
-  assert.match(app, /\$\\("contentForm"\\)\\.addEventListener\\("change", invalidateContentDraftOnInput\\)/);
-  assert.match(app, /\$\\("contentOutput"\\)\\.addEventListener\\("input"/);
-  assert.match(app, /New draft created\\. Review all claims/);
-  assert.match(app, /Draft text changed\\. Review the full edited draft/);
-  assert.match(app, /Content inputs changed\\. Generate a fresh draft/);
-  assert.match(app, /Product selection changed\\. Generate a fresh draft/);
+  assert.match(app, /function resetContentReview\(message\)/);
+  assert.match(app, /function invalidateContentDraftOnInput\(\)/);
+  assert.match(app, /\$\("contentForm"\)\.addEventListener\("input", invalidateContentDraftOnInput\)/);
+  assert.match(app, /\$\("contentForm"\)\.addEventListener\("change", invalidateContentDraftOnInput\)/);
+  assert.match(app, /\$\("contentOutput"\)\.addEventListener\("input"/);
+  assert.match(app, /New draft created\. Review all claims/);
+  assert.match(app, /Draft text changed\. Review the full edited draft/);
+  assert.match(app, /Content inputs changed\. Generate a fresh draft/);
+  assert.match(app, /Product selection changed\. Generate a fresh draft/);
+  assert.match(app, /\$\(id\)\.checked = false/);
+  assert.match(app, /\$\("contentOutput"\)\.value = ""/);
 });

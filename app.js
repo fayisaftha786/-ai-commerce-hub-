@@ -1202,3 +1202,121 @@ $("exportCampaignReport").addEventListener("click", () => {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
   $("campaignReportMessage").textContent = "Exported the imported report analysis. Values come from your CSV; unmatched attribution and warnings remain visible in the export.";
 });
+
+const SOCIAL_QUEUE_KEY = "ai-commerce-hub.social-queue.v1";
+const SOCIAL_ANALYTICS_KEY = "ai-commerce-hub.social-analytics.v1";
+const MAX_SOCIAL_MEDIA_BYTES = 50 * 1024 * 1024;
+let socialMediaObjectUrl = "";
+let socialQueue = loadSocialArray(SOCIAL_QUEUE_KEY, 100);
+let socialAnalytics = loadSocialArray(SOCIAL_ANALYTICS_KEY, 500);
+
+function loadSocialArray(key, limit) {
+  try {
+    const value = JSON.parse(localStorage.getItem(key) || "[]");
+    return Array.isArray(value) ? value.filter((item) => item && typeof item === "object" && !Array.isArray(item)).slice(0, limit) : [];
+  } catch { return []; }
+}
+function persistSocialArray(key, value) {
+  try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch { return false; }
+}
+function revokeSocialMediaPreview() {
+  if (socialMediaObjectUrl) URL.revokeObjectURL(socialMediaObjectUrl);
+  socialMediaObjectUrl = "";
+}
+$("socialMediaUpload").addEventListener("change", () => {
+  const file = $("socialMediaUpload").files?.[0], root = $("socialMediaPreview");
+  root.replaceChildren(); revokeSocialMediaPreview();
+  if (!file) { root.textContent = "No media selected yet."; return; }
+  if (!(file.type.startsWith("image/") || file.type.startsWith("video/"))) {
+    $("socialPostMessage").textContent = "Choose an image or video file."; $("socialMediaUpload").value = ""; root.textContent = "Unsupported file type."; return;
+  }
+  if (file.size > MAX_SOCIAL_MEDIA_BYTES) {
+    $("socialPostMessage").textContent = "Media file must be 50 MB or smaller."; $("socialMediaUpload").value = ""; root.textContent = "File is too large."; return;
+  }
+  socialMediaObjectUrl = URL.createObjectURL(file);
+  if (file.type.startsWith("image/")) {
+    const preview = document.createElement("img"); preview.src = socialMediaObjectUrl; preview.alt = "Selected media preview"; root.append(preview);
+  } else {
+    const preview = document.createElement("video"); preview.src = socialMediaObjectUrl; preview.controls = true; preview.playsInline = true; root.append(preview);
+  }
+  const details = document.createElement("p"); details.textContent = file.name + " · " + (file.size / (1024 * 1024)).toFixed(2) + " MB. Preview only; file is not uploaded."; root.append(details);
+  $("socialPostMessage").textContent = "Media preview ready. Save the post record, then use the official platform app/site to publish.";
+});
+function renderSocialQueue() {
+  const root = $("socialQueue"); root.replaceChildren();
+  if (!socialQueue.length) { root.textContent = "No queued posts yet."; return; }
+  for (const item of [...socialQueue].reverse()) {
+    const card = document.createElement("article"); card.className = "candidate-card";
+    const heading = document.createElement("h4"); heading.textContent = item.platform + " · " + item.status;
+    const details = document.createElement("p"); details.textContent = "Created " + new Date(item.createdAt).toLocaleString() + (item.plannedAt ? " · Planned for " + item.plannedAt : " · No planned time");
+    const caption = document.createElement("p"); caption.textContent = item.caption || "No caption supplied.";
+    const media = document.createElement("p"); media.textContent = item.mediaName ? "Media selected when saved: " + item.mediaName + " (file itself is not stored)." : "No media attached to this queue record.";
+    const copy = document.createElement("button"); copy.type = "button"; copy.className = "secondary"; copy.textContent = "Copy caption";
+    copy.addEventListener("click", async () => { try { await navigator.clipboard.writeText(item.caption || ""); $("socialPostMessage").textContent = "Caption copied."; } catch { $("socialPostMessage").textContent = "Clipboard unavailable. Copy the caption manually from the saved record."; } });
+    const open = document.createElement("button"); open.type = "button"; open.textContent = "Open platform";
+    open.addEventListener("click", () => {
+      const urls = { Instagram:"https://www.instagram.com/", Facebook:"https://www.facebook.com/", "YouTube Shorts":"https://studio.youtube.com/", WhatsApp:"https://web.whatsapp.com/" };
+      window.open(urls[item.platform] || "https://www.instagram.com/", "_blank", "noopener,noreferrer");
+      $("socialPostMessage").textContent = "Platform opened. You must publish there; this app has not posted anything.";
+    });
+    const remove = document.createElement("button"); remove.type = "button"; remove.className = "secondary"; remove.textContent = "Remove from queue";
+    remove.addEventListener("click", () => {
+      const index = socialQueue.findIndex((candidate) => candidate.id === item.id); if (index < 0) return;
+      const removed = socialQueue.splice(index, 1)[0];
+      if (!persistSocialArray(SOCIAL_QUEUE_KEY, socialQueue)) { socialQueue.splice(index, 0, removed); $("socialPostMessage").textContent = "Could not save queue changes; record restored."; }
+      else $("socialPostMessage").textContent = "Queue record removed from this device.";
+      renderSocialQueue();
+    });
+    card.append(heading, details, caption, media, copy, open, remove); root.append(card);
+  }
+}
+$("socialPostForm").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const file = $("socialMediaUpload").files?.[0];
+  if (file && (file.size > MAX_SOCIAL_MEDIA_BYTES || !(file.type.startsWith("image/") || file.type.startsWith("video/")))) { $("socialPostMessage").textContent = "Choose a supported image/video no larger than 50 MB."; return; }
+  if (!$("socialCaption").value.trim() && !file) { $("socialPostMessage").textContent = "Add a caption or choose media before saving."; return; }
+  if (socialQueue.length >= 100) { $("socialPostMessage").textContent = "Posting queue limit is 100 records."; return; }
+  const item = { id:"SOC-" + (window.crypto?.randomUUID ? window.crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2,8)), platform:$("socialPlatform").value, caption:$("socialCaption").value.trim(), mediaName:file ? file.name.slice(0,255) : "", plannedAt:$("socialScheduleAt").value, createdAt:new Date().toISOString(), status:"Draft — not published" };
+  socialQueue.push(item);
+  if (!persistSocialArray(SOCIAL_QUEUE_KEY, socialQueue)) { socialQueue.pop(); $("socialPostMessage").textContent = "Browser storage unavailable or full; queue was not saved."; return; }
+  renderSocialQueue(); $("socialPostMessage").textContent = "Saved to this device. Media itself is not stored, and no post was published.";
+});
+$("downloadSocialCaption").addEventListener("click", () => {
+  const caption = $("socialCaption").value.trim(); if (!caption) { $("socialPostMessage").textContent = "Write a caption before downloading."; return; }
+  const blob = new Blob([caption + "\n"], {type:"text/plain;charset=utf-8"}), url = URL.createObjectURL(blob), link = document.createElement("a");
+  link.href=url; link.download="ai-commerce-social-caption.txt"; link.hidden=true; document.body.append(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url),1000);
+  $("socialPostMessage").textContent = "Caption downloaded. Media is not included.";
+});
+function renderSocialAnalytics() {
+  const root = $("socialAnalyticsResults"); root.replaceChildren();
+  if (!socialAnalytics.length) { root.textContent = "No manually entered analytics records yet."; return; }
+  for (const item of [...socialAnalytics].reverse()) {
+    const card=document.createElement("article"); card.className="candidate-card";
+    const heading=document.createElement("h4"); heading.textContent=item.platform+" · "+item.date;
+    const engagement=item.reach>0 ? ((item.likes+item.comments+item.shares)/item.reach*100) : null;
+    const metrics=document.createElement("p"); metrics.textContent="Reach/views: "+item.reach+" · Likes: "+item.likes+" · Comments: "+item.comments+" · Shares: "+item.shares+" · Link clicks: "+item.linkClicks+" · Attributed orders: "+item.orders+" · Engagement/reach: "+(engagement===null?"unavailable (zero reach)":engagement.toFixed(2)+"%");
+    const note=document.createElement("p"); note.className="hint"; note.textContent="Entered by you from platform insights; not automatically verified.";
+    card.append(heading,metrics,note); root.append(card);
+  }
+}
+$("socialAnalyticsForm").addEventListener("submit", (event) => {
+  event.preventDefault(); const date=$("socialAnalyticsDate").value;
+  const numbers=["socialReach","socialLikes","socialComments","socialShares","socialLinkClicks","socialOrders"].map((id)=>Number($(id).value));
+  if (!date || !Number.isFinite(Date.parse(date)) || numbers.some((v)=>!Number.isSafeInteger(v)||v<0||v>1000000000)) { $("socialAnalyticsMessage").textContent="Enter a valid date and non-negative whole-number metrics up to 1,000,000,000."; return; }
+  if (socialAnalytics.length>=500) { $("socialAnalyticsMessage").textContent="Analytics history limit is 500 records. Export old records before adding more."; return; }
+  const item={id:"MET-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,8),platform:$("socialAnalyticsPlatform").value,date,reach:numbers[0],likes:numbers[1],comments:numbers[2],shares:numbers[3],linkClicks:numbers[4],orders:numbers[5]};
+  socialAnalytics.push(item);
+  if (!persistSocialArray(SOCIAL_ANALYTICS_KEY,socialAnalytics)) { socialAnalytics.pop(); $("socialAnalyticsMessage").textContent="Browser storage unavailable or full; record was not saved."; return; }
+  renderSocialAnalytics(); $("socialAnalyticsMessage").textContent="Analytics record saved on this device.";
+});
+$("exportSocialAnalytics").addEventListener("click", () => {
+  if (!socialAnalytics.length) { $("socialAnalyticsMessage").textContent="Add at least one analytics record before exporting."; return; }
+  const header=["platform","date","reach_or_views","likes","comments","shares","link_clicks","attributed_orders","engagement_rate_percent"];
+  const rows=socialAnalytics.map((item)=>[item.platform,item.date,item.reach,item.likes,item.comments,item.shares,item.linkClicks,item.orders,item.reach>0?((item.likes+item.comments+item.shares)/item.reach*100).toFixed(2):""]);
+  const csv=[header,...rows].map((row)=>row.map(csvCell).join(",")).join("\r\n")+"\r\n";
+  const blob=new Blob([csv],{type:"text/csv;charset=utf-8"}), url=URL.createObjectURL(blob), link=document.createElement("a");
+  link.href=url; link.download="ai-commerce-social-analytics.csv"; link.hidden=true; document.body.append(link); link.click(); link.remove(); setTimeout(()=>URL.revokeObjectURL(url),1000);
+  $("socialAnalyticsMessage").textContent="Exported manually entered analytics records.";
+});
+renderSocialQueue();
+renderSocialAnalytics();

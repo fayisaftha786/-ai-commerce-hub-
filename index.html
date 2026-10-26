@@ -165,7 +165,22 @@
     </section>
 
     <section class="panel">
-      <h2>7. Browser Video Maker</h2>
+      <h2>7. Campaign Performance Report</h2>
+      <p>Import a CSV exported from an affiliate dashboard you are authorised to access. The report is processed in this browser and is matched only by an exact campaign/sub-ID already saved in this workspace.</p>
+      <p class="hint">Required columns: <code>campaign_id, period_start, period_end, clicks, orders</code>. Optional: <code>commission, returns</code>. Dates must be YYYY-MM-DD. If the affiliate programme does not export the campaign/sub-ID you used, attribution is unavailable; this tool will not guess which campaign caused a sale.</p>
+      <form id="campaignReportForm">
+        <label for="campaignReportCsv">Choose performance CSV (max 2 MB)
+          <input id="campaignReportCsv" type="file" accept=".csv,text/csv" required>
+        </label>
+        <button type="submit">Import campaign results</button>
+      </form>
+      <p id="campaignReportMessage" role="status" aria-live="polite"></p>
+      <div id="campaignReportResults" aria-live="polite"></div>
+      <p class="hint">Use the same reporting period and metric definitions when comparing campaigns. Report totals are supplied by your source, not independently verified. This import does not prove commission has been approved or paid.</p>
+    </section>
+
+    <section class="panel">
+      <h2>8. Browser Video Maker</h2>
       <p>Turn product images you are authorised to use into a vertical slideshow video. This runs on your device; images are not uploaded.</p>
       <form id="videoMakerForm">
         <label for="videoMakerImages">Choose 1–8 authorised product images (max 10 MB each)
@@ -209,6 +224,7 @@
   <script src="offer-engine.js"></script>
   <script src="discovery-engine.js"></script>
   <script src="catalog-import.js"></script>
+  <script src="campaign-report.js"></script>
   <script src="video-maker.js"></script>
   <script src="app.js"></script>
 </body>

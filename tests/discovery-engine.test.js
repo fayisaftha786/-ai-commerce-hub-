@@ -22,10 +22,10 @@ test("rejects invalid candidate names, price, ratings and percentages", () => {
   assert.equal(scoreCandidate({ ...base, demand: 7 }).valid, false);
 });
 
-test("warns when demand evidence is weak", () => {
-  const result = scoreCandidate({ ...base, demand: 1 });
-  assert.equal(result.valid, true);
+test("warns when demand is weak or product is out of stock", () => {
+  const result = scoreCandidate({ ...base, demand: 1, inStock: false });
   assert.ok(result.candidate.checks.some((line) => line.includes("Demand evidence is weak")));
+  assert.ok(result.candidate.checks.some((line) => line.includes("out of stock")));
 });
 
 test("creates Malayalam promo copy with affiliate disclosure and link placeholder", () => {
@@ -68,49 +68,29 @@ test("creates three distinct hooks and calls to action for simple content testin
 });
 
 
-test("hard-blocks candidates when any required evidence is missing", () => {
+test("does not recommend a product when key evidence is missing", () => {
   const result = scoreCandidate({
     name: "Unverified product", price: 499, rating: "", reviews: "",
     commission: "", demand: 4, competition: 2, inStock: true
   });
-  assert.equal(result.valid, false);
-  assert.deepEqual(result.missingEvidence, ["rating", "reviews", "commission"]);
-  assert.equal(result.evidenceCount, 3);
-  assert.equal(result.evidenceTotal, 6);
-  assert.equal(result.evidenceCoverage, 50);
-  assert.equal(result.confidence, "Low");
-  assert.match(result.error, /Cannot score or recommend/);
-  assert.equal(Object.hasOwn(result, "candidate"), false);
-});
-
-test("hard-blocks blank demand or competition instead of using fallback values", () => {
-  const result = scoreCandidate({ ...base, demand: "", competition: "" });
-  assert.equal(result.valid, false);
-  assert.deepEqual(result.missingEvidence, ["demand", "competition"]);
-  assert.equal(result.evidenceCount, 4);
-  assert.equal(result.evidenceCoverage, 67);
-});
-
-test("hard-blocks zero commission and out-of-stock products", () => {
-  assert.equal(scoreCandidate({ ...base, commission: 0 }).valid, false);
-  assert.match(scoreCandidate({ ...base, commission: 0 }).error, /zero commission/);
-  assert.equal(scoreCandidate({ ...base, inStock: false }).valid, false);
-  assert.match(scoreCandidate({ ...base, inStock: false }).error, /out of stock/);
-});
-
-test("does not accept missing stock status as evidence", () => {
-  const { inStock, ...withoutStock } = base;
-  const result = scoreCandidate(withoutStock);
-  assert.equal(result.valid, false);
-  assert.ok(result.missingEvidence.includes("inStock"));
-});
-
-test("scores only a complete, in-stock candidate with positive commission", () => {
-  const result = scoreCandidate(base);
   assert.equal(result.valid, true);
-  assert.equal(result.candidate.promotable, true);
-  assert.equal(result.candidate.evidenceCount, 6);
-  assert.equal(result.candidate.evidenceCoverage, 100);
-  assert.equal(result.candidate.confidence, "High");
-  assert.equal(result.candidate.estimatedCommission, 59.9);
+  assert.equal(result.candidate.label, "Need more evidence");
+  assert.equal(result.candidate.estimatedCommission, null);
+  assert.equal(result.candidate.confidence, "Low");
+  assert.ok(result.candidate.checks.some((line) => line.includes("Missing rating")));
+  assert.ok(result.candidate.checks.some((line) => line.includes("Missing review count")));
+  assert.ok(result.candidate.checks.some((line) => line.includes("Commission is missing")));
+});
+
+test("does not treat a blank demand/competition estimate as a real signal", () => {
+  const result = scoreCandidate({ ...base, demand: "", competition: "" });
+  assert.equal(result.valid, true);
+  assert.equal(result.candidate.label, "Need more evidence");
+  assert.ok(result.candidate.checks.some((line) => line.includes("Missing demand signal")));
+  assert.ok(result.candidate.checks.some((line) => line.includes("Missing competition estimate")));
+});
+
+test("only reports estimated commission when a positive rate is supplied", () => {
+  assert.equal(scoreCandidate({ ...base, commission: "" }).candidate.estimatedCommission, null);
+  assert.equal(scoreCandidate({ ...base, commission: 0 }).candidate.estimatedCommission, null);
 });

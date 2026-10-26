@@ -7,69 +7,42 @@ function scoreCandidate(input) {
   const name = typeof input.name === "string" ? input.name.trim() : "";
   if (!name || name.length > 120) return { valid: false, error: "Product name is required (max 120 characters)." };
 
-  const number = (value) => value === "" || value == null ? NaN : Number(value);
-  const requiredEvidence = [
-    ["rating", input.rating, "product/seller rating"],
-    ["reviews", input.reviews, "review count"],
-    ["commission", input.commission, "confirmed affiliate commission rate"],
-    ["demand", input.demand, "demand signal"],
-    ["competition", input.competition, "competition estimate"]
-  ];
-  const missingEvidence = requiredEvidence
-    .filter(([, value]) => value === "" || value == null || (typeof value === "string" && !value.trim()))
-    .map(([key, , label]) => ({ key, label }));
-  if (typeof input.inStock !== "boolean") missingEvidence.push({ key: "inStock", label: "current stock status" });
-  const evidenceTotal = requiredEvidence.length + 1;
-  const evidenceCount = evidenceTotal - missingEvidence.length;
-  const evidenceCoverage = Math.round((evidenceCount / evidenceTotal) * 100);
-  const confidence = evidenceCoverage >= 85 ? "High" : evidenceCoverage >= 65 ? "Medium" : "Low";
-  if (missingEvidence.length) {
-    return {
-      valid: false,
-      error: "Cannot score or recommend this product until required evidence is supplied: " + missingEvidence.map((item) => item.label).join(", ") + ".",
-      missingEvidence: missingEvidence.map((item) => item.key),
-      evidenceCount,
-      evidenceTotal,
-      evidenceCoverage,
-      confidence
-    };
-  }
-
+  const number = (value, fallback = NaN) => value === "" || value == null ? fallback : Number(value);
   const price = number(input.price);
-  const rating = number(input.rating);
-  const reviews = number(input.reviews);
-  const commission = number(input.commission);
-  const demand = number(input.demand);
-  const competition = number(input.competition);
-  const inStock = input.inStock;
+  const rating = number(input.rating, 0);
+  const reviews = number(input.reviews, 0);
+  const commission = number(input.commission, 0);
+  const demand = number(input.demand, 3);
+  const competition = number(input.competition, 3);
+  const inStock = input.inStock !== false;
   if (!Number.isFinite(price) || price <= 0) return { valid: false, error: "Enter a valid product price greater than zero." };
   if (!Number.isFinite(rating) || rating < 0 || rating > 5) return { valid: false, error: "Rating must be from 0 to 5." };
   if (!Number.isFinite(reviews) || reviews < 0 || reviews > 100000000) return { valid: false, error: "Review count must be a non-negative number." };
   if (!Number.isFinite(commission) || commission < 0 || commission > 100) return { valid: false, error: "Commission must be from 0 to 100 percent." };
-  if (commission === 0) return { valid: false, error: "A zero commission rate is not eligible for affiliate promotion. Enter a confirmed positive rate." };
   if (!Number.isInteger(demand) || demand < 1 || demand > 5) return { valid: false, error: "Demand signal must be from 1 to 5." };
   if (!Number.isInteger(competition) || competition < 1 || competition > 5) return { valid: false, error: "Competition must be from 1 to 5." };
-  if (!inStock) return { valid: false, error: "This product is marked out of stock. Do not score it for promotion until availability is confirmed." };
 
   // A transparent shortlist score based only on the user's entered evidence.
-  // Every scored candidate has passed the required-evidence gate above.
-  const hasRating = true;
-  const hasReviews = true;
-  const hasCommission = true;
-  const hasDemand = true;
-  const hasCompetition = true;
-  const demandPoints = (demand - 1) * 7.5; // max 30
-  const ratingPoints = (rating / 5) * 15;
-  const reviewPoints = Math.min(15, Math.log10(reviews + 1) * 3.75);
-  const commissionPoints = Math.min(15, commission / 2);
+  // Empty fields are unknown, not evidence of poor performance or a zero commission.
+  const hasRating = input.rating !== "" && input.rating != null;
+  const hasReviews = input.reviews !== "" && input.reviews != null;
+  const hasCommission = input.commission !== "" && input.commission != null;
+  const hasDemand = input.demand !== "" && input.demand != null;
+  const hasCompetition = input.competition !== "" && input.competition != null;
+  const demandPoints = hasDemand ? (demand - 1) * 7.5 : 0; // max 30
+  const ratingPoints = hasRating ? (rating / 5) * 15 : 0;
+  const reviewPoints = hasReviews ? Math.min(15, Math.log10(reviews + 1) * 3.75) : 0;
+  const commissionPoints = hasCommission ? Math.min(15, commission / 2) : 0;
   const pricePoints = price >= 199 && price <= 1999 ? 10 : price < 199 || price <= 3999 ? 6 : 3;
   const competitionPoints = hasCompetition ? (5 - competition) * 3 : 0; // max 12
   const stockPoints = inStock ? 3 : 0;
-  const evidenceFields = [hasRating, hasReviews, hasCommission && commission > 0, hasDemand, hasCompetition, typeof input.inStock === "boolean"];
-  const scoredEvidenceCount = evidenceFields.filter(Boolean).length;
-  const scoredEvidenceTotal = evidenceFields.length;
-  const scoredEvidenceCoverage = Math.round((scoredEvidenceCount / scoredEvidenceTotal) * 100);
-  const scoredConfidence = scoredEvidenceCoverage >= 85 ? "High" : scoredEvidenceCoverage >= 65 ? "Medium" : "Low";
+  const evidenceFields = [
+    true, hasRating, hasReviews, hasCommission && commission > 0,
+    hasDemand, hasCompetition, input.inStock !== undefined
+  ];
+  const evidenceCount = evidenceFields.filter(Boolean).length;
+  const evidenceCoverage = Math.round((evidenceCount / evidenceFields.length) * 100);
+  const confidence = evidenceCoverage >= 85 ? "High" : evidenceCoverage >= 65 ? "Medium" : "Low";
   const score = Math.round(Math.max(0, Math.min(100,
     demandPoints + ratingPoints + reviewPoints + commissionPoints + pricePoints + competitionPoints + stockPoints
   )));
@@ -89,10 +62,12 @@ function scoreCandidate(input) {
     valid: true,
     candidate: {
       name, price, rating, reviews, commission, demand, competition, inStock, score,
-      evidenceCount: scoredEvidenceCount, evidenceTotal: scoredEvidenceTotal, evidenceCoverage: scoredEvidenceCoverage, confidence: scoredConfidence,
-      promotable: true,
-      label: score >= 75 ? "Prioritize for review" : score >= 55 ? "Test with a small post" : "Research more first",
-      estimatedCommission: Math.round(price * commission) / 100,
+      evidenceCount, evidenceTotal: evidenceFields.length, evidenceCoverage, confidence,
+      label: !hasRating || !hasReviews || !hasCommission || commission <= 0 || !hasDemand || !hasCompetition
+        ? "Need more evidence"
+        : !inStock ? "Do not promote — out of stock"
+        : score >= 75 ? "Prioritize for review" : score >= 55 ? "Test with a small post" : "Research more first",
+      estimatedCommission: hasCommission && commission > 0 ? Math.round(price * commission) / 100 : null,
       checks
     }
   };

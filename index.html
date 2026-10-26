@@ -142,7 +142,17 @@
 
 
     <section class="panel">
-      <h2>6. Browser Video Maker</h2>
+      <h2>6. Campaign Registry</h2>
+      <p>Save a record for each post or video you plan to publish. Each record gets a campaign ID so you can keep your creative tests organised and match it to an authorised affiliate report if the programme supports campaign/sub IDs.</p>
+      <button id="saveContentCampaign" type="button">Save current content as campaign</button>
+      <button id="exportCampaigns" type="button" class="secondary">Export campaign register CSV</button>
+      <p id="campaignMessage" role="status" aria-live="polite"></p>
+      <div id="campaignList" aria-live="polite"></div>
+      <p class="hint">Important: this registry does not track external clicks, orders or commission. Saving a campaign or exporting its ID does not attach tracking to an affiliate link. Only use programme-approved tracking/sub-ID fields and compare actual results from an authorised report.</p>
+    </section>
+
+    <section class="panel">
+      <h2>7. Browser Video Maker</h2>
       <p>Turn product images you are authorised to use into a vertical slideshow video. This runs on your device; images are not uploaded.</p>
       <form id="videoMakerForm">
         <label for="videoMakerImages">Choose 1–8 authorised product images (max 10 MB each)
@@ -177,7 +187,7 @@
     </section>
 
     <section class="panel">
-      <h2>7. Honest tracking</h2>
+      <h2>8. Honest tracking</h2>
       <p>The click count records link clicks in this open page only. It does not confirm successful page loads, purchases, conversions or commissions. Product lists are saved locally and are not synced to the cloud. Social posting is not automated.</p>
     </section>
   </main>

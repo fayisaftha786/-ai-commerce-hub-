@@ -7,6 +7,9 @@ const products = loadProducts();
 let clicks = 0;
 let draftsCreated = 0;
 let lastAnalyzedOffer = null;
+const CAMPAIGN_KEY = "ai-commerce-hub.campaigns.v1";
+const MAX_CAMPAIGNS = 200;
+const campaigns = loadCampaigns();
 
 function loadProducts() {
   try {
@@ -93,6 +96,137 @@ $("productForm").addEventListener("submit", (event) => {
     ? "Product added and saved on this device."
     : "Product added for this session, but browser storage is unavailable.";
   render();
+});
+
+
+function loadCampaigns() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(CAMPAIGN_KEY) || "[]");
+    if (!Array.isArray(saved)) return [];
+    return saved.filter((item) =>
+      item && typeof item.id === "string" && typeof item.productName === "string" &&
+      typeof item.createdAt === "string" && typeof item.platform === "string" &&
+      typeof item.format === "string"
+    ).slice(0, MAX_CAMPAIGNS);
+  } catch {
+    return [];
+  }
+}
+
+function saveCampaigns() {
+  try {
+    localStorage.setItem(CAMPAIGN_KEY, JSON.stringify(campaigns));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function createCampaignId() {
+  if (window.crypto && typeof window.crypto.randomUUID === "function") {
+    return "ACH-" + window.crypto.randomUUID();
+  }
+  return "ACH-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10);
+}
+
+function renderCampaigns() {
+  const root = $("campaignList");
+  root.replaceChildren();
+  if (!campaigns.length) {
+    const empty = document.createElement("p");
+    empty.textContent = "No campaign records saved yet. Create content, then save it here.";
+    root.append(empty);
+    return;
+  }
+  for (const campaign of [...campaigns].reverse()) {
+    const card = document.createElement("article");
+    card.className = "candidate-card";
+    const heading = document.createElement("h3");
+    heading.textContent = campaign.productName + " · " + campaign.format;
+    const detail = document.createElement("p");
+    detail.textContent = campaign.platform + " · " + new Date(campaign.createdAt).toLocaleString() + " · ID: " + campaign.id;
+    const idButton = document.createElement("button");
+    idButton.type = "button";
+    idButton.className = "secondary";
+    idButton.textContent = "Copy campaign ID";
+    idButton.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(campaign.id);
+        $("campaignMessage").textContent = "Campaign ID copied. Use it only in an approved campaign/sub-ID field if your programme supports one.";
+      } catch {
+        $("campaignMessage").textContent = "Campaign ID: " + campaign.id + " (select and copy manually if needed).";
+      }
+    });
+    card.append(heading, detail);
+    if (campaign.link) {
+      const link = document.createElement("a");
+      link.href = campaign.link;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer sponsored";
+      link.textContent = "Open saved affiliate link";
+      card.append(link);
+    }
+    card.append(idButton);
+    root.append(card);
+  }
+}
+
+function csvCell(value) {
+  const text = String(value == null ? "" : value);
+  return '"' + text.replace(/"/g, '""') + '"';
+}
+
+$("saveContentCampaign").addEventListener("click", () => {
+  const content = $("contentOutput").value.trim();
+  const productName = $("contentName").value.trim();
+  if (!content || !productName) {
+    $("campaignMessage").textContent = "Create a content pack and enter its product name before saving a campaign.";
+    return;
+  }
+  if (campaigns.length >= MAX_CAMPAIGNS) {
+    $("campaignMessage").textContent = "Campaign register limit is 200. Export your register before clearing old entries.";
+    return;
+  }
+  const rawLink = $("contentLink").value.trim();
+  let safeLink = "";
+  if (rawLink) {
+    try {
+      const parsed = new URL(rawLink);
+      if (parsed.protocol === "https:" && parsed.hostname && !parsed.username && !parsed.password) safeLink = parsed.href;
+    } catch {
+      // Invalid or unsafe links are omitted from the campaign record.
+    }
+  }
+  const campaign = {
+    id: createCampaignId(),
+    createdAt: new Date().toISOString(),
+    productName,
+    platform: $("contentPlatform").value,
+    format: $("contentType").value,
+    link: safeLink
+  };
+  campaigns.push(campaign);
+  const saved = saveCampaigns();
+  renderCampaigns();
+  $("campaignMessage").textContent = saved
+    ? "Campaign saved on this device. ID: " + campaign.id
+    : "Campaign added for this session only; browser storage is unavailable. ID: " + campaign.id;
+});
+
+$("exportCampaigns").addEventListener("click", () => {
+  const header = ["campaign_id", "created_at", "product_name", "platform", "format", "affiliate_link"];
+  const rows = campaigns.map((item) => [item.id, item.createdAt, item.productName, item.platform, item.format, item.link || ""]);
+  const csv = [header, ...rows].map((row) => row.map(csvCell).join(",")).join("\r\n") + "\r\n";
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "ai-commerce-hub-campaign-register.csv";
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  $("campaignMessage").textContent = "Exported " + campaigns.length + " campaign records. This file contains campaign metadata, not actual performance results.";
 });
 
 function formatMoney(value) {
@@ -511,5 +645,6 @@ try {
 }
 
 renderCandidates();
+renderCampaigns();
 
 render();

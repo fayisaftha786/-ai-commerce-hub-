@@ -291,6 +291,55 @@ function rankCatalogCsv(csvText) {
   return { valid: true, records, errors, importedRows: records.length, totalRows: parsed.rows.length - 1 };
 }
 
-const api = { rankCatalogCsv };
+function catalogRecordsToCsv(records) {
+  if (!Array.isArray(records) || records.length === 0) return "";
+  const columns = [
+    ["rank", (record, index) => index + 1],
+    ["row_number", (record) => record.rowNumber],
+    ["product_name", (record) => record.name],
+    ["platform", (record) => record.platform],
+    ["product_url", (record) => record.url],
+    ["price", (record) => record.price],
+    ["commission_percent", (record) => record.commission],
+    ["rating", (record) => record.rating],
+    ["review_count", (record) => record.reviews],
+    ["clicks", (record) => record.clicks],
+    ["orders", (record) => record.orders],
+    ["returns", (record) => record.returns],
+    ["reporting_period_days", (record) => record.periodDays],
+    ["stock", (record) => record.inStock === null ? "" : record.inStock ? "yes" : "no"],
+    ["source", (record) => record.source],
+    ["checked_at", (record) => record.checkedAt],
+    ["evidence_freshness", (record) => record.evidenceFreshness],
+    ["evidence_quality", (record) => record.evidenceQuality],
+    ["score_out_of_100", (record) => record.score],
+    ["orders_per_day", (record) => record.ordersPerDay],
+    ["clicks_per_day", (record) => record.clicksPerDay],
+    ["conversion_percent", (record) => record.conversionRate == null ? "" : Math.round(record.conversionRate * 10000) / 100],
+    ["return_rate_percent", (record) => record.returnRate == null ? "" : Math.round(record.returnRate * 10000) / 100],
+    ["estimated_commission_per_order", (record) => record.estimatedCommissionPerOrder],
+    ["estimated_commission_after_returns", (record) => record.estimatedCommissionAfterReturns],
+    ["promotion_readiness", (record) => record.promotionReadiness],
+    ["possible_duplicate_of_row", (record) => record.duplicateOfRowNumber],
+    ["next_action", (record) => record.nextAction],
+    ["recommendation_reasons", (record) => (record.recommendationReasons || []).join(" | ")],
+    ["warnings", (record) => (record.warnings || []).join(" | ")]
+  ];
+  const cell = (value) => {
+    if (value === null || value === undefined) return '""';
+    let text = String(value);
+    // Neutralize spreadsheet formula starters in untrusted text fields.
+    if (typeof value === "string" && /^[\u0000-\u0020]*[=+\-@]/.test(text)) text = "'" + text;
+    return '"' + text.replace(/"/g, '""') + '"';
+  };
+  const lines = [columns.map(([name]) => cell(name)).join(",")];
+  for (let index = 0; index < records.length; index += 1) {
+    const record = records[index] || {};
+    lines.push(columns.map(([, getValue]) => cell(getValue(record, index))).join(","));
+  }
+  return lines.join("\r\n") + "\r\n";
+}
+
+const api = { rankCatalogCsv, catalogRecordsToCsv };
 if (typeof module !== "undefined" && module.exports) module.exports = api;
 if (typeof window !== "undefined") window.AICommerceCatalogImport = api;

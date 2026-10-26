@@ -2,7 +2,7 @@
 
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { rankCatalogCsv } = require("../catalog-import");
+const { rankCatalogCsv, catalogRecordsToCsv } = require("../catalog-import");
 
 test("ranks imported products using supplied order and click evidence", () => {
   const csv = "name,platform,url,price,commission,rating,reviews,clicks,orders,period_days,stock\n" +
@@ -243,4 +243,20 @@ test("flags duplicate product URLs after removing common tracking parameters wit
   assert.ok(duplicate.recommendationReasons.some((reason) => reason.includes("matches row 2")));
   const original = result.records.find((record) => record.rowNumber === 2);
   assert.equal(original.duplicateOfRowNumber, null);
+});
+
+
+test("exports a ranked catalog report with evidence and safely escaped cells", () => {
+  const csvInput = 'name,platform,url,price,commission,clicks,orders,returns,period_days,stock,source,checked_at\n' +
+    '"=HYPERLINK(""https://bad.example"")",Amazon,https://www.amazon.in/dp/B001,499,10,100,20,1,7,yes,Official dashboard,2026-10-26';
+  const record = rankCatalogCsv(csvInput).records[0];
+  const csv = catalogRecordsToCsv([record]);
+  assert.match(csv, /"score_out_of_100"/);
+  assert.match(csv, /"evidence_freshness"/);
+  assert.match(csv, /"promotion_readiness"/);
+  assert.match(csv, /"'=HYPERLINK\(""https:\/\/bad\.example""\)"/);
+  assert.match(csv, /"Official dashboard"/);
+  assert.match(csv, /"2026-10-26"/);
+  assert.equal(catalogRecordsToCsv([]), "");
+  assert.equal(catalogRecordsToCsv(null), "");
 });

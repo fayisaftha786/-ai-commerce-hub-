@@ -856,6 +856,7 @@ $("downloadContent").addEventListener("click", () => {
 
 
 const CATALOG_KEY = "ai-commerce-hub.catalog-import.v1";
+let latestImportedCatalogRecords = [];
 function useCatalogProductInContent(record) {
   $("contentName").value = record.name || "";
   $("contentPrice").value = record.price == null ? "" : String(record.price);
@@ -872,8 +873,10 @@ function useCatalogProductInContent(record) {
 }
 
 function renderImportedCatalog(records, errors = []) {
+  latestImportedCatalogRecords = Array.isArray(records) ? records : [];
   const root = $("catalogResults");
   root.replaceChildren();
+  $("exportCatalogReport").disabled = !Array.isArray(records) || records.length === 0;
   const summary = document.createElement("p");
   summary.textContent = "Ranked " + records.length + " valid products. Highest scores first. Check any row warnings below; scores are not a sales guarantee.";
   root.append(summary);
@@ -976,6 +979,40 @@ function renderImportedCatalog(records, errors = []) {
   }
 }
 
+function exportRankedCatalogReport() {
+  const button = $("exportCatalogReport");
+  try {
+    const records = latestImportedCatalogRecords.length
+      ? latestImportedCatalogRecords
+      : JSON.parse(localStorage.getItem(CATALOG_KEY) || "[]");
+    const exporter = window.AICommerceCatalogImport?.catalogRecordsToCsv;
+    if (!Array.isArray(records) || records.length === 0 || typeof exporter !== "function") {
+      $("catalogMessage").textContent = "Import and rank a valid product CSV before exporting a report.";
+      if (button) button.disabled = true;
+      return;
+    }
+    const csv = exporter(records);
+    if (!csv) {
+      $("catalogMessage").textContent = "No ranked product data is available to export.";
+      return;
+    }
+    const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "ai-commerce-hub-ranked-catalog-report.csv";
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    $("catalogMessage").textContent = "Ranked catalog report downloaded. It contains supplied data and rule-based guidance, not a sales guarantee.";
+  } catch {
+    $("catalogMessage").textContent = "Could not export the ranked catalog report. Re-import the CSV and try again.";
+  }
+}
+
+$("exportCatalogReport").addEventListener("click", exportRankedCatalogReport);
+
 $("downloadCatalogTemplate").addEventListener("click", () => {
   const template = "name,platform,url,price,commission,rating,reviews,clicks,orders,returns,period_days,stock,source,checked_at\n";
   const blob = new Blob([template], { type: "text/csv;charset=utf-8" });
@@ -1010,12 +1047,14 @@ $("catalogForm").addEventListener("submit", (event) => {
     const result = importer.rankCatalogCsv(String(reader.result || ""));
     if (!result.valid) {
       $("catalogResults").replaceChildren();
+      latestImportedCatalogRecords = [];
+      $("exportCatalogReport").disabled = true;
       $("catalogMessage").textContent = result.error;
       return;
     }
     renderImportedCatalog(result.records, result.errors);
   };
-  reader.onerror = () => { $("catalogMessage").textContent = "Could not read the selected CSV file."; };
+  reader.onerror = () => { latestImportedCatalogRecords = []; $("exportCatalogReport").disabled = true; $("catalogMessage").textContent = "Could not read the selected CSV file."; };
   reader.readAsText(file);
 });
 

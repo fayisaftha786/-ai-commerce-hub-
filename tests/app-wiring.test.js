@@ -177,3 +177,11 @@ test("product discovery does not prefill demand or competition as if they were v
   assert.doesNotMatch(html, /id="candidateCompetition"[\s\S]{0,300}value="3" selected/);
   assert.match(html, /does not mistake an unreviewed default for evidence/);
 });
+
+
+test("ranked catalog report export has a button and uses the safe CSV exporter", () => {
+  assert.ok(html.includes('id="exportCatalogReport"'));
+  assert.match(app, /function exportRankedCatalogReport\(\)/);
+  assert.match(app, /catalogRecordsToCsv/);
+  assert.match(app, /ai-commerce-hub-ranked-catalog-report\.csv/);
+});

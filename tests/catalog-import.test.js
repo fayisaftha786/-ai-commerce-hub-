@@ -165,3 +165,18 @@ test("does not estimate commission after returns when return count exceeds order
   assert.equal(record.estimatedCommissionAfterReturns, null);
   assert.ok(record.warnings.some((warning) => warning.includes("Returns exceed orders")));
 });
+
+
+test("ranks promotion readiness before raw score when performance metrics conflict", () => {
+  const csv = "name,price,commission,rating,reviews,clicks,orders,returns,period_days,stock\n" +
+    "Conflicted,499,10,5,1000,1,100,0,30,yes\n" +
+    "Consistent,499,10,4.5,200,100,10,0,30,yes";
+  const result = rankCatalogCsv(csv);
+  assert.equal(result.valid, true);
+  assert.equal(result.records[0].name, "Consistent");
+  assert.equal(result.records[0].promotionReadiness, "Shortlist for a small test");
+  assert.equal(result.records[1].name, "Conflicted");
+  assert.equal(result.records[1].promotionReadiness, "Do not promote yet");
+  assert.ok(result.records[1].warnings.some((warning) => warning.includes("Orders exceed clicks")));
+  assert.ok(result.records[1].score > result.records[0].score);
+});

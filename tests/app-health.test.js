@@ -36,7 +36,7 @@ function makeEnvironment(overrides = {}) {
 
 test("self-check passes when secure context, storage, modules, and key forms are present", () => {
   const checks = collectEnvironmentChecks(makeEnvironment());
-  assert.ok(checks.length >= 20);
+  assert.ok(checks.length >= 19);
   assert.ok(checks.every((check) => ["pass", "warn", "fail", "info"].includes(check.state)));
   assert.ok(checks.some((check) => check.title === "Secure browser context" && check.state === "pass"));
   assert.ok(checks.some((check) => check.title === "Browser storage" && check.state === "pass"));

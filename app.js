@@ -754,6 +754,7 @@ $("contentForm").addEventListener("submit", (event) => {
     $("contentOutput").value = $("contentType").value === "Post"
       ? pack.post + "\n\n---------------- VIDEO PLAN ----------------\n\n" + pack.video + "\n\n---------------- TESTABLE VARIANTS ----------------\n\n" + variants
       : pack.video + "\n\n---------------- POST CAPTION ----------------\n\n" + pack.post + "\n\n---------------- TESTABLE VARIANTS ----------------\n\n" + variants;
+    resetContentReview("New draft created. Review all claims, current price, affiliate disclosure and link, then check all four items before copying, downloading, or saving.");
     draftsCreated += 1;
     $("campaigns").textContent = String(draftsCreated);
     $("contentMessage").textContent = "Draft prepared. Review every product claim and link before posting.";
@@ -772,6 +773,31 @@ function contentReviewComplete() {
     : "Review all four items before copying, downloading, or saving this draft. This checklist does not independently verify them.";
   return complete;
 }
+
+function resetContentReview(message) {
+  CONTENT_REVIEW_IDS.forEach((id) => {
+    $(id).checked = false;
+  });
+  contentReviewComplete();
+  if (message) $("contentReviewStatus").textContent = message;
+}
+
+function invalidateContentDraftOnInput() {
+  const hasDraft = Boolean($("contentOutput").value.trim());
+  const hadChecks = CONTENT_REVIEW_IDS.some((id) => $(id).checked);
+  if (!hasDraft && !hadChecks) return;
+  if (hasDraft) {
+    $("contentOutput").value = "";
+    $("contentMessage").textContent = "Content inputs changed. Generate a fresh draft before copying, downloading, or saving.";
+  }
+  resetContentReview("Content details changed. Generate or review the current draft, then check all four items before copying, downloading, or saving.");
+}
+
+$("contentForm").addEventListener("input", invalidateContentDraftOnInput);
+$("contentForm").addEventListener("change", invalidateContentDraftOnInput);
+$("contentOutput").addEventListener("input", () => {
+  resetContentReview("Draft text changed. Review the full edited draft and re-check all four items before copying, downloading, or saving.");
+});
 
 function requireContentReview(action) {
   if (contentReviewComplete()) return true;
@@ -838,6 +864,8 @@ function useCatalogProductInContent(record) {
   $("contentBenefit").value = "";
   $("contentAudience").value = "";
   $("contentProof").value = "";
+  $("contentOutput").value = "";
+  resetContentReview("Product selection changed. Generate a fresh draft, then review and check all four items before exporting.");
   $("contentMessage").textContent = "Product name, price and available link copied. Add a real, verified benefit and feature before generating content.";
   $("contentForm").scrollIntoView({ behavior: "smooth", block: "start" });
   $("contentBenefit").focus({ preventScroll: true });

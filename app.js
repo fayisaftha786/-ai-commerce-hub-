@@ -763,3 +763,79 @@ renderCandidates();
 renderCampaigns();
 
 render();
+
+
+$("campaignReportForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const file = $("campaignReportCsv").files?.[0];
+  const root = $("campaignReportResults");
+  root.replaceChildren();
+  if (!file) {
+    $("campaignReportMessage").textContent = "Choose a performance CSV first.";
+    return;
+  }
+  if (file.size > 2 * 1024 * 1024) {
+    $("campaignReportMessage").textContent = "Performance CSV must be 2 MB or smaller.";
+    return;
+  }
+  try {
+    const importer = window.AICommerceCampaignReport;
+    if (typeof importer?.parseCampaignReport !== "function") {
+      $("campaignReportMessage").textContent = "Campaign report importer did not load. Refresh and try again.";
+      return;
+    }
+    const result = importer.parseCampaignReport(await file.text(), campaigns);
+    if (!result.valid) {
+      $("campaignReportMessage").textContent = result.error;
+      return;
+    }
+    $("campaignReportMessage").textContent =
+      "Imported " + result.importedRows + " valid rows across " + result.reports.length +
+      " campaign/period group(s). Results come from your CSV and are not independently verified." +
+      (result.errors.length ? " " + result.errors.length + " row(s) were skipped." : "");
+    for (const report of result.reports) {
+      const card = document.createElement("article");
+      card.className = "candidate-card";
+      const heading = document.createElement("h3");
+      heading.textContent = report.campaignId;
+      const attribution = document.createElement("p");
+      attribution.textContent = report.matched
+        ? "Attribution match: exact ID found in this workspace."
+        : "Attribution unavailable: no exact match to a saved campaign.";
+      const period = document.createElement("p");
+      period.textContent = "Reporting period: " + report.periodStart + " to " + report.periodEnd;
+      const metrics = document.createElement("p");
+      metrics.textContent = "Clicks: " + report.clicks + " · Orders: " + report.orders +
+        (report.conversionRate !== null ? " · Orders/clicks: " + (report.conversionRate * 100).toFixed(2) + "%" : " · Conversion: unavailable / requires verification") +
+        (report.commission !== null ? " · Reported commission: ₹" + report.commission.toLocaleString("en-IN", { maximumFractionDigits: 2 }) : " · Commission: not fully supplied") +
+        (report.returns !== null ? " · Returns: " + report.returns : " · Returns: not fully supplied") +
+        (report.returnRate !== null ? " · Return rate: " + (report.returnRate * 100).toFixed(2) + "%" : "");
+      card.append(heading, attribution, period, metrics);
+      if (report.warnings.length) {
+        const list = document.createElement("ul");
+        for (const warning of report.warnings) {
+          const item = document.createElement("li");
+          item.textContent = warning;
+          list.append(item);
+        }
+        card.append(list);
+      }
+      root.append(card);
+    }
+    if (result.errors.length) {
+      const heading = document.createElement("h3");
+      heading.textContent = "Rows needing attention";
+      const list = document.createElement("ul");
+      for (const error of result.errors.slice(0, 20)) {
+        const item = document.createElement("li");
+        item.textContent = error;
+        list.append(item);
+      }
+      root.append(heading, list);
+    }
+  } catch {
+    $("campaignReportMessage").textContent = "Could not read this performance CSV. Check the file and try again.";
+  } finally {
+    $("campaignReportCsv").value = "";
+  }
+});

@@ -15,6 +15,19 @@
     <p>Find products worth testing. Create better promotions. Learn what works.</p>
   </header>
   <main>
+    <section class="panel" aria-labelledby="backupHeading">
+      <h2 id="backupHeading">Workspace Backup & Restore</h2>
+      <p>Export saved workspace data to a JSON file or restore a previous backup on this device. The file stays under your control and may contain product links and campaign details.</p>
+      <div class="form-grid">
+        <button id="exportWorkspaceBackup" type="button" class="secondary">Export full backup</button>
+        <label for="importWorkspaceBackup">Restore from backup (replaces saved data)
+          <input id="importWorkspaceBackup" type="file" accept=".json,application/json">
+        </label>
+      </div>
+      <p id="backupMessage" role="status" aria-live="polite"></p>
+      <p class="hint">Use a backup you trust. Restore validates the file format, asks for confirmation and attempts to roll back if browser storage fails. This is not encrypted cloud storage; keep the file private.</p>
+    </section>
+
     <section class="stats" aria-label="Workspace summary">
       <article><span>Saved products on this device</span><strong id="products">0</strong></article>
       <article><span>Drafts created this session</span><strong id="campaigns">0</strong></article>

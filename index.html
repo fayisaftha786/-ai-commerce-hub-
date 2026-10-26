@@ -140,8 +140,38 @@
       <div class="notice"><strong>Meesho video note:</strong> This version does not download videos from Meesho. Use videos/assets supplied by the seller or programme for your approved use, or film your own original demonstration. Do not assume a listing photo or video is free to reuse. We can add an authorised media import workflow when the programme provides it.</div>
     </section>
 
+
     <section class="panel">
-      <h2>6. Honest tracking</h2>
+      <h2>6. Browser Video Maker</h2>
+      <p>Turn product images you are authorised to use into a vertical slideshow video. This runs on your device; images are not uploaded.</p>
+      <form id="videoMakerForm">
+        <label for="videoMakerImages">Choose 1–8 authorised product images (max 10 MB each)
+          <input id="videoMakerImages" type="file" accept="image/*" multiple required>
+        </label>
+        <label for="videoMakerName">Product name
+          <input id="videoMakerName" maxlength="100" required placeholder="Product name">
+        </label>
+        <label for="videoMakerBenefit">Main benefit
+          <input id="videoMakerBenefit" maxlength="140" required placeholder="Example: makes small spaces easier to organise">
+        </label>
+        <div class="form-grid">
+          <label for="videoMakerPrice">Verified price (optional)
+            <input id="videoMakerPrice" maxlength="30" placeholder="₹599">
+          </label>
+          <label for="videoMakerCta">Call to action
+            <input id="videoMakerCta" maxlength="100" value="Check details and current price">
+          </label>
+        </div>
+        <button id="createVideo" type="submit">Create vertical video</button>
+      </form>
+      <p id="videoMakerStatus" role="status" aria-live="polite"></p>
+      <video id="videoMakerPreview" controls playsinline hidden style="width:100%;max-width:360px;border-radius:12px;background:#000"></video>
+      <p id="videoMakerDownload"></p>
+      <p class="hint">Exports WebM where your browser supports MediaRecorder. This is a simple slideshow, not a finished AI-generated video; it does not add music or voice-over. Check media permissions and price before publishing.</p>
+    </section>
+
+    <section class="panel">
+      <h2>7. Honest tracking</h2>
       <p>The click count records link clicks in this open page only. It does not confirm successful page loads, purchases, conversions or commissions. Product lists are saved locally and are not synced to the cloud. Social posting is not automated.</p>
     </section>
   </main>
@@ -150,6 +180,7 @@
   <script src="offer-engine.js"></script>
   <script src="discovery-engine.js"></script>
   <script src="catalog-import.js"></script>
+  <script src="video-maker.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

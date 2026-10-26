@@ -9,6 +9,8 @@ A lightweight affiliate workspace prototype for evaluating offer details, shortl
 - Smart Offer Intelligence: calculate listed discount, savings and entered shipping-inclusive price
 - Product Discovery shortlist: score candidate products using user-entered demand evidence, rating, review count, confirmed commission, price band, competition and stock status
 - CSV catalogue/performance import: rank products using supplied orders, clicks, reporting period, rating, commission, price and availability; unsafe links are ignored
+- Explainable catalogue guidance with period-normalized order comparisons, next-step recommendations and illustrative commission estimates
+- Send an imported catalogue product into Content Studio with its available name, price and link; product-specific claims are cleared so you must enter verified benefits yourself
 - Save and sort a local shortlist of up to 50 product candidates
 - Generate Malayalam, English or bilingual product captions
 - Generate a short vertical-video plan with hook, shot guidance, voice-over, CTA and affiliate disclosure

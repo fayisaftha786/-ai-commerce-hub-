@@ -98,6 +98,8 @@ function rankCatalogCsv(csvText) {
     const hasOrders = orders !== null;
     const hasClicks = clicks !== null;
     const salesPoints = hasOrders ? Math.min(35, Math.log10(orders + 1) * 12) : 0;
+    const returnRate = returns !== null && orders !== null && orders > 0 ? returns / orders : null;
+    const returnPenalty = returnRate === null ? 0 : Math.min(20, returnRate * 100);
     const conversionRate = hasOrders && hasClicks && clicks > 0 ? orders / clicks : null;
     const conversionPoints = conversionRate === null ? 0 : Math.min(20, conversionRate * 200);
     const ratingPoints = rating / 5 * 15;
@@ -105,13 +107,17 @@ function rankCatalogCsv(csvText) {
     const commissionPoints = Math.min(10, commission * 1.25);
     const pricePoints = price >= 199 && price <= 1999 ? 5 : 3;
     const stockPoints = inStock ? 5 : 0;
-    const score = Math.round(Math.min(100, salesPoints + conversionPoints + ratingPoints + reviewPoints + commissionPoints + pricePoints + stockPoints));
+    const score = Math.round(Math.max(0, Math.min(100, salesPoints + conversionPoints + ratingPoints + reviewPoints + commissionPoints + pricePoints + stockPoints - returnPenalty)));
     const hasPerformanceData = hasOrders || hasClicks;
     const warnings = [];
     if (!hasPerformanceData) warnings.push("No click/order data supplied; this is a catalogue-quality score, not a sales-demand ranking.");
     if (hasOrders && !hasClicks) warnings.push("Orders supplied without clicks; conversion rate cannot be calculated.");
     if (hasClicks && !hasOrders) warnings.push("Clicks supplied without orders; sales performance cannot be calculated.");
+    if (hasOrders && orders === 0) warnings.push("No orders recorded in the supplied period; investigate before prioritising this product.");
     if (hasOrders && !periodDays) warnings.push("Reporting period missing; order counts may not be comparable across products.");
+    if (returns !== null && orders === null) warnings.push("Returns supplied without orders; return rate cannot be calculated.");
+    if (returnRate !== null && returnRate >= 0.2) warnings.push("High supplied return rate (" + Math.round(returnRate * 100) + "%); investigate product quality and buyer expectations.");
+    else if (returnRate !== null && returnRate >= 0.1) warnings.push("Elevated supplied return rate (" + Math.round(returnRate * 100) + "%); review recent return reasons.");
     if (returns !== null && orders !== null && returns > orders) warnings.push("Returns exceed orders; verify that these columns use the same reporting period.");
     if (!inStock) warnings.push("Marked unavailable; do not promote until stock is confirmed.");
     if (!url) warnings.push("No valid HTTPS product link supplied.");

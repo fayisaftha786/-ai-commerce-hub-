@@ -192,6 +192,55 @@ function compareCampaignReports(reports) {
     .sort((a, b) => a.periodStart.localeCompare(b.periodStart) || a.periodEnd.localeCompare(b.periodEnd));
 }
 
-const api = { parseCampaignReport, compareCampaignReports };
+function summarizeCampaignComparison(group) {
+  if (!group || !Array.isArray(group.campaigns) || group.campaigns.length < 2) return [];
+  const campaigns = group.campaigns;
+  const observations = [];
+  const conversion = campaigns.filter((item) =>
+    Number.isFinite(item.conversionRate) && item.clicks > 0 &&
+    Number.isFinite(item.orders) && item.orders <= item.clicks
+  );
+  if (conversion.length >= 2) {
+    const bestRate = Math.max(...conversion.map((item) => item.conversionRate));
+    const leaders = conversion.filter((item) => item.conversionRate === bestRate);
+    observations.push(
+      "Highest observed orders/clicks: " + leaders.map((item) => item.campaignId).join(", ") +
+      " (" + (bestRate * 100).toFixed(2) + "%). Compare click volume too; this is a signal, not proof of a winner."
+    );
+  } else {
+    observations.push("Not enough valid conversion-rate values to compare this period.");
+  }
+
+  if (campaigns.every((item) => Number.isFinite(item.commission) && item.commission >= 0)) {
+    const maxCommission = Math.max(...campaigns.map((item) => item.commission));
+    const leaders = campaigns.filter((item) => item.commission === maxCommission);
+    observations.push(
+      "Highest reported commission: " + leaders.map((item) => item.campaignId).join(", ") +
+      " (₹" + maxCommission.toLocaleString("en-IN", { maximumFractionDigits: 2 }) +
+      "). Commission alone does not establish profitability or causal performance."
+    );
+  } else {
+    observations.push("Commission comparison withheld because one or more campaign reports have incomplete commission data.");
+  }
+
+  const returns = campaigns.filter((item) =>
+    Number.isFinite(item.returnRate) && Number.isFinite(item.returns) &&
+    Number.isFinite(item.orders) && item.orders > 0 && item.returns <= item.orders
+  );
+  if (returns.length >= 2) {
+    const lowestRate = Math.min(...returns.map((item) => item.returnRate));
+    const leaders = returns.filter((item) => item.returnRate === lowestRate);
+    observations.push(
+      "Lowest observed return rate among reports with valid return data: " +
+      leaders.map((item) => item.campaignId).join(", ") +
+      " (" + (lowestRate * 100).toFixed(2) + "%). Confirm returns use the same attribution window."
+    );
+  } else {
+    observations.push("Return-rate comparison unavailable: at least two campaigns need valid return data.");
+  }
+  return observations;
+}
+
+const api = { parseCampaignReport, compareCampaignReports, summarizeCampaignComparison };
 if (typeof module !== "undefined" && module.exports) module.exports = api;
 if (typeof window !== "undefined") window.AICommerceCampaignReport = api;

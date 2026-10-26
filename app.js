@@ -878,6 +878,15 @@ $("campaignReportForm").addEventListener("submit", async (event) => {
         }
         table.append(head, body);
         section.append(title, table);
+        const insightHeading = document.createElement("h5");
+        insightHeading.textContent = "Data-based observations";
+        const insightList = document.createElement("ul");
+        for (const observation of importer.summarizeCampaignComparison(comparison)) {
+          const item = document.createElement("li");
+          item.textContent = observation;
+          insightList.append(item);
+        }
+        section.append(insightHeading, insightList);
         root.append(section);
       }
     } else {

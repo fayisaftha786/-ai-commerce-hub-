@@ -75,3 +75,13 @@ test("saved candidate cards explain evidence coverage and handle older records",
   assert.match(app, /Evidence coverage unavailable for this older saved record/);
   assert.match(app, /card\.append\(title, details, evidence, remove\)/);
 });
+
+
+test("content pack download control exists and exports generated text safely", () => {
+  assert.ok(html.includes('id="downloadContent"'));
+  assert.match(app, /\$\("downloadContent"\)\.addEventListener\("click"/);
+  assert.match(app, /new Blob\(\[output \+ "\\n"\], \{ type: "text\/plain;charset=utf-8" \}\)/);
+  assert.match(app, /anchor\.download = "ai-commerce-" \+ safeName \+ "\.txt"/);
+  assert.match(app, /replace\(\/\[\^a-zA-Z0-9_-\]\+\/g, "-"/);
+  assert.match(app, /Create a post or video plan before downloading/);
+});

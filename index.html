@@ -4,17 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#101522">
-  <meta name="description" content="Organize affiliate products, assess offer readiness and prepare honest promotional drafts.">
-  <title>AI Commerce Hub — Smart Offer Workspace</title>
+  <meta name="description" content="Evaluate affiliate offers, shortlist products and create responsible promotional posts and video plans.">
+  <title>AI Commerce Hub — Product & Content Studio</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header>
     <p class="eyebrow">YOUR PRIVATE BUSINESS WORKSPACE</p>
     <h1>AI Commerce Hub</h1>
-    <p>Understand offers. Create better promotions. Learn what works.</p>
+    <p>Find products worth testing. Create better promotions. Learn what works.</p>
   </header>
-
   <main>
     <section class="stats" aria-label="Workspace summary">
       <article><span>Saved products on this device</span><strong id="products">0</strong></article>
@@ -23,20 +22,16 @@
     </section>
 
     <section class="panel">
-      <h2>Product Workspace</h2>
-      <p>Add products you are permitted to promote. Product details are saved in this browser on this device.</p>
+      <h2>1. Product Workspace</h2>
+      <p>Save products you are allowed to promote. Product details stay in this browser on this device.</p>
       <form id="productForm">
         <label for="productName">Product name
           <input id="productName" maxlength="120" required autocomplete="off" placeholder="Example: Kitchen storage organiser">
         </label>
         <label for="platform">Affiliate platform
-          <select id="platform">
-            <option>Amazon</option>
-            <option>Flipkart</option>
-            <option>Meesho</option>
-          </select>
+          <select id="platform"><option>Meesho</option><option>Amazon</option><option>Flipkart</option></select>
         </label>
-        <label for="productUrl">Product link (HTTPS only)
+        <label for="productUrl">Approved product / affiliate link (HTTPS)
           <input id="productUrl" type="url" maxlength="2048" required inputmode="url" autocomplete="url" placeholder="https://...">
         </label>
         <button type="submit">Add product</button>
@@ -46,84 +41,98 @@
     </section>
 
     <section class="panel">
-      <h2>Smart Offer Intelligence</h2>
-      <p>Enter the price shown by the seller. This checks the arithmetic and offer-readiness signals; it cannot independently verify a seller's price history.</p>
-      <form id="offerForm">
-        <label for="offerName">Product name
-          <input id="offerName" maxlength="120" required placeholder="Example: Kitchen organiser">
+      <h2>2. Product Discovery & Buyer-Interest Score</h2>
+      <p>Use evidence from your approved marketplace dashboard, recent reviews, search suggestions and audience questions. This score ranks the information you enter; it does not fetch live trends or guarantee sales.</p>
+      <form id="candidateForm">
+        <label for="candidateName">Product name
+          <input id="candidateName" maxlength="120" required placeholder="Example: space-saving kitchen rack">
         </label>
         <div class="form-grid">
-          <label for="offerCurrentPrice">Current price (₹)
-            <input id="offerCurrentPrice" type="number" min="0.01" step="0.01" required inputmode="decimal" placeholder="799">
+          <label for="candidatePrice">Current price (₹)
+            <input id="candidatePrice" type="number" min="0.01" step="0.01" required placeholder="599">
           </label>
-          <label for="offerOriginalPrice">Original/listed price (₹)
-            <input id="offerOriginalPrice" type="number" min="0.01" step="0.01" required inputmode="decimal" placeholder="999">
+          <label for="candidateCommission">Your confirmed commission (%)
+            <input id="candidateCommission" type="number" min="0" max="100" step="0.1" value="0" required placeholder="Check dashboard">
           </label>
-          <label for="offerShipping">Shipping (₹)
-            <input id="offerShipping" type="number" min="0" step="0.01" value="0" inputmode="decimal">
+          <label for="candidateRating">Seller/product rating (0–5)
+            <input id="candidateRating" type="number" min="0" max="5" step="0.1" value="0" required>
           </label>
-          <label for="offerExpiry">Expiry date (if confirmed)
-            <input id="offerExpiry" type="date">
+          <label for="candidateReviews">Review count
+            <input id="candidateReviews" type="number" min="0" step="1" value="0" required>
+          </label>
+          <label for="candidateDemand">Demand evidence (1–5)
+            <select id="candidateDemand"><option value="1">1 — little evidence</option><option value="2">2 — weak</option><option value="3" selected>3 — some interest</option><option value="4">4 — strong signals</option><option value="5">5 — repeated buyer interest</option></select>
+          </label>
+          <label for="candidateCompetition">Competition (1–5)
+            <select id="candidateCompetition"><option value="1">1 — low</option><option value="2">2 — manageable</option><option value="3" selected>3 — medium</option><option value="4">4 — high</option><option value="5">5 — very high</option></select>
           </label>
         </div>
-        <label for="offerUrl">Product / affiliate link (optional for analysis)
-          <input id="offerUrl" type="url" maxlength="2048" inputmode="url" placeholder="https://...">
-        </label>
-        <label for="offerLanguage">Promotion language
-          <select id="offerLanguage">
-            <option value="Malayalam">Malayalam</option>
-            <option value="English">English</option>
-            <option value="Both">Malayalam + English</option>
-          </select>
-        </label>
-        <label for="offerChannel">Promotion channel
-          <select id="offerChannel">
-            <option>WhatsApp</option>
-            <option>Instagram</option>
-            <option>Facebook</option>
-          </select>
-        </label>
+        <label class="check-label" for="candidateStock"><input id="candidateStock" type="checkbox" checked> Seller currently shows in stock</label>
+        <button type="submit">Score product candidate</button>
+        <button id="saveCandidate" type="button" class="secondary">Save to shortlist</button>
+      </form>
+      <div id="candidateResult" aria-live="polite"></div>
+      <h3>Saved shortlist</h3>
+      <div id="candidateList" aria-live="polite"></div>
+      <p class="hint">The score uses your entered evidence. It is not a live popularity ranking. Confirm current price, stock, return terms and commission before publishing.</p>
+    </section>
+
+    <section class="panel">
+      <h2>3. Smart Offer Intelligence</h2>
+      <p>Check the price calculation and offer readiness. The original price is not independently verified.</p>
+      <form id="offerForm">
+        <label for="offerName">Product name<input id="offerName" maxlength="120" required placeholder="Example: Kitchen organiser"></label>
+        <div class="form-grid">
+          <label for="offerCurrentPrice">Current price (₹)<input id="offerCurrentPrice" type="number" min="0.01" step="0.01" required placeholder="799"></label>
+          <label for="offerOriginalPrice">Original/listed price (₹)<input id="offerOriginalPrice" type="number" min="0.01" step="0.01" required placeholder="999"></label>
+          <label for="offerShipping">Shipping (₹)<input id="offerShipping" type="number" min="0" step="0.01" value="0"></label>
+          <label for="offerExpiry">Expiry date (if confirmed)<input id="offerExpiry" type="date"></label>
+        </div>
+        <label for="offerUrl">Approved product / affiliate link (optional for analysis)<input id="offerUrl" type="url" maxlength="2048" inputmode="url" placeholder="https://..."></label>
+        <label for="offerLanguage">Promotion language<select id="offerLanguage"><option value="Malayalam">Malayalam</option><option value="English">English</option><option value="Both">Malayalam + English</option></select></label>
+        <label for="offerChannel">Promotion channel<select id="offerChannel"><option>WhatsApp</option><option>Instagram</option><option>Facebook</option></select></label>
         <button type="submit">Analyze offer</button>
       </form>
       <div id="offerResult" aria-live="polite"></div>
-      <label for="offerDraft">Offer promotion draft
-        <textarea id="offerDraft" rows="8" placeholder="Analyze an offer to prepare a draft."></textarea>
-      </label>
+      <label for="offerDraft">Offer promotion draft<textarea id="offerDraft" rows="8" placeholder="Analyze an offer to prepare a draft."></textarea></label>
       <button id="copyOfferDraft" type="button">Copy offer draft</button>
       <p id="offerMessage" role="status" aria-live="polite"></p>
     </section>
 
     <section class="panel">
-      <h2>Content Draft Studio</h2>
-      <p>This general template tool is not connected to a live AI service yet.</p>
-      <label for="topic">Product or topic
-        <input id="topic" maxlength="200" placeholder="Example: affordable kitchen organiser">
-      </label>
-      <label for="language">Language
-        <select id="language">
-          <option value="Malayalam">Malayalam</option>
-          <option value="English">English</option>
-          <option value="Both">Malayalam + English</option>
-        </select>
-      </label>
-      <button id="generate" type="button">Create draft</button>
-      <label for="draft">Draft text
-        <textarea id="draft" rows="6" placeholder="Your draft will appear here."></textarea>
-      </label>
-      <button id="copyDraft" type="button">Copy draft</button>
+      <h2>4. Post & Video Content Studio</h2>
+      <p>Create a post caption and a short vertical-video plan. Best results come from genuine product demonstrations and verified claims.</p>
+      <form id="contentForm">
+        <label for="contentName">Product name<input id="contentName" maxlength="120" required placeholder="Product name"></label>
+        <label for="contentBenefit">Main practical benefit<input id="contentBenefit" maxlength="200" required placeholder="Example: saves space in a small kitchen"></label>
+        <label for="contentAudience">Who may find it useful?<input id="contentAudience" maxlength="160" placeholder="Example: people organising small kitchens"></label>
+        <label for="contentProof">Verified feature / proof to show<input id="contentProof" maxlength="200" placeholder="Example: metal frame, dimensions shown on listing"></label>
+        <div class="form-grid">
+          <label for="contentPrice">Current price (optional)<input id="contentPrice" inputmode="decimal" maxlength="20" placeholder="599"></label>
+          <label for="contentLink">Approved affiliate link (optional)<input id="contentLink" type="url" maxlength="2048" placeholder="https://..."></label>
+        </div>
+        <div class="form-grid">
+          <label for="contentLanguage">Language<select id="contentLanguage"><option value="Malayalam">Malayalam</option><option value="English">English</option><option value="Both">Malayalam + English</option></select></label>
+          <label for="contentPlatform">Platform<select id="contentPlatform"><option>Instagram</option><option>Facebook</option><option>WhatsApp</option><option>YouTube Shorts</option></select></label>
+          <label for="contentType">Content format<select id="contentType"><option value="Video">Short video / Reel plan</option><option value="Post">Post / caption</option></select></label>
+        </div>
+        <button type="submit">Create post + video plan</button>
+      </form>
+      <label for="contentOutput">Generated content pack<textarea id="contentOutput" rows="16" placeholder="Your caption and video plan will appear here."></textarea></label>
+      <button id="copyContent" type="button">Copy content pack</button>
+      <p id="contentMessage" role="status" aria-live="polite"></p>
+      <div class="notice"><strong>Meesho video note:</strong> This version does not download videos from Meesho. Use videos/assets supplied by the seller or programme for your approved use, or film your own original demonstration. Do not assume a listing photo or video is free to reuse. We can add an authorised media import workflow when the programme provides it.</div>
     </section>
 
     <section class="panel">
-      <h2>Honest tracking</h2>
-      <p>The click count only counts link clicks in this open page. It does not confirm that a page loaded, a purchase happened, or a commission was earned. Product data is stored locally in this browser and is not synced to the cloud.</p>
+      <h2>5. Honest tracking</h2>
+      <p>The click count records link clicks in this open page only. It does not confirm successful page loads, purchases, conversions or commissions. Product lists are saved locally and are not synced to the cloud. Social posting is not automated.</p>
     </section>
   </main>
-
-  <footer>
-    Prototype only · Check each affiliate program's terms and disclose affiliate relationships clearly.
-  </footer>
+  <footer>Prototype · Verify every claim and current price. Follow the affiliate programme's content rules and disclose affiliate relationships clearly.</footer>
   <script src="product-utils.js"></script>
   <script src="offer-engine.js"></script>
+  <script src="discovery-engine.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

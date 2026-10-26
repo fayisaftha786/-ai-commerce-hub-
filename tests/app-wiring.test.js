@@ -85,3 +85,11 @@ test("content pack download control exists and exports generated text safely", (
   assert.match(app, /replace\(\/\[\^a-zA-Z0-9_-\]\+\/g, "-"/);
   assert.match(app, /Create a post or video plan before downloading/);
 });
+
+test("saved campaigns expose a confirmed delete action and preserve records if storage save fails", () => {
+  assert.match(app, /deleteButton\.textContent = "Delete campaign"/);
+  assert.match(app, /window\.confirm\("Delete this campaign record\?/);
+  assert.match(app, /campaigns\.splice\(index, 1\)/);
+  assert.match(app, /if \(!saved\) \{\s*campaigns\.splice\(index, 0, campaign\)/);
+  assert.match(app, /Campaign record deleted from this device/);
+});

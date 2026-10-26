@@ -283,6 +283,26 @@ function renderCampaigns() {
       card.append(link);
     }
     card.append(idButton);
+    const deleteButton = document.createElement("button");
+    deleteButton.type = "button";
+    deleteButton.className = "secondary";
+    deleteButton.textContent = "Delete campaign";
+    deleteButton.addEventListener("click", () => {
+      if (!window.confirm("Delete this campaign record? Export the register first if you may need it later.")) return;
+      const index = campaigns.findIndex((item) => item.id === campaign.id);
+      if (index < 0) return;
+      campaigns.splice(index, 1);
+      const saved = saveCampaigns();
+      if (!saved) {
+        campaigns.splice(index, 0, campaign);
+        renderCampaigns();
+        $("campaignMessage").textContent = "Could not save the deletion to browser storage. The campaign was kept.";
+        return;
+      }
+      renderCampaigns();
+      $("campaignMessage").textContent = "Campaign record deleted from this device.";
+    });
+    card.append(deleteButton);
     root.append(card);
   }
 }

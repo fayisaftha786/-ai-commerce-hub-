@@ -93,3 +93,10 @@ test("saved campaigns expose a confirmed delete action and preserve records if s
   assert.match(app, /if \(!saved\) \{\s*campaigns\.splice\(index, 0, campaign\)/);
   assert.match(app, /Campaign record deleted from this device/);
 });
+
+test("campaign register search filters by product, platform, format, and campaign ID", () => {
+  assert.ok(html.includes('id="campaignSearch"'));
+  assert.match(app, /\$\("campaignSearch"\)\.addEventListener\("input", renderCampaigns\)/);
+  assert.match(app, /\[campaign\.productName, campaign\.platform, campaign\.format, campaign\.id\]/);
+  assert.match(app, /No campaigns match this search/);
+});

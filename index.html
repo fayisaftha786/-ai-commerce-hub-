@@ -78,7 +78,22 @@
     </section>
 
     <section class="panel">
-      <h2>3. Smart Offer Intelligence</h2>
+      <h2>3. Import real catalogue / affiliate performance data</h2>
+      <p>For the strongest ranking, export a CSV from a dashboard you are authorised to access. This tool does not connect to or scrape Meesho. Import stays in this browser; it is not uploaded.</p>
+      <p class="hint">Recommended columns: <code>name, platform, url, price, commission, rating, reviews, clicks, orders, period_days, stock</code>. Minimum required columns: <code>name, price</code>. Use the same reporting period for every product. Only include metrics actually shown by your dashboard.</p>
+      <form id="catalogForm">
+        <label for="catalogCsv">Choose catalogue / performance CSV (max 2 MB)
+          <input id="catalogCsv" type="file" accept=".csv,text/csv" required>
+        </label>
+        <button type="submit">Import and rank products</button>
+      </form>
+      <p id="catalogMessage" role="status" aria-live="polite"></p>
+      <div id="catalogResults" aria-live="polite"></div>
+      <p class="hint">Orders and clicks are useful only when their time window and definitions are comparable. If the file contains only product ratings, the app labels the result as catalogue quality—not evidence that people are buying.</p>
+    </section>
+
+    <section class="panel">
+      <h2>4. Smart Offer Intelligence</h2>
       <p>Check the price calculation and offer readiness. The original price is not independently verified.</p>
       <form id="offerForm">
         <label for="offerName">Product name<input id="offerName" maxlength="120" required placeholder="Example: Kitchen organiser"></label>
@@ -132,7 +147,8 @@
   <footer>Prototype · Verify every claim and current price. Follow the affiliate programme's content rules and disclose affiliate relationships clearly.</footer>
   <script src="product-utils.js"></script>
   <script src="offer-engine.js"></script>
-  <script src="discovery-engine.js"></script>\n  <script src="catalog-import.js"></script>
+  <script src="discovery-engine.js"></script>
+  <script src="catalog-import.js"></script>\n  <script src="catalog-import.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

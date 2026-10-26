@@ -60,7 +60,14 @@ function createContentPack(input) {
   const benefit = (typeof input.benefit === "string" && input.benefit.trim()) || "a useful everyday solution";
   const proof = (typeof input.proof === "string" && input.proof.trim()) || "Check the product page for full details";
   const price = typeof input.price === "string" ? input.price.trim() : "";
-  const link = typeof input.link === "string" ? input.link.trim() : "";
+  const rawLink = typeof input.link === "string" ? input.link.trim() : "";
+  let link = "";
+  try {
+    const parsedLink = new URL(rawLink);
+    if (parsedLink.protocol === "https:" && parsedLink.hostname && !parsedLink.username && !parsedLink.password) link = parsedLink.href;
+  } catch {
+    link = "";
+  }
   const platform = input.platform || "Instagram";
   const language = input.language || "Malayalam";
   const type = input.type || "Video";

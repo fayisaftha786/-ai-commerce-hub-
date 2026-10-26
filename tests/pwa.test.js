@@ -37,7 +37,7 @@ test("service worker precaches the local app shell and uses offline fallback", (
   assert.match(serviceWorker, /const response = await fetch\(request\)/);
   assert.match(serviceWorker, /const cached = await cache\.match\(request\)/);
   assert.match(serviceWorker, /request\.mode === "navigate"/);
-  assert.match(serviceWorker, /cache\.delete\(key\)/);
+  assert.match(serviceWorker, /caches\.delete\(key\)/);
 });
 
 test("HTML links the PWA manifest and registers service worker outside file URLs", () => {

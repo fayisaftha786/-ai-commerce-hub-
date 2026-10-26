@@ -71,3 +71,10 @@ button.secondary { background: #30394e; color: #edf1f8; border: 1px solid #53617
 #catalogResults ul { padding-left: 22px; }
 #catalogResults li { margin: 6px 0; }
 input[type="file"] { max-width: 100%; }
+
+
+.social-media-preview { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin: 12px 0; }
+.social-media-preview figure { margin: 0; min-width: 0; padding: 8px; background: #101522; border: 1px solid #414c63; border-radius: 8px; }
+.social-media-preview img, .social-media-preview video { display: block; width: 100%; max-height: 220px; object-fit: contain; border-radius: 6px; background: #000; }
+.social-media-preview figcaption { font-size: 12px; color: #b8c3d8; overflow-wrap: anywhere; margin-top: 6px; }
+#socialAnalyticsResults .candidate-card { margin-top: 12px; }

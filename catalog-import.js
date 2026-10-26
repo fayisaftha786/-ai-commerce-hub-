@@ -95,7 +95,7 @@ function rankCatalogCsv(csvText) {
     const orders = numeric(cells, "orders", { defaultValue: null, optional: true });
     const returns = numeric(cells, "returns", { defaultValue: null, optional: true });
     const periodDays = numeric(cells, "period_days", { defaultValue: null, optional: true });
-    const countValues = [reviews, clicks, orders, returns].filter((item) => item !== null);
+    const countValues = [reviews, clicks, orders, returns, periodDays].filter((item) => item !== null);
     const countsAreWhole = countValues.every((item) => Number.isInteger(item));
     if (![price, commission, rating, reviews].every(Number.isFinite) || price <= 0 ||
         (clicks !== null && !Number.isFinite(clicks)) ||
@@ -141,9 +141,11 @@ function rankCatalogCsv(csvText) {
     const warnings = [];
     if (!hasPerformanceData) warnings.push("No click/order data supplied; this is a catalogue-quality score, not a sales-demand ranking.");
     if (hasOrders && !hasClicks) warnings.push("Orders supplied without clicks; conversion rate cannot be calculated.");
+    if (hasOrders && hasClicks && clicks === 0 && orders > 0) warnings.push("Orders are positive while clicks are zero; verify attribution windows and metric definitions.");
+    if (hasOrders && hasClicks && clicks > 0 && orders > clicks) warnings.push("Orders exceed clicks; verify metric definitions and reporting windows before comparing conversion rates.");
     if (hasClicks && !hasOrders) warnings.push("Clicks supplied without orders; sales performance cannot be calculated.");
     if (hasOrders && orders === 0) warnings.push("No orders recorded in the supplied period; investigate before prioritising this product.");
-    if (hasOrders && !periodDays) warnings.push("Reporting period missing; order counts may not be comparable across products.");
+    if (hasPerformanceData && !periodDays) warnings.push("Reporting period missing; click/order counts may not be comparable across products.");
     if (returns !== null && orders === null) warnings.push("Returns supplied without orders; return rate cannot be calculated.");
     if (returnRate !== null && returnRate >= 0.2) warnings.push("High supplied return rate (" + Math.round(returnRate * 100) + "%); investigate product quality and buyer expectations.");
     else if (returnRate !== null && returnRate >= 0.1) warnings.push("Elevated supplied return rate (" + Math.round(returnRate * 100) + "%); review recent return reasons.");

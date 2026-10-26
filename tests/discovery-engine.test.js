@@ -94,3 +94,14 @@ test("only reports estimated commission when a positive rate is supplied", () =>
   assert.equal(scoreCandidate({ ...base, commission: "" }).candidate.estimatedCommission, null);
   assert.equal(scoreCandidate({ ...base, commission: 0 }).candidate.estimatedCommission, null);
 });
+
+
+test("ranks ready candidates before incomplete and out-of-stock candidates", () => {
+  const compare = require("../discovery-engine").compareCandidatesByReadiness;
+  const ready = { label: "Prioritize for review", inStock: true, score: 60 };
+  const incompleteHighScore = { label: "Need more evidence", inStock: true, score: 99 };
+  const outOfStock = { label: "Do not promote — out of stock", inStock: false, score: 100 };
+  assert.ok(compare(ready, incompleteHighScore) < 0);
+  assert.ok(compare(incompleteHighScore, outOfStock) < 0);
+  assert.ok(compare({ ...ready, score: 80 }, ready) < 0);
+});

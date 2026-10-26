@@ -1,0 +1,35 @@
+
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: #101522; color: #edf1f8;
+  font-family: system-ui, sans-serif; line-height: 1.5;
+}
+header, main, footer { max-width: 900px; margin: auto; padding: 20px; }
+header { padding-top: 36px; }
+.eyebrow { color: #85d8bd; font-size: 12px; letter-spacing: 2px; }
+h1 { font-size: clamp(30px, 6vw, 46px); margin-bottom: 8px; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+article, .panel {
+  background: #191f30; border: 1px solid #30394e;
+  border-radius: 14px; padding: 18px; margin-bottom: 16px;
+}
+article span, label { display: block; color: #b8c3d8; font-size: 14px; }
+article strong { display: block; font-size: 28px; margin-top: 8px; }
+label { margin: 14px 0; }
+input, select, textarea {
+  display: block; width: 100%; margin-top: 7px; padding: 12px;
+  border: 1px solid #414c63; border-radius: 8px;
+  background: #101522; color: #fff; font: inherit;
+}
+button {
+  background: #85d8bd; color: #101522; border: 0;
+  padding: 12px 16px; border-radius: 8px; font-weight: 700;
+  cursor: pointer; margin: 6px 6px 6px 0;
+}
+.product { padding: 12px 0; border-bottom: 1px solid #30394e; }
+a { color: #85d8bd; overflow-wrap: anywhere; }
+footer { color: #aab4c7; font-size: 12px; }
+@media (max-width: 480px) {
+  .stats { grid-template-columns: 1fr; }
+}
+

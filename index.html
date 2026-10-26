@@ -1,0 +1,77 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101522">
+  <title>AI Commerce Command Center</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <p class="eyebrow">YOUR PRIVATE BUSINESS WORKSPACE</p>
+    <h1>AI Commerce Hub</h1>
+    <p>Discover products. Create content. Track performance.</p>
+  </header>
+
+  <main>
+    <section class="stats">
+      <article><span>Products</span><strong id="products">0</strong></article>
+      <article><span>Campaigns</span><strong id="campaigns">0</strong></article>
+      <article><span>Tracked clicks</span><strong id="clicks">0</strong></article>
+    </section>
+
+    <section class="panel">
+      <h2>Product Workspace</h2>
+      <p>Add products you are permitted to promote.</p>
+      <form id="productForm">
+        <label>Product name
+          <input id="productName" maxlength="120" required
+            placeholder="Example: Kitchen storage organiser">
+        </label>
+        <label>Affiliate platform
+          <select id="platform">
+            <option>Amazon</option>
+            <option>Flipkart</option>
+            <option>Meesho</option>
+          </select>
+        </label>
+        <label>Product link
+          <input id="productUrl" type="url" required
+            placeholder="https://...">
+        </label>
+        <button type="submit">Add product</button>
+      </form>
+      <p id="message" role="status"></p>
+      <div id="productList"></div>
+    </section>
+
+    <section class="panel">
+      <h2>AI Content Studio</h2>
+      <label>Product or topic
+        <input id="topic" maxlength="200"
+          placeholder="Example: affordable kitchen organiser">
+      </label>
+      <label>Language
+        <select id="language">
+          <option value="Malayalam">Malayalam</option>
+          <option value="English">English</option>
+          <option value="Both">Malayalam + English</option>
+        </select>
+      </label>
+      <button id="generate" type="button">Create draft</button>
+      <textarea id="draft" rows="6"
+        placeholder="Your draft will appear here."></textarea>
+      <button id="copyDraft" type="button">Copy draft</button>
+    </section>
+  </main>
+
+  <footer>
+    Prototype only · Verify affiliate eligibility and disclosures
+    before publishing.
+  </footer>
+  <script src="app.js"></script>
+</body>
+</html>
+

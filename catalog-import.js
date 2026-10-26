@@ -125,7 +125,7 @@ function rankCatalogCsv(csvText) {
       name, platform, url, price, commission, rating, reviews, clicks, orders, returns,
       periodDays, inStock, score,
       evidenceLabel: hasOrders ? "Orders supplied" : hasClicks ? "Clicks supplied" : "No sales evidence",
-      conversionRate,
+      conversionRate, returnRate,
       warnings,
       rowNumber: i + 1
     });

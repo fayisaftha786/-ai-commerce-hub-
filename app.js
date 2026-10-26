@@ -597,6 +597,31 @@ $("copyContent").addEventListener("click", async () => {
   }
 });
 
+$("downloadContent").addEventListener("click", () => {
+  const output = $("contentOutput").value;
+  if (!output.trim()) {
+    $("contentMessage").textContent = "Create a post or video plan before downloading.";
+    return;
+  }
+  const rawName = $("contentName").value.trim() || "content-pack";
+  const safeName = rawName.normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9_-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60) || "content-pack";
+  const blob = new Blob([output + "\n"], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = "ai-commerce-" + safeName + ".txt";
+  anchor.hidden = true;
+  document.body.append(anchor);
+  anchor.click();
+  anchor.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  $("contentMessage").textContent = "Content pack downloaded as a text file. Review claims and affiliate disclosure before posting.";
+});
+
 
 const CATALOG_KEY = "ai-commerce-hub.catalog-import.v1";
 function useCatalogProductInContent(record) {

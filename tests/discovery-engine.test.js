@@ -130,7 +130,7 @@ test("requires a current source, date, link, commission and known stock before p
   assert.equal(complete.valid, true);
   assert.equal(complete.candidate.evidenceFreshness, "current");
   assert.equal(complete.candidate.evidenceTraceable, true);
-  assert.equal(complete.candidate.label, "Prioritize for review");
+  assert.equal(complete.candidate.label, "Test with a small post");
   assert.equal(complete.candidate.inStock, true);
   assert.equal(complete.candidate.evidenceCoverage, 100);
 

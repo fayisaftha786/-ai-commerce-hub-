@@ -673,7 +673,12 @@ function renderCandidates() {
       productLink.textContent = "Open supplied product link";
       card.append(productLink);
     }
-    card.append(remove);
+    const contentButton = document.createElement("button");
+    contentButton.type = "button";
+    contentButton.className = "secondary";
+    contentButton.textContent = "Use in Content Studio";
+    contentButton.addEventListener("click", () => useCandidateInContent(candidate));
+    card.append(contentButton, remove);
     root.append(card);
   }
 }
@@ -731,7 +736,12 @@ $("candidateForm").addEventListener("submit", (event) => {
     productLink.textContent = "Open supplied product link";
     card.append(productLink);
   }
-  card.append(list);
+  const contentButton = document.createElement("button");
+  contentButton.type = "button";
+  contentButton.className = "secondary";
+  contentButton.textContent = "Use in Content Studio";
+  contentButton.addEventListener("click", () => useCandidateInContent(result.candidate));
+  card.append(contentButton, list);
   $("candidateResult").append(card);
 });
 
@@ -899,6 +909,16 @@ function useCatalogProductInContent(record) {
   $("contentMessage").textContent = "Product name, price and available link copied. Add a real, verified benefit and feature before generating content.";
   $("contentForm").scrollIntoView({ behavior: "smooth", block: "start" });
   $("contentBenefit").focus({ preventScroll: true });
+}
+
+function useCandidateInContent(candidate) {
+  if (!candidate || typeof candidate !== "object") return;
+  // Reuse the existing safe hand-off so previous product claims and review checks are cleared.
+  useCatalogProductInContent({
+    name: typeof candidate.name === "string" ? candidate.name : "",
+    price: candidate.price == null || !Number.isFinite(Number(candidate.price)) ? "" : Number(candidate.price),
+    url: safeCampaignUrl(candidate.url)
+  });
 }
 
 function renderImportedCatalog(records, errors = []) {

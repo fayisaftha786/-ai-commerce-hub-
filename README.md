@@ -16,7 +16,7 @@ A lightweight affiliate workspace prototype for evaluating offer details, shortl
 - Generate a short vertical-video plan with hook, shot guidance, voice-over, CTA and affiliate disclosure
 - Generate three distinct hook options and three CTA options for simple creative testing; compare results manually because the prototype does not track conversions
 - Save a local campaign register with a unique ID per content variant and export campaign metadata as CSV
-- Import authorised campaign-performance CSVs, group by exact campaign ID and reporting period, and calculate conversion only when click/order counts are plausible
+- Import authorised campaign-performance CSVs, group by exact campaign ID and reporting period, detect exact duplicate rows and overlapping date windows, and calculate conversion only when click/order counts are plausible
 - Export/restore a versioned JSON backup of local products, campaigns, shortlist and imported catalogue data
 - Copy content for Instagram, Facebook, WhatsApp and YouTube Shorts workflows
 - Automated Node.js regression tests and GitHub Actions CI
@@ -38,7 +38,7 @@ The importer rejects malformed quoting, duplicate normalised headers, mismatched
 
 ## Campaign performance report
 
-The campaign report importer accepts a user-supplied CSV with `campaign_id` (or `sub_id`), `period_start`, `period_end`, `clicks` and `orders`; `commission` and `returns` are optional. It validates dates and counts, groups only rows with the same campaign ID and exact reporting period, and matches only exact IDs in the local campaign registry. It does not infer attribution from product names, dates or similar-looking IDs. If the affiliate programme does not export a campaign/sub-ID that was actually attached to the link, attribution is unavailable. Missing commission/return values are not treated as zero; implausible click/order counts suppress conversion calculations. Imported reports are shown in the current page and are not independently verified or saved as official payout records.
+The campaign report importer accepts a user-supplied CSV with `campaign_id` (or `sub_id`), `period_start`, `period_end`, `clicks` and `orders`; `commission` and `returns` are optional. It validates dates and counts, groups only rows with the same campaign ID and exact reporting period, and matches only exact IDs in the local campaign registry. It does not infer attribution from product names, dates or similar-looking IDs. If the affiliate programme does not export a campaign/sub-ID that was actually attached to the link, attribution is unavailable. Missing commission/return values are not treated as zero; implausible click/order counts suppress conversion calculations. Imported reports are shown in the current page and are not independently verified or saved as official payout records. Exact duplicate rows are skipped to reduce double-counting risk; overlapping date ranges are flagged rather than silently treated as independent periods. These checks cannot establish that a report is complete or truthful.
 
 ## Product discovery: important limitations
 

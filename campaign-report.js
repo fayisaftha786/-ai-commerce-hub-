@@ -91,9 +91,18 @@ function parseCampaignReport(csvText, savedCampaigns = []) {
 
   const groups = new Map();
   const errors = [];
+  const seenRows = new Set();
+  let duplicateRows = 0;
   for (let i = 1; i < parsed.rows.length; i += 1) {
     const cells = parsed.rows[i];
     if (cells.length !== columns.length) { errors.push("Row " + (i + 1) + ": wrong number of columns; skipped."); continue; }
+    const rowSignature = JSON.stringify(cells.map((cell) => String(cell).trim()));
+    if (seenRows.has(rowSignature)) {
+      duplicateRows += 1;
+      errors.push("Row " + (i + 1) + ": exact duplicate of an earlier row; skipped to avoid double-counting.");
+      continue;
+    }
+    seenRows.add(rowSignature);
     const campaignId = value(cells, "campaign_id");
     const start = value(cells, "period_start");
     const end = value(cells, "period_end");
@@ -135,7 +144,32 @@ function parseCampaignReport(csvText, savedCampaigns = []) {
     const returnRate = group.returns !== null && group.orders > 0 && group.returns <= group.orders ? group.returns / group.orders : null;
     return { ...group, matched, conversionRate, returnRate };
   }).sort((a, b) => a.periodStart.localeCompare(b.periodStart) || a.campaignId.localeCompare(b.campaignId));
-  return { valid: true, reports, errors, importedRows: reports.reduce((sum, item) => sum + item.rows, 0), totalRows: parsed.rows.length - 1 };
+  const byCampaign = new Map();
+  for (const report of reports) {
+    if (!byCampaign.has(report.campaignId)) byCampaign.set(report.campaignId, []);
+    byCampaign.get(report.campaignId).push(report);
+  }
+  for (const periods of byCampaign.values()) {
+    periods.sort((a, b) => a.periodStart.localeCompare(b.periodStart) || a.periodEnd.localeCompare(b.periodEnd));
+    for (let i = 1; i < periods.length; i += 1) {
+      if (periods[i].periodStart <= periods[i - 1].periodEnd) {
+        periods[i - 1].warnings.push("Reporting periods overlap for this campaign; do not compare or add these periods without checking the source.");
+        periods[i].warnings.push("Reporting periods overlap for this campaign; do not compare or add these periods without checking the source.");
+      }
+    }
+  }
+  return {
+    valid: true, reports, errors, duplicateRows,
+    importedRows: reports.reduce((sum, item) => sum + item.rows, 0),
+    totalRows: parsed.rows.length - 1,
+    dataQuality: {
+      status: errors.length || reports.some((item) => item.warnings.length) ? "review" : "clean",
+      validRows: reports.reduce((sum, item) => sum + item.rows, 0),
+      skippedRows: errors.length,
+      duplicateRows,
+      warningCount: reports.reduce((sum, item) => sum + item.warnings.length, 0)
+    }
+  };
 }
 
 const api = { parseCampaignReport };

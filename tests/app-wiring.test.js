@@ -254,3 +254,10 @@ test("App Self-Check panel loads its diagnostic script and labels external integ
   assert.match(appHealth, /External integrations/);
   assert.match(appHealth, /Live marketplace data APIs, a live AI text API, and automatic social publishing are not connected/);
 });
+
+
+test("manual discovery cannot label a zero-commission product ready for a small post", () => {
+  const discovery = fs.readFileSync(path.join(root, "discovery-engine.js"), "utf8");
+  assert.match(discovery, /!hasCommission \|\| commission <= 0/);
+  assert.match(html, /positive confirmed commission/);
+});

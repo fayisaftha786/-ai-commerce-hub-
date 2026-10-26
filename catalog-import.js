@@ -63,9 +63,9 @@ function rankCatalogCsv(csvText) {
     if (!name) { errors.push("Row " + (i + 1) + ": product name is missing."); continue; }
     if (name.length > 120) { errors.push("Row " + (i + 1) + ": product name is over 120 characters."); continue; }
     const price = numeric(cells, "price");
-    const commission = numeric(cells, "commission", { defaultValue: 0, optional: true, max: 100 });
-    const rating = numeric(cells, "rating", { defaultValue: 0, optional: true, max: 5 });
-    const reviews = numeric(cells, "reviews", { defaultValue: 0, optional: true });
+    const commission = numeric(cells, "commission", { defaultValue: 0, max: 100 });
+    const rating = numeric(cells, "rating", { defaultValue: 0, max: 5 });
+    const reviews = numeric(cells, "reviews", { defaultValue: 0 });
     const clicks = numeric(cells, "clicks", { defaultValue: null, optional: true });
     const orders = numeric(cells, "orders", { defaultValue: null, optional: true });
     const returns = numeric(cells, "returns", { defaultValue: null, optional: true });

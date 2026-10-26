@@ -221,3 +221,9 @@ test("manual discovery results and saved candidates can be handed to Content Stu
   assert.match(app, /\$\("contentBenefit"\)\.value = ""/);
   assert.match(app, /Product selection changed\. Generate a fresh draft/);
 });
+
+
+test("workflow section numbers run sequentially without duplicates", () => {
+  const numbers = [...html.matchAll(/<h2\b[^>]*>(\d+)\./g)].map((match) => Number(match[1]));
+  assert.deepEqual(numbers, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
+});

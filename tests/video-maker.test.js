@@ -90,3 +90,12 @@ test("video maker falls back to uploaded images when an optional remote image is
   assert.match(source, /Remote image unavailable; using the uploaded image files instead/);
   assert.match(source, /if \(!images\.length\) throw new Error\("No usable product images were loaded/);
 });
+
+test("video export always cleans up capture tracks and names downloads after the product", () => {
+  assert.match(source, /let activeStream = null/);
+  assert.match(source, /let activeRecorder = null/);
+  assert.match(source, /if \(activeRecorder && activeRecorder\.state !== "inactive"\)/);
+  assert.match(source, /if \(activeStream\) activeStream\.getTracks\(\)\.forEach\(\(track\) => track\.stop\(\)\)/);
+  assert.match(source, /\.normalize\("NFKD"\)/);
+  assert.match(source, /link\.download = filename \+ "-video\\.webm"/);
+});

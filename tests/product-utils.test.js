@@ -80,3 +80,22 @@ test("calculates date-only evidence freshness by local calendar day", () => {
   assert.equal(calculateCalendarDateAgeDays("2026-02-30", localToday), null);
   assert.equal(calculateCalendarDateAgeDays("", localToday), null);
 });
+
+
+test("accepts a safe optional HTTPS product image URL", () => {
+  const result = validateProduct({ ...validProduct, imageUrl: "https://cdn.example.com/item.jpg" });
+  assert.equal(result.valid, true);
+  assert.equal(result.product.imageUrl, "https://cdn.example.com/item.jpg");
+});
+
+test("rejects unsafe product image URLs", () => {
+  for (const imageUrl of ["http://example.com/item.jpg", "javascript:alert(1)", "https://user:pass@example.com/x", "not-a-url"]) {
+    assert.equal(validateProduct({ ...validProduct, imageUrl }).valid, false);
+  }
+});
+
+test("keeps legacy product records valid when no image URL exists", () => {
+  const result = validateProduct(validProduct);
+  assert.equal(result.valid, true);
+  assert.equal(Object.hasOwn(result.product, "imageUrl"), false);
+});

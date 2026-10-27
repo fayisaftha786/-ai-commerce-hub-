@@ -69,6 +69,10 @@
         <label for="productUrl">Approved product / affiliate link (HTTPS)
           <input id="productUrl" type="url" maxlength="2048" required inputmode="url" autocomplete="url" placeholder="https://...">
         </label>
+        <label for="productImageUrl">Product image URL (optional, HTTPS)
+          <input id="productImageUrl" type="url" maxlength="2048" inputmode="url" placeholder="Paste an image link you may use">
+        </label>
+        <p class="hint">Marketplace links do not reliably expose product images to this static app. Add an authorised image URL when you have one; missing or blocked images show a designed fallback.</p>
         <button type="submit">Add product</button>
       </form>
       <p id="message" role="status" aria-live="polite"></p>

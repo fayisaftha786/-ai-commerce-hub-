@@ -7,6 +7,7 @@ const path = require("node:path");
 
 const root = path.join(__dirname, "..");
 const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
+const css = fs.readFileSync(path.join(root, "style.css"), "utf8");
 const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
 const appHealth = fs.readFileSync(path.join(root, "app-health.js"), "utf8");
 const catalog = fs.readFileSync(path.join(root, "catalog-import.js"), "utf8");
@@ -261,4 +262,15 @@ test("App Self-Check panel loads its diagnostic script and labels external integ
   assert.match(appHealth, /Secure browser context/);
   assert.match(appHealth, /External integrations/);
   assert.match(appHealth, /Live marketplace data APIs, a live AI text API, and automatic social publishing are not connected/);
+});
+
+
+test("product workspace supports safe optional image URLs and premium image cards", () => {
+  assert.ok(html.includes('id="productImageUrl"'));
+  assert.match(app, /imageUrl: \$\("productImageUrl"\)\.value/);
+  assert.match(app, /className = "product-media"/);
+  assert.match(app, /className = "product-image-fallback"/);
+  assert.match(app, /image\.addEventListener\("error", \(\) => image\.remove\(\)\)/);
+  assert.match(app, /image\.addEventListener\("load", \(\) => fallback\.remove\(\)\)/);
+  assert.match(css, /\.product-grid/);
 });

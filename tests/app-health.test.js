@@ -26,7 +26,7 @@ function makeEnvironment(overrides = {}) {
     document: {
       getElementById(id) { return ids.has(id) ? { id } : null; },
       querySelector(selector) {
-        return ['link[rel="manifest"]', 'script[src="video-maker.js"]', 'script[src="pwa-install.js"]'].includes(selector) ? {} : null;
+        return ['link[rel="manifest"]', 'script[src="video-maker.js"]', 'script[src="pwa-install.js"]', 'script[src="app.js"]', 'script[data-register-service-worker]'].includes(selector) ? {} : null;
       }
     },
     AICommerceProductUtils: { validateProduct() {} },
@@ -116,7 +116,7 @@ test("self-check catches missing video-maker and install helper script tags", ()
   const environment = makeEnvironment({
     document: {
       getElementById(id) { return new Set(["productForm", "marketplaceSearchForm", "candidateForm", "catalogForm", "contentForm", "campaignReportForm", "socialAnalyticsForm", "videoMakerForm", "installAppButton"]).has(id) ? { id } : null; },
-      querySelector(selector) { return selector === 'link[rel="manifest"]' ? {} : null; }
+      querySelector(selector) { return ['link[rel="manifest"]', 'script[src="app.js"]', 'script[data-register-service-worker]'].includes(selector) ? {} : null; }
     }
   });
   const checks = collectEnvironmentChecks(environment);

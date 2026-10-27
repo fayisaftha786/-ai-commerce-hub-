@@ -359,7 +359,7 @@
   <script src="app.js"></script>
   <script src="pwa-install.js"></script>
   <script src="app-health.js"></script>
-  <script>
+  <script data-register-service-worker>
     // Service-worker caching is optional; the app remains usable online if registration is blocked.
     if ("serviceWorker" in navigator && location.protocol !== "file:") {
       window.addEventListener("load", () => {

@@ -22,6 +22,17 @@ test("rejects empty search and bounds the keyword length", () => {
   assert.equal(buildMarketplaceSearches("x".repeat(200)).query.length, 120);
 });
 
+test("marketplace search cards can hand the keyword to scoring without carrying over old evidence", () => {
+  const source = fs.readFileSync(path.join(root, "marketplace-search.js"), "utf8");
+  assert.match(source, /scoreButton\.textContent = "Start scoring this keyword"/);
+  assert.match(source, /candidateName: result\.query/);
+  for (const id of ["candidatePrice", "candidateCommission", "candidateDemand", "candidateCompetition", "candidateUrl", "candidateSource", "candidateCheckedAt", "candidateStock"]) {
+    assert.match(source, new RegExp(id + ': ""'));
+  }
+  assert.match(source, /marketplace search links do not provide verified evidence/);
+  assert.match(source, /form\.scrollIntoView/);
+});
+
 test("search UI exists and module loads before app initialisation", () => {
   for (const id of ["marketplaceSearchForm", "marketplaceSearchQuery", "marketplaceSearchResults", "marketplaceSearchStatus"]) {
     assert.ok(html.includes('id="' + id + '"'), "missing " + id);

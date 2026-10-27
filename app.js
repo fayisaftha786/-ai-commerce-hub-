@@ -8,6 +8,7 @@ let clicks = 0;
 let draftsCreated = 0;
 let lastAnalyzedOffer = null;
 let latestCampaignReport = null;
+let latestBulkContentPacks = [];
 const CAMPAIGN_KEY = "ai-commerce-hub.campaigns.v1";
 
 const BACKUP_KEYS = [
@@ -902,6 +903,8 @@ function parseBulkContentRows(text) {
 }
 
 $("bulkContentRows").addEventListener("input", () => {
+  latestBulkContentPacks = [];
+  $("exportBulkContentCsv").disabled = true;
   $("contentOutput").value = "";
   resetContentReview("Bulk product rows changed. Generate the batch again, review the complete draft, then check all four items.");
   $("bulkContentStatus").textContent = "Rows changed. Generate the batch again before exporting.";
@@ -920,6 +923,8 @@ $("generateBulkContent").addEventListener("click", () => {
       platform: $("contentPlatform").value,
       type: $("contentType").value
     });
+    latestBulkContentPacks = packs;
+    $("exportBulkContentCsv").disabled = false;
     $("contentName").value = "Bulk content batch (" + packs.length + " products)";
     $("contentBenefit").value = "";
     $("contentAudience").value = "";
@@ -943,6 +948,34 @@ $("generateBulkContent").addEventListener("click", () => {
 });
 
 
+
+function exportBulkContentCsv() {
+  if (!latestBulkContentPacks.length || !$("contentOutput").value.trim()) {
+    $("bulkContentStatus").textContent = "Generate a bulk batch again before exporting CSV.";
+    return;
+  }
+  if (!requireContentReview("export the bulk CSV")) return;
+  const headers = ["product_name", "platform", "language", "content_format", "caption", "video_plan", "hook_options", "call_to_action_options", "affiliate_disclosure"];
+  const rows = latestBulkContentPacks.map(({ name, pack }) => [
+    name, pack.platform, pack.language, pack.type, pack.post, pack.video,
+    (pack.hooks || []).join("\n"), (pack.ctas || []).join("\n"),
+    pack.disclosure || "Affiliate disclosure included in draft; review before publishing."
+  ]);
+  const csv = "\uFEFF" + [headers, ...rows].map((row) => row.map(csvCell).join(",")).join("\r\n") + "\r\n";
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = "ai-commerce-bulk-content.csv";
+  anchor.hidden = true;
+  document.body.append(anchor);
+  anchor.click();
+  anchor.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  $("bulkContentStatus").textContent = "Exported " + rows.length + " product content rows to CSV. Review Malayalam text, claims, prices and disclosures before posting.";
+}
+
+$("exportBulkContentCsv").addEventListener("click", exportBulkContentCsv);
 
 const CONTENT_REVIEW_IDS = ["reviewClaims", "reviewPrice", "reviewAffiliate", "reviewLink"];
 
@@ -976,6 +1009,8 @@ function invalidateContentDraftOnInput() {
 $("contentForm").addEventListener("input", invalidateContentDraftOnInput);
 $("contentForm").addEventListener("change", invalidateContentDraftOnInput);
 $("contentOutput").addEventListener("input", () => {
+  latestBulkContentPacks = [];
+  $("exportBulkContentCsv").disabled = true;
   resetContentReview("Draft text changed. Review the full edited draft and re-check all four items before copying, downloading, or saving.");
 });
 

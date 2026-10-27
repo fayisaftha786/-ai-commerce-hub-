@@ -21,9 +21,13 @@ function makeEnvironment(overrides = {}) {
     location: { protocol: "https:", hostname: "example.github.io" },
     localStorage: storage,
     navigator: { serviceWorker: { getRegistration: async () => ({ active: {} }) } },
+    MediaRecorder: function MediaRecorder() {},
+    HTMLCanvasElement: { prototype: { captureStream() {} } },
     document: {
       getElementById(id) { return ids.has(id) ? { id } : null; },
-      querySelector(selector) { return selector === 'link[rel="manifest"]' ? {} : null; }
+      querySelector(selector) {
+        return ['link[rel="manifest"]', 'script[src="video-maker.js"]', 'script[src="pwa-install.js"]'].includes(selector) ? {} : null;
+      }
     },
     AICommerceProductUtils: { validateProduct() {} },
     AICommerceOfferEngine: { analyzeOffer() {}, createPromoCopy() {} },
@@ -46,6 +50,9 @@ test("self-check passes when secure context, storage, modules, and key forms are
   assert.ok(checks.some((check) => check.title === "Marketplace search" && check.state === "pass"));
   assert.ok(checks.some((check) => check.title === "Social media workflow" && check.state === "pass"));
   assert.ok(checks.some((check) => check.title === "Manual product discovery form/control" && check.state === "pass"));
+  assert.ok(checks.some((check) => check.title === "Video maker script wiring" && check.state === "pass"));
+  assert.ok(checks.some((check) => check.title === "PWA install script wiring" && check.state === "pass"));
+  assert.ok(checks.some((check) => check.title === "Browser video export capability" && check.state === "pass"));
   assert.ok(checks.some((check) => check.title === "External integrations" && check.state === "info"));
 });
 
@@ -97,4 +104,22 @@ test("service-worker check distinguishes registered and missing offline setup", 
   }));
   assert.equal(missing.state, "warn");
   assert.match(missing.detail, /No service worker is registered/i);
+});
+
+
+test("self-check warns when browser video export APIs are unavailable", () => {
+  const checks = collectEnvironmentChecks(makeEnvironment({ MediaRecorder: undefined, HTMLCanvasElement: undefined }));
+  assert.ok(checks.some((check) => check.title === "Browser video export capability" && check.state === "warn"));
+});
+
+test("self-check catches missing video-maker and install helper script tags", () => {
+  const environment = makeEnvironment({
+    document: {
+      getElementById(id) { return new Set(["productForm", "marketplaceSearchForm", "candidateForm", "catalogForm", "contentForm", "campaignReportForm", "socialAnalyticsForm", "videoMakerForm", "installAppButton"]).has(id) ? { id } : null; },
+      querySelector(selector) { return selector === 'link[rel="manifest"]' ? {} : null; }
+    }
+  });
+  const checks = collectEnvironmentChecks(environment);
+  assert.ok(checks.some((check) => check.title === "Video maker script wiring" && check.state === "fail"));
+  assert.ok(checks.some((check) => check.title === "PWA install script wiring" && check.state === "warn"));
 });

@@ -212,7 +212,25 @@ function render() {
       }));
       $("videoMakerForm").scrollIntoView({ behavior: "smooth", block: "start" });
     });
-    body.append(platform, title, link, videoButton);
+    const scoreButton = document.createElement("button");
+    scoreButton.type = "button";
+    scoreButton.className = "secondary";
+    scoreButton.textContent = "Score this product";
+    scoreButton.addEventListener("click", () => {
+      $("candidateName").value = product.name || "";
+      $("candidateUrl").value = product.url || "";
+      // A saved product link is not proof of current price, commission, stock or demand.
+      $("candidateSource").value = "";
+      $("candidateCheckedAt").value = "";
+      $("candidatePrice").focus();
+      $("candidateForm").scrollIntoView({ behavior: "smooth", block: "start" });
+      $("candidateName").dispatchEvent(new Event("input", { bubbles: true }));
+      $("candidateUrl").dispatchEvent(new Event("input", { bubbles: true }));
+      $("candidateSource").dispatchEvent(new Event("input", { bubbles: true }));
+      $("candidateCheckedAt").dispatchEvent(new Event("input", { bubbles: true }));
+      $("candidateForm").querySelector("button[type='submit']")?.focus({ preventScroll: true });
+    });
+    body.append(platform, title, link, videoButton, scoreButton);
     item.append(media, body);
     list.append(item);
   }

@@ -15,9 +15,12 @@
       valid: true,
       query: term,
       searches: [
-        { platform: "Amazon", url: "https://www.amazon.in/s?k=" + encoded },
-        { platform: "Flipkart", url: "https://www.flipkart.com/search?q=" + encoded },
-        { platform: "Meesho", url: "https://www.meesho.com/search?q=" + encoded }
+        { platform: "Amazon India", purpose: "Marketplace listings", url: "https://www.amazon.in/s?k=" + encoded },
+        { platform: "Flipkart", purpose: "Marketplace listings", url: "https://www.flipkart.com/search?q=" + encoded },
+        { platform: "Meesho", purpose: "Marketplace listings", url: "https://www.meesho.com/search?q=" + encoded },
+        { platform: "Google Trends India", purpose: "Compare interest over time", url: "https://trends.google.com/trends/explore?geo=IN&q=" + encoded },
+        { platform: "YouTube", purpose: "See demonstrations and audience questions", url: "https://www.youtube.com/results?search_query=" + encoded },
+        { platform: "Google Shopping", purpose: "Compare visible offers", url: "https://www.google.com/search?tbm=shop&q=" + encoded }
       ]
     };
   }
@@ -38,22 +41,24 @@
         return;
       }
       const intro = doc.createElement("p");
-      intro.textContent = "Compare the same keyword across all three marketplaces. Open each result and collect only information you can verify.";
+      intro.textContent = "Research pack ready: compare marketplace listings, interest over time, demonstrations and visible offers. These links open external pages; this app does not scrape them or import live rankings.";
       results.append(intro);
       for (const item of result.searches) {
         const card = doc.createElement("article");
         card.className = "candidate-card";
         const title = doc.createElement("h3");
         title.textContent = item.platform;
+        const purpose = doc.createElement("p");
+        purpose.textContent = item.purpose || "Research source";
         const link = doc.createElement("a");
         link.href = item.url;
         link.target = "_blank";
         link.rel = "noopener noreferrer";
         link.textContent = "Search " + item.platform + " for “" + result.query + "”";
-        card.append(title, link);
+        card.append(title, purpose, link);
         results.append(card);
       }
-      status.textContent = "Search links ready. These links open marketplace pages; they do not fetch live listings into the app.";
+      status.textContent = "Research pack ready: 6 external sources. Record the source and date for any facts you use; no live listing data was imported.";
     });
   }
 

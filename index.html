@@ -299,10 +299,13 @@
 
     <section class="panel">
       <h2>10. Browser Video Maker</h2>
-      <p>Turn product images you are authorised to use into a vertical slideshow video. This runs on your device; images are not uploaded.</p>
+      <p>Select “Make a video” on a saved product to prefill its details here. Add a verified benefit and use an authorised image URL or upload images. Video creation runs on this device; images are not uploaded.</p>
       <form id="videoMakerForm">
-        <label for="videoMakerImages">Choose 1–8 authorised product images (max 10 MB each)
-          <input id="videoMakerImages" type="file" accept="image/*" multiple required>
+        <label for="videoMakerImages">Upload 1–8 authorised product images (optional if image URL works; max 10 MB each)
+          <input id="videoMakerImages" type="file" accept="image/*" multiple>
+        </label>
+        <label for="videoMakerImageUrl">Product image URL (optional; HTTPS and image host must allow canvas access)
+          <input id="videoMakerImageUrl" type="url" maxlength="2048" inputmode="url" placeholder="https://...">
         </label>
         <label for="videoMakerName">Product name
           <input id="videoMakerName" maxlength="100" required placeholder="Product name">
@@ -329,7 +332,7 @@
       <p id="videoMakerStatus" role="status" aria-live="polite"></p>
       <video id="videoMakerPreview" controls playsinline hidden style="width:100%;max-width:360px;border-radius:12px;background:#000"></video>
       <p id="videoMakerDownload"></p>
-      <p class="hint">Exports WebM where your browser supports MediaRecorder. Every slide includes an affiliate disclosure in the selected language. This is a simple slideshow, not a finished AI-generated video; it does not add music or voice-over. Check media permissions and price before publishing.</p>
+      <p class="hint">Exports a vertical WebM slideshow where your browser supports MediaRecorder; it is not MP4 or a full AI-generated scene. Remote image URLs work only when the image host permits browser canvas access; if blocked, upload an authorised image file instead. This version does not add generated voice-over or music. Check price, claims and media rights before publishing.</p>
     </section>
 
     <section class="panel">

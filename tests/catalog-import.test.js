@@ -162,7 +162,7 @@ test("provides transparent reasons, next action and commission estimates", () =>
 
 test("flags duplicate product names without deleting variants or separate offers", () => {
   const result = rankCatalogCsv(
-    "name,price,url\\nKitchen Rack,499,https://www.amazon.in/dp/A1\\n kitchen   rack ,599,https://www.flipkart.com/item/B2\\nDesk Lamp,299,https://www.amazon.in/dp/C3"
+    "name,price,url\nKitchen Rack,499,https://www.amazon.in/dp/A1\n kitchen   rack ,599,https://www.flipkart.com/item/B2\nDesk Lamp,299,https://www.amazon.in/dp/C3"
   );
   assert.equal(result.valid, true);
   const first = result.records.find((record) => record.rowNumber === 2);

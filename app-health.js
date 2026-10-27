@@ -104,6 +104,20 @@
         ? "The page declares the install helper. The browser decides whether an install prompt is available."
         : "The install helper script tag is missing; the install button may not work.");
 
+    const appScript = document.querySelector && document.querySelector('script[src="app.js"]');
+    add(appScript ? "pass" : "fail", "Core app script wiring",
+      appScript
+        ? "The main application script is declared. This check does not prove every interaction works."
+        : "The main app.js script tag is missing; core workspace actions may not work.");
+
+    const serviceWorkerScript = document.querySelector && document.querySelector('script[src="service-worker.js"]');
+    const inlineRegistration = Boolean(document.querySelector &&
+      document.querySelector('script[data-register-service-worker], script:not([src])'));
+    add(serviceWorkerScript || inlineRegistration ? "pass" : "warn", "Offline registration wiring",
+      serviceWorkerScript || inlineRegistration
+        ? "A service-worker script or explicit registration marker is present; runtime registration is checked separately."
+        : "No service-worker registration wiring was detected. Offline caching may not be enabled.");
+
     const mediaRecorderSupported = typeof root.MediaRecorder === "function";
     const canvasCaptureSupported = Boolean(root.HTMLCanvasElement && root.HTMLCanvasElement.prototype &&
       typeof root.HTMLCanvasElement.prototype.captureStream === "function");

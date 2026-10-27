@@ -276,6 +276,16 @@ test("product workspace supports safe optional image URLs and premium image card
 });
 
 
+test("saved products can prefill the scoring form without inventing evidence", () => {
+  assert.match(app, /scoreButton\.textContent = "Score this product"/);
+  assert.match(app, /\$\("candidateName"\)\.value = product\.name \|\| ""/);
+  assert.match(app, /\$\("candidateUrl"\)\.value = product\.url \|\| ""/);
+  assert.match(app, /\$\("candidateSource"\)\.value = ""/);
+  assert.match(app, /\$\("candidateCheckedAt"\)\.value = ""/);
+  assert.match(app, /A saved product link is not proof of current price, commission, stock or demand/);
+  assert.match(app, /\$\("candidateForm"\)\.scrollIntoView/);
+});
+
 test("saved product cards offer a video-maker handoff without inventing product claims", () => {
   assert.match(app, /videoButton\.textContent = "Make a video"/);
   assert.match(app, /commerce:prepare-video/);

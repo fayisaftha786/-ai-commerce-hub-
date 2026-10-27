@@ -267,3 +267,18 @@ details > summary::marker { color: var(--gold); }
 @media (prefers-reduced-motion: reduce) {
   .product-card { transition: none; }
 }
+
+
+/* Workflow guide: clear next steps and local readiness counts */
+.workflow-guide-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 14px 0;
+}
+.workflow-guide-card { min-width: 0; padding: 16px; }
+.workflow-guide-card h3 { margin: 0 0 8px; font-size: 15px; }
+.workflow-guide-card strong { display: block; color: var(--mint); font-size: 30px; line-height: 1.2; }
+.workflow-guide-card p { font-size: 12px; margin: 8px 0 12px; }
+.workflow-guide-card a { font-size: 13px; font-weight: 750; }
+@media (max-width: 650px) { .workflow-guide-grid { grid-template-columns: 1fr; } }

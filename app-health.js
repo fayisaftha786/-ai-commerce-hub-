@@ -11,7 +11,9 @@
     ["Offer analysis", "AICommerceOfferEngine"],
     ["Product discovery", "AICommerceDiscovery"],
     ["Catalogue importer", "AICommerceCatalogImport"],
-    ["Campaign reporting", "AICommerceCampaignReport"]
+    ["Campaign reporting", "AICommerceCampaignReport"],
+    ["Marketplace search", "AICommerceMarketplaceSearch"],
+    ["Social media workflow", "AICommerceSocialCenter"]
   ];
   const CONTROLS = [
     ["Product workspace", "productForm"],

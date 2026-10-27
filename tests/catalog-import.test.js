@@ -2,7 +2,35 @@
 
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { rankCatalogCsv, catalogRecordsToCsv, calculateEvidenceAgeDays } = require("../catalog-import");
+const { rankCatalogCsv, catalogRecordsToCsv, calculateEvidenceAgeDays, summarizeCatalogRecords } = require("../catalog-import");
+
+
+test("summarizes catalogue evidence gaps without changing individual scores", () => {
+  const today = new Date().toISOString().slice(0, 10);
+  const csv = "name,platform,url,price,commission,clicks,orders,period_days,stock,source,checked_at\\n" +
+    "Ready,Amazon,https://www.amazon.in/dp/A1,500,10,100,12,7,yes,Official dashboard," + today + "\\n" +
+    "Stale,Amazon,https://www.amazon.in/dp/A2,600,5,20,,7,yes,Official dashboard,2020-01-01\\n" +
+    "No metrics,Meesho,,399,,,,,,,";
+  const result = rankCatalogCsv(csv);
+  assert.equal(result.valid, true);
+  const before = result.records.map((record) => record.score);
+  const summary = summarizeCatalogRecords(result.records);
+  assert.equal(summary.total, 3);
+  assert.equal(summary.withOrders, 1);
+  assert.equal(summary.clicksWithoutOrders, 1);
+  assert.equal(summary.withoutSalesMetrics, 1);
+  assert.equal(summary.staleEvidence, 1);
+  assert.equal(summary.missingSource, 1);
+  assert.equal(summary.missingLink, 1);
+  assert.deepEqual(result.records.map((record) => record.score), before);
+});
+
+test("catalogue summary safely handles empty or invalid collections", () => {
+  const summary = summarizeCatalogRecords(null);
+  assert.equal(summary.total, 0);
+  assert.equal(summary.readyForSmallTest, 0);
+  assert.equal(summary.withoutSalesMetrics, 0);
+});
 
 test("ranks imported products using supplied order and click evidence", () => {
   const csv = "name,platform,url,price,commission,rating,reviews,clicks,orders,period_days,stock\n" +

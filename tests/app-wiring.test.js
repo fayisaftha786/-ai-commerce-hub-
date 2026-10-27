@@ -53,6 +53,14 @@ test("campaign registry controls exist and are wired to local campaign storage a
   assert.ok(app.includes('parsed.protocol === "https:"'));
 });
 
+test("product workspace blocks duplicate links on the same marketplace before saving", () => {
+  assert.match(app, /const duplicate = products\.some\(\(saved\) =>/);
+  assert.match(app, /saved\.platform === result\.product\.platform && saved\.url === result\.product\.url/);
+  assert.match(app, /if \(duplicate\) \{/);
+  assert.match(app, /This product link is already saved for /);
+  assert.ok(app.indexOf("if (duplicate)") < app.indexOf("products.push(result.product)"));
+});
+
 test("campaign records reject unsafe stored URLs and require a parseable timestamp", () => {
   assert.match(app, /function safeCampaignUrl\(value\)/);
   assert.match(app, /parsed\.protocol === "https:" && parsed\.hostname && !parsed\.username && !parsed\.password/);

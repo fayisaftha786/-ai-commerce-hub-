@@ -54,6 +54,17 @@ test("campaign registry controls exist and are wired to local campaign storage a
   assert.ok(app.includes('parsed.protocol === "https:"'));
 });
 
+test("saved product cards provide a one-click Content Studio handoff without stale claims", () => {
+  assert.match(app, /contentButton\.textContent = "Create content"/);
+  assert.match(app, /useCatalogProductInContent\(\{\s*name: product\.name \|\| ""/);
+  assert.match(app, /evidenceFreshness: "unknown"/);
+  assert.match(app, /checkedAt: ""/);
+  assert.match(app, /body\.append\(platform, title, link, contentButton, videoButton, scoreButton\)/);
+  assert.match(app, /function useCatalogProductInContent\(record\)/);
+  assert.match(app, /\$\("contentBenefit"\)\.value = ""/);
+  assert.match(app, /\$\("contentProof"\)\.value = ""/);
+});
+
 test("product workspace blocks duplicate links on the same marketplace before saving", () => {
   assert.match(app, /const duplicate = products\.some\(\(saved\) =>/);
   assert.match(app, /saved\.platform === result\.product\.platform && saved\.url === result\.product\.url/);

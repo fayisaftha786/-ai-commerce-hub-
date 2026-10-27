@@ -210,9 +210,12 @@ function createContentPack(input) {
 function compareCandidatesByReadiness(a, b) {
   const readinessRank = (candidate) => {
     if (candidate?.inStock === false) return 3;
+    const ageDays = calculateManualCandidateAgeDays(candidate?.checkedAt);
+    const evidenceIsCurrent = ageDays !== null && ageDays >= 0 && ageDays <= 7;
     if (!candidate?.label || candidate.label === "Need more evidence" ||
         candidate?.evidenceTraceable !== true || !candidate?.url ||
-        !(Number(candidate?.commission) > 0) || candidate?.inStock !== true) return 2;
+        !(Number(candidate?.commission) > 0) || candidate?.inStock !== true ||
+        !candidate?.source || !evidenceIsCurrent) return 2;
     if (candidate.label === "Research more first") return 1;
     return 0;
   };

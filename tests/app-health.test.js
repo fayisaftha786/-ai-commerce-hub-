@@ -26,7 +26,7 @@ function makeEnvironment(overrides = {}) {
     document: {
       getElementById(id) { return ids.has(id) ? { id } : null; },
       querySelector(selector) {
-        return ['link[rel="manifest"]', 'script[src="video-maker.js"]', 'script[src="pwa-install.js"]', 'script[src="app.js"]', 'script[data-register-service-worker], script:not([src])'].includes(selector) ? {} : null;
+        return ['link[rel="manifest"]', 'script[src="video-maker.js"]', 'script[src="pwa-install.js"]', 'script[src="app.js"]', 'script[data-register-service-worker]'].includes(selector) ? {} : null;
       }
     },
     AICommerceProductUtils: { validateProduct() {} },

@@ -330,6 +330,31 @@ function rankCatalogCsv(csvText) {
   return { valid: true, records, errors, importedRows: records.length, totalRows: parsed.rows.length - 1 };
 }
 
+
+/** Aggregate imported evidence quality; descriptive only, not a sales prediction. */
+function summarizeCatalogRecords(records) {
+  const items = Array.isArray(records) ? records.filter((record) => record && typeof record === "object") : [];
+  const count = (predicate) => items.filter(predicate).length;
+  return {
+    total: items.length,
+    readyForSmallTest: count((r) => r.promotionReadiness === "Shortlist for a small test"),
+    testCautiously: count((r) => r.promotionReadiness === "Test cautiously"),
+    verifyBeforePromotion: count((r) => r.promotionReadiness === "Verify before promotion"),
+    doNotPromoteYet: count((r) => r.promotionReadiness === "Do not promote yet"),
+    staleEvidence: count((r) => r.evidenceFreshness === "stale"),
+    futureDatedEvidence: count((r) => r.evidenceFreshness === "future"),
+    unknownFreshness: count((r) => !r.evidenceFreshness || r.evidenceFreshness === "unknown"),
+    duplicateUrls: count((r) => r.duplicateOfRowNumber != null),
+    duplicateNames: count((r) => r.duplicateNameOfRowNumber != null),
+    withOrders: count((r) => r.orders !== null && r.orders !== undefined),
+    clicksWithoutOrders: count((r) => r.clicks !== null && r.clicks !== undefined && (r.orders === null || r.orders === undefined)),
+    withoutSalesMetrics: count((r) => (r.clicks === null || r.clicks === undefined) && (r.orders === null || r.orders === undefined)),
+    outOfStock: count((r) => r.inStock === false),
+    missingSource: count((r) => typeof r.source !== "string" || !r.source.trim()),
+    missingLink: count((r) => typeof r.url !== "string" || !r.url.trim())
+  };
+}
+
 function catalogRecordsToCsv(records) {
   if (!Array.isArray(records) || records.length === 0) return "";
   const columns = [
@@ -381,6 +406,6 @@ function catalogRecordsToCsv(records) {
   return "\uFEFF" + lines.join("\r\n") + "\r\n";
 }
 
-const api = { rankCatalogCsv, catalogRecordsToCsv, calculateEvidenceAgeDays };
+const api = { rankCatalogCsv, catalogRecordsToCsv, calculateEvidenceAgeDays, summarizeCatalogRecords };
 if (typeof module !== "undefined" && module.exports) module.exports = api;
 if (typeof window !== "undefined") window.AICommerceCatalogImport = api;

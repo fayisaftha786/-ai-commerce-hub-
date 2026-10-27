@@ -290,6 +290,24 @@ function rankCatalogCsv(csvText) {
     }
   }
 
+  // Flag repeated product names after trimming and Unicode-aware case folding. Keep all
+  // rows because identical names can represent different sellers, variants or offers.
+  const seenProductNames = new Map();
+  for (const record of records) {
+    const nameIdentity = record.name.normalize("NFKC").trim().replace(/\\s+/g, " ").toLocaleLowerCase("en-US");
+    if (seenProductNames.has(nameIdentity)) {
+      const firstRow = seenProductNames.get(nameIdentity);
+      record.duplicateNameOfRowNumber = firstRow;
+      record.warnings.push("Possible duplicate product name; compare with row " + firstRow +
+        " before treating these as separate products.");
+      record.recommendationReasons.push("Product name matches row " + firstRow +
+        " after normalisation; verify whether this is a duplicate, variant or separate seller offer.");
+    } else {
+      seenProductNames.set(nameIdentity, record.rowNumber);
+      record.duplicateNameOfRowNumber = null;
+    }
+  }
+
   // Readiness is a safety gate: a high heuristic score must not put conflicted or unavailable
   // products above candidates whose supplied evidence supports a cautious test.
   const readinessPriority = {
@@ -336,6 +354,7 @@ function catalogRecordsToCsv(records) {
     ["estimated_commission_after_returns", (record) => record.estimatedCommissionAfterReturns],
     ["promotion_readiness", (record) => record.promotionReadiness],
     ["possible_duplicate_of_row", (record) => record.duplicateOfRowNumber],
+    ["possible_duplicate_name_of_row", (record) => record.duplicateNameOfRowNumber],
     ["next_action", (record) => record.nextAction],
     ["recommendation_reasons", (record) => (record.recommendationReasons || []).join(" | ")],
     ["warnings", (record) => (record.warnings || []).join(" | ")]

@@ -136,26 +136,70 @@ function render() {
   $("products").textContent = String(products.length);
   $("campaigns").textContent = String(draftsCreated);
   $("clicks").textContent = String(clicks);
-  $("productList").replaceChildren();
+  const list = $("productList");
+  list.replaceChildren();
+  list.classList.toggle("product-grid", products.length > 0);
+
+  if (!products.length) {
+    const empty = document.createElement("div");
+    empty.className = "product-empty";
+    const icon = document.createElement("span");
+    icon.className = "product-empty-icon";
+    icon.setAttribute("aria-hidden", "true");
+    icon.textContent = "✦";
+    const heading = document.createElement("strong");
+    heading.textContent = "Your product studio starts here";
+    const copy = document.createElement("p");
+    copy.textContent = "Add a product and an optional image URL to build your visual shortlist.";
+    empty.append(icon, heading, copy);
+    list.append(empty);
+    return;
+  }
 
   for (const product of products) {
-    const item = document.createElement("div");
-    item.className = "product";
-    const title = document.createElement("strong");
+    const item = document.createElement("article");
+    item.className = "product product-card";
+    const media = document.createElement("div");
+    media.className = "product-media";
+    const fallback = document.createElement("div");
+    fallback.className = "product-image-fallback";
+    fallback.setAttribute("aria-label", "No product image supplied");
+    fallback.innerHTML = '<span aria-hidden="true">✦</span><small>PRODUCT</small>';
+    media.append(fallback);
+
+    if (product.imageUrl) {
+      const image = document.createElement("img");
+      image.className = "product-image";
+      image.src = product.imageUrl;
+      image.alt = product.name;
+      image.loading = "lazy";
+      image.decoding = "async";
+      image.referrerPolicy = "no-referrer";
+      image.addEventListener("load", () => fallback.remove());
+      image.addEventListener("error", () => image.remove());
+      media.append(image);
+    }
+
+    const body = document.createElement("div");
+    body.className = "product-card-body";
+    const platform = document.createElement("span");
+    platform.className = "product-platform";
+    platform.textContent = product.platform;
+    const title = document.createElement("h3");
     title.textContent = product.name;
-    const detail = document.createElement("p");
-    detail.textContent = product.platform;
     const link = document.createElement("a");
+    link.className = "product-open-link";
     link.href = product.url;
     link.target = "_blank";
     link.rel = "noopener noreferrer sponsored";
-    link.textContent = "Open product link";
+    link.textContent = "View product ↗";
     link.addEventListener("click", () => {
       clicks += 1;
       $("clicks").textContent = String(clicks);
     });
-    item.append(title, detail, link);
-    $("productList").append(item);
+    body.append(platform, title, link);
+    item.append(media, body);
+    list.append(item);
   }
 }
 
@@ -170,7 +214,8 @@ $("productForm").addEventListener("submit", (event) => {
   const result = validator({
     name: $("productName").value,
     platform: $("platform").value,
-    url: $("productUrl").value
+    url: $("productUrl").value,
+    imageUrl: $("productImageUrl").value
   });
   if (!result.valid) {
     $("message").textContent = result.error;
@@ -193,6 +238,7 @@ $("productForm").addEventListener("submit", (event) => {
   const saved = saveProducts();
   $("productName").value = "";
   $("productUrl").value = "";
+  $("productImageUrl").value = "";
   $("message").textContent = saved
     ? "Product added and saved on this device."
     : "Product added for this session, but browser storage is unavailable.";

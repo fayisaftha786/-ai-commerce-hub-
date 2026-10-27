@@ -81,3 +81,12 @@ test("video storyboard uses distinct hook, product-benefit and closing copy", ()
   assert.match(source, /isClosing \? \(language === "Malayalam" \? "വിലയും ലഭ്യതയും പരിശോധിക്കൂ"/);
   assert.match(source, /if \(price && !isClosing\)/);
 });
+
+test("video maker falls back to uploaded images when an optional remote image is blocked", () => {
+  assert.match(source, /const uploadedImages = await Promise\.all\(files\.map\(loadImage\)\)/);
+  assert.match(source, /let remoteImageWarning = ""/);
+  assert.match(source, /if \(!uploadedImages\.length\) throw error/);
+  assert.match(source, /images\.push\(\.\.\.uploadedImages\)/);
+  assert.match(source, /Remote image unavailable; using the uploaded image files instead/);
+  assert.match(source, /if \(!images\.length\) throw new Error\("No usable product images were loaded/);
+});

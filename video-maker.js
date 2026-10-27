@@ -202,9 +202,20 @@
     status.textContent = "Preparing images…";
     try {
       const images = [];
-      if (imageUrl) images.push(await loadRemoteImage(imageUrl));
       const uploadedImages = await Promise.all(files.map(loadImage));
+      let remoteImageWarning = "";
+      if (imageUrl) {
+        try {
+          images.push(await loadRemoteImage(imageUrl));
+        } catch (error) {
+          // A cross-origin host can block canvas export. Do not discard valid uploaded
+          // images just because the optional remote image cannot be used.
+          if (!uploadedImages.length) throw error;
+          remoteImageWarning = " Remote image unavailable; using the uploaded image files instead.";
+        }
+      }
       images.push(...uploadedImages);
+      if (!images.length) throw new Error("No usable product images were loaded. Upload an authorised image file.");
       const canvas = document.createElement("canvas");
       canvas.width = WIDTH;
       canvas.height = HEIGHT;
@@ -252,7 +263,7 @@
       link.download = "ai-commerce-product-video.webm";
       link.textContent = "Download your video (WebM)";
       byId("videoMakerDownload").append(link);
-      status.textContent = "Video ready. Watch it and verify every detail before publishing.";
+      status.textContent = "Video ready. Watch it and verify every detail before publishing." + remoteImageWarning;
     } catch (error) {
       status.textContent = error instanceof Error ? error.message : "Could not create the video.";
     } finally {

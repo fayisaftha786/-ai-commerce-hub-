@@ -64,12 +64,14 @@
     byId("videoMakerBenefit").focus({ preventScroll: true });
   });
 
-  function drawSlide(ctx, image, title, benefit, price, cta, language, index, total) {
+  function drawSlide(ctx, image, title, benefit, price, cta, language, index, total, progress = 0) {
     ctx.fillStyle = "#101522";
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
     const maxW = WIDTH - 64;
     const maxH = 760;
-    const scale = Math.min(maxW / image.width, maxH / image.height);
+    const baseScale = Math.min(maxW / image.width, maxH / image.height);
+    // A restrained Ken Burns-style push-in keeps still product photos from feeling static.
+    const scale = baseScale * (1 + Math.max(0, Math.min(1, progress)) * 0.045);
     const w = image.width * scale;
     const h = image.height * scale;
     const x = (WIDTH - w) / 2;
@@ -85,7 +87,14 @@
 
     ctx.fillStyle = "#85d8bd";
     ctx.font = "bold 24px system-ui, sans-serif";
-    ctx.fillText("PRODUCT SPOTLIGHT", 36, 930);
+    const sceneLabel = total === 1
+      ? (language === "Malayalam" ? "ഉൽപ്പന്നം പരിചയപ്പെടാം" : "PRODUCT SPOTLIGHT")
+      : index === 0
+        ? (language === "Malayalam" ? "ശ്രദ്ധിക്കൂ!" : "STOP THE SCROLL")
+        : index === total - 1
+          ? (language === "Malayalam" ? "വിശദാംശങ്ങൾ പരിശോധിക്കൂ" : "TAKE A CLOSER LOOK")
+          : (language === "Malayalam" ? "പ്രധാന ഗുണം" : "WHY IT MAY HELP");
+    ctx.fillText(sceneLabel, 36, 930);
     ctx.fillStyle = "#ffffff";
     ctx.font = "bold 42px system-ui, sans-serif";
     const lines = wrapText(ctx, title, WIDTH - 72, 2);
@@ -195,9 +204,17 @@
       });
       recorder.start();
       for (let i = 0; i < images.length; i++) {
-        drawSlide(ctx, images[i], title, benefit, price, cta, language, i, images.length);
-        status.textContent = "Creating video… slide " + (i + 1) + " of " + images.length;
-        await new Promise((resolve) => setTimeout(resolve, SLIDE_MS));
+        status.textContent = "Creating animated scene " + (i + 1) + " of " + images.length;
+        const sceneStart = performance.now();
+        await new Promise((resolve) => {
+          const paintFrame = (now) => {
+            const progress = Math.min(1, (now - sceneStart) / SLIDE_MS);
+            drawSlide(ctx, images[i], title, benefit, price, cta, language, i, images.length, progress);
+            if (progress < 1) requestAnimationFrame(paintFrame);
+            else resolve();
+          };
+          requestAnimationFrame(paintFrame);
+        });
       }
       recorder.stop();
       await finished;

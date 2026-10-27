@@ -50,7 +50,37 @@
         link.target = "_blank";
         link.rel = "noopener noreferrer";
         link.textContent = "Search " + item.platform + " for “" + result.query + "”";
-        card.append(title, link);
+        const scoreButton = doc.createElement("button");
+        scoreButton.type = "button";
+        scoreButton.className = "secondary";
+        scoreButton.textContent = "Start scoring this keyword";
+        scoreButton.addEventListener("click", () => {
+          const fields = {
+            candidateName: result.query,
+            candidatePrice: "",
+            candidateCommission: "",
+            candidateRating: "",
+            candidateReviews: "",
+            candidateDemand: "",
+            candidateCompetition: "",
+            candidateUrl: "",
+            candidateSource: "",
+            candidateCheckedAt: "",
+            candidateStock: ""
+          };
+          for (const [id, value] of Object.entries(fields)) {
+            const field = doc.getElementById(id);
+            if (field) field.value = value;
+          }
+          const form = doc.getElementById("candidateForm");
+          if (form) {
+            form.scrollIntoView({ behavior: "smooth", block: "start" });
+            const name = doc.getElementById("candidateName");
+            if (name) name.focus({ preventScroll: true });
+          }
+          status.textContent = "Keyword transferred. Enter verified product details before scoring; marketplace search links do not provide verified evidence.";
+        });
+        card.append(title, link, scoreButton);
         results.append(card);
       }
       status.textContent = "Search links ready. These links open marketplace pages; they do not fetch live listings into the app.";

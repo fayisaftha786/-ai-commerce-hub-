@@ -293,3 +293,16 @@ test("saved product cards offer a video-maker handoff without inventing product 
   assert.match(html, /id="videoMakerImageUrl"/);
   assert.match(app, /\$\("videoMakerForm"\)\.scrollIntoView/);
 });
+
+
+test("bulk Content Studio has a bounded tab-separated input and reuses the reviewed export gate", () => {
+  for (const id of ["bulkContentRows", "generateBulkContent", "bulkContentStatus"]) {
+    assert.ok(html.includes('id="' + id + '"'), "missing bulk content UI id: " + id);
+  }
+  assert.match(app, /function parseBulkContentRows\(text\)/);
+  assert.match(app, /lines\.length > 50/);
+  assert.match(app, /engine\.createBulkContentPacks\(rows/);
+  assert.match(app, /Bulk batch generated\. Review every product claim/);
+  assert.match(app, /function requireContentReview\(action\)/);
+  assert.match(html, /tab-separated columns/);
+});

@@ -207,6 +207,32 @@ function createContentPack(input) {
   return { post, video, platform, type, language, disclosure, hooks, ctas };
 }
 
+function createBulkContentPacks(rows, options = {}) {
+  if (!Array.isArray(rows) || rows.length === 0) {
+    throw new TypeError("Add at least one product row.");
+  }
+  if (rows.length > 50) throw new RangeError("Bulk content supports up to 50 products per batch.");
+  const packs = rows.map((row, index) => {
+    if (!row || typeof row !== "object") throw new TypeError("Product row " + (index + 1) + " is invalid.");
+    const name = typeof row.name === "string" ? row.name.trim() : "";
+    const benefit = typeof row.benefit === "string" ? row.benefit.trim() : "";
+    if (!name || !benefit) throw new TypeError("Product row " + (index + 1) + " needs both a product name and a verified practical benefit.");
+    return {
+      name,
+      pack: createContentPack({
+        ...options,
+        name,
+        benefit,
+        audience: typeof row.audience === "string" ? row.audience.trim() : "",
+        proof: typeof row.proof === "string" ? row.proof.trim() : "",
+        price: typeof row.price === "string" || typeof row.price === "number" ? String(row.price).trim() : "",
+        link: typeof row.link === "string" ? row.link.trim() : ""
+      })
+    };
+  });
+  return packs;
+}
+
 function compareCandidatesByReadiness(a, b) {
   const readinessRank = (candidate) => {
     if (candidate?.inStock === false) return 3;
@@ -222,6 +248,6 @@ function compareCandidatesByReadiness(a, b) {
   return readinessRank(a) - readinessRank(b) || Number(b?.score || 0) - Number(a?.score || 0);
 }
 
-const api = { scoreCandidate, createContentPack, compareCandidatesByReadiness };
+const api = { scoreCandidate, createContentPack, createBulkContentPacks, compareCandidatesByReadiness };
 if (typeof module !== "undefined" && module.exports) module.exports = api;
 if (typeof window !== "undefined") window.AICommerceDiscovery = api;

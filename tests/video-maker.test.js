@@ -30,7 +30,7 @@ test("video maker embeds a language-specific affiliate disclosure on each slide"
   assert.match(html, /id="videoMakerLanguage"/);
   assert.match(source, /Affiliate link • I may earn a commission/);
   assert.match(source, /അഫിലിയേറ്റ് ലിങ്ക്/);
-  assert.match(source, /drawSlide\(ctx, images\[i\], title, benefit, price, cta, language, i, images\.length\)/);
+  assert.match(source, /drawSlide\(ctx, images\[i\], title, benefit, price, cta, language, i, images\.length, progress\)/);
 });
 
 test("video maker does not upload files or use external media services", () => {
@@ -47,4 +47,16 @@ test("saved product event prefills the video maker and remote images require HTT
   assert.match(source, /image\.crossOrigin = "anonymous"/);
   assert.match(source, /image host blocked canvas access/);
   assert.match(source, /Choose at least one authorised image file or enter a direct HTTPS image URL/);
+});
+
+
+test("video scenes animate product imagery and use distinct hook, benefit, and CTA labels", () => {
+  assert.match(source, /Ken Burns-style push-in/);
+  assert.match(source, /requestAnimationFrame\(paintFrame\)/);
+  assert.match(source, /STOP THE SCROLL/);
+  assert.match(source, /WHY IT MAY HELP/);
+  assert.match(source, /TAKE A CLOSER LOOK/);
+  assert.match(source, /ശ്രദ്ധിക്കൂ!/);
+  assert.match(source, /പ്രധാന ഗുണം/);
+  assert.match(source, /വിശദാംശങ്ങൾ പരിശോധിക്കൂ/);
 });

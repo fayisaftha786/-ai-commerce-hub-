@@ -175,7 +175,7 @@ test("flags duplicate product names without deleting variants or separate offers
   assert.equal(result.importedRows, 3);
   const exported = catalogRecordsToCsv(result.records);
   assert.match(exported, /possible_duplicate_name_of_row/);
-  assert.match(exported, /"3","2"/);
+  assert.match(exported, /"2","3","kitchen   rack"/);
 });
 
 test("does not estimate commission after returns when return count exceeds orders", () => {

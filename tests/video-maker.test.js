@@ -71,3 +71,13 @@ test("single-image videos expand into a structured short-form storyboard", () =>
   assert.match(source, /const isHook = index === 0 && total > 1/);
   assert.match(source, /const isClosing = index === total - 1 && total > 1/);
 });
+
+
+test("video storyboard uses distinct hook, product-benefit and closing copy", () => {
+  assert.match(source, /const sceneTitle = isHook/);
+  assert.match(source, /Before you decide, take a look/);
+  assert.match(source, /Could " \+ title \+ " fit your needs/);
+  assert.match(source, /const sceneBenefit = isHook/);
+  assert.match(source, /isClosing \? \(language === "Malayalam" \? "വിലയും ലഭ്യതയും പരിശോധിക്കൂ"/);
+  assert.match(source, /if \(price && !isClosing\)/);
+});

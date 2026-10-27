@@ -100,14 +100,26 @@
     const isHook = index === 0 && total > 1;
     const isClosing = index === total - 1 && total > 1;
     const isBenefit = !isHook && !isClosing;
+    // Give each scene a different purpose instead of repeating identical copy across
+    // every frame. Keep the hook generic and only use the user-supplied benefit as a claim.
+    const sceneTitle = isHook
+      ? (language === "Malayalam" ? "വാങ്ങുന്നതിന് മുമ്പ് ഒന്ന് നോക്കൂ" : "Before you decide, take a look")
+      : isClosing
+        ? (language === "Malayalam" ? "വിശദാംശങ്ങൾ പരിശോധിക്കൂ" : "Check the details first")
+        : title;
+    const sceneBenefit = isHook
+      ? (language === "Malayalam" ? title + " നിങ്ങളുടെ ആവശ്യത്തിന് യോജിക്കുമോ?" : "Could " + title + " fit your needs?")
+      : isClosing
+        ? cta
+        : benefit;
     ctx.fillStyle = "#ffffff";
-    ctx.font = isHook ? "bold 46px system-ui, sans-serif" : "bold 34px system-ui, sans-serif";
-    const lines = wrapText(ctx, title, WIDTH - 72, 2);
-    lines.forEach((line, i) => ctx.fillText(line, 36, 988 + i * (isHook ? 50 : 40)));
+    ctx.font = isHook ? "bold 42px system-ui, sans-serif" : "bold 34px system-ui, sans-serif";
+    const lines = wrapText(ctx, sceneTitle, WIDTH - 72, 2);
+    lines.forEach((line, i) => ctx.fillText(line, 36, 988 + i * (isHook ? 46 : 40)));
     ctx.fillStyle = isBenefit ? "#85d8bd" : "#cbd5e1";
     ctx.font = isBenefit ? "bold 30px system-ui, sans-serif" : "26px system-ui, sans-serif";
-    wrapText(ctx, benefit, WIDTH - 72, 2).forEach((line, i) => ctx.fillText(line, 36, 1095 + i * 34));
-    if (price) {
+    wrapText(ctx, sceneBenefit, WIDTH - 72, 2).forEach((line, i) => ctx.fillText(line, 36, 1095 + i * 34));
+    if (price && !isClosing) {
       ctx.fillStyle = "#f4d35e";
       ctx.font = "bold 32px system-ui, sans-serif";
       ctx.fillText(price, 36, 1180);
@@ -116,7 +128,7 @@
     ctx.fillRect(24, 1210, WIDTH - 48, 54);
     ctx.fillStyle = "#85d8bd";
     ctx.font = "bold 22px system-ui, sans-serif";
-    ctx.fillText(cta, 36, 1245, WIDTH - 72);
+    ctx.fillText(isClosing ? (language === "Malayalam" ? "വിലയും ലഭ്യതയും പരിശോധിക്കൂ" : "Verify price and availability") : cta, 36, 1245, WIDTH - 72);
     ctx.fillStyle = "#101522";
     ctx.fillRect(24, 8, WIDTH - 48, 34);
     ctx.fillStyle = "#f4d35e";

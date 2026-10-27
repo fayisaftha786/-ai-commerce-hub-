@@ -102,7 +102,7 @@ test("only reports estimated commission when a positive rate is supplied", () =>
 
 test("ranks ready candidates before incomplete and out-of-stock candidates", () => {
   const compare = require("../discovery-engine").compareCandidatesByReadiness;
-  const ready = { label: "Prioritize for review", inStock: true, score: 60, evidenceTraceable: true, url: "https://www.amazon.in/dp/B010", commission: 10 };
+  const ready = { label: "Prioritize for review", inStock: true, score: 60, evidenceTraceable: true, url: "https://www.amazon.in/dp/B010", commission: 10, source: "Official dashboard", checkedAt: today() };
   const incompleteHighScore = { label: "Need more evidence", inStock: true, score: 99 };
   const outOfStock = { label: "Do not promote — out of stock", inStock: false, score: 100 };
   assert.ok(compare(ready, incompleteHighScore) < 0);

@@ -116,7 +116,7 @@ test("self-check catches missing video-maker and install helper script tags", ()
   const environment = makeEnvironment({
     document: {
       getElementById(id) { return new Set(["productForm", "marketplaceSearchForm", "candidateForm", "catalogForm", "contentForm", "campaignReportForm", "socialAnalyticsForm", "videoMakerForm", "installAppButton"]).has(id) ? { id } : null; },
-      querySelector(selector) { return ['link[rel="manifest"]', 'script[src="app.js"]', 'script[data-register-service-worker], script:not([src])'].includes(selector) ? {} : null; }
+      querySelector(selector) { return ['link[rel="manifest"]', 'script[src="app.js"]', 'script[data-register-service-worker]'].includes(selector) ? {} : null; }
     }
   });
   const checks = collectEnvironmentChecks(environment);

@@ -36,3 +36,15 @@ test("video maker embeds a language-specific affiliate disclosure on each slide"
 test("video maker does not upload files or use external media services", () => {
   assert.doesNotMatch(source, /fetch\s*\(|XMLHttpRequest|https?:\/\//i);
 });
+
+
+test("saved product event prefills the video maker and remote images require HTTPS plus canvas access", () => {
+  assert.match(html, /id="videoMakerImageUrl"/);
+  assert.match(source, /commerce:prepare-video/);
+  assert.match(source, /byId\("videoMakerName"\)\.value = cleanText\(product\.name, 100\)/);
+  assert.match(source, /function loadRemoteImage\(value\)/);
+  assert.match(source, /parsed\.protocol !== "https:"/);
+  assert.match(source, /image\.crossOrigin = "anonymous"/);
+  assert.match(source, /image host blocked canvas access/);
+  assert.match(source, /Choose at least one authorised image file or enter a direct HTTPS image URL/);
+});

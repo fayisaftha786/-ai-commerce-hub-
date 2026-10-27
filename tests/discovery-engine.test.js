@@ -110,6 +110,19 @@ test("ranks ready candidates before incomplete and out-of-stock candidates", () 
   assert.ok(compare({ ...ready, score: 80 }, ready) < 0);
 });
 
+test("demotes saved candidates when their evidence becomes stale or future-dated", () => {
+  const compare = require("../discovery-engine").compareCandidatesByReadiness;
+  const current = { label: "Prioritize for review", inStock: true, score: 55, evidenceTraceable: true, url: "https://www.amazon.in/dp/B010", commission: 10, source: "Official dashboard", checkedAt: today() };
+  const staleDate = new Date(Date.now() - 9 * 86400000);
+  const staleCheckedAt = staleDate.getFullYear() + "-" + String(staleDate.getMonth() + 1).padStart(2, "0") + "-" + String(staleDate.getDate()).padStart(2, "0");
+  const futureDate = new Date(Date.now() + 2 * 86400000);
+  const futureCheckedAt = futureDate.getFullYear() + "-" + String(futureDate.getMonth() + 1).padStart(2, "0") + "-" + String(futureDate.getDate()).padStart(2, "0");
+  const stale = { ...current, checkedAt: staleCheckedAt, score: 99 };
+  const future = { ...current, checkedAt: futureCheckedAt, score: 98 };
+  assert.ok(compare(current, stale) < 0);
+  assert.ok(compare(current, future) < 0);
+});
+
 
 test("keeps missing demand and competition unknown in saved candidate data", () => {
   const result = scoreCandidate({ ...base, demand: "", competition: "" });

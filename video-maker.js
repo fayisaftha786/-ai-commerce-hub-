@@ -5,7 +5,9 @@
   const MAX_FILE_BYTES = 10 * 1024 * 1024;
   const WIDTH = 720;
   const HEIGHT = 1280;
-  const SLIDE_MS = 2600;
+  const TARGET_VIDEO_MS = 16000;
+  const MIN_SCENE_MS = 2600;
+  const MIN_SCENES = 4;
 
   const byId = (id) => document.getElementById(id);
   const form = byId("videoMakerForm");
@@ -95,12 +97,15 @@
           ? (language === "Malayalam" ? "വിശദാംശങ്ങൾ പരിശോധിക്കൂ" : "TAKE A CLOSER LOOK")
           : (language === "Malayalam" ? "പ്രധാന ഗുണം" : "WHY IT MAY HELP");
     ctx.fillText(sceneLabel, 36, 930);
+    const isHook = index === 0 && total > 1;
+    const isClosing = index === total - 1 && total > 1;
+    const isBenefit = !isHook && !isClosing;
     ctx.fillStyle = "#ffffff";
-    ctx.font = "bold 42px system-ui, sans-serif";
+    ctx.font = isHook ? "bold 46px system-ui, sans-serif" : "bold 34px system-ui, sans-serif";
     const lines = wrapText(ctx, title, WIDTH - 72, 2);
-    lines.forEach((line, i) => ctx.fillText(line, 36, 988 + i * 48));
-    ctx.fillStyle = "#cbd5e1";
-    ctx.font = "26px system-ui, sans-serif";
+    lines.forEach((line, i) => ctx.fillText(line, 36, 988 + i * (isHook ? 50 : 40)));
+    ctx.fillStyle = isBenefit ? "#85d8bd" : "#cbd5e1";
+    ctx.font = isBenefit ? "bold 30px system-ui, sans-serif" : "26px system-ui, sans-serif";
     wrapText(ctx, benefit, WIDTH - 72, 2).forEach((line, i) => ctx.fillText(line, 36, 1095 + i * 34));
     if (price) {
       ctx.fillStyle = "#f4d35e";
@@ -203,13 +208,17 @@
         recorder.addEventListener("error", () => reject(new Error("The browser could not record the video.")), { once: true });
       });
       recorder.start();
-      for (let i = 0; i < images.length; i++) {
-        status.textContent = "Creating animated scene " + (i + 1) + " of " + images.length;
+      // Build a complete short-form storyboard even when the user has only one product photo.
+      // Reuse authorised images across hook, benefit and closing scenes rather than inventing footage.
+      const sceneCount = Math.max(MIN_SCENES, images.length);
+      const sceneDuration = Math.max(MIN_SCENE_MS, Math.round(TARGET_VIDEO_MS / sceneCount));
+      for (let i = 0; i < sceneCount; i++) {
+        status.textContent = "Creating animated scene " + (i + 1) + " of " + sceneCount;
         const sceneStart = performance.now();
         await new Promise((resolve) => {
           const paintFrame = (now) => {
-            const progress = Math.min(1, (now - sceneStart) / SLIDE_MS);
-            drawSlide(ctx, images[i], title, benefit, price, cta, language, i, images.length, progress);
+            const progress = Math.min(1, (now - sceneStart) / sceneDuration);
+            drawSlide(ctx, images[i % images.length], title, benefit, price, cta, language, i, sceneCount, progress);
             if (progress < 1) requestAnimationFrame(paintFrame);
             else resolve();
           };

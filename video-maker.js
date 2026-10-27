@@ -200,6 +200,8 @@
     submit.disabled = true;
     byId("videoMakerDownload").replaceChildren();
     status.textContent = "Preparing images…";
+    let activeStream = null;
+    let activeRecorder = null;
     try {
       const images = [];
       const uploadedImages = await Promise.all(files.map(loadImage));
@@ -223,8 +225,10 @@
       if (!ctx) throw new Error("Canvas is unavailable in this browser.");
 
       const stream = canvas.captureStream(30);
+      activeStream = stream;
       const chunks = [];
       const recorder = new MediaRecorder(stream, { mimeType: "video/webm" });
+      activeRecorder = recorder;
       const finished = new Promise((resolve, reject) => {
         recorder.addEventListener("dataavailable", (e) => { if (e.data && e.data.size) chunks.push(e.data); });
         recorder.addEventListener("stop", resolve, { once: true });
@@ -260,13 +264,25 @@
       preview.hidden = false;
       const link = document.createElement("a");
       link.href = previousUrl;
-      link.download = "ai-commerce-product-video.webm";
+      const filename = title
+        .normalize("NFKD")
+        .replace(/[\\u0300-\\u036f]/g, "")
+        .replace(/[^a-zA-Z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+        .slice(0, 60)
+        .toLowerCase() || "product";
+      link.download = filename + "-video.webm";
       link.textContent = "Download your video (WebM)";
       byId("videoMakerDownload").append(link);
       status.textContent = "Video ready. Watch it and verify every detail before publishing." + remoteImageWarning;
     } catch (error) {
       status.textContent = error instanceof Error ? error.message : "Could not create the video.";
     } finally {
+      // Always release camera-free canvas capture tracks, including error paths.
+      if (activeRecorder && activeRecorder.state !== "inactive") {
+        try { activeRecorder.stop(); } catch { /* already stopped by the browser */ }
+      }
+      if (activeStream) activeStream.getTracks().forEach((track) => track.stop());
       submit.disabled = false;
     }
   });

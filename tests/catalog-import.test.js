@@ -334,10 +334,10 @@ test("ranks current evidence ahead of stale or future evidence within the same r
 
 test("ranks measured performance evidence ahead of catalogue-only scores within the same readiness tier", () => {
   const today = new Date().toISOString().slice(0, 10);
-  const headers = "name,price,url,commission,rating,reviews,clicks,orders,returns,period_days,stock,source,checked_at\\n";
+  const headers = "name,price,url,commission,rating,reviews,clicks,orders,returns,period_days,stock,source,checked_at\n";
   const catalogueOnly = "Catalogue only,499,https://www.amazon.in/dp/CAT1,10,5,10000,,,,,yes,Official dashboard," + today;
   const measuredNoSales = "Measured no sales,499,https://www.amazon.in/dp/MET1,5,2,1,100,0,0,7,yes,Official dashboard," + today;
-  const result = rankCatalogCsv(headers + catalogueOnly + "\\n" + measuredNoSales);
+  const result = rankCatalogCsv(headers + catalogueOnly + "\n" + measuredNoSales);
   assert.equal(result.valid, true);
   const measured = result.records.find((record) => record.name === "Measured no sales");
   const catalogue = result.records.find((record) => record.name === "Catalogue only");

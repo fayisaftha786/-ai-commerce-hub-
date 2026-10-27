@@ -347,3 +347,11 @@ test("ranks measured performance evidence ahead of catalogue-only scores within 
   assert.ok(catalogue.score > measured.score);
   assert.equal(result.records[0].name, "Measured no sales");
 });
+
+
+test("exports UTF-8 BOM so Excel recognises Malayalam product names", () => {
+  const csv = catalogRecordsToCsv([{ name: "മലയാളം ഉൽപ്പന്നം", platform: "Meesho", price: 499, score: 50 }]);
+  assert.ok(csv.startsWith("\uFEFF"));
+  assert.ok(csv.includes('"മലയാളം ഉൽപ്പന്നം"'));
+  assert.equal(catalogRecordsToCsv([]), "");
+});

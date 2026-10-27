@@ -377,7 +377,8 @@ function catalogRecordsToCsv(records) {
     const record = records[index] || {};
     lines.push(columns.map(([, getValue]) => cell(getValue(record, index))).join(","));
   }
-  return lines.join("\r\n") + "\r\n";
+  // UTF-8 BOM helps spreadsheet apps (especially Excel) detect Malayalam and other Unicode text.
+  return "\uFEFF" + lines.join("\r\n") + "\r\n";
 }
 
 const api = { rankCatalogCsv, catalogRecordsToCsv, calculateEvidenceAgeDays };

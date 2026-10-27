@@ -160,6 +160,24 @@ test("provides transparent reasons, next action and commission estimates", () =>
   assert.ok(unknownReturns.recommendationReasons.length > 0);
 });
 
+test("flags duplicate product names without deleting variants or separate offers", () => {
+  const result = rankCatalogCsv(
+    "name,price,url\nKitchen Rack,499,https://www.amazon.in/dp/A1\n kitchen   rack ,599,https://www.flipkart.com/item/B2\nDesk Lamp,299,https://www.amazon.in/dp/C3"
+  );
+  assert.equal(result.valid, true);
+  const first = result.records.find((record) => record.rowNumber === 2);
+  const second = result.records.find((record) => record.rowNumber === 3);
+  const third = result.records.find((record) => record.rowNumber === 4);
+  assert.equal(first.duplicateNameOfRowNumber, null);
+  assert.equal(second.duplicateNameOfRowNumber, 2);
+  assert.ok(second.warnings.some((warning) => /duplicate product name/i.test(warning)));
+  assert.equal(third.duplicateNameOfRowNumber, null);
+  assert.equal(result.importedRows, 3);
+  const exported = catalogRecordsToCsv(result.records);
+  assert.match(exported, /possible_duplicate_name_of_row/);
+  assert.match(exported, /"2","3","kitchen   rack"/);
+});
+
 test("does not estimate commission after returns when return count exceeds orders", () => {
   const record = rankCatalogCsv(
     "name,price,commission,orders,returns\nLamp,500,10,10,12"

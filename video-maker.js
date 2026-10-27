@@ -21,13 +21,48 @@
 
   function loadImage(file) {
     return new Promise((resolve, reject) => {
-      const url = URL.createObjectURL(file);
+      const objectUrl = URL.createObjectURL(file);
       const image = new Image();
-      image.onload = () => { URL.revokeObjectURL(url); resolve(image); };
-      image.onerror = () => { URL.revokeObjectURL(url); reject(new Error("One image could not be opened. Try a different image file.")); };
-      image.src = url;
+      image.onload = () => { URL.revokeObjectURL(objectUrl); resolve(image); };
+      image.onerror = () => { URL.revokeObjectURL(objectUrl); reject(new Error("One uploaded image could not be opened. Try a different image file.")); };
+      image.src = objectUrl;
     });
   }
+
+  function loadRemoteImage(value) {
+    return new Promise((resolve, reject) => {
+      let parsed;
+      try {
+        parsed = new URL(value);
+      } catch {
+        reject(new Error("Enter a valid HTTPS product image URL."));
+        return;
+      }
+      if (parsed.protocol !== "https:" || !parsed.hostname || parsed.username || parsed.password) {
+        reject(new Error("Product image URLs must use HTTPS and must not contain embedded credentials."));
+        return;
+      }
+      const image = new Image();
+      image.crossOrigin = "anonymous";
+      image.referrerPolicy = "no-referrer";
+      image.onload = () => resolve(image);
+      image.onerror = () => reject(new Error("The image host blocked canvas access or the URL is not a direct image. Upload an authorised image file instead."));
+      image.src = parsed.href;
+    });
+  }
+
+  window.addEventListener("commerce:prepare-video", (event) => {
+    const product = event.detail || {};
+    byId("videoMakerName").value = cleanText(product.name, 100);
+    byId("videoMakerImageUrl").value = cleanText(product.imageUrl, 2048);
+    byId("videoMakerBenefit").value = "";
+    byId("videoMakerPrice").value = "";
+    byId("videoMakerImages").value = "";
+    status.textContent = product.imageUrl
+      ? "Product details loaded. Add a verified benefit; if the remote image is blocked, upload the image file."
+      : "Product name loaded. Add a verified benefit and upload an authorised product image.";
+    byId("videoMakerBenefit").focus({ preventScroll: true });
+  });
 
   function drawSlide(ctx, image, title, benefit, price, cta, language, index, total) {
     ctx.fillStyle = "#101522";
@@ -104,8 +139,13 @@
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     const files = Array.from(byId("videoMakerImages").files || []);
-    if (!files.length || files.length > MAX_FILES) {
-      status.textContent = "Choose between 1 and 8 images.";
+    const imageUrl = byId("videoMakerImageUrl").value.trim();
+    if (!files.length && !imageUrl) {
+      status.textContent = "Choose at least one authorised image file or enter a direct HTTPS image URL.";
+      return;
+    }
+    if (files.length + (imageUrl ? 1 : 0) > MAX_FILES) {
+      status.textContent = "Use no more than 8 images in total.";
       return;
     }
     if (files.some((file) => !file.type.startsWith("image/") || file.size > MAX_FILE_BYTES)) {
@@ -135,7 +175,10 @@
     byId("videoMakerDownload").replaceChildren();
     status.textContent = "Preparing images…";
     try {
-      const images = await Promise.all(files.map(loadImage));
+      const images = [];
+      if (imageUrl) images.push(await loadRemoteImage(imageUrl));
+      const uploadedImages = await Promise.all(files.map(loadImage));
+      images.push(...uploadedImages);
       const canvas = document.createElement("canvas");
       canvas.width = WIDTH;
       canvas.height = HEIGHT;

@@ -274,3 +274,12 @@ test("product workspace supports safe optional image URLs and premium image card
   assert.match(app, /image\.addEventListener\("load", \(\) => fallback\.remove\(\)\)/);
   assert.match(css, /\.product-grid/);
 });
+
+
+test("saved product cards offer a video-maker handoff without inventing product claims", () => {
+  assert.match(app, /videoButton\.textContent = "Make a video"/);
+  assert.match(app, /commerce:prepare-video/);
+  assert.match(app, /imageUrl: product\.imageUrl \|\| ""/);
+  assert.match(html, /id="videoMakerImageUrl"/);
+  assert.match(app, /\$\("videoMakerForm"\)\.scrollIntoView/);
+});

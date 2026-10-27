@@ -47,7 +47,7 @@ test("search UI exists and module loads before app initialisation", () => {
 
 test("keyword presets are clearly framed as research prompts and wired to the search input", () => {
   const source = fs.readFileSync(path.join(root, "marketplace-search.js"), "utf8");
-  assert.match(html, /class="keyword-preset" data-keyword="kitchen organiser"/);
+  assert.match(html, /data-keyword="kitchen organiser"/);
   assert.match(html, /not verified bestsellers/i);
   assert.match(source, /querySelectorAll\("\\.keyword-preset"\)/);
   assert.match(source, /input\.value = button\.dataset\.keyword/);

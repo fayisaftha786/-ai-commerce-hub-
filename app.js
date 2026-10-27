@@ -1118,8 +1118,43 @@ function renderImportedCatalog(records, errors = []) {
   root.replaceChildren();
   $("exportCatalogReport").disabled = !Array.isArray(records) || records.length === 0;
   const summary = document.createElement("p");
-  summary.textContent = "Ranked " + records.length + " valid products. Highest scores first. Check any row warnings below; scores are not a sales guarantee.";
+  summary.textContent = "Ranked " + records.length + " valid products. Highest evidence-readiness first; scores are not a sales guarantee.";
   root.append(summary);
+  const importer = window.AICommerceCatalogImport;
+  if (importer && typeof importer.summarizeCatalogRecords === "function") {
+    const audit = importer.summarizeCatalogRecords(records);
+    const auditPanel = document.createElement("section");
+    auditPanel.className = "notice";
+    const auditHeading = document.createElement("h3");
+    auditHeading.textContent = "Catalogue evidence audit";
+    const auditDetails = document.createElement("p");
+    auditDetails.textContent =
+      "Ready for a small test: " + audit.readyForSmallTest +
+      " · Test cautiously: " + audit.testCautiously +
+      " · Verify before promotion: " + audit.verifyBeforePromotion +
+      " · Do not promote yet: " + audit.doNotPromoteYet +
+      " · Stale evidence: " + audit.staleEvidence +
+      " · Future-dated evidence: " + audit.futureDatedEvidence +
+      " · Unknown freshness: " + audit.unknownFreshness +
+      " · Possible duplicate URLs: " + audit.duplicateUrls +
+      " · Possible duplicate names: " + audit.duplicateNames +
+      " · Rows with orders: " + audit.withOrders +
+      " · Clicks but no orders: " + audit.clicksWithoutOrders +
+      " · No sales metrics: " + audit.withoutSalesMetrics +
+      " · Out of stock: " + audit.outOfStock +
+      " · Missing source: " + audit.missingSource +
+      " · Missing link: " + audit.missingLink + ".";
+    const auditAction = document.createElement("p");
+    auditAction.textContent = audit.staleEvidence + audit.futureDatedEvidence + audit.unknownFreshness > 0
+      ? "Priority action: re-check stale, future-dated or undated evidence before making a promotion decision."
+      : audit.withoutSalesMetrics > 0
+        ? "Priority action: collect comparable click/order data where available; catalogue quality alone does not establish buyer demand."
+        : audit.duplicateUrls + audit.duplicateNames > 0
+          ? "Priority action: review possible duplicates and confirm whether rows are variants or separate seller offers."
+          : "Priority action: review row warnings and verify current price, stock and commission before promotion.";
+    auditPanel.append(auditHeading, auditDetails, auditAction);
+    root.append(auditPanel);
+  }
   for (const record of records) {
     const card = document.createElement("article");
     card.className = "candidate-card";

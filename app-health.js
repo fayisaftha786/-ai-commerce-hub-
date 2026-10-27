@@ -7,13 +7,13 @@
   "use strict";
 
   const MODULES = [
-    ["Product validation", "AICommerceProductUtils"],
-    ["Offer analysis", "AICommerceOfferEngine"],
-    ["Product discovery", "AICommerceDiscovery"],
-    ["Catalogue importer", "AICommerceCatalogImport"],
-    ["Campaign reporting", "AICommerceCampaignReport"],
-    ["Marketplace search", "AICommerceMarketplaceSearch"],
-    ["Social media workflow", "AICommerceSocialCenter"]
+    ["Product validation", "AICommerceProductUtils", ["validateProduct"]],
+    ["Offer analysis", "AICommerceOfferEngine", ["analyzeOffer", "createPromoCopy"]],
+    ["Product discovery", "AICommerceDiscovery", ["scoreCandidate", "createContentPack", "compareCandidatesByReadiness"]],
+    ["Catalogue importer", "AICommerceCatalogImport", ["rankCatalogCsv", "catalogRecordsToCsv"]],
+    ["Campaign reporting", "AICommerceCampaignReport", ["parseCampaignReport", "compareCampaignReports", "summarizeCampaignComparison"]],
+    ["Marketplace search", "AICommerceMarketplaceSearch", ["buildMarketplaceSearches"]],
+    ["Social media workflow", "AICommerceSocialCenter", ["analyzeSocialMetrics"]]
   ];
   const CONTROLS = [
     ["Product workspace", "productForm"],
@@ -60,9 +60,17 @@
       add("warn", "Browser storage", "Local storage is blocked or full. Saved items may not persist; export a backup when storage works.");
     }
 
-    for (const [label, name] of MODULES) {
-      add(root[name] ? "pass" : "fail", label,
-        root[name] ? "The main JavaScript module is available." : "The module is missing. Refresh the page online and check its script file.");
+    for (const [label, name, requiredMethods] of MODULES) {
+      const moduleApi = root[name];
+      if (!moduleApi) {
+        add("fail", label, "The module is missing. Refresh the page online and check its script file.");
+        continue;
+      }
+      const missingMethods = requiredMethods.filter((method) => typeof moduleApi[method] !== "function");
+      add(missingMethods.length ? "fail" : "pass", label,
+        missingMethods.length
+          ? "The module loaded but required functions are missing: " + missingMethods.join(", ") + ". Check the script version and exports."
+          : "The module and its required public functions are available.");
     }
 
     for (const [label, id] of CONTROLS) {

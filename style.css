@@ -241,6 +241,8 @@ details > summary::marker { color: var(--gold); }
   text-decoration: none;
 }
 .product-open-link:hover { background: rgba(114, 240, 192, .13); }
+.product-video-button { width: 100%; margin-top: 2px; }
+.product-card-body .product-video-button { font-size: 13px; padding: 10px 12px; }
 .product-empty {
   display: flex;
   flex-direction: column;

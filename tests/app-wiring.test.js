@@ -317,3 +317,10 @@ test("catalogue-to-content handoff carries evidence guardrails and suppresses st
   assert.match(app, /Do not infer stock, discounts, product benefits or guarantees/);
   assert.match(app, /Manual product name entered\. Catalogue evidence context cleared/);
 });
+
+
+test("Content Studio permits conservative draft generation without requiring a product benefit", () => {
+  assert.match(html, /id="contentBenefit" maxlength="200" placeholder="Optional: add only a benefit you verified"/);
+  assert.doesNotMatch(html, /id="contentBenefit" maxlength="200" required/);
+  assert.match(app, /createContentPack\(\{/);
+});

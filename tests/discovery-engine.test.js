@@ -199,3 +199,13 @@ test("bulk content rejects missing rows, missing required fields, and batches ab
   assert.throws(() => createBulkContentPacks([{ name: "Rack", benefit: "" }]), /row 1 needs both/i);
   assert.throws(() => createBulkContentPacks(Array.from({ length: 51 }, (_, i) => ({ name: "P" + i, benefit: "useful" }))), /up to 50/i);
 });
+
+
+test("single-product content can be generated without an unverified benefit claim", () => {
+  const { createContentPack } = require("../discovery-engine");
+  const pack = createContentPack({ name: "Desk Lamp", benefit: "", proof: "", language: "English", type: "Video" });
+  assert.match(pack.post, /Review the listed details to decide whether Desk Lamp fits your needs/);
+  assert.doesNotMatch(pack.post, /a useful everyday solution/i);
+  assert.match(pack.video, /Show only real product details supported by the listing/);
+  assert.match(pack.video, /Do not invent benefits or performance claims/);
+});

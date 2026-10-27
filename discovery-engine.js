@@ -124,7 +124,11 @@ function createContentPack(input) {
   const name = typeof input.name === "string" ? input.name.trim() : "";
   if (!name) throw new TypeError("Product name is required.");
   const audience = (typeof input.audience === "string" && input.audience.trim()) || "people looking for practical value";
-  const benefit = (typeof input.benefit === "string" && input.benefit.trim()) || "a useful everyday solution";
+  const benefit = typeof input.benefit === "string" ? input.benefit.trim() : "";
+  const benefitProvided = Boolean(benefit);
+  const safeBenefitLine = language => language === "English"
+    ? (benefitProvided ? benefit + " — worth a look if you are " + audience + "." : "Review the listed details to decide whether " + name + " fits your needs.")
+    : (benefitProvided ? benefit + " — " + audience + "ക്കായി." : name + " നിങ്ങളുടെ ആവശ്യത്തിന് അനുയോജ്യമാണോ എന്ന് അറിയാൻ ലിസ്റ്റിലെ വിവരങ്ങൾ പരിശോധിക്കൂ.");
   const proof = (typeof input.proof === "string" && input.proof.trim()) || "Check the product page for full details";
   const price = typeof input.price === "string" ? input.price.trim() : "";
   const rawLink = typeof input.link === "string" ? input.link.trim() : "";
@@ -144,7 +148,7 @@ function createContentPack(input) {
   const malayalam = [
     disclosure,
     "✨ " + name,
-    benefit + " — " + audience + "ക്കായി.",
+    safeBenefitLine("Malayalam"),
     "🔎 " + proof,
     safePrice,
     "വാങ്ങുന്നതിന് മുമ്പ് വില, size/variant, delivery, return നിബന്ധനകൾ പരിശോധിക്കുക.",
@@ -153,7 +157,7 @@ function createContentPack(input) {
   const english = [
     disclosure,
     "✨ " + name,
-    benefit + " — worth a look if you are " + audience + ".",
+    safeBenefitLine("English"),
     "🔎 " + proof,
     safePrice,
     "Check the current price, size/variant, delivery and return terms before buying.",
@@ -162,13 +166,13 @@ function createContentPack(input) {
   const post = language === "English" ? english : language === "Both" ? malayalam + "\n\n---\n\n" + english : malayalam;
   const hooks = language === "English"
     ? [
-        "Need " + benefit.toLowerCase() + "? Take a quick look.",
-        "Looking for " + benefit.toLowerCase() + "? Check these details first.",
+        benefitProvided ? "Need " + benefit.toLowerCase() + "? Take a quick look." : "Before you decide, review the listed details for " + name + ".",
+        benefitProvided ? "Looking for " + benefit.toLowerCase() + "? Check these details first." : "Check the listed features and terms before choosing " + name + ".",
         "Before you decide, see whether " + name + " fits your needs."
       ]
     : [
         "ഇത് നിങ്ങൾക്ക് ഉപകാരപ്പെടുമോ? ഒന്ന് കണ്ടുനോക്കൂ!",
-        benefit + " തേടുന്നുണ്ടോ? ആദ്യം വിവരങ്ങൾ പരിശോധിക്കൂ.",
+        benefitProvided ? benefit + " തേടുന്നുണ്ടോ? ആദ്യം വിവരങ്ങൾ പരിശോധിക്കൂ." : name + " തിരഞ്ഞെടുക്കുന്നതിന് മുമ്പ് ലിസ്റ്റിലെ വിവരങ്ങൾ പരിശോധിക്കൂ.",
         "വാങ്ങുന്നതിന് മുമ്പ് " + name + " നിങ്ങളുടെ ആവശ്യത്തിന് അനുയോജ്യമാണോ എന്ന് നോക്കൂ."
       ];
   const ctas = language === "English"
@@ -184,14 +188,16 @@ function createContentPack(input) {
       ];
   const hook = hooks[0];
   const voice = language === "English"
-    ? "Here is " + name + ". " + benefit + ". " + proof + ". Check the current price and details through the link."
-    : name + ". " + benefit + ". " + proof + ". നിലവിലെ വിലയും വിവരങ്ങളും ലിങ്കിൽ പരിശോധിച്ച ശേഷം തീരുമാനിക്കൂ.";
+    ? "Here is " + name + ". " + (benefitProvided ? benefit + ". " : "Review the listed details to decide whether it fits your needs. ") + proof + ". Check the current price and details through the link."
+    : name + ". " + (benefitProvided ? benefit + ". " : "നിങ്ങളുടെ ആവശ്യത്തിന് അനുയോജ്യമാണോ എന്ന് ലിസ്റ്റിലെ വിവരങ്ങൾ പരിശോധിക്കൂ. ") + proof + ". നിലവിലെ വിലയും വിവരങ്ങളും ലിങ്കിൽ പരിശോധിച്ച ശേഷം തീരുമാനിക്കൂ.";
   const video = [
     "SHORT VIDEO PLAN (20–25 seconds)",
     "0–9s — AFFILIATE DISCLOSURE: Show a clear, readable \"Affiliate\" label on-screen for at least 9 seconds in this 20–25 second video. Do not hide it among hashtags.",
     "0–2s — HOOK: " + hook,
     "2–6s — SHOW: Show the real product clearly; use your own footage or media you are authorised to use.",
-    "6–12s — BENEFIT: Demonstrate " + benefit + " for " + audience + ". Do not claim features you cannot verify.",
+    benefitProvided
+      ? "6–12s — BENEFIT: Demonstrate " + benefit + " for " + audience + ". Do not claim features you cannot verify."
+      : "6–12s — DETAILS: Show only real product details supported by the listing. Do not invent benefits or performance claims.",
     "12–17s — PROOF: Show only the verified detail: " + proof + ".",
     "17–25s — PRICE + CTA: " + safePrice + " Invite viewers to check the link for current availability; the affiliate label must already have been visible for at least 9 seconds.",
     "",
@@ -199,7 +205,7 @@ function createContentPack(input) {
     voice,
     "",
     "ON-SCREEN TEXT",
-    "Affiliate" + "\n" + hook + "\n" + benefit + "\nCheck current price • Link in bio/post",
+    "Affiliate" + "\n" + hook + "\n" + (benefitProvided ? benefit : "Check listed details before deciding") + "\nCheck current price • Link in bio/post",
     "",
     "CAPTION",
     post

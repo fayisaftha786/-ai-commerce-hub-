@@ -324,3 +324,14 @@ test("Content Studio permits conservative draft generation without requiring a p
   assert.doesNotMatch(html, /id="contentBenefit" maxlength="200" required/);
   assert.match(app, /createContentPack\(\{/);
 });
+
+
+test("saved shortlist can restart evidence review without carrying stale product metrics", () => {
+  assert.match(app, /recheckButton\.textContent = "Recheck evidence"/);
+  assert.match(app, /recheckButton\.addEventListener\("click", \(\) => \{/);
+  for (const id of ["candidatePrice", "candidateCommission", "candidateRating", "candidateReviews", "candidateDemand", "candidateCompetition", "candidateStock", "candidateSource", "candidateCheckedAt"]) {
+    assert.match(app, new RegExp('\\$\\("' + id + '"\\)\\.value = ""'));
+  }
+  assert.match(app, /Previous price, commission, rating, reviews, demand, competition, stock, source and date were cleared/);
+  assert.match(app, /card\.append\(recheckButton, contentButton, remove\)/);
+});

@@ -319,10 +319,10 @@ test("ranks current evidence ahead of stale or future evidence within the same r
   const currentDate = dateString(today);
   const staleDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 9);
   const futureDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 2);
-  const headers = "name,price,source,checked_at,commission,stock\\n";
+  const headers = "name,price,source,checked_at,commission,stock\n";
   const result = rankCatalogCsv(headers +
-    "Stale high score,499,Official dashboard," + dateString(staleDate) + ",10,yes\\n" +
-    "Future high score,499,Official dashboard," + dateString(futureDate) + ",10,yes\\n" +
+    "Stale high score,499,Official dashboard," + dateString(staleDate) + ",10,yes\n" +
+    "Future high score,499,Official dashboard," + dateString(futureDate) + ",10,yes\n" +
     "Current evidence,499,Official dashboard," + currentDate + ",10,yes");
   assert.equal(result.valid, true);
   assert.equal(result.records[0].name, "Current evidence");

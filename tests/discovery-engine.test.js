@@ -188,7 +188,7 @@ test("creates a bulk content pack for each row and preserves per-product details
   ], { language: "English", platform: "Instagram", type: "Video" });
   assert.equal(packs.length, 2);
   assert.match(packs[0].pack.post, /Rack/);
-  assert.match(packs[0].pack.post, /https:\\/\\/example\\.com\\/rack/);
+  assert.ok(packs[0].pack.post.includes("https://example.com/rack"));
   assert.match(packs[1].pack.post, /Bottle/);
   assert.match(packs[1].pack.post, /Affiliate disclosure/);
 });

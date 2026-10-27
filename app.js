@@ -761,12 +761,35 @@ function renderCandidates() {
       productLink.textContent = "Open supplied product link";
       card.append(productLink);
     }
+    const recheckButton = document.createElement("button");
+    recheckButton.type = "button";
+    recheckButton.className = "secondary";
+    recheckButton.textContent = "Recheck evidence";
+    recheckButton.addEventListener("click", () => {
+      // Keep only identity/link; all changeable evidence must be checked again by the user.
+      $("candidateName").value = candidate.name || "";
+      $("candidateUrl").value = safeCampaignUrl(candidate.url);
+      $("candidatePrice").value = "";
+      $("candidateCommission").value = "";
+      $("candidateRating").value = "";
+      $("candidateReviews").value = "";
+      $("candidateDemand").value = "";
+      $("candidateCompetition").value = "";
+      $("candidateStock").value = "";
+      $("candidateSource").value = "";
+      $("candidateCheckedAt").value = "";
+      $("candidateResult").replaceChildren();
+      latestCandidate = null;
+      $("candidateForm").scrollIntoView({ behavior: "smooth", block: "start" });
+      $("candidatePrice").focus({ preventScroll: true });
+      $("candidateResult").textContent = "Recheck the current listing and affiliate dashboard. Previous price, commission, rating, reviews, demand, competition, stock, source and date were cleared so old evidence is not reused.";
+    });
     const contentButton = document.createElement("button");
     contentButton.type = "button";
     contentButton.className = "secondary";
     contentButton.textContent = "Use in Content Studio";
     contentButton.addEventListener("click", () => useCandidateInContent(candidate));
-    card.append(contentButton, remove);
+    card.append(recheckButton, contentButton, remove);
     root.append(card);
   }
 }

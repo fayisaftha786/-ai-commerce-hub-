@@ -178,3 +178,24 @@ test("requires a current source, date, link, commission and known stock before p
   const outOfStock = scoreCandidate({ ...base, inStock: false });
   assert.equal(outOfStock.candidate.label, "Do not promote — out of stock");
 });
+
+
+test("creates a bulk content pack for each row and preserves per-product details", () => {
+  const { createBulkContentPacks } = require("../discovery-engine");
+  const packs = createBulkContentPacks([
+    { name: "Rack", benefit: "saves counter space", audience: "small homes", proof: "listing dimensions", price: "599", link: "https://example.com/rack" },
+    { name: "Bottle", benefit: "helps carry water", proof: "capacity shown on label" }
+  ], { language: "English", platform: "Instagram", type: "Video" });
+  assert.equal(packs.length, 2);
+  assert.match(packs[0].pack.post, /Rack/);
+  assert.ok(packs[0].pack.post.includes("https://example.com/rack"));
+  assert.match(packs[1].pack.post, /Bottle/);
+  assert.match(packs[1].pack.post, /Affiliate disclosure/);
+});
+
+test("bulk content rejects missing rows, missing required fields, and batches above 50", () => {
+  const { createBulkContentPacks } = require("../discovery-engine");
+  assert.throws(() => createBulkContentPacks([]), /at least one product row/i);
+  assert.throws(() => createBulkContentPacks([{ name: "Rack", benefit: "" }]), /row 1 needs both/i);
+  assert.throws(() => createBulkContentPacks(Array.from({ length: 51 }, (_, i) => ({ name: "P" + i, benefit: "useful" }))), /up to 50/i);
+});

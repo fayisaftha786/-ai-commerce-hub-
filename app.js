@@ -197,7 +197,22 @@ function render() {
       clicks += 1;
       $("clicks").textContent = String(clicks);
     });
-    body.append(platform, title, link);
+    const videoButton = document.createElement("button");
+    videoButton.type = "button";
+    videoButton.className = "secondary product-video-button";
+    videoButton.textContent = "Make a video";
+    videoButton.addEventListener("click", () => {
+      window.dispatchEvent(new CustomEvent("commerce:prepare-video", {
+        detail: {
+          name: product.name || "",
+          imageUrl: product.imageUrl || "",
+          link: product.url || "",
+          platform: product.platform || ""
+        }
+      }));
+      $("videoMakerForm").scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    body.append(platform, title, link, videoButton);
     item.append(media, body);
     list.append(item);
   }

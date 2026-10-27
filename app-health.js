@@ -112,7 +112,7 @@
 
     const serviceWorkerScript = document.querySelector && document.querySelector('script[src="service-worker.js"]');
     const inlineRegistration = Boolean(document.querySelector &&
-      document.querySelector('script[data-register-service-worker], script:not([src])'));
+      document.querySelector('script[data-register-service-worker]'));
     add(serviceWorkerScript || inlineRegistration ? "pass" : "warn", "Offline registration wiring",
       serviceWorkerScript || inlineRegistration
         ? "A service-worker script or explicit registration marker is present; runtime registration is checked separately."

@@ -294,7 +294,7 @@ function rankCatalogCsv(csvText) {
   // rows because identical names can represent different sellers, variants or offers.
   const seenProductNames = new Map();
   for (const record of records) {
-    const nameIdentity = record.name.normalize("NFKC").trim().replace(/\\s+/g, " ").toLocaleLowerCase("en-US");
+    const nameIdentity = record.name.normalize("NFKC").trim().replace(/\s+/g, " ").toLocaleLowerCase("en-US");
     if (seenProductNames.has(nameIdentity)) {
       const firstRow = seenProductNames.get(nameIdentity);
       record.duplicateNameOfRowNumber = firstRow;

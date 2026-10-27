@@ -64,12 +64,29 @@ function validateProduct(product) {
     return { valid: false, error: "This URL is not allowed." };
   }
 
+  let imageUrl = "";
+  if (typeof product.imageUrl === "string" && product.imageUrl.trim()) {
+    if (product.imageUrl.trim().length > MAX_URL_LENGTH) {
+      return { valid: false, error: "Image URL must be 2048 characters or fewer." };
+    }
+    try {
+      const image = new URL(product.imageUrl.trim());
+      if (image.protocol !== "https:" || !image.hostname || image.username || image.password) {
+        return { valid: false, error: "Image links must be safe HTTPS URLs." };
+      }
+      imageUrl = image.href;
+    } catch {
+      return { valid: false, error: "Enter a valid HTTPS image URL." };
+    }
+  }
+
   return {
     valid: true,
     product: {
       name,
       platform: product.platform,
-      url: url.href
+      url: url.href,
+      ...(imageUrl ? { imageUrl } : {})
     }
   };
 }

@@ -37,6 +37,15 @@
       <p id="appHealthSummary" role="status" aria-live="polite">Run a self-check to see what is ready and what needs setup.</p>
       <ul id="appHealthResults" aria-live="polite"></ul>
     </section>
+    <section class="panel" id="workflowGuide" aria-labelledby="workflowGuideHeading">
+      <h2 id="workflowGuideHeading">Your Next Best Action</h2>
+      <p>ഒരു ഘട്ടം വീതം മുന്നോട്ട് പോകാം. ഈ ഗൈഡ് ഈ browser-ൽ സേവ് ചെയ്തിരിക്കുന്ന വിവരങ്ങൾ മാത്രം പരിശോധിക്കുന്നു; live marketplace data അല്ലെങ്കിൽ sales ഉറപ്പുകൾ ഇതിൽ നിന്ന് ലഭിക്കില്ല.</p>
+      <div id="workflowGuideSummary" class="offer-summary" role="status" aria-live="polite">Checking your saved workspace…</div>
+      <div id="workflowGuideSteps" class="workflow-guide-grid" aria-live="polite"></div>
+      <button id="refreshWorkflowGuide" type="button" class="secondary">Refresh workflow status</button>
+      <p class="hint">Product details മാറിയാൽ, പുതിയതായി shortlist/content സേവ് ചെയ്താൽ, അല്ലെങ്കിൽ restore ചെയ്താൽ Refresh അമർത്തി നില പുതുക്കാം.</p>
+    </section>
+
     <section class="panel" aria-labelledby="backupHeading">
       <h2 id="backupHeading">Workspace Backup & Restore</h2>
       <p>Export saved workspace data to a JSON file or restore a previous backup on this device. The file stays under your control and may contain product links and campaign details.</p>
@@ -369,6 +378,7 @@
   <script src="app.js"></script>
   <script src="pwa-install.js"></script>
   <script src="app-health.js"></script>
+  <script src="workflow-guide.js"></script>
   <script data-register-service-worker>
     // Service-worker caching is optional; the app remains usable online if registration is blocked.
     if ("serviceWorker" in navigator && location.protocol !== "file:") {

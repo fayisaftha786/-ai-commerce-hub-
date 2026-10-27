@@ -28,27 +28,20 @@ jobs:
       - name: Configure GitHub Pages
         id: pages
         uses: actions/configure-pages@v5
-        continue-on-error: true
-
-      - name: Explain missing Pages setup
-        if: steps.pages.outcome != 'success'
-        run: |
-          echo "::warning title=GitHub Pages not configured::Open Settings → Pages, choose GitHub Actions as the publishing source, and save. Deployment was skipped safely."
+        with:
+          enablement: true
 
       - name: Assemble static site files
-        if: steps.pages.outcome == 'success'
         run: |
           mkdir -p _site
           cp index.html style.css manifest.webmanifest icon.svg service-worker.js pwa-install.js app-health.js product-utils.js offer-engine.js discovery-engine.js catalog-import.js marketplace-search.js campaign-report.js video-maker.js social-center.js app.js _site/
           touch _site/.nojekyll
 
       - name: Upload Pages artifact
-        if: steps.pages.outcome == 'success'
         uses: actions/upload-pages-artifact@v4
         with:
           path: _site
 
       - name: Deploy Pages
-        if: steps.pages.outcome == 'success'
         id: deployment
         uses: actions/deploy-pages@v4

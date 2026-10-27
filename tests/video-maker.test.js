@@ -97,5 +97,5 @@ test("video export always cleans up capture tracks and names downloads after the
   assert.match(source, /if \(activeRecorder && activeRecorder\.state !== "inactive"\)/);
   assert.match(source, /if \(activeStream\) activeStream\.getTracks\(\)\.forEach\(\(track\) => track\.stop\(\)\)/);
   assert.match(source, /\.normalize\("NFKD"\)/);
-  assert.match(source, /link\.download = filename \+ "-video\\.webm"/);
+  assert.match(source, /link\.download = filename \+ "-video\.webm"/);
 });

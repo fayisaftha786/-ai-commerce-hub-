@@ -30,7 +30,7 @@ test("video maker embeds a language-specific affiliate disclosure on each slide"
   assert.match(html, /id="videoMakerLanguage"/);
   assert.match(source, /Affiliate link • I may earn a commission/);
   assert.match(source, /അഫിലിയേറ്റ് ലിങ്ക്/);
-  assert.match(source, /drawSlide\(ctx, images\[i\], title, benefit, price, cta, language, i, images\.length, progress\)/);
+  assert.match(source, /drawSlide\(ctx, images\[i % images\.length\], title, benefit, price, cta, language, i, sceneCount, progress\)/);
 });
 
 test("video maker does not upload files or use external media services", () => {
@@ -59,4 +59,15 @@ test("video scenes animate product imagery and use distinct hook, benefit, and C
   assert.match(source, /ശ്രദ്ധിക്കൂ!/);
   assert.match(source, /പ്രധാന ഗുണം/);
   assert.match(source, /വിശദാംശങ്ങൾ പരിശോധിക്കൂ/);
+});
+
+
+test("single-image videos expand into a structured short-form storyboard", () => {
+  assert.match(source, /TARGET_VIDEO_MS = 16000/);
+  assert.match(source, /MIN_SCENES = 4/);
+  assert.match(source, /const sceneCount = Math\.max\(MIN_SCENES, images\.length\)/);
+  assert.match(source, /const sceneDuration = Math\.max\(MIN_SCENE_MS, Math\.round\(TARGET_VIDEO_MS \/ sceneCount\)\)/);
+  assert.match(source, /images\[i % images\.length\]/);
+  assert.match(source, /const isHook = index === 0 && total > 1/);
+  assert.match(source, /const isClosing = index === total - 1 && total > 1/);
 });

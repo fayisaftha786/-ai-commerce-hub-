@@ -890,6 +890,59 @@ $("contentForm").addEventListener("submit", (event) => {
   }
 });
 
+function parseBulkContentRows(text) {
+  const lines = String(text || "").split(/\\r?\\n/).map((line) => line.trimEnd()).filter((line) => line.trim());
+  if (!lines.length) throw new TypeError("Paste at least one product row.");
+  if (lines.length > 50) throw new RangeError("Use batches of 50 products or fewer.");
+  return lines.map((line, index) => {
+    const columns = line.split("\\t").map((value) => value.trim());
+    if (columns.length < 2) throw new TypeError("Row " + (index + 1) + " needs a product name and benefit separated by a tab.");
+    return { name: columns[0], benefit: columns[1], audience: columns[2] || "", proof: columns[3] || "", price: columns[4] || "", link: columns[5] || "" };
+  });
+}
+
+$("bulkContentRows").addEventListener("input", () => {
+  $("contentOutput").value = "";
+  resetContentReview("Bulk product rows changed. Generate the batch again, review the complete draft, then check all four items.");
+  $("bulkContentStatus").textContent = "Rows changed. Generate the batch again before exporting.";
+});
+
+$("generateBulkContent").addEventListener("click", () => {
+  const engine = window.AICommerceDiscovery;
+  if (typeof engine?.createBulkContentPacks !== "function") {
+    $("bulkContentStatus").textContent = "Bulk content module is unavailable. Refresh the app and try again.";
+    return;
+  }
+  try {
+    const rows = parseBulkContentRows($("bulkContentRows").value);
+    const packs = engine.createBulkContentPacks(rows, {
+      language: $("contentLanguage").value,
+      platform: $("contentPlatform").value,
+      type: $("contentType").value
+    });
+    $("contentName").value = "Bulk content batch (" + packs.length + " products)";
+    $("contentBenefit").value = "";
+    $("contentAudience").value = "";
+    $("contentProof").value = "";
+    $("contentPrice").value = "";
+    $("contentLink").value = "";
+    $("contentOutput").value = packs.map(({ name, pack }, index) => {
+      const hooks = pack.hooks.map((hook, hookIndex) => (hookIndex + 1) + ". " + hook).join("\\n");
+      const ctas = pack.ctas.map((cta, ctaIndex) => (ctaIndex + 1) + ". " + cta).join("\\n");
+      return "========== PRODUCT " + (index + 1) + ": " + name + " ==========\\n\\nPOST CAPTION\\n" + pack.post + "\\n\\nVIDEO PLAN\\n" + pack.video + "\\n\\nHOOK OPTIONS\\n" + hooks + "\\n\\nCALL-TO-ACTION OPTIONS\\n" + ctas;
+    }).join("\\n\\n\\n");
+    resetContentReview("Bulk batch generated. Review every product claim, price, disclosure and link, then check all four items before copying or downloading.");
+    draftsCreated += packs.length;
+    $("campaigns").textContent = String(draftsCreated);
+    $("bulkContentStatus").textContent = "Prepared " + packs.length + " product drafts. Check the full output below and complete the four safety checks before exporting.";
+    $("contentMessage").textContent = "Bulk content is ready for review. No footage was generated and nothing was posted.";
+    $("contentOutput").scrollIntoView({ behavior: "smooth", block: "center" });
+  } catch (error) {
+    $("bulkContentStatus").textContent = error instanceof Error ? error.message : "Could not prepare the batch.";
+  }
+});
+
+
 
 const CONTENT_REVIEW_IDS = ["reviewClaims", "reviewPrice", "reviewAffiliate", "reviewLink"];
 

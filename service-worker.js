@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "ai-commerce-hub-pwa-v1";
+const CACHE_NAME = "ai-commerce-hub-pwa-v2";
 const ASSET_PATHS = [
   "./",
   "./index.html",
@@ -18,7 +18,8 @@ const ASSET_PATHS = [
   "./app.js",
   "./service-worker.js",
   "./pwa-install.js",
-  "./app-health.js"
+  "./app-health.js",
+  "./workflow-guide.js"
 ];
 
 function assetUrl(path) {

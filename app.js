@@ -9,6 +9,7 @@ let draftsCreated = 0;
 let lastAnalyzedOffer = null;
 let latestCampaignReport = null;
 let latestBulkContentPacks = [];
+let latestBulkContentOutput = "";
 const CAMPAIGN_KEY = "ai-commerce-hub.campaigns.v1";
 
 const BACKUP_KEYS = [
@@ -904,6 +905,7 @@ function parseBulkContentRows(text) {
 
 $("bulkContentRows").addEventListener("input", () => {
   latestBulkContentPacks = [];
+  latestBulkContentOutput = "";
   $("exportBulkContentCsv").disabled = true;
   $("contentOutput").value = "";
   resetContentReview("Bulk product rows changed. Generate the batch again, review the complete draft, then check all four items.");
@@ -936,6 +938,7 @@ $("generateBulkContent").addEventListener("click", () => {
       const ctas = pack.ctas.map((cta, ctaIndex) => (ctaIndex + 1) + ". " + cta).join("\\n");
       return "========== PRODUCT " + (index + 1) + ": " + name + " ==========\\n\\nPOST CAPTION\\n" + pack.post + "\\n\\nVIDEO PLAN\\n" + pack.video + "\\n\\nHOOK OPTIONS\\n" + hooks + "\\n\\nCALL-TO-ACTION OPTIONS\\n" + ctas;
     }).join("\\n\\n\\n");
+    latestBulkContentOutput = $("contentOutput").value;
     resetContentReview("Bulk batch generated. Review every product claim, price, disclosure and link, then check all four items before copying or downloading.");
     draftsCreated += packs.length;
     $("campaigns").textContent = String(draftsCreated);
@@ -950,7 +953,7 @@ $("generateBulkContent").addEventListener("click", () => {
 
 
 function exportBulkContentCsv() {
-  if (!latestBulkContentPacks.length || !$("contentOutput").value.trim()) {
+  if (!latestBulkContentPacks.length || !$("contentOutput").value.trim() || $("contentOutput").value !== latestBulkContentOutput) {
     $("bulkContentStatus").textContent = "Generate a bulk batch again before exporting CSV.";
     return;
   }
@@ -1010,6 +1013,7 @@ $("contentForm").addEventListener("input", invalidateContentDraftOnInput);
 $("contentForm").addEventListener("change", invalidateContentDraftOnInput);
 $("contentOutput").addEventListener("input", () => {
   latestBulkContentPacks = [];
+  latestBulkContentOutput = "";
   $("exportBulkContentCsv").disabled = true;
   resetContentReview("Draft text changed. Review the full edited draft and re-check all four items before copying, downloading, or saving.");
 });

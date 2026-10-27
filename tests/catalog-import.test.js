@@ -7,9 +7,9 @@ const { rankCatalogCsv, catalogRecordsToCsv, calculateEvidenceAgeDays, summarize
 
 test("summarizes catalogue evidence gaps without changing individual scores", () => {
   const today = new Date().toISOString().slice(0, 10);
-  const csv = "name,platform,url,price,commission,clicks,orders,period_days,stock,source,checked_at\\n" +
-    "Ready,Amazon,https://www.amazon.in/dp/A1,500,10,100,12,7,yes,Official dashboard," + today + "\\n" +
-    "Stale,Amazon,https://www.amazon.in/dp/A2,600,5,20,,7,yes,Official dashboard,2020-01-01\\n" +
+  const csv = "name,platform,url,price,commission,clicks,orders,period_days,stock,source,checked_at\n" +
+    "Ready,Amazon,https://www.amazon.in/dp/A1,500,10,100,12,7,yes,Official dashboard," + today + "\n" +
+    "Stale,Amazon,https://www.amazon.in/dp/A2,600,5,20,,7,yes,Official dashboard,2020-01-01\n" +
     "No metrics,Meesho,,399,,,,,,,";
   const result = rankCatalogCsv(csv);
   assert.equal(result.valid, true);

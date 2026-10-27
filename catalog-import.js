@@ -317,9 +317,13 @@ function rankCatalogCsv(csvText) {
     "Do not promote yet": 3
   };
   const freshnessPriority = { current: 0, unknown: 1, stale: 2, future: 3 };
+  // Prefer actual performance evidence over catalogue-only scores within the same
+  // readiness and freshness tier. Ratings/reviews alone must not masquerade as demand.
+  const evidenceQualityPriority = { Complete: 0, Partial: 1, Limited: 2, Unverified: 3 };
   records.sort((a, b) =>
     (readinessPriority[a.promotionReadiness] ?? 2) - (readinessPriority[b.promotionReadiness] ?? 2) ||
     (freshnessPriority[a.evidenceFreshness] ?? 1) - (freshnessPriority[b.evidenceFreshness] ?? 1) ||
+    (evidenceQualityPriority[a.evidenceQuality] ?? 2) - (evidenceQualityPriority[b.evidenceQuality] ?? 2) ||
     b.score - a.score ||
     (b.orders ?? -1) - (a.orders ?? -1)
   );

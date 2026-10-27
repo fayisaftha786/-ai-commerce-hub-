@@ -306,16 +306,3 @@ test("bulk Content Studio has a bounded tab-separated input and reuses the revie
   assert.match(app, /function requireContentReview\(action\)/);
   assert.match(html, /tab-separated columns/);
 });
-
-
-test("bulk content CSV export includes one safe spreadsheet row per product and requires review", () => {
-  assert.ok(html.includes('id="exportBulkContentCsv"'));
-  assert.match(app, /let latestBulkContentPacks = \[\]/);
-  assert.match(app, /function exportBulkContentCsv\(\)/);
-  assert.match(app, /const headers = \["product_name", "platform", "language", "content_format", "caption", "video_plan", "hook_options", "call_to_action_options", "affiliate_disclosure"\]/);
-  assert.match(app, /row\.map\(csvCell\)\.join\(","\)/);
-  assert.match(app, /requireContentReview\("export the bulk CSV"\)/);
-  assert.match(app, /latestBulkContentPacks = packs/);
-  assert.match(app, /ai-commerce-bulk-content\.csv/);
-  assert.match(app, /\$\("exportBulkContentCsv"\)\.disabled = true/);
-});

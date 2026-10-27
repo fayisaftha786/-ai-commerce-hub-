@@ -852,6 +852,32 @@ $("saveCandidate").addEventListener("click", () => {
   $("candidateResult").append(document.createTextNode(saved ? " Saved to this device." : " Added for this session only; browser storage is unavailable."));
 });
 
+let selectedCatalogContentEvidence = null;
+
+function catalogEvidenceSummary(record) {
+  const freshness = record.evidenceFreshness || "unknown";
+  const source = record.source && record.source.trim() ? record.source.trim() : "not supplied";
+  const checkedAt = record.checkedAt || "not supplied";
+  const warnings = Array.isArray(record.warnings) ? record.warnings : [];
+  return [
+    "CATALOG EVIDENCE REVIEW — supplied CSV data only; not independently verified",
+    "Evidence freshness: " + freshness,
+    "Source: " + source,
+    "Date checked: " + checkedAt,
+    "Promotion guidance: " + (record.promotionReadiness || "verify before promotion"),
+    "Price handling: " + (freshness === "current" && checkedAt !== "not supplied" ? "entered price from supplied catalogue; re-check before posting" : "price omitted because evidence is stale, future-dated or undated"),
+    "Do not infer stock, discounts, product benefits or guarantees from this report.",
+    warnings.length ? "Catalogue warnings: " + warnings.join("; ") : "Catalogue warnings: none recorded; this is not proof of verification."
+  ].join("\n");
+}
+
+$("contentName").addEventListener("input", () => {
+  if (selectedCatalogContentEvidence && $("contentName").value.trim() !== selectedCatalogContentEvidence.name) {
+    selectedCatalogContentEvidence = null;
+    $("contentEvidenceStatus").textContent = "Manual product name entered. Catalogue evidence context cleared; verify all details yourself.";
+  }
+});
+
 $("contentForm").addEventListener("submit", (event) => {
   event.preventDefault();
   const engine = window.AICommerceDiscovery;
@@ -878,9 +904,12 @@ $("contentForm").addEventListener("submit", (event) => {
       "CALL-TO-ACTION OPTIONS",
       ...pack.ctas.map((cta, index) => (index + 1) + ". " + cta)
     ].join("\n");
-    $("contentOutput").value = $("contentType").value === "Post"
+    const contentDraft = $("contentType").value === "Post"
       ? pack.post + "\n\n---------------- VIDEO PLAN ----------------\n\n" + pack.video + "\n\n---------------- TESTABLE VARIANTS ----------------\n\n" + variants
       : pack.video + "\n\n---------------- POST CAPTION ----------------\n\n" + pack.post + "\n\n---------------- TESTABLE VARIANTS ----------------\n\n" + variants;
+    $("contentOutput").value = contentDraft + (selectedCatalogContentEvidence
+      ? "\n\n---------------- PRODUCT EVIDENCE GUARDRAILS ----------------\n\n" + catalogEvidenceSummary(selectedCatalogContentEvidence)
+      : "\n\nPRODUCT EVIDENCE REMINDER: User-entered details are not independently verified. Confirm current price, stock, features, rights to media and affiliate disclosure before publishing.");
     resetContentReview("New draft created. Review all claims, current price, affiliate disclosure and link, then check all four items before copying, downloading, or saving.");
     draftsCreated += 1;
     $("campaigns").textContent = String(draftsCreated);
@@ -1038,8 +1067,11 @@ $("downloadContent").addEventListener("click", () => {
 const CATALOG_KEY = "ai-commerce-hub.catalog-import.v1";
 let latestImportedCatalogRecords = [];
 function useCatalogProductInContent(record) {
+  selectedCatalogContentEvidence = { ...record, name: record.name || "" };
   $("contentName").value = record.name || "";
-  $("contentPrice").value = record.price == null ? "" : String(record.price);
+  const priceEvidenceIsCurrent = record.evidenceFreshness === "current" && Boolean(record.checkedAt);
+  $("contentPrice").value = priceEvidenceIsCurrent && record.price != null ? String(record.price) : "";
+  $("contentEvidenceStatus").textContent = catalogEvidenceSummary(record);
   $("contentLink").value = record.url || "";
   // Clear product-specific claims so text from a previously selected item cannot carry over.
   $("contentBenefit").value = "";
@@ -1047,7 +1079,9 @@ function useCatalogProductInContent(record) {
   $("contentProof").value = "";
   $("contentOutput").value = "";
   resetContentReview("Product selection changed. Generate a fresh draft, then review and check all four items before exporting.");
-  $("contentMessage").textContent = "Product name, price and available link copied. Add a real, verified benefit and feature before generating content.";
+  $("contentMessage").textContent = priceEvidenceIsCurrent
+    ? "Product name and link copied. The supplied price is marked current by its check date, but re-check it before posting; add verified benefits/features."
+    : "Product name and link copied. Price left blank because the supplied evidence is stale or undated; re-check price, stock and features before publishing.";
   $("contentForm").scrollIntoView({ behavior: "smooth", block: "start" });
   $("contentBenefit").focus({ preventScroll: true });
 }

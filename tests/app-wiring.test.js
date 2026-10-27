@@ -306,3 +306,14 @@ test("bulk Content Studio has a bounded tab-separated input and reuses the revie
   assert.match(app, /function requireContentReview\(action\)/);
   assert.match(html, /tab-separated columns/);
 });
+
+
+test("catalogue-to-content handoff carries evidence guardrails and suppresses stale or undated prices", () => {
+  assert.ok(html.includes('id="contentEvidenceStatus"'));
+  assert.match(app, /function catalogEvidenceSummary\(record\)/);
+  assert.match(app, /priceEvidenceIsCurrent = record\.evidenceFreshness === "current" && Boolean\(record\.checkedAt\)/);
+  assert.match(app, /price omitted because evidence is stale, future-dated or undated/);
+  assert.match(app, /PRODUCT EVIDENCE GUARDRAILS/);
+  assert.match(app, /Do not infer stock, discounts, product benefits or guarantees/);
+  assert.match(app, /Manual product name entered\. Catalogue evidence context cleared/);
+});

@@ -49,7 +49,7 @@ test("keyword presets are clearly framed as research prompts and wired to the se
   const source = fs.readFileSync(path.join(root, "marketplace-search.js"), "utf8");
   assert.match(html, /data-keyword="kitchen organiser"/);
   assert.match(html, /not verified bestsellers/i);
-  assert.match(source, /querySelectorAll\("\\.keyword-preset"\)/);
+  assert.ok(source.includes('querySelectorAll(".keyword-preset")'));
   assert.match(source, /input\.value = button\.dataset\.keyword/);
   assert.match(source, /does not indicate verified demand/);
 });

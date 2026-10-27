@@ -25,13 +25,13 @@ function makeEnvironment(overrides = {}) {
       getElementById(id) { return ids.has(id) ? { id } : null; },
       querySelector(selector) { return selector === 'link[rel="manifest"]' ? {} : null; }
     },
-    AICommerceProductUtils: {},
-    AICommerceOfferEngine: {},
-    AICommerceDiscovery: {},
-    AICommerceCatalogImport: {},
-    AICommerceCampaignReport: {},
-    AICommerceMarketplaceSearch: {},
-    AICommerceSocialCenter: {},
+    AICommerceProductUtils: { validateProduct() {} },
+    AICommerceOfferEngine: { analyzeOffer() {}, createPromoCopy() {} },
+    AICommerceDiscovery: { scoreCandidate() {}, createContentPack() {}, compareCandidatesByReadiness() {} },
+    AICommerceCatalogImport: { rankCatalogCsv() {}, catalogRecordsToCsv() {} },
+    AICommerceCampaignReport: { parseCampaignReport() {}, compareCampaignReports() {}, summarizeCampaignComparison() {} },
+    AICommerceMarketplaceSearch: { buildMarketplaceSearches() {} },
+    AICommerceSocialCenter: { analyzeSocialMetrics() {} },
     ...overrides
   };
 }
@@ -68,6 +68,16 @@ test("self-check surfaces missing modules, missing forms and insecure context", 
   assert.ok(checks.some((check) => check.title === "Social media workflow" && check.state === "fail"));
   assert.ok(checks.some((check) => check.title === "Manual product discovery form/control" && check.state === "fail"));
   assert.ok(checks.some((check) => check.title === "PWA manifest" && check.state === "warn"));
+});
+
+test("self-check detects a loaded module with missing public functions", () => {
+  const environment = makeEnvironment({
+    AICommerceCatalogImport: { rankCatalogCsv() {} },
+    AICommerceSocialCenter: {}
+  });
+  const checks = collectEnvironmentChecks(environment);
+  assert.ok(checks.some((check) => check.title === "Catalogue importer" && check.state === "fail" && /catalogRecordsToCsv/.test(check.detail)));
+  assert.ok(checks.some((check) => check.title === "Social media workflow" && check.state === "fail" && /analyzeSocialMetrics/.test(check.detail)));
 });
 
 test("self-check warns if browser local storage is blocked", () => {

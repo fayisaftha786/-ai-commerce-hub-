@@ -316,8 +316,10 @@ function rankCatalogCsv(csvText) {
     "Verify before promotion": 2,
     "Do not promote yet": 3
   };
+  const freshnessPriority = { current: 0, unknown: 1, stale: 2, future: 3 };
   records.sort((a, b) =>
     (readinessPriority[a.promotionReadiness] ?? 2) - (readinessPriority[b.promotionReadiness] ?? 2) ||
+    (freshnessPriority[a.evidenceFreshness] ?? 1) - (freshnessPriority[b.evidenceFreshness] ?? 1) ||
     b.score - a.score ||
     (b.orders ?? -1) - (a.orders ?? -1)
   );

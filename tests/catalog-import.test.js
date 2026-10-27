@@ -310,3 +310,23 @@ test("requires a usable product link and positive commission before shortlisting
   assert.equal(unknownCommission.promotionReadiness, "Verify before promotion");
   assert.ok(unknownCommission.warnings.some((warning) => warning.includes("commission is missing or not confirmed")));
 });
+
+test("ranks current evidence ahead of stale or future evidence within the same readiness tier", () => {
+  const today = new Date();
+  const dateString = (date) => date.getFullYear() + "-" +
+    String(date.getMonth() + 1).padStart(2, "0") + "-" +
+    String(date.getDate()).padStart(2, "0");
+  const currentDate = dateString(today);
+  const staleDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 9);
+  const futureDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 2);
+  const headers = "name,price,source,checked_at,commission,stock\n";
+  const result = rankCatalogCsv(headers +
+    "Stale high score,499,Official dashboard," + dateString(staleDate) + ",10,yes\n" +
+    "Future high score,499,Official dashboard," + dateString(futureDate) + ",10,yes\n" +
+    "Current evidence,499,Official dashboard," + currentDate + ",10,yes");
+  assert.equal(result.valid, true);
+  assert.equal(result.records[0].name, "Current evidence");
+  assert.equal(result.records[1].name, "Stale high score");
+  assert.equal(result.records[2].name, "Future high score");
+  assert.ok(result.records.every((record) => record.promotionReadiness === "Verify before promotion"));
+});

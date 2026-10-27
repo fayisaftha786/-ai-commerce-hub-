@@ -92,6 +92,27 @@
         ? "This browser exposes the service-worker API; registration still needs to be confirmed."
         : "This browser or page context does not expose service workers.");
 
+    const videoScript = document.querySelector && document.querySelector('script[src="video-maker.js"]');
+    add(videoScript ? "pass" : "fail", "Video maker script wiring",
+      videoScript
+        ? "The page declares the local video-maker script. Video export still depends on browser media support and valid input."
+        : "The video-maker script tag is missing. Restore video-maker.js before using video export.");
+
+    const installScript = document.querySelector && document.querySelector('script[src="pwa-install.js"]');
+    add(installScript ? "pass" : "warn", "PWA install script wiring",
+      installScript
+        ? "The page declares the install helper. The browser decides whether an install prompt is available."
+        : "The install helper script tag is missing; the install button may not work.");
+
+    const mediaRecorderSupported = typeof root.MediaRecorder === "function";
+    const canvasCaptureSupported = Boolean(root.HTMLCanvasElement && root.HTMLCanvasElement.prototype &&
+      typeof root.HTMLCanvasElement.prototype.captureStream === "function");
+    const videoReady = mediaRecorderSupported && canvasCaptureSupported;
+    add(videoReady ? "pass" : "warn", "Browser video export capability",
+      videoReady
+        ? "MediaRecorder and canvas captureStream are available for local WebM export."
+        : "This browser may not export WebM videos. Try an updated Chrome browser; export requires MediaRecorder and canvas captureStream.");
+
     add("info", "External integrations",
       "Live marketplace data APIs, a live AI text API, and automatic social publishing are not connected by this self-check. Search links and user-supplied CSV imports are the current data workflow.");
     return checks;

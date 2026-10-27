@@ -29,6 +29,13 @@
     const input = doc.getElementById("marketplaceSearchQuery");
     const results = doc.getElementById("marketplaceSearchResults");
     const status = doc.getElementById("marketplaceSearchStatus");
+    doc.querySelectorAll(".keyword-preset").forEach((button) => {
+      button.addEventListener("click", () => {
+        input.value = button.dataset.keyword || "";
+        input.focus();
+        status.textContent = "Research prompt selected. Submit to open marketplace searches; this does not indicate verified demand.";
+      });
+    });
     form.addEventListener("submit", (event) => {
       event.preventDefault();
       const result = buildMarketplaceSearches(input.value);

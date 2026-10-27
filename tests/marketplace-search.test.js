@@ -43,3 +43,13 @@ test("search UI exists and module loads before app initialisation", () => {
   assert.match(pkg.scripts.check, /node --check marketplace-search\.js/);
   assert.match(pkg.scripts.check, /node --check tests\/marketplace-search\.test\.js/);
 });
+
+
+test("keyword presets are clearly framed as research prompts and wired to the search input", () => {
+  const source = fs.readFileSync(path.join(root, "marketplace-search.js"), "utf8");
+  assert.match(html, /data-keyword="kitchen organiser"/);
+  assert.match(html, /not verified bestsellers/i);
+  assert.ok(source.includes('querySelectorAll(".keyword-preset")'));
+  assert.match(source, /input\.value = button\.dataset\.keyword/);
+  assert.match(source, /does not indicate verified demand/);
+});

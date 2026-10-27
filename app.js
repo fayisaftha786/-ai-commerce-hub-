@@ -197,6 +197,20 @@ function render() {
       clicks += 1;
       $("clicks").textContent = String(clicks);
     });
+    const contentButton = document.createElement("button");
+    contentButton.type = "button";
+    contentButton.className = "secondary product-content-button";
+    contentButton.textContent = "Create content";
+    contentButton.addEventListener("click", () => {
+      // A saved product link is not evidence of current price, stock, benefits, or performance.
+      useCatalogProductInContent({
+        name: product.name || "",
+        url: safeCampaignUrl(product.url),
+        price: "",
+        evidenceFreshness: "unknown",
+        checkedAt: ""
+      });
+    });
     const videoButton = document.createElement("button");
     videoButton.type = "button";
     videoButton.className = "secondary product-video-button";
@@ -230,7 +244,7 @@ function render() {
       $("candidateCheckedAt").dispatchEvent(new Event("input", { bubbles: true }));
       $("candidateForm").querySelector("button[type='submit']")?.focus({ preventScroll: true });
     });
-    body.append(platform, title, link, videoButton, scoreButton);
+    body.append(platform, title, link, contentButton, videoButton, scoreButton);
     item.append(media, body);
     list.append(item);
   }

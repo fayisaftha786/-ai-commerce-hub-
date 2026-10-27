@@ -176,6 +176,14 @@ $("productForm").addEventListener("submit", (event) => {
     $("message").textContent = result.error;
     return;
   }
+  const duplicate = products.some((saved) =>
+    saved.platform === result.product.platform && saved.url === result.product.url
+  );
+  if (duplicate) {
+    $("message").textContent = "This product link is already saved for " + result.product.platform + ". Open the saved product instead of adding a duplicate.";
+    return;
+  }
+
   if (products.length >= MAX_PRODUCTS) {
     $("message").textContent = "Prototype limit: 100 products.";
     return;

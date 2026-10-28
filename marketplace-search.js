@@ -8,7 +8,7 @@
   "use strict";
 
   function buildMarketplaceSearches(query) {
-    const term = String(query || "").replace(/[\\u0000-\\u001f]/g, " ").trim().slice(0, 120);
+    const term = String(query || "").replace(/[\x00-\x1f]/g, " ").trim().slice(0, 120);
     if (!term) return { valid: false, error: "Choose a product category first." };
     const encoded = encodeURIComponent(term);
     return {

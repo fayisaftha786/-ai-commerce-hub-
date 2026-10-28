@@ -24,13 +24,13 @@ test("rejects empty search and bounds the keyword length", () => {
 
 test("marketplace search cards can hand the keyword to scoring without carrying over old evidence", () => {
   const source = fs.readFileSync(path.join(root, "marketplace-search.js"), "utf8");
-  assert.match(source, /scoreButton\.textContent = "Start scoring this keyword"/);
+  assert.match(source, /scoreButton\.textContent = "Analyse a product from this search"/);
   assert.match(source, /candidateName: result\.query/);
   for (const id of ["candidatePrice", "candidateCommission", "candidateDemand", "candidateCompetition", "candidateUrl", "candidateSource", "candidateCheckedAt", "candidateStock"]) {
     assert.match(source, new RegExp(id + ': ""'));
   }
   assert.match(source, /search links do not contain live listing data/);
-  assert.match(source, /form\.scrollIntoView/);
+  assert.match(source, /candidateForm\.scrollIntoView/);
 });
 
 test("search UI exists and module loads before app initialisation", () => {
@@ -51,5 +51,5 @@ test("keyword presets are clearly framed as research prompts and wired to the se
   assert.match(html, /not verified bestsellers/i);
   assert.ok(source.includes('querySelectorAll(".keyword-preset")'));
   assert.match(source, /input\.value = button\.dataset\.keyword/);
-  assert.match(source, /Quick search prepared/);
+  assert.match(source, /Quick search prepared/);\n  assert.match(source, /runSearch\\(input\\.value\\)/);
 });

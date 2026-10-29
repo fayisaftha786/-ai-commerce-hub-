@@ -54,3 +54,45 @@ test("backup export/import round-trips and rejects unsupported or duplicate data
   const duplicate = { app: "ClipReward Studio", version: 1, campaigns: [{id:"x",name:"A"},{id:"x",name:"B"}], timestamps: [] };
   assert.throws(() => Core.parseBackup(duplicate), /duplicate campaign IDs/);
 });
+
+
+test("account center stores only local creator labels, social handles and explicit checklist confirmations", () => {
+  const account = Core.normalizeAccount({
+    displayName: "Creator workspace",
+    socialAccounts: [
+      { id: "s1", platform: "YouTube", handle: "@mychannel", confirmedConnected: true },
+      { id: "s2", platform: "TikTok", handle: "@clips", confirmedConnected: false }
+    ],
+    checklist: { loggedIn: true, socialVerified: true, campaignReady: false, postPublished: false, submissionSent: false }
+  }, "2026-10-29T12:00:00.000Z");
+  assert.equal(account.displayName, "Creator workspace");
+  assert.equal(account.socialAccounts.length, 2);
+  assert.equal(account.socialAccounts[0].confirmedConnected, true);
+  assert.equal(account.checklist.loggedIn, true);
+  assert.equal(account.checklist.submissionSent, false);
+  assert.equal(account.updatedAt, "2026-10-29T12:00:00.000Z");
+  assert.throws(() => Core.normalizeAccount({ socialAccounts: [
+    { id: "s1", platform: "TikTok", handle: "@same" },
+    { id: "s2", platform: "TikTok", handle: "@same" }
+  ] }), /already saved/);
+  assert.throws(() => Core.normalizeAccount({ socialAccounts: [{ id: "s1", platform: "TikTok", handle: "" }] }), /needs a handle/);
+});
+
+test("backup preserves account-center data and imports legacy backups without account data", () => {
+  const backup = Core.createBackup({
+    campaigns: [],
+    timestamps: [],
+    account: {
+      displayName: "My creator setup",
+      socialAccounts: [{ id: "social1", platform: "Instagram", handle: "@studio", confirmedConnected: true }],
+      checklist: { loggedIn: true, socialVerified: true, campaignReady: true, postPublished: false, submissionSent: false }
+    }
+  }, "2026-10-29T12:00:00.000Z");
+  const imported = Core.parseBackup(backup);
+  assert.equal(imported.account.displayName, "My creator setup");
+  assert.equal(imported.account.socialAccounts[0].handle, "@studio");
+  assert.equal(imported.account.checklist.campaignReady, true);
+  const legacy = Core.parseBackup({ app: "ClipReward Studio", version: 1, campaigns: [], timestamps: [] });
+  assert.equal(legacy.account.displayName, "");
+  assert.equal(legacy.account.socialAccounts.length, 0);
+});

@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101627"><meta name="description" content="A local-first workspace to plan licensed clips, track creator reward campaigns, prepare post copy, and verify submissions.">
+<title>ClipReward Studio — Creator workspace</title>
+<link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./icon.svg" type="image/svg+xml"><link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<div class="app-shell">
+<aside class="sidebar">
+<a class="brand" href="./" aria-label="ClipReward Studio home"><span class="brand-mark">CR</span><span><strong>ClipReward</strong><small>STUDIO</small></span></a>
+<div class="workspace-label">WORKSPACE</div>
+<nav class="side-nav" aria-label="Main navigation">
+<a class="nav-link active" href="#overview"><span>◫</span> Overview</a><a class="nav-link" href="#campaigns"><span>▤</span> Campaigns</a><a class="nav-link" href="#clip-studio"><span>▶</span> Clip studio</a><a class="nav-link" href="#submissions"><span>↗</span> Submissions</a>
+</nav>
+<div class="sidebar-bottom"><div class="privacy-card"><span class="privacy-dot"></span><div><strong>Private by default</strong><p>Your workspace stays in this browser.</p></div></div><div class="sidebar-foot">CLIPREWARD STUDIO <span>v0.1.0</span></div></div>
+</aside>
+<main class="main-content">
+<header class="topbar"><div class="crumbs">Creator tools <span>/</span> <strong>Rewards workspace</strong></div><div class="top-actions"><button class="button button-quiet" id="import-button" type="button">Import backup</button><input id="import-file" type="file" accept=".json,application/json" hidden><button class="button button-primary" id="export-button" type="button">↓ Export backup</button></div></header>
+<section id="overview" class="page-intro"><div><div class="eyebrow"><span class="live-dot"></span> YOUR CREATOR WORKSPACE</div><h1>Make every clip <span>count.</span></h1><p>Organize reward campaigns, plan short-form edits, and keep submission evidence in one place.</p></div><div class="intro-date"><span class="intro-date-icon">◷</span><div><small>LOCAL WORKSPACE</small><strong id="today-label">Today</strong></div></div></section>
+<section class="metric-grid" aria-label="Workspace summary">
+<article class="metric-card"><div class="metric-top"><span>Tracked campaigns</span><span class="metric-icon purple">▤</span></div><strong id="metric-total">0</strong><small>Saved to this device</small></article>
+<article class="metric-card"><div class="metric-top"><span>In progress</span><span class="metric-icon blue">◌</span></div><strong id="metric-progress">0</strong><small>Editing or ready to post</small></article>
+<article class="metric-card"><div class="metric-top"><span>Awaiting review</span><span class="metric-icon amber">◷</span></div><strong id="metric-review">0</strong><small>Submitted, not confirmed</small></article>
+<article class="metric-card"><div class="metric-top"><span>Approved</span><span class="metric-icon green">✓</span></div><strong id="metric-approved">0</strong><small>Manually marked approved</small></article>
+</section>
+<div class="content-grid">
+<section id="campaigns" class="panel campaigns-panel">
+<div class="panel-header"><div><div class="section-kicker">YOUR PIPELINE</div><h2>Campaign tracker</h2><p class="muted">Track campaign details against their actual terms and deadlines.</p></div><button class="button button-primary" id="add-campaign-button" type="button">＋ Add campaign</button></div>
+<div class="filter-row"><label class="search-box">⌕ <input id="campaign-search" type="search" placeholder="Search campaigns" aria-label="Search campaigns"></label><select id="status-filter" aria-label="Filter campaign status"><option value="all">All statuses</option><option value="idea">Idea</option><option value="editing">Editing</option><option value="ready">Ready to post</option><option value="submitted">Submitted</option><option value="approved">Approved</option><option value="rejected">Needs changes</option></select></div>
+<div id="campaign-list" class="campaign-list"></div><div id="empty-state" class="empty-state"><div class="empty-icon">✳</div><h3>Your workspace starts here</h3><p>Add the campaign name, rules and deadline. Then plan an original or expressly licensed clip.</p><button class="button button-primary" type="button" id="empty-add-button">Add your first campaign</button></div>
+</section>
+<aside class="right-column">
+<section id="clip-studio" class="panel clip-panel"><div class="panel-header"><div><div class="section-kicker">CREATIVE WORKSPACE</div><h2>Clip studio</h2></div><span class="panel-symbol">✦</span></div>
+<p class="muted small-text">Draft a short-form script from your own footage or media you are allowed to use. This version uses local templates; no external AI service is connected yet.</p>
+<form id="draft-form" class="form-stack"><label>Campaign<select id="draft-campaign"><option value="">Select a campaign (optional)</option></select></label><label>Video topic<input id="draft-topic" required maxlength="180" placeholder="e.g. Three useful editing tips"></label><label>Language<select id="draft-language"><option value="en">English</option><option value="ml">Malayalam</option><option value="both">Malayalam + English</option></select></label><label>Platform<select id="draft-platform"><option>TikTok</option><option>Instagram Reels</option><option>YouTube Shorts</option><option>Other</option></select></label><label>Verified takeaway or benefit<textarea id="draft-benefit" rows="2" maxlength="500" placeholder="Only include claims you can substantiate"></textarea></label><button class="button button-primary full-width" type="submit">✦ Generate content draft</button></form>
+<div id="draft-result" class="draft-result" hidden><div class="result-head"><strong>Draft preview</strong><button type="button" class="text-button" id="copy-draft">Copy text</button></div><textarea id="draft-output" rows="8" aria-label="Generated content draft"></textarea><p class="tiny-note">Review facts, rights, disclosure, campaign rules and platform requirements before posting.</p></div>
+</section>
+<section class="panel timestamp-panel"><div class="panel-header"><div><div class="section-kicker">EDITING NOTES</div><h2>Clip timestamps</h2></div><span class="panel-symbol">◷</span></div><p class="muted small-text">Record useful moments from footage you can lawfully edit. Format: mm:ss or hh:mm:ss.</p>
+<form id="timestamp-form" class="timestamp-form"><input id="timestamp-input" required placeholder="00:42" aria-label="Timestamp"><input id="timestamp-note" required maxlength="140" placeholder="Why this moment works" aria-label="Timestamp note"><button class="button button-secondary" type="submit">Add</button></form><div id="timestamp-list" class="timestamp-list"></div>
+</section>
+</aside>
+</div>
+<section id="submissions" class="panel submissions-panel"><div class="panel-header"><div><div class="section-kicker">EVIDENCE & FOLLOW-UP</div><h2>Submission log</h2><p class="muted">A saved record is not proof of platform approval or payout.</p></div><span class="panel-symbol">✓</span></div>
+<div class="table-wrap"><table><thead><tr><th>Campaign</th><th>Post URL</th><th>Submitted / Updated</th><th>Status</th><th>Action</th></tr></thead><tbody id="submission-table"></tbody></table></div><div id="submission-empty" class="table-empty">No submissions yet. Mark a campaign “Submitted” and add its public post URL.</div>
+</section>
+<footer class="disclaimer"><span>◇</span><p><strong>Built for responsible creator workflows.</strong> This is a tracking and drafting assistant, not an official connection to Content Rewards or Whop. It does not guarantee campaign eligibility, approval, views, or earnings. Never bypass CAPTCHA, account restrictions or platform rules.</p></footer>
+</main></div>
+<div id="campaign-modal" class="modal-backdrop" hidden><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-header"><div><div class="section-kicker">CAMPAIGN DETAILS</div><h2 id="modal-title">Add campaign</h2></div><button class="icon-button" id="close-modal" type="button" aria-label="Close dialog">×</button></div>
+<form id="campaign-form" class="form-stack"><input id="campaign-id" type="hidden"><label>Campaign name<input id="campaign-name" required maxlength="120" placeholder="Campaign or brief name"></label><label>Platform<select id="campaign-platform"><option>Content Rewards</option><option>Whop</option><option>TikTok campaign</option><option>Instagram campaign</option><option>YouTube campaign</option><option>Other</option></select></label><label>Campaign or rules URL<input id="campaign-url" type="url" placeholder="https://…" maxlength="500"></label><label>Deadline <span class="optional">(optional)</span><input id="campaign-deadline" type="date"></label><label>Reward terms / requirements<textarea id="campaign-rules" rows="3" maxlength="2000" placeholder="Required duration, disclosure, submission window, permitted assets…"></textarea></label><label>Status<select id="campaign-status"><option value="idea">Idea</option><option value="editing">Editing</option><option value="ready">Ready to post</option><option value="submitted">Submitted</option><option value="approved">Approved</option><option value="rejected">Needs changes</option></select></label><label>Public post URL <span class="optional">(for submission log)</span><input id="campaign-post-url" type="url" placeholder="https://…" maxlength="500"></label><div class="modal-actions"><button class="button button-quiet" id="cancel-modal" type="button">Cancel</button><button class="button button-primary" type="submit">Save campaign</button></div></form>
+</section></div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script src="./core.js"></script><script src="./app.js"></script>
+</body></html>

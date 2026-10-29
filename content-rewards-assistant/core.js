@@ -62,6 +62,10 @@
     const status = STATUSES.includes(source.status) ? source.status : "idea";
     const campaignUrl = safeUrl(source.url);
     const postUrl = safeUrl(source.postUrl);
+    const postedAtRaw = text(source.postedAt, 40);
+    const postedAtDate = postedAtRaw ? new Date(postedAtRaw) : null;
+    if (postedAtRaw && (!postedAtDate || Number.isNaN(postedAtDate.getTime()))) throw new Error("Post time must be a valid date and time.");
+    const postedAt = postedAtDate ? postedAtDate.toISOString() : "";
     if (!name) throw new Error("Campaign name is required.");
     if (campaignUrl === null) throw new Error("Campaign URL must be a valid HTTPS link.");
     if (postUrl === null) throw new Error("Post URL must be a valid HTTPS link.");
@@ -77,6 +81,7 @@
       rules: text(source.rules, MAX_TEXT),
       status,
       postUrl,
+      postedAt,
       createdAt: text(source.createdAt, 40) || stamp,
       updatedAt: text(source.updatedAt, 40) || stamp
     };

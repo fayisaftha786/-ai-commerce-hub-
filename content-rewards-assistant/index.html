@@ -12,7 +12,7 @@
 <a class="brand" href="./" aria-label="ClipReward Studio home"><span class="brand-mark">CR</span><span><strong>ClipReward</strong><small>STUDIO</small></span></a>
 <div class="workspace-label">WORKSPACE</div>
 <nav class="side-nav" aria-label="Main navigation">
-<a class="nav-link active" href="#overview"><span>◫</span> Overview</a><a class="nav-link" href="#campaigns"><span>▤</span> Campaigns</a><a class="nav-link" href="#clip-studio"><span>▶</span> Clip studio</a><a class="nav-link" href="#submissions"><span>↗</span> Submissions</a>
+<a class="nav-link active" href="#overview"><span>◫</span> Overview</a><a class="nav-link" href="#account-center"><span>◎</span> Account center</a><a class="nav-link" href="#campaigns"><span>▤</span> Campaigns</a><a class="nav-link" href="#clip-studio"><span>▶</span> Clip studio</a><a class="nav-link" href="#submissions"><span>↗</span> Submissions</a>
 </nav>
 <div class="sidebar-bottom"><div class="privacy-card"><span class="privacy-dot"></span><div><strong>Private by default</strong><p>Your workspace stays in this browser.</p></div></div><div class="sidebar-foot">CLIPREWARD STUDIO <span>v0.1.0</span></div></div>
 </aside>
@@ -24,6 +24,47 @@
 <article class="metric-card"><div class="metric-top"><span>In progress</span><span class="metric-icon blue">◌</span></div><strong id="metric-progress">0</strong><small>Editing or ready to post</small></article>
 <article class="metric-card"><div class="metric-top"><span>Awaiting review</span><span class="metric-icon amber">◷</span></div><strong id="metric-review">0</strong><small>Submitted, not confirmed</small></article>
 <article class="metric-card"><div class="metric-top"><span>Approved</span><span class="metric-icon green">✓</span></div><strong id="metric-approved">0</strong><small>Manually marked approved</small></article>
+</section>
+<section id="account-center" class="panel account-center">
+  <div class="panel-header"><div><div class="section-kicker">ACCOUNT WORKSPACE</div><h2>Account center</h2><p class="muted">Manage your workflow around the official Content Rewards account.</p></div><span class="account-state-pill"><span class="privacy-dot"></span> Local assistant</span></div>
+  <div class="account-warning"><strong>Important:</strong> this app is not logged in to Content Rewards or Whop and cannot read their private account data. Use the official sign-in and account-connection screens below. Do not enter passwords, one-time codes, cookies or API keys in this app.</div>
+  <div class="account-layout">
+    <div class="account-column">
+      <div class="account-subheading">Official account shortcuts</div>
+      <a class="account-link primary-account-link" href="https://contentrewards.com/" target="_blank" rel="noopener noreferrer"><span class="account-link-icon">↗</span><span><strong>Open Content Rewards</strong><small>Sign in, discover campaigns and manage submissions</small></span></a>
+      <a class="account-link" href="https://help.contentrewards.com/en/articles/16746780-connect-your-social-accounts" target="_blank" rel="noopener noreferrer"><span class="account-link-icon">◎</span><span><strong>Connect social accounts</strong><small>Official guide for TikTok, Instagram, YouTube, X and Facebook</small></span></a>
+      <a class="account-link" href="https://help.contentrewards.com/en/articles/16817237-find-and-apply-to-a-campaign" target="_blank" rel="noopener noreferrer"><span class="account-link-icon">▤</span><span><strong>Find and join campaigns</strong><small>Read campaign rules and eligibility before joining</small></span></a>
+      <a class="account-link" href="https://help.contentrewards.com/en/articles/15319814-submit-a-video" target="_blank" rel="noopener noreferrer"><span class="account-link-icon">↗</span><span><strong>Submit a posted clip</strong><small>Official submission steps and 30-minute window</small></span></a>
+      <a class="account-link" href="https://help.contentrewards.com/en/articles/16817239-withdraw-your-earnings" target="_blank" rel="noopener noreferrer"><span class="account-link-icon">$</span><span><strong>Withdraw earnings</strong><small>Official instructions for Content Rewards and Whop balances</small></span></a>
+    </div>
+    <div class="account-column">
+      <div class="account-subheading">Your local profile</div>
+      <form id="account-profile-form" class="account-profile-form">
+        <label>Creator label <span class="optional">(optional; stays on this device)</span><input id="account-display-name" maxlength="100" placeholder="e.g. My creator workspace"></label>
+        <button class="button button-secondary" type="submit">Save profile label</button>
+      </form>
+      <div class="account-subheading social-heading">Social accounts checklist</div>
+      <p class="muted small-text">Add the handle you intend to post from, then mark it only after Content Rewards itself shows that account as connected. This is a reminder—not live verification.</p>
+      <form id="social-account-form" class="social-account-form">
+        <select id="social-platform" aria-label="Social platform"><option>TikTok</option><option>Instagram</option><option>YouTube</option><option>Facebook</option><option>X</option><option>Other</option></select>
+        <input id="social-handle" required maxlength="100" placeholder="@handle or channel name" aria-label="Social handle">
+        <button class="button button-primary" type="submit">Add</button>
+      </form>
+      <div id="social-account-list" class="social-account-list"></div>
+    </div>
+  </div>
+  <div class="account-checklist-panel">
+    <div class="account-checklist-head"><div><div class="account-subheading">Before you submit a clip</div><p class="muted small-text">Tick items only after you have confirmed them on the official platform.</p></div><strong id="account-check-progress">0 / 5 confirmed</strong></div>
+    <div class="account-progress-track"><div id="account-progress-fill" class="account-progress-fill"></div></div>
+    <div class="account-checklist">
+      <label><input type="checkbox" data-account-check="loggedIn"><span><strong>Signed in</strong><small>I can access my Content Rewards account.</small></span></label>
+      <label><input type="checkbox" data-account-check="socialVerified"><span><strong>Social account verified</strong><small>The account I will post from shows Connected in Content Rewards settings.</small></span></label>
+      <label><input type="checkbox" data-account-check="campaignReady"><span><strong>Campaign approved or joined</strong><small>I checked the brief, platform, eligibility and requirements.</small></span></label>
+      <label><input type="checkbox" data-account-check="postPublished"><span><strong>Public clip posted</strong><small>The clip was posted on the correct connected account, using permitted content.</small></span></label>
+      <label><input type="checkbox" data-account-check="submissionSent"><span><strong>Submission sent</strong><small>I submitted the post link through Content Rewards within 30 minutes.</small></span></label>
+    </div>
+    <p class="account-checklist-note">These checkboxes are saved locally and are not synced to, or verified by, Content Rewards. Approval and payment still depend on their review.</p>
+  </div>
 </section>
 <div class="content-grid">
 <section id="campaigns" class="panel campaigns-panel">

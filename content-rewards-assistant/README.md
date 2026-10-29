@@ -14,6 +14,7 @@ Or run the existing root project as usual and open \`content-rewards-assistant/i
 
 - Create, edit, search, filter, and delete campaign records for Content Rewards, Whop and other creator programs.
 - Account Center with official Content Rewards/Whop/help links, a local creator label, saved social handles and a manual workflow-readiness checklist.
+- A 30-minute clip submission countdown from the user-entered post time, with visible overdue and locally marked-submitted states.
 - Record deadlines, campaign rules, public post links, and manual review status.
 - Generate English, Malayalam, or bilingual caption/script scaffolds from local templates.
 - Save and sort mm:ss or hh:mm:ss editing notes.
@@ -23,7 +24,7 @@ Or run the existing root project as usual and open \`content-rewards-assistant/i
 
 ## Important limitations — read before using
 
-This is **not an official Content Rewards or Whop integration**. The Account Center only opens official pages and saves local reminders; it does not sign in, control the session, read account data, or verify that a social account is really connected. No account login/OAuth connection, live campaign feed, reward eligibility verification, video rendering, social publishing, views ingestion, payout tracking, or connected AI API is implemented in this MVP. The content generator is a local template helper, not a claim that an AI model has been connected. A true AI API requires a secure server-side integration; do not put secret API keys in frontend code or GitHub.
+This is **not an official Content Rewards or Whop integration**. The Account Center only opens official pages and saves local reminders; it does not sign in, control the session, read account data, or verify that a social account is really connected. The 30-minute countdown is a local reminder, not a platform submission or verified receipt. No account login/OAuth connection, live campaign feed, reward eligibility verification, video rendering, social publishing, views ingestion, payout tracking, or connected AI API is implemented in this MVP. The content generator is a local template helper, not a claim that an AI model has been connected. A true AI API requires a secure server-side integration; do not put secret API keys in frontend code or GitHub.
 
 Submission and approval status are user-maintained notes. A status marked “Approved” is not independently verified, and the app does not guarantee views, campaign acceptance, or payment. Use official platform workflows, verify deadlines and terms, respect music/media licenses, and include any required sponsorship or affiliate disclosure. Do not automate CAPTCHA, bypass access restrictions, create fake engagement, or use accounts without permission.
 

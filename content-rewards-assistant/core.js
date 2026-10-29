@@ -75,7 +75,7 @@
       status,
       postUrl,
       createdAt: text(source.createdAt, 40) || stamp,
-      updatedAt: stamp
+      updatedAt: text(source.updatedAt, 40) || stamp
     };
   }
 

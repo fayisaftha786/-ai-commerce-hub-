@@ -96,3 +96,16 @@ test("backup preserves account-center data and imports legacy backups without ac
   assert.equal(legacy.account.displayName, "");
   assert.equal(legacy.account.socialAccounts.length, 0);
 });
+
+
+test("campaign post time normalizes to ISO, is optional for old backups, and rejects invalid dates", () => {
+  const item = Core.normalizeCampaign({
+    id: "posted-time",
+    name: "Recent clip",
+    platform: "Content Rewards",
+    postedAt: "2026-10-30T04:40:00+05:30"
+  }, "2026-10-30T00:00:00.000Z");
+  assert.equal(item.postedAt, "2026-10-29T23:10:00.000Z");
+  assert.equal(Core.normalizeCampaign({ name: "Legacy campaign" }).postedAt, "");
+  assert.throws(() => Core.normalizeCampaign({ name: "Bad post time", postedAt: "not-a-date" }), /valid date and time/);
+});

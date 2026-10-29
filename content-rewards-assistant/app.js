@@ -61,6 +61,42 @@
     if (Number.isNaN(date.getTime())) return value;
     return date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
   }
+  function localDateTimeValue(value) {
+    if (!value) return "";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "";
+    return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  }
+  function submissionDeadlineMarkup(campaign) {
+    if (!campaign.postedAt) return "";
+    const deadline = new Date(campaign.postedAt).getTime() + 30 * 60 * 1000;
+    const remaining = deadline - Date.now();
+    if (["submitted", "approved", "rejected"].includes(campaign.status)) {
+      return '<div class="submission-deadline submitted-deadline"><strong>Submission status:</strong> Marked "' + escapeHtml(statusNames[campaign.status]) + '" in this app. Platform receipt is not verified.</div>';
+    }
+    if (remaining <= 0) {
+      return '<div class="submission-deadline overdue-deadline"><strong>30-minute window may have passed.</strong> Check the official campaign page; this app cannot submit or extend the deadline.</div>';
+    }
+    const minutes = Math.floor(remaining / 60000);
+    const seconds = Math.floor((remaining % 60000) / 1000);
+    return '<div class="submission-deadline active-deadline" data-posted-at="' + escapeHtml(campaign.postedAt) + '"><strong>Submit clip now:</strong> <span class="deadline-countdown">' + minutes + ':' + String(seconds).padStart(2, "0") + '</span> left · deadline ' + escapeHtml(new Date(deadline).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })) + '</div>';
+  }
+  function refreshDeadlineCountdowns() {
+    document.querySelectorAll("[data-posted-at]").forEach((node) => {
+      const deadline = new Date(node.dataset.postedAt).getTime() + 30 * 60 * 1000;
+      const remaining = deadline - Date.now();
+      if (remaining <= 0) {
+        node.classList.remove("active-deadline");
+        node.classList.add("overdue-deadline");
+        node.innerHTML = "<strong>30-minute window may have passed.</strong> Check the official campaign page; this app cannot submit or extend the deadline.";
+      } else {
+        const minutes = Math.floor(remaining / 60000);
+        const seconds = Math.floor((remaining % 60000) / 1000);
+        const timer = node.querySelector(".deadline-countdown");
+        if (timer) timer.textContent = minutes + ":" + String(seconds).padStart(2, "0");
+      }
+    });
+  }
   function statusBadge(status) {
     return '<span class="status-pill status-' + escapeHtml(status) + '">' + escapeHtml(statusNames[status] || "Idea") + "</span>";
   }
@@ -161,6 +197,7 @@
     $("campaign-rules").value = editing ? campaign.rules : "";
     $("campaign-status").value = editing ? campaign.status : "idea";
     $("campaign-post-url").value = editing ? campaign.postUrl : "";
+    $("campaign-posted-at").value = editing ? localDateTimeValue(campaign.postedAt) : "";
     $("campaign-modal").hidden = false;
     document.body.style.overflow = "hidden";
     $("campaign-name").focus();
@@ -189,6 +226,7 @@
         rules: $("campaign-rules").value,
         status: $("campaign-status").value,
         postUrl: $("campaign-post-url").value,
+        postedAt: $("campaign-posted-at").value ? new Date($("campaign-posted-at").value).toISOString() : "",
         createdAt: old ? old.createdAt : ""
       });
       if (!old && state.campaigns.length >= Core.MAX_CAMPAIGNS) throw new Error("Campaign limit reached. Export a backup before adding more.");
@@ -371,6 +409,7 @@
   $("import-file").addEventListener("change", (event) => importBackup(event.target.files && event.target.files[0]));
   load();
   render();
+  window.setInterval(refreshDeadlineCountdowns, 1000);
   if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
     window.addEventListener("load", () => navigator.serviceWorker.register("./service-worker.js").catch(() => {
       showToast("Offline caching is unavailable in this browser session.");

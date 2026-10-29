@@ -3,7 +3,7 @@
   const Core = window.ClipRewardCore;
   const STORAGE_KEY = "clipreward-studio-v1";
   const $ = (id) => document.getElementById(id);
-  let state = { campaigns: [], timestamps: [] };
+  let state = { campaigns: [], timestamps: [], account: Core.normalizeAccount({}) };
   let toastTimer;
   const statusNames = { idea: "Idea", editing: "Editing", ready: "Ready to post", submitted: "Awaiting review", approved: "Approved", rejected: "Needs changes" };
 
@@ -49,9 +49,9 @@
         if (timestampIds.has(t.id)) throw new Error("duplicate timestamp ID");
         timestampIds.add(t.id);
       });
-      state = { campaigns, timestamps };
+      state = { campaigns, timestamps, account: Core.normalizeAccount(parsed.account || {}) };
     } catch (_) {
-      state = { campaigns: [], timestamps: [] };
+      state = { campaigns: [], timestamps: [], account: Core.normalizeAccount({}) };
       showToast("Local data was invalid and was not loaded. Import a known-good backup if available.");
     }
   }
@@ -124,7 +124,25 @@
     }).join("");
     $("submission-empty").hidden = entries.length > 0;
   }
+  function renderAccount() {
+    const account = Core.normalizeAccount(state.account || {});
+    state.account = account;
+    $("account-display-name").value = account.displayName;
+    document.querySelectorAll("[data-account-check]").forEach((input) => {
+      input.checked = account.checklist[input.dataset.accountCheck] === true;
+    });
+    const checked = Core.ACCOUNT_CHECKS.filter((key) => account.checklist[key]).length;
+    $("account-check-progress").textContent = checked + " / " + Core.ACCOUNT_CHECKS.length + " confirmed";
+    $("account-progress-fill").style.width = Math.round(checked / Core.ACCOUNT_CHECKS.length * 100) + "%";
+    $("social-account-list").innerHTML = account.socialAccounts.map((item) =>
+      '<article class="social-account-row"><div class="social-account-avatar">' + escapeHtml(item.platform.slice(0, 1)) + '</div><div class="social-account-copy"><strong>' + escapeHtml(item.platform) + '</strong><span>' + escapeHtml(item.handle) + '</span><small class="' + (item.confirmedConnected ? "social-confirmed" : "social-unconfirmed") + '">' + (item.confirmedConnected ? "Marked connected by you" : "Needs check in Content Rewards") + '</small></div><div class="social-account-actions"><button class="text-button confirm-social" type="button" data-id="' + escapeHtml(item.id) + '" aria-label="Toggle account connection reminder">' + (item.confirmedConnected ? "Undo check" : "Mark connected") + '</button><button class="text-button danger-button remove-social" type="button" data-id="' + escapeHtml(item.id) + '" aria-label="Remove saved social account">Remove</button></div></article>'
+    ).join("");
+    if (account.socialAccounts.length === 0) {
+      $("social-account-list").innerHTML = '<div class="social-empty">No social handles saved yet.</div>';
+    }
+  }
   function render() {
+    renderAccount();
     renderStats();
     renderCampaigns();
     renderDraftCampaignOptions();
@@ -249,7 +267,7 @@
     reader.onload = () => {
       try {
         const imported = Core.parseBackup(String(reader.result || ""));
-        if (!window.confirm("Replace this device's " + state.campaigns.length + " campaigns and " + state.timestamps.length + " timestamps with " + imported.campaigns.length + " campaigns and " + imported.timestamps.length + " timestamps from this backup?")) return;
+        if (!window.confirm("Replace this device's " + state.campaigns.length + " campaigns, " + state.timestamps.length + " timestamps and account checklist with " + imported.campaigns.length + " campaigns, " + imported.timestamps.length + " timestamps and the account checklist from this backup?")) return;
         state = imported;
         save(); render(); showToast("Backup imported.");
       } catch (error) { showToast(error.message || "Could not import backup."); }
@@ -285,6 +303,66 @@
     if (!button) return;
     state.timestamps = state.timestamps.filter((t) => t.id !== button.dataset.id);
     save(); renderTimestamps(); showToast("Timestamp removed.");
+  });
+  $("account-profile-form").addEventListener("submit", (event) => {
+    event.preventDefault();
+    try {
+      state.account = Core.normalizeAccount({ ...state.account, displayName: $("account-display-name").value, updatedAt: new Date().toISOString() });
+      save(); renderAccount(); showToast("Creator label saved on this device.");
+    } catch (error) { showToast(error.message || "Could not save creator label."); }
+  });
+  $("social-account-form").addEventListener("submit", (event) => {
+    event.preventDefault();
+    try {
+      if (state.account.socialAccounts.length >= Core.MAX_SOCIAL_ACCOUNTS) throw new Error("Social-account limit reached. Remove an entry you no longer use.");
+      state.account = Core.normalizeAccount({
+        ...state.account,
+        socialAccounts: [...state.account.socialAccounts, {
+          platform: $("social-platform").value,
+          handle: $("social-handle").value,
+          confirmedConnected: false
+        }],
+        updatedAt: new Date().toISOString()
+      });
+      save(); $("social-handle").value = ""; renderAccount();
+      showToast("Social handle saved. Verify connection on the official platform.");
+    } catch (error) { showToast(error.message || "Could not save this social account."); }
+  });
+  $("social-account-list").addEventListener("click", (event) => {
+    const confirm = event.target.closest(".confirm-social");
+    const remove = event.target.closest(".remove-social");
+    const id = (confirm || remove) && (confirm || remove).dataset.id;
+    if (!id) return;
+    try {
+      if (confirm) {
+        state.account = Core.normalizeAccount({
+          ...state.account,
+          socialAccounts: state.account.socialAccounts.map((item) => item.id === id ? { ...item, confirmedConnected: !item.confirmedConnected, updatedAt: new Date().toISOString() } : item),
+          updatedAt: new Date().toISOString()
+        });
+        save(); renderAccount();
+        showToast("Local reminder updated; live connection was not queried.");
+      } else if (remove && window.confirm("Remove this saved social-account reminder from this device?")) {
+        state.account = Core.normalizeAccount({
+          ...state.account,
+          socialAccounts: state.account.socialAccounts.filter((item) => item.id !== id),
+          updatedAt: new Date().toISOString()
+        });
+        save(); renderAccount(); showToast("Saved social-account reminder removed.");
+      }
+    } catch (error) { showToast(error.message || "Could not update this account reminder."); }
+  });
+  document.querySelectorAll("[data-account-check]").forEach((input) => {
+    input.addEventListener("change", () => {
+      const key = input.dataset.accountCheck;
+      if (!Core.ACCOUNT_CHECKS.includes(key)) return;
+      state.account = Core.normalizeAccount({
+        ...state.account,
+        checklist: { ...state.account.checklist, [key]: input.checked },
+        updatedAt: new Date().toISOString()
+      });
+      save(); renderAccount();
+    });
   });
   $("draft-form").addEventListener("submit", generateDraft);
   $("copy-draft").addEventListener("click", copyDraft);

@@ -4,6 +4,8 @@ A lightweight affiliate workspace prototype for evaluating offer details, shortl
 
 ## Current features
 
+- Standalone ClipReward Studio prototype for creator campaign tracking, content draft scaffolds, clip timestamps, submission logs, local backup/restore and mobile-friendly offline-ready UI: [open the assistant source](content-rewards-assistant/README.md)
+
 - Add product entries for Amazon, Flipkart and Meesho
 - HTTPS product URL validation and local-only product storage
 - Smart Offer Intelligence: calculate listed discount, savings and entered shipping-inclusive price
@@ -97,6 +99,10 @@ Use affiliate links only after approval by the relevant programme. Follow market
 
 The product discovery score is a transparent heuristic based on entered information, not a live trend feed or sales prediction. Blank rating, review count, commission, demand or competition fields are treated as unknown and do not earn score points. When key evidence is missing, the result is labelled **Need more evidence** instead of recommending the product for promotion. Estimated commission is shown only when a positive commission rate has been entered; it is not a payout guarantee. Verify current stock, price, eligibility and programme terms before publishing.
 
+
+## ClipReward Studio sub-app
+
+A separate early-stage creator workspace is in [`content-rewards-assistant/`](content-rewards-assistant/). Once the updated GitHub Pages deployment workflow runs successfully, its expected public path is `https://fayisaftha786.github.io/-ai-commerce-hub-/content-rewards-assistant/`. The app tracks campaigns and submissions and generates local template drafts; it is **not** connected to Content Rewards or Whop APIs and does not auto-publish videos or verify payouts. Read its README for limitations and privacy details.
 
 ## Development roadmap
 

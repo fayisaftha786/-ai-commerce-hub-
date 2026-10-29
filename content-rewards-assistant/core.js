@@ -10,7 +10,10 @@
   const PLATFORMS = Object.freeze(["Content Rewards", "Whop", "TikTok campaign", "Instagram campaign", "YouTube campaign", "Other"]);
   const MAX_CAMPAIGNS = 500;
   const MAX_TIMESTAMPS = 1000;
+  const MAX_SOCIAL_ACCOUNTS = 20;
   const MAX_TEXT = 2000;
+  const SOCIAL_PLATFORMS = Object.freeze(["TikTok", "Instagram", "YouTube", "Facebook", "X", "Other"]);
+  const ACCOUNT_CHECKS = Object.freeze(["loggedIn", "socialVerified", "campaignReady", "postPublished", "submissionSent"]);
 
   function text(value, maxLength) {
     return String(value == null ? "" : value).trim().slice(0, maxLength || MAX_TEXT);
@@ -98,6 +101,42 @@
     };
   }
 
+  function normalizeAccount(input, now) {
+    const source = input && typeof input === "object" && !Array.isArray(input) ? input : {};
+    const rawSocial = Array.isArray(source.socialAccounts) ? source.socialAccounts : [];
+    if (rawSocial.length > MAX_SOCIAL_ACCOUNTS) throw new Error("Too many social accounts in this workspace.");
+    const seenIds = new Set();
+    const seenAccounts = new Set();
+    const socialAccounts = rawSocial.map((item) => {
+      const row = item && typeof item === "object" && !Array.isArray(item) ? item : {};
+      const platform = SOCIAL_PLATFORMS.includes(row.platform) ? row.platform : "Other";
+      const handle = text(row.handle, 100);
+      if (!handle) throw new Error("Each saved social account needs a handle or channel name.");
+      const id = text(row.id, 80) || "social-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 7);
+      if (seenIds.has(id)) throw new Error("Duplicate social account IDs are not allowed.");
+      seenIds.add(id);
+      const identity = platform.toLowerCase() + ":" + handle.toLowerCase();
+      if (seenAccounts.has(identity)) throw new Error("That platform and handle are already saved.");
+      seenAccounts.add(identity);
+      return {
+        id,
+        platform,
+        handle,
+        confirmedConnected: row.confirmedConnected === true,
+        updatedAt: text(row.updatedAt, 40) || (now || new Date().toISOString())
+      };
+    });
+    const rawChecks = source.checklist && typeof source.checklist === "object" ? source.checklist : {};
+    const checklist = {};
+    ACCOUNT_CHECKS.forEach((key) => { checklist[key] = rawChecks[key] === true; });
+    return {
+      displayName: text(source.displayName, 100),
+      socialAccounts,
+      checklist,
+      updatedAt: text(source.updatedAt, 40) || (now || new Date().toISOString())
+    };
+  }
+
   function stats(campaigns) {
     const safe = Array.isArray(campaigns) ? campaigns : [];
     return {
@@ -141,7 +180,8 @@
       version: VERSION,
       exportedAt: now || new Date().toISOString(),
       campaigns: (Array.isArray(source.campaigns) ? source.campaigns : []).slice(0, MAX_CAMPAIGNS).map((c) => normalizeCampaign(c)),
-      timestamps: (Array.isArray(source.timestamps) ? source.timestamps : []).slice(0, MAX_TIMESTAMPS).map((t) => normalizeTimestamp(t))
+      timestamps: (Array.isArray(source.timestamps) ? source.timestamps : []).slice(0, MAX_TIMESTAMPS).map((t) => normalizeTimestamp(t)),
+      account: normalizeAccount(source.account, now)
     };
   }
 
@@ -167,12 +207,13 @@
       timestampIds.add(normalized.id);
       return normalized;
     });
-    return { campaigns, timestamps };
+    const account = normalizeAccount(data.account);
+    return { campaigns, timestamps, account };
   }
 
   return Object.freeze({
-    VERSION, STATUSES, PLATFORMS, MAX_CAMPAIGNS, MAX_TIMESTAMPS,
-    validDate, safeUrl, validateTimestamp, normalizeCampaign, normalizeTimestamp,
+    VERSION, STATUSES, PLATFORMS, MAX_CAMPAIGNS, MAX_TIMESTAMPS, MAX_SOCIAL_ACCOUNTS, SOCIAL_PLATFORMS, ACCOUNT_CHECKS,
+    validDate, safeUrl, validateTimestamp, normalizeCampaign, normalizeTimestamp, normalizeAccount,
     stats, makeDraft, createBackup, parseBackup
   });
 });

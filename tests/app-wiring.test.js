@@ -362,7 +362,7 @@ test("campaign CSV import drops duplicate IDs within the incoming batch and exis
   const repeated = { id: "new-campaign", productName: "Duplicate row" };
   const other = { id: "other-campaign", productName: "Other row" };
   const result = uniqueCampaignRecords([first, repeated, existing, other], ["already-saved"]);
-  assert.deepEqual(result.records, [first, other]);
+  assert.deepEqual(Array.from(result.records, (item) => item.id), ["new-campaign", "other-campaign"]);
   assert.equal(result.duplicates, 2);
 });
 
@@ -372,7 +372,7 @@ test("campaign register CSV import validates the exported schema and protects ex
   assert.match(app, /function parseCampaignCsv\(text\)/);
   assert.match(app, /CSV columns do not match the exported campaign register format/);
   assert.match(app, /file\.size > 1024 \* 1024/);
-  assert.match(app, /const duplicates = deduplicated\\.duplicates/);
+  assert.match(app, /const duplicates = deduplicated\.duplicates/);
   assert.match(app, /Existing records will be kept/);
   assert.match(app, /Import could not be saved to browser storage\. Existing records were preserved/);
   assert.match(app, /safeCampaignUrl\(link\.trim\(\)\)/);

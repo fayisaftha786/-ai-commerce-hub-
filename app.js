@@ -21,7 +21,7 @@ const BACKUP_KEYS = [
   "ai-commerce-hub.earning-records.v1",
   CLIPREWARD_STORAGE_KEY
 ];
-const MAX_BACKUP_BYTES = 2 * 1024 * 1024;
+const MAX_BACKUP_BYTES = 4 * 1024 * 1024;
 
 function exportWorkspaceBackup() {
   const payload = { format: "ai-commerce-hub-backup", version: 1, exportedAt: new Date().toISOString(), data: {} };
@@ -174,7 +174,7 @@ $("importWorkspaceBackup").addEventListener("change", async () => {
   const file = $("importWorkspaceBackup").files?.[0];
   if (!file) return;
   if (file.size > MAX_BACKUP_BYTES) {
-    $("backupMessage").textContent = "Backup file must be 2 MB or smaller.";
+    $("backupMessage").textContent = "Backup file must be 4 MB or smaller.";
     $("importWorkspaceBackup").value = "";
     return;
   }

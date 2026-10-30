@@ -7,6 +7,7 @@
   "use strict";
 
   const MODULES = [
+    ["Earning intelligence", "AIEarningEngine", ["validateOpportunity", "analyzeOpportunity", "createTaskPlan", "summarizeEarnings", "rankOpportunities"]],
     ["Product validation", "AICommerceProductUtils", ["validateProduct"]],
     ["Offer analysis", "AICommerceOfferEngine", ["analyzeOffer", "createPromoCopy"]],
     ["Product discovery", "AICommerceDiscovery", ["scoreCandidate", "createContentPack", "compareCandidatesByReadiness"]],
@@ -26,6 +27,13 @@
     ["Campaign report", "campaignReportForm"],
     ["Social analytics", "socialAnalyticsForm"],
     ["Browser video maker", "videoMakerForm"],
+    ["Earning opportunity tracker", "earningOpportunityForm"],
+    ["Earnings record form", "earningRecordForm"],
+    ["Full workspace backup export", "exportWorkspaceBackup"],
+    ["Full workspace backup restore", "importWorkspaceBackup"],
+    ["Saved earning opportunities", "earningOpportunityList"],
+    ["Saved earning tasks", "earningTaskList"],
+    ["Saved earnings records", "earningRecordList"],
     ["Video script generator", "generateVideoScript"],
     ["Voice-over recorder", "recordVoiceStart"],
     ["Caption copy control", "copyVideoCaption"],

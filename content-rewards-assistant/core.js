@@ -140,6 +140,8 @@
       platform,
       url: campaignUrl,
       deadline,
+      payoutTerms: text(source.payoutTerms, 180),
+      budgetTerms: text(source.budgetTerms, 180),
       rules: text(source.rules, MAX_TEXT),
       status,
       postUrl,

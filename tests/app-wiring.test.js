@@ -9,6 +9,7 @@ const root = path.join(__dirname, "..");
 const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const css = fs.readFileSync(path.join(root, "style.css"), "utf8");
 const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+const backupExport = app.slice(app.indexOf("function exportWorkspaceBackup"), app.indexOf("function validateBackup"));
 const appHealth = fs.readFileSync(path.join(root, "app-health.js"), "utf8");
 const catalog = fs.readFileSync(path.join(root, "catalog-import.js"), "utf8");
 
@@ -88,7 +89,6 @@ test("full workspace backup includes Earning Hub records", () => {
     "ai-commerce-hub.earning-records.v1"
   ];
   const backupKeys = app.slice(app.indexOf("const BACKUP_KEYS"), app.indexOf("const MAX_BACKUP_BYTES"));
-  const backupExport = app.slice(app.indexOf("function exportWorkspaceBackup"), app.indexOf("function validateBackup"));
   for (const key of keys) assert.ok(backupKeys.includes('"' + key + '"'), "backup must include " + key);
   assert.ok(app.includes("function exportWorkspaceBackup()"));
   assert.ok(app.includes("function validateBackup(payload)"));

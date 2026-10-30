@@ -43,8 +43,7 @@
       empty.className = "hint";
       empty.textContent = "ഇപ്പോൾ അവസരങ്ങളില്ല. ഔദ്യോഗികമായി പരിശോധിച്ച opportunity ചേർത്ത് വിശകലനം ആരംഭിക്കാം.";
       list.append(empty);
-      return;
-    }
+    } else {
     for (const item of ranked) {
       const card = document.createElement("article");
       card.className = "candidate-card";
@@ -79,6 +78,7 @@
       actions.append(plan, close);
       card.append(heading, score, detail, reward, source, actions);
       list.append(card);
+    }
     }
     renderTasks();
     renderEarnings();
@@ -209,6 +209,14 @@
     }
     if (!Number.isFinite(amount) || amount <= 0 || amount > 100000000) {
       $("earningHubMessage").textContent = "Enter a valid positive amount.";
+      return;
+    }
+    if ($("earningRecordStatus").value !== "estimated" && !evidenceUrl) {
+      $("earningHubMessage").textContent = "Add an official evidence link before recording confirmed or paid earnings.";
+      return;
+    }
+    if (earnings.length >= 1000) {
+      $("earningHubMessage").textContent = "Earnings record limit reached. Export a backup before adding more.";
       return;
     }
     const record = {

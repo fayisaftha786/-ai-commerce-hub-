@@ -33,4 +33,6 @@ test("earning hub uses local storage and explains its limits", () => {
   assert.match(app, /function renderTasks\(\)/);
   assert.match(app, /function renderEarnings\(\)/);
   assert.match(app, /EARNINGS_KEY/);
+  assert.match(app, /sourceCheckedAt/);
+  assert.match(app, /official evidence link/);
 });

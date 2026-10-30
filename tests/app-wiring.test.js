@@ -81,6 +81,7 @@ test("new product, candidate and campaign additions roll back when local storage
   function createElement(id) {
     return {
       id,
+      className: "",
       value: "",
       textContent: "",
       innerHTML: "",

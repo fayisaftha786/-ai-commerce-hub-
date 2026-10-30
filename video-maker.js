@@ -19,7 +19,7 @@
   let micStream = null;
   let micChunks = [];
 
-  const cleanText = (value, maxLength) => String(value || "").replace(/[<>\\u0000-\\u001f]/g, "").trim().slice(0, maxLength);
+  const cleanText = (value, maxLength) => String(value || "").replace(/[<>\u0000-\u001f]/g, "").trim().slice(0, maxLength);
   const status = (message) => { byId("videoMakerStatus").textContent = message; };
 
   function makeScenes() {
@@ -42,9 +42,9 @@
       ml && en ? "കൂടുതൽ അറിയാൻ പരിശോധിക്കൂ: " + cta + " | Find out more: " + cta : ml ? "കൂടുതൽ അറിയാൻ പരിശോധിക്കൂ: " + cta : "Find out more: " + cta
     ];
     if (price) lines.splice(3, 0, ml && en ? "വില: " + price + " (വാങ്ങുന്നതിന് മുമ്പ് വീണ്ടും പരിശോധിക്കുക) | Price: " + price + " (verify before purchase)" : ml ? "വില: " + price + " (വീണ്ടും പരിശോധിക്കുക)" : "Price: " + price + " (verify before purchase)");
-    byId("videoMakerScenes").value = lines.join("\\n");
-    byId("videoMakerCaption").value = (ml ? title + " — " + benefit + "\\n" : "") +
-      (en ? title + " — " + benefit + "\\n" : "") +
+    byId("videoMakerScenes").value = lines.join("\n");
+    byId("videoMakerCaption").value = (ml ? title + " — " + benefit + "\n" : "") +
+      (en ? title + " — " + benefit + "\n" : "") +
       (ml && en ? "വിലയും ലഭ്യതയും പരിശോധിക്കുക. | Check current price and availability.\\n" : "") +
       "#ProductReview #Shorts #Reels";
     status("Draft script created. Edit every scene and verify product claims before exporting.");
@@ -52,7 +52,7 @@
   }
 
   function wrapText(ctx, text, maxWidth, maxLines) {
-    const words = String(text || "").split(/\\s+/).filter(Boolean);
+    const words = String(text || "").split(/\s+/).filter(Boolean);
     const lines = [];
     let line = "";
     for (const word of words) {
@@ -221,7 +221,7 @@
 
     const title = cleanText(byId("videoMakerName").value, 100);
     const cta = cleanText(byId("videoMakerCta").value, 100) || "Check details and current price";
-    const sceneLines = byId("videoMakerScenes").value.split("\\n").map(line => cleanText(line, 180)).filter(Boolean);
+    const sceneLines = byId("videoMakerScenes").value.split("\n").map(line => cleanText(line, 180)).filter(Boolean);
     if (!title || sceneLines.length < MIN_SCENES || sceneLines.length > MAX_SCENES) {
       status("Generate or edit a script with 4 to 6 non-empty scenes before creating the video."); return;
     }
@@ -275,7 +275,7 @@
       previousUrl = URL.createObjectURL(blob);
       const preview = byId("videoMakerPreview"); preview.src = previousUrl; preview.hidden = false;
       const link = document.createElement("a"); link.href = previousUrl;
-      const filename = title.normalize("NFKD").replace(/[\\u0300-\\u036f]/g, "").replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60).toLowerCase() || "reel";
+      const filename = title.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60).toLowerCase() || "reel";
       link.download = filename + "-reel.webm"; link.textContent = "Download finished video (WebM)";
       byId("videoMakerDownload").append(link);
       status("Video ready. Preview it and verify the claims, sound level, rights and platform rules before publishing." + warning);

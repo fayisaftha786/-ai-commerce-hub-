@@ -185,7 +185,7 @@ $("importWorkspaceBackup").addEventListener("change", async () => {
       $("backupMessage").textContent = validation.error;
       return;
     }
-    if (!window.confirm("Restore this backup? Current saved workspace data will be replaced. Export a backup first if you want to keep it.")) return;
+    if (!window.confirm("Restore this backup? Included workspace data will be replaced. A legacy backup without ClipReward data keeps your current ClipReward workspace. Export a backup first if you want to keep all current data.")) return;
     // Save previous values so a storage failure cannot leave a partially restored workspace.
     const previous = new Map(BACKUP_KEYS.map((key) => [key, localStorage.getItem(key)]));
     try {

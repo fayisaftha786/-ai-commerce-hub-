@@ -122,7 +122,7 @@ test("combined workspace backup includes and validates ClipReward Studio data", 
     })
   };
   const validateStart = app.indexOf("function validateBackup(payload)");
-  const validateEnd = app.indexOf('\\n}\\n\\n$("exportWorkspaceBackup")', validateStart);
+  const validateEnd = app.indexOf("\n}\n\n$(\"exportWorkspaceBackup\")", validateStart);
   assert.ok(validateStart >= 0 && validateEnd > validateStart, "workspace backup validator must be extractable for direct tests");
   const validateSource = app.slice(validateStart, validateEnd + 2);
   const validateBackup = vm.runInNewContext("(" + validateSource + ")", {
@@ -174,7 +174,7 @@ test("workspace backup and restore controls are present and validated", () => {
   assert.ok(html.includes('id="backupMessage"'));
   assert.match(app, /format: "ai-commerce-hub-backup", version: 1/);
   assert.ok(app.includes("function validateBackup(payload)"));
-  assert.match(app, /MAX_BACKUP_BYTES = 2 \* 1024 \* 1024/);
+  assert.match(app, /MAX_BACKUP_BYTES = 4 \\* 1024 \\* 1024/);
   assert.match(app, /window\.confirm\("Restore this backup\?/);
   assert.match(app, /best-effort rollback/);
   assert.ok(app.includes("function exportWorkspaceBackup()"));

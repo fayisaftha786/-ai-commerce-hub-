@@ -28,6 +28,19 @@
 <section id="account-center" class="panel account-center">
   <div class="panel-header"><div><div class="section-kicker">ACCOUNT WORKSPACE</div><h2>Account center</h2><p class="muted">Manage your workflow around the official Content Rewards account.</p></div><span class="account-state-pill"><span class="privacy-dot"></span> Local assistant</span></div>
   <div class="account-warning"><strong>Important:</strong> this app is not logged in to Content Rewards or Whop and cannot read their private account data. Use the official sign-in and account-connection screens below. Do not enter passwords, one-time codes, cookies or API keys in this app.</div>
+  <div class="instagram-setup-panel">
+    <div class="instagram-setup-heading">
+      <div><div class="section-kicker">INSTAGRAM CREATOR · OFFICIAL LOGIN</div><h3>Connect your Instagram Creator account</h3><p class="muted">Setup guide for Meta's Instagram Login. Your account is not connected yet.</p></div>
+      <span class="instagram-status">Not connected</span>
+    </div>
+    <div class="instagram-setup-grid">
+      <div class="instagram-setup-step"><span>01</span><div><strong>Create a Meta developer app</strong><p>Open Meta for Developers and create an app for the Instagram professional account use case.</p><a href="https://developers.facebook.com/apps/" target="_blank" rel="noopener noreferrer">Open Meta Developer Apps ↗</a></div></div>
+      <div class="instagram-setup-step"><span>02</span><div><strong>Add Instagram Login</strong><p>In the app dashboard, configure Instagram API with Instagram Login / Business Login for Instagram. This supports Creator accounts and does not require linking a Facebook Page.</p><a href="https://www.postman.com/meta/instagram/documentation/6yqw8pt/instagram-api" target="_blank" rel="noopener noreferrer">Meta Instagram API documentation ↗</a></div></div>
+      <div class="instagram-setup-step"><span>03</span><div><strong>Prepare the secure callback</strong><p>We must host the OAuth backend on HTTPS before registering the exact callback URL. Do not enter a guessed or placeholder redirect URI in Meta yet.</p><code>/api/social/instagram/callback</code></div></div>
+      <div class="instagram-setup-step"><span>04</span><div><strong>Keep app credentials on the server</strong><p>After backend hosting, store these as server environment secrets only. Never paste the App Secret into this browser app or commit it to GitHub.</p><code>INSTAGRAM_APP_ID</code><code>INSTAGRAM_APP_SECRET</code><code>INSTAGRAM_REDIRECT_URI</code></div></div>
+    </div>
+    <div class="instagram-setup-note"><strong>Current implementation status:</strong> This release adds setup instructions and server-side configuration readiness only. OAuth login, token exchange, encrypted token storage, account profile retrieval and disconnect are not implemented yet. No Instagram credentials or account data are collected here.</div>
+  </div>
   <div class="account-layout">
     <div class="account-column">
       <div class="account-subheading">Official account shortcuts</div>

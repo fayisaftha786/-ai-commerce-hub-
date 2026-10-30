@@ -12,3 +12,19 @@
 
 /* Submission deadline tracker */
 .deadline-help{font-size:10px;line-height:1.5;margin:-2px 0 4px}.submission-deadline{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-top:12px;padding:10px 12px;border:1px solid #554b88;border-radius:9px;background:#211e3d;color:#c9c0ff;font-size:10px;line-height:1.5}.submission-deadline strong{font-weight:850}.deadline-countdown{font-variant-numeric:tabular-nums;font-size:16px;font-weight:900;color:#f5f2ff;letter-spacing:.04em}.active-deadline{border-color:#6257a7;background:#211e3d}.overdue-deadline{border-color:#814b4b;background:#351f27;color:#ffc4c4}.submitted-deadline{border-color:#315f50;background:#142d2a;color:#a8e7cf}
+
+/* Instagram Creator account setup */
+.instagram-setup-panel{margin:18px 0 24px;padding:20px;border:1px solid #344265;border-radius:16px;background:linear-gradient(145deg,#171f38,#11192b)}
+.instagram-setup-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:18px}
+.instagram-setup-heading h3{margin:5px 0;font-size:19px;letter-spacing:-.3px}
+.instagram-setup-heading p{margin:0}
+.instagram-status{white-space:nowrap;border:1px solid #725f43;background:#302719;color:#f4cb82;border-radius:999px;padding:5px 10px;font-size:11px;font-weight:800}
+.instagram-setup-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.instagram-setup-step{display:flex;gap:12px;padding:15px;border:1px solid var(--line);border-radius:12px;background:#0e1729}
+.instagram-setup-step>span{flex:0 0 30px;height:30px;display:grid;place-items:center;border-radius:9px;background:#29234b;color:#c4baff;font-weight:800;font-size:11px}
+.instagram-setup-step strong{display:block;margin:2px 0 5px}
+.instagram-setup-step p{margin:0 0 8px;color:var(--muted);font-size:12px}
+.instagram-setup-step a{color:#b7aaff;font-size:12px;font-weight:700;text-decoration:none}
+.instagram-setup-step code{display:inline-block;margin:3px 5px 0 0;padding:4px 6px;border-radius:6px;background:#080f1e;color:#b9c7e5;font-size:10px;overflow-wrap:anywhere}
+.instagram-setup-note{margin-top:14px;padding:12px 14px;border-left:3px solid var(--amber);background:#211d19;color:#d8c9aa;border-radius:8px;font-size:12px}
+@media(max-width:720px){.instagram-setup-grid{grid-template-columns:1fr}.instagram-setup-heading{flex-direction:column}.instagram-setup-panel{padding:15px}}

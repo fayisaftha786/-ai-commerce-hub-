@@ -51,3 +51,17 @@ node --test content-rewards-assistant/tests/*.test.js
 npm run check
 npm test
 \`\`\`
+
+## Instagram Creator account setup
+
+The Account Center includes an Instagram Creator setup guide for Meta's **Instagram API with Instagram Login**. This login path supports professional Creator and Business accounts and does not require a linked Facebook Page. Start at [Meta for Developers](https://developers.facebook.com/apps/) and configure Instagram Login in the app dashboard. Use the official [Meta Instagram API collection](https://www.postman.com/meta/instagram/documentation/6yqw8pt/instagram-api) as the API reference.
+
+The backend readiness endpoint recognizes these server-only environment variables:
+
+- `INSTAGRAM_APP_ID`
+- `INSTAGRAM_APP_SECRET`
+- `INSTAGRAM_REDIRECT_URI` (must be HTTPS)
+
+The exact redirect URI must be registered in Meta and must point to a separately hosted HTTPS backend. Do not guess the URI or enter a placeholder before backend hosting is selected. Never put the App Secret in browser code, GitHub, a Pages build, or a client-side environment variable.
+
+**Important status:** this setup guide and configuration-readiness check do not implement OAuth authorization, callback handling, token exchange/refresh, encrypted token persistence, profile/insights retrieval, publishing, or disconnect. A configuration status of `credentials_present_oauth_not_verified` is not an account connection. The current static GitHub Pages deployment cannot safely host OAuth secrets or perform server-side token exchange. A secure backend deployment and the complete OAuth/session/token lifecycle must be implemented and tested before connecting a real account.

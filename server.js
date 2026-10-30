@@ -46,14 +46,40 @@ function createServer(options = {}) {
   });
 }
 
-if (require.main === module) {
-  const port = Number(process.env.PORT || 3000);
+function getListenConfig(env = process.env) {
+  const rawPort = typeof env.PORT === "string" && env.PORT.trim()
+    ? env.PORT.trim()
+    : env.PORT ?? 3000;
+  const port = Number(rawPort);
   if (!Number.isInteger(port) || port < 1 || port > 65535) {
     throw new Error("PORT must be an integer from 1 to 65535");
   }
-  createServer().listen(port, "127.0.0.1", () => {
-    process.stdout.write("Social API starter listening on 127.0.0.1:" + port + "\\n");
-  });
+
+  const configuredHost = typeof env.HOST === "string" ? env.HOST.trim() : "";
+  const host = configuredHost || (env.NODE_ENV === "production" ? "0.0.0.0" : "127.0.0.1");
+  if (/\s|[/?#]/.test(host)) {
+    throw new Error("HOST must be a hostname or IP address without whitespace or URL path characters");
+  }
+
+  return { host, port };
 }
 
-module.exports = { createServer };
+function startServer(options = {}) {
+  const env = options.env ?? process.env;
+  const { host, port } = getListenConfig(env);
+  const server = createServer({ env });
+  const write = typeof options.write === "function"
+    ? options.write
+    : (message) => process.stdout.write(message);
+
+  server.listen(port, host, () => {
+    write("Social API starter listening on " + host + ":" + port + "\n");
+  });
+  return server;
+}
+
+if (require.main === module) {
+  startServer();
+}
+
+module.exports = { createServer, getListenConfig, startServer };

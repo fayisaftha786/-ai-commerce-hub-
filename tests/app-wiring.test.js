@@ -351,6 +351,48 @@ test("campaign register search filters by product, platform, format, and campaig
   assert.match(app, /No campaigns match this search/);
 });
 
+test("legacy saved campaigns are deduplicated and normalized before restore or backup", () => {
+  const start = app.indexOf("function sanitizeCampaignRecords(saved)");
+  const end = app.indexOf("\n}\n\nfunction loadCampaigns", start);
+  assert.ok(start >= 0 && end > start, "legacy campaign sanitizer must be present");
+  const helperSource = app.slice(start, end + 2);
+  const sanitizeCampaignRecords = vm.runInNewContext("(" + helperSource + ")", {
+    MAX_CAMPAIGNS: 200,
+    safeCampaignUrl(value) {
+      try { return new URL(value).protocol === "https:" ? new URL(value).href : ""; }
+      catch { return ""; }
+    }
+  });
+  const first = {
+    id: " legacy-1 ", createdAt: "2026-10-30T10:00:00.000Z",
+    productName: " First campaign ", platform: "Instagram", format: "Reel",
+    link: "https://example.com/first"
+  };
+  const duplicate = {
+    id: "legacy-1", createdAt: "2026-10-30T11:00:00.000Z",
+    productName: "Duplicate campaign", platform: "Instagram", format: "Reel", link: ""
+  };
+  const second = {
+    id: "legacy-2", createdAt: "2026-10-30T12:00:00.000Z",
+    productName: "Second campaign", platform: "YouTube", format: "Short", link: ""
+  };
+  const invalid = { id: "invalid", productName: "", createdAt: "not-a-date", platform: "X", format: "Post" };
+  const result = sanitizeCampaignRecords([first, duplicate, second, invalid]);
+  assert.deepEqual(Array.from(result.records, (item) => item.id), ["legacy-1", "legacy-2"]);
+  assert.equal(result.records[0].productName, "First campaign");
+  assert.equal(result.records[0].link, "https://example.com/first");
+  assert.equal(result.discarded, 2);
+});
+
+test("legacy campaign migration persists sanitized data when possible and backup uses the sanitized register", () => {
+  assert.match(app, /const campaignLoadResult = loadCampaigns\(\);\s*const campaigns = campaignLoadResult\.records/);
+  assert.match(app, /function persistCampaignMigration\(\)/);
+  assert.match(app, /persistCampaignMigration\(\);/);
+  assert.match(app, /if \(campaignLoadResult\.corrupt\)/);
+  assert.match(app, /payload\.data\[key\] = key === CAMPAIGN_KEY \? campaigns : JSON\.parse\(raw\)/);
+  assert.match(app, /Full backup export will use the cleaned register/);
+});
+
 test("campaign CSV import drops duplicate IDs within the incoming batch and existing records", () => {
   const start = app.indexOf("function uniqueCampaignRecords(records, existingIds)");
   const end = app.indexOf("\n}\n\n$(\"importCampaigns\")", start);

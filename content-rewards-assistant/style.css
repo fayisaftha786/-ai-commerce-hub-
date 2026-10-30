@@ -62,3 +62,11 @@
   .scout-result-columns{grid-template-columns:1fr}
   .scout-result-heading{align-items:flex-start;flex-direction:column}
 }
+
+.scout-platform-links{display:flex;flex-wrap:wrap;gap:7px;justify-content:flex-end}
+.scout-platform-links .button{font-size:10px;padding:9px 11px}
+.scout-confidence{font-size:10px;font-weight:800}
+.scout-match{border-color:#315f50;background:#142d2a;color:#a8e7cf}
+.scout-mismatch{border-color:#814b4b;background:#351f27;color:#ffc4c4}
+.scout-unknown{border-color:#62502a;background:#302817;color:#efd9a0}
+@media(max-width:760px){.scout-platform-links{display:grid;grid-template-columns:1fr 1fr;width:100%}.scout-platform-links .button{width:100%}}

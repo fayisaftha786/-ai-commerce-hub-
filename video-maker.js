@@ -117,7 +117,11 @@
     ctx.fillStyle = "#85d8bd"; ctx.font = "bold 21px system-ui, sans-serif";
     wrapText(ctx, cta, WIDTH - 84, 1).forEach(line => ctx.fillText(line, 38, 1245));
     ctx.fillStyle = "#f4cb75"; ctx.font = "bold 16px system-ui, sans-serif";
-    const disclosure = byId("videoMakerLanguage").value === "Malayalam" ? "അഫിലിയേറ്റ് ലിങ്ക് • വാങ്ങിയാൽ കമ്മീഷൻ ലഭിക്കാം" : "Affiliate link • I may earn a commission";
+    const disclosure = byId("videoMakerLanguage").value === "Malayalam"
+      ? "അഫിലിയേറ്റ് ലിങ്ക് • വാങ്ങിയാൽ കമ്മീഷൻ ലഭിക്കാം"
+      : byId("videoMakerLanguage").value === "Bilingual"
+        ? "Affiliate link • കമ്മീഷൻ ലഭിക്കാം"
+        : "Affiliate link • I may earn a commission";
     ctx.fillText(disclosure, 34, 30, WIDTH - 68);
   }
 
@@ -126,7 +130,7 @@
     return context.decodeAudioData(buffer.slice(0));
   }
 
-  async function makeAudioTrack(voiceFile, musicFile, durationSeconds) {
+  async function makeAudioTrack(voiceFile, musicFile) {
     if (!voiceFile && !musicFile) return { stream: null, cleanup() {} };
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
     if (!AudioContextClass) throw new Error("This browser cannot mix audio tracks. Remove voice/music or use a recent Chrome browser.");
@@ -134,9 +138,11 @@
     await context.resume();
     const destination = context.createMediaStreamDestination();
     const sources = [];
+    let voiceDurationSeconds = 0;
     try {
       if (voiceFile) {
         const buffer = await decodeAudio(context, voiceFile);
+        voiceDurationSeconds = buffer.duration;
         const source = context.createBufferSource();
         source.buffer = buffer;
         const gain = context.createGain(); gain.gain.value = 1;
@@ -150,6 +156,7 @@
       }
       return {
         stream: destination.stream,
+        durationSeconds: voiceDurationSeconds,
         start() { sources.forEach(source => source.start(0)); },
         cleanup() { sources.forEach(source => { try { source.stop(); } catch {} }); context.close().catch(() => {}); }
       };
@@ -250,9 +257,9 @@
       if (!images.length) throw new Error("No usable images were loaded.");
       const canvas = document.createElement("canvas"); canvas.width = WIDTH; canvas.height = HEIGHT;
       const ctx = canvas.getContext("2d"); if (!ctx) throw new Error("Canvas is unavailable.");
-      const duration = Math.max(4, Math.ceil(20 / sceneLines.length));
-      const totalSeconds = duration * sceneLines.length;
-      audioTrack = await makeAudioTrack(voiceFile, musicFile, totalSeconds);
+      audioTrack = await makeAudioTrack(voiceFile, musicFile);
+      if (audioTrack.durationSeconds > 60) throw new Error("Voice-over is longer than 60 seconds. Trim it to keep this short-form video concise.");
+      const duration = Math.max(4, Math.ceil(Math.max(20, audioTrack.durationSeconds || 0) / sceneLines.length));
       stream = canvas.captureStream(30);
       if (audioTrack.stream) audioTrack.stream.getAudioTracks().forEach(track => stream.addTrack(track));
       const chunks = [];

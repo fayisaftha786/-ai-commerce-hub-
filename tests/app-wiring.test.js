@@ -90,6 +90,9 @@ test("workspace backup and restore controls are present and validated", () => {
   assert.match(app, /MAX_BACKUP_BYTES = 2 \* 1024 \* 1024/);
   assert.match(app, /window\.confirm\("Restore this backup\?/);
   assert.match(app, /best-effort rollback/);
+  const backupExport = app.slice(app.indexOf("function exportWorkspaceBackup"), app.indexOf("function validateBackup"));
+  assert.match(backupExport, /anchor\.click\(\);[\s\S]*anchor\.remove\(\);[\s\S]*setTimeout\(\(\) => URL\.revokeObjectURL\(url\), 1000\)/);
+  assert.doesNotMatch(backupExport, /URL\.revokeObjectURL\(url\);/);
 });
 
 test("workspace backup validates each dataset before replacing browser storage", () => {

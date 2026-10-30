@@ -204,7 +204,7 @@ test("ClipReward keeps saved UI state when campaign, timestamp, account and back
   function makeElement(id) {
     return {
       id,
-      value: "",
+      value: id === "status-filter" ? "all" : "",
       innerHTML: "",
       textContent: "",
       hidden: false,

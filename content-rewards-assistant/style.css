@@ -70,3 +70,14 @@
 .scout-mismatch{border-color:#814b4b;background:#351f27;color:#ffc4c4}
 .scout-unknown{border-color:#62502a;background:#302817;color:#efd9a0}
 @media(max-width:760px){.scout-platform-links{display:grid;grid-template-columns:1fr 1fr;width:100%}.scout-platform-links .button{width:100%}}
+
+/* Dedicated official platform discovery destinations */
+.scout-platform-tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:12px 0}
+.scout-platform-tile{min-width:0;padding:15px;border:1px solid #2b3851;border-radius:12px;background:#10192b;display:flex;flex-direction:column;gap:9px}
+.scout-platform-tile h3{font-size:14px;line-height:1.3;margin:0;color:#edf0ff}
+.scout-platform-tile p{font-size:10px;line-height:1.6;color:#aab6cc;margin:0;flex:1}
+.scout-platform-actions{display:flex;flex-wrap:wrap;gap:7px}
+.scout-platform-actions .button{font-size:10px;padding:8px 10px}
+.scout-platform-tile>.text-button{font-size:10px}
+@media(max-width:900px){.scout-platform-tiles{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.scout-platform-tiles{grid-template-columns:1fr}.scout-platform-actions{display:grid;grid-template-columns:1fr 1fr}.scout-platform-actions .button{width:100%}}

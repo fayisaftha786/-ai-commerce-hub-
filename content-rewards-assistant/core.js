@@ -266,6 +266,10 @@
     const campaigns = data.campaigns.map((item) => {
       const normalized = normalizeCampaign(item);
       if (ids.has(normalized.id)) throw new Error("Backup contains duplicate campaign IDs.");
+      if (normalized.platform === "Content Rewards" && normalized.status === "submitted" && normalized.submittedAt) {
+        const validation = validateSubmissionRecord(normalized);
+        if (!validation.valid) throw new Error("Backup contains an invalid Content Rewards submission record: " + validation.error);
+      }
       ids.add(normalized.id);
       return normalized;
     });

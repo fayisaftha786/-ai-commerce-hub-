@@ -63,7 +63,7 @@ test("saved product cards provide a one-click Content Studio handoff without sta
   assert.match(app, /useCatalogProductInContent\(\{\s*name: product\.name \|\| ""/);
   assert.match(app, /evidenceFreshness: "unknown"/);
   assert.match(app, /checkedAt: ""/);
-  assert.match(app, /body\.append\(platform, title, link, contentButton, videoButton, scoreButton\)/);
+  assert.match(app, /body\.append\(platform, title, link, contentButton, videoButton, scoreButton, removeButton\)/);
   assert.match(app, /function useCatalogProductInContent\(record\)/);
   assert.match(app, /\$\("contentBenefit"\)\.value = ""/);
   assert.match(app, /\$\("contentProof"\)\.value = ""/);

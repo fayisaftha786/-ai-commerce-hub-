@@ -12,6 +12,7 @@ const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
 const backupExport = app.slice(app.indexOf("function exportWorkspaceBackup"), app.indexOf("function validateBackup"));
 const appHealth = fs.readFileSync(path.join(root, "app-health.js"), "utf8");
 const catalog = fs.readFileSync(path.join(root, "catalog-import.js"), "utf8");
+const serviceWorker = fs.readFileSync(path.join(root, "service-worker.js"), "utf8");
 const clipRewardCore = require("../content-rewards-assistant/core.js");
 
 test("every direct app event-listener target exists in the HTML", () => {
@@ -102,7 +103,7 @@ test("combined workspace backup includes and validates ClipReward Studio data", 
   assert.ok(keys.includes('"clipreward-studio-v1"'));
   assert.match(html, /content-rewards-assistant\/core\.js/);
   assert.match(html, /<script src="content-rewards-assistant\/core\.js"><\/script>[\s\S]*?<script src="app\.js"><\/script>/);
-  assert.match(sw, /\.\/content-rewards-assistant\/core\.js/);
+  assert.match(serviceWorker, /\.\/content-rewards-assistant\/core\.js/);
   assert.match(app, /core\.parseBackup\(\{/);
   assert.match(app, /key !== CLIPREWARD_STORAGE_KEY/);
   assert.match(html, /ClipReward Studio campaigns, timestamps and creator-account checklist/);

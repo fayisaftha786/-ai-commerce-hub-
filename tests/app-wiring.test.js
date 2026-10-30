@@ -276,6 +276,37 @@ test("legacy workspace backup restore preserves current ClipReward data", () => 
   assert.match(app, /CLIPREWARD_STORAGE_KEY = "clipreward-studio-v1"/);
 });
 
+test("workspace backup export refuses files larger than the restore limit", () => {
+  const start = app.indexOf("function exportWorkspaceBackup()");
+  const end = app.indexOf("\n}\n\nfunction validateBackup", start);
+  assert.ok(start >= 0 && end > start);
+  const source = app.slice(start, end + 2);
+  let objectUrlCreated = false;
+  let anchorCreated = false;
+  let message = "";
+  const exportBackup = vm.runInNewContext("(" + source + ")", {
+    BACKUP_KEYS: ["large-section"],
+    CAMPAIGN_KEY: "campaign-key",
+    campaigns: [],
+    MAX_BACKUP_BYTES: 4 * 1024 * 1024,
+    localStorage: { getItem() { return JSON.stringify({ payload: "x".repeat(4 * 1024 * 1024) }); } },
+    Blob,
+    Date,
+    URL: { createObjectURL() { objectUrlCreated = true; return "blob:test"; } },
+    document: {
+      body: { append() {} },
+      createElement() { anchorCreated = true; return { click() {}, remove() {} }; }
+    },
+    setTimeout() {},
+    $() { return { set textContent(value) { message = value; } }; }
+  });
+  exportBackup();
+  assert.equal(objectUrlCreated, false);
+  assert.equal(anchorCreated, false);
+  assert.match(message, /exceeds 4 MB and was not exported/);
+  assert.match(message, /Export the catalogue and campaign CSV files separately/);
+});
+
 test("workspace backup and restore controls are present and validated", () => {
   assert.ok(html.includes('id="exportWorkspaceBackup"'));
   assert.ok(html.includes('id="importWorkspaceBackup"'));

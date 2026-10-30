@@ -305,3 +305,10 @@ details > summary::marker { color: var(--gold); }
 #earningRecordForm{padding:16px;margin:16px 0;border:1px solid var(--line);border-radius:14px;background:rgba(8,14,25,.35)}
 #earningRecordList p{padding:9px 12px;border-bottom:1px solid var(--line);font-size:13px}
 @media(max-width:520px){.earning-task-row{align-items:flex-start;flex-direction:column}.earning-task-row button{width:100%}}
+
+.earning-task-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;margin:7px 0;border:1px solid var(--line);border-radius:10px;background:var(--surface-soft)}
+.earning-task-row span{font-size:13px;color:#c8d5e8}
+.earning-task-row button{flex:0 0 auto}
+#earningRecordForm{padding:16px;margin:16px 0;border:1px solid var(--line);border-radius:14px;background:rgba(8,14,25,.35)}
+#earningRecordList p{padding:9px 12px;border-bottom:1px solid var(--line);font-size:13px}
+@media(max-width:520px){.earning-task-row{align-items:flex-start;flex-direction:column}.earning-task-row button{width:100%}}

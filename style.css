@@ -312,3 +312,12 @@ details > summary::marker { color: var(--gold); }
 #earningRecordForm{padding:16px;margin:16px 0;border:1px solid var(--line);border-radius:14px;background:rgba(8,14,25,.35)}
 #earningRecordList p{padding:9px 12px;border-bottom:1px solid var(--line);font-size:13px}
 @media(max-width:520px){.earning-task-row{align-items:flex-start;flex-direction:column}.earning-task-row button{width:100%}}
+
+.studio-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin:16px 0}
+.audio-studio{padding:16px;margin:18px 0;border:1px solid var(--line);border-radius:14px;background:var(--surface-soft)}
+.audio-studio h3{margin-top:0}
+.audio-studio audio{display:block;width:100%;margin-top:12px}
+.button-row{display:flex;gap:10px;flex-wrap:wrap}
+#videoMakerScenes,#videoMakerCaption{min-height:130px}
+#videoMakerPreview{display:block;max-height:70vh;margin:16px 0;object-fit:contain}
+@media(max-width:700px){.studio-grid{grid-template-columns:1fr}.button-row button{flex:1 1 100%}}

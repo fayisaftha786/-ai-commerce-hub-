@@ -286,6 +286,9 @@ test("workspace backup export refuses files larger than the restore limit", () =
   let message = "";
   const exportBackup = vm.runInNewContext("(" + source + ")", {
     BACKUP_KEYS: ["large-section"],
+    CAMPAIGN_KEY: "ai-commerce-hub.campaigns.v1",
+    campaigns: [],
+    campaignLoadResult: { corrupt: false },
     MAX_BACKUP_BYTES: 4 * 1024 * 1024,
     localStorage: { getItem() { return JSON.stringify({ payload: "x".repeat(4 * 1024 * 1024) }); } },
     Blob,
@@ -378,6 +381,90 @@ test("campaign register search filters by product, platform, format, and campaig
   assert.match(app, /\$\("campaignSearch"\)\.addEventListener\("input", renderCampaigns\)/);
   assert.match(app, /\[campaign\.productName, campaign\.platform, campaign\.format, campaign\.id\]/);
   assert.match(app, /No campaigns match this search/);
+});
+
+test("legacy campaign register records are normalized and deduplicated", () => {
+  const start = app.indexOf("function sanitizeCampaignRecords(saved)");
+  const end = app.indexOf("\n}\n\nfunction loadCampaigns", start);
+  assert.ok(start >= 0 && end > start, "legacy campaign sanitizer must be present");
+  const sanitizeSource = app.slice(start, end + 2);
+  const sanitize = vm.runInNewContext("(" + sanitizeSource + ")", {
+    MAX_CAMPAIGNS: 200,
+    safeCampaignUrl(value) {
+      try { return new URL(value).protocol === "https:" ? new URL(value).href : ""; }
+      catch { return ""; }
+    }
+  });
+  const first = {
+    id: " legacy-1 ", createdAt: "2026-10-30T10:00:00.000Z",
+    productName: " First campaign ", platform: "Instagram", format: "Reel",
+    link: "https://example.com/first"
+  };
+  const duplicate = {
+    id: "legacy-1", createdAt: "2026-10-30T11:00:00.000Z",
+    productName: "Duplicate campaign", platform: "Instagram", format: "Reel", link: ""
+  };
+  const second = {
+    id: "legacy-2", createdAt: "2026-10-30T12:00:00.000Z",
+    productName: "Second campaign", platform: "YouTube", format: "Short", link: ""
+  };
+  const invalid = { id: "invalid", productName: "", createdAt: "not-a-date", platform: "X", format: "Post" };
+  const result = sanitize([first, duplicate, second, invalid]);
+  assert.deepEqual(Array.from(result.records, (item) => item.id), ["legacy-1", "legacy-2"]);
+  assert.equal(result.records[0].productName, "First campaign");
+  assert.equal(result.records[0].link, "https://example.com/first");
+  assert.equal(result.discarded, 2);
+});
+
+test("corrupt saved campaign data blocks backup export and later campaign writes", () => {
+  const exportStart = app.indexOf("function exportWorkspaceBackup()");
+  const exportEnd = app.indexOf("\n}\n\nfunction validateBackup", exportStart);
+  const exportSource = app.slice(exportStart, exportEnd + 2);
+  let reads = 0;
+  let downloadCreated = false;
+  let message = "";
+  const exportBackup = vm.runInNewContext("(" + exportSource + ")", {
+    campaignLoadResult: { corrupt: true },
+    BACKUP_KEYS: ["ai-commerce-hub.campaigns.v1"],
+    CAMPAIGN_KEY: "ai-commerce-hub.campaigns.v1",
+    campaigns: [],
+    MAX_BACKUP_BYTES: 4 * 1024 * 1024,
+    localStorage: { getItem() { reads += 1; return "{broken-json"; } },
+    Blob,
+    Date,
+    URL: { createObjectURL() { downloadCreated = true; return "blob:bad"; } },
+    document: { body: { append() {} }, createElement() { downloadCreated = true; return { click() {}, remove() {} }; } },
+    setTimeout() {},
+    $() { return { set textContent(value) { message = value; } }; }
+  });
+  exportBackup();
+  assert.equal(reads, 0, "corrupt storage must be detected before exporting sections");
+  assert.equal(downloadCreated, false);
+  assert.match(message, /campaign register is corrupt/);
+  assert.match(message, /Full backup was not exported/);
+
+  const saveStart = app.indexOf("function saveCampaigns()");
+  const saveEnd = app.indexOf("\n}\n\nfunction persistCampaignMigration", saveStart);
+  const saveSource = app.slice(saveStart, saveEnd + 2);
+  let writes = 0;
+  const saveCampaigns = vm.runInNewContext("(" + saveSource + ")", {
+    campaignLoadResult: { corrupt: true },
+    CAMPAIGN_KEY: "ai-commerce-hub.campaigns.v1",
+    campaigns: [],
+    localStorage: { setItem() { writes += 1; } }
+  });
+  assert.equal(saveCampaigns(), false);
+  assert.equal(writes, 0, "new operations must not overwrite the corrupt campaign register");
+});
+
+test("campaign migration persists the sanitized register without losing valid rows", () => {
+  assert.match(app, /const campaignLoadResult = loadCampaigns\(\);\s*const campaigns = campaignLoadResult\.records/);
+  assert.match(app, /function persistCampaignMigration\(\)/);
+  assert.match(app, /persistCampaignMigration\(\);/);
+  assert.match(app, /campaignLoadResult\.discarded > 0/);
+  assert.match(app, /Full backup export will use the cleaned register/);
+  assert.match(app, /if \(campaignLoadResult\.corrupt\) return false/);
+  assert.match(app, /payload\.data\[key\] = key === CAMPAIGN_KEY \? campaigns : JSON\.parse\(raw\)/);
 });
 
 test("campaign CSV import drops duplicate IDs within the incoming batch and existing records", () => {

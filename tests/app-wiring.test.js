@@ -288,6 +288,7 @@ test("workspace backup export refuses files larger than the restore limit", () =
     BACKUP_KEYS: ["large-section"],
     CAMPAIGN_KEY: "campaign-key",
     campaigns: [],
+    campaignLoadResult: { corrupt: false },
     MAX_BACKUP_BYTES: 4 * 1024 * 1024,
     localStorage: { getItem() { return JSON.stringify({ payload: "x".repeat(4 * 1024 * 1024) }); } },
     Blob,
@@ -413,6 +414,47 @@ test("legacy saved campaigns are deduplicated and normalized before restore or b
   assert.equal(result.records[0].productName, "First campaign");
   assert.equal(result.records[0].link, "https://example.com/first");
   assert.equal(result.discarded, 2);
+});
+
+test("corrupt saved campaign data blocks full backup export and later campaign writes", () => {
+  const exportStart = app.indexOf("function exportWorkspaceBackup()");
+  const exportEnd = app.indexOf("\n}\n\nfunction validateBackup", exportStart);
+  const exportSource = app.slice(exportStart, exportEnd + 2);
+  let reads = 0;
+  let downloadCreated = false;
+  let message = "";
+  const exportBackup = vm.runInNewContext("(" + exportSource + ")", {
+    campaignLoadResult: { corrupt: true },
+    BACKUP_KEYS: ["ai-commerce-hub.campaigns.v1"],
+    CAMPAIGN_KEY: "ai-commerce-hub.campaigns.v1",
+    campaigns: [],
+    MAX_BACKUP_BYTES: 4 * 1024 * 1024,
+    localStorage: { getItem() { reads += 1; return "{broken-json"; } },
+    Blob,
+    Date,
+    URL: { createObjectURL() { downloadCreated = true; return "blob:bad"; } },
+    document: { body: { append() {} }, createElement() { downloadCreated = true; return { click() {}, remove() {} }; } },
+    setTimeout() {},
+    $() { return { set textContent(value) { message = value; } }; }
+  });
+  exportBackup();
+  assert.equal(reads, 0, "corrupt storage must be detected before reading/exporting sections");
+  assert.equal(downloadCreated, false);
+  assert.match(message, /campaign register is corrupt/);
+  assert.match(message, /Full backup was not exported/);
+
+  const saveStart = app.indexOf("function saveCampaigns()");
+  const saveEnd = app.indexOf("\n}\n\nfunction persistCampaignMigration", saveStart);
+  const saveSource = app.slice(saveStart, saveEnd + 2);
+  let writes = 0;
+  const saveCampaigns = vm.runInNewContext("(" + saveSource + ")", {
+    campaignLoadResult: { corrupt: true },
+    CAMPAIGN_KEY: "ai-commerce-hub.campaigns.v1",
+    campaigns: [],
+    localStorage: { setItem() { writes += 1; } }
+  });
+  assert.equal(saveCampaigns(), false);
+  assert.equal(writes, 0, "new operations must not overwrite the corrupt campaign register");
 });
 
 test("legacy campaign migration persists sanitized data when possible and backup uses the sanitized register", () => {

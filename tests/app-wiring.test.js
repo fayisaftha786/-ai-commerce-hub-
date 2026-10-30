@@ -12,6 +12,7 @@ const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
 const backupExport = app.slice(app.indexOf("function exportWorkspaceBackup"), app.indexOf("function validateBackup"));
 const appHealth = fs.readFileSync(path.join(root, "app-health.js"), "utf8");
 const catalog = fs.readFileSync(path.join(root, "catalog-import.js"), "utf8");
+const clipRewardCore = require("../content-rewards-assistant/core.js");
 
 test("every direct app event-listener target exists in the HTML", () => {
   const ids = new Set([...html.matchAll(/\bid="([^"]+)"/g)].map((match) => match[1]));
@@ -94,6 +95,44 @@ test("full workspace backup includes Earning Hub records", () => {
   assert.ok(app.includes("function validateBackup(payload)"));
   assert.match(html, /Earning opportunities, task plans and earnings records are included in Full Workspace Backup & Restore/);
   assert.doesNotMatch(html, /until backup schema support is added/i);
+});
+
+test("combined workspace backup includes and validates ClipReward Studio data", () => {
+  const keys = app.slice(app.indexOf("const BACKUP_KEYS"), app.indexOf("const MAX_BACKUP_BYTES"));
+  assert.ok(keys.includes('"clipreward-studio-v1"'));
+  assert.match(html, /content-rewards-assistant\/core\.js/);
+  assert.match(html, /<script src="content-rewards-assistant\/core\.js"><\/script>[\s\S]*?<script src="app\.js"><\/script>/);
+  assert.match(sw, /\.\/content-rewards-assistant\/core\.js/);
+  assert.match(app, /core\.parseBackup\(\{/);
+  assert.match(app, /key !== CLIPREWARD_STORAGE_KEY/);
+  assert.match(html, /ClipReward Studio campaigns, timestamps and creator-account checklist/);
+
+  const valid = {
+    campaigns: [clipRewardCore.normalizeCampaign({
+      id: "clip-campaign", name: "Saved clip campaign", platform: "Content Rewards", status: "idea"
+    })],
+    timestamps: [clipRewardCore.normalizeTimestamp({
+      id: "clip-time", timestamp: "00:24", note: "Hook begins"
+    })],
+    account: clipRewardCore.normalizeAccount({
+      displayName: "My creator profile",
+      socialAccounts: [{ id: "clip-social", platform: "Instagram", handle: "@creator" }]
+    })
+  };
+  assert.doesNotThrow(() => clipRewardCore.parseBackup({
+    app: "ClipReward Studio", version: clipRewardCore.VERSION, ...valid
+  }));
+  const invalid = structuredClone(valid);
+  invalid.campaigns.push({ ...invalid.campaigns[0] });
+  assert.throws(() => clipRewardCore.parseBackup({
+    app: "ClipReward Studio", version: clipRewardCore.VERSION, ...invalid
+  }), /duplicate campaign IDs/);
+});
+
+test("legacy workspace backup restore preserves current ClipReward data", () => {
+  assert.match(app, /else if \(key !== CLIPREWARD_STORAGE_KEY\)/);
+  assert.match(app, /Backups created before the combined-workspace update did not contain ClipReward data/);
+  assert.match(app, /CLIPREWARD_STORAGE_KEY = "clipreward-studio-v1"/);
 });
 
 test("workspace backup and restore controls are present and validated", () => {

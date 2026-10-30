@@ -11,7 +11,7 @@ const INDIA_PROVIDER_REGISTRY = Object.freeze([
   { id: "meesho", name: "Meesho", type: "affiliate", indiaAvailability: "creator-program-and-account-dependent", earningTypes: ["creator/affiliate commission"], source: "https://affiliate.meesho.com/influencer-home" }
 ]);
 
-const WEIGHTS = Object.freeze({ eligibility: 25, reward: 25, effort: 15, payout: 15, deadline: 10, risk: 10 });
+const WEIGHTS = Object.freeze({ eligibility: 20, reward: 20, effort: 10, payout: 15, deadline: 10, risk: 10, sourceFreshness: 15 });
 const MAX_OPPORTUNITIES = 300;
 const ALLOWED_ELIGIBILITY = new Set(["eligible", "likely", "ineligible", "unknown"]);
 const ALLOWED_PAYOUT = new Set(["verified", "official-terms", "unknown"]);
@@ -44,6 +44,15 @@ function validateOpportunity(input) {
   const effortHours = input.effortHours == null || input.effortHours === "" ? null : Number(input.effortHours);
   const currency = cleanText(input.currency || "INR", 3).toUpperCase();
   const deadline = cleanText(input.deadline, 10);
+  const sourceCheckedAt = cleanText(input.sourceCheckedAt, 10);
+  if (sourceCheckedAt) {
+    const checkedMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(sourceCheckedAt);
+    if (!checkedMatch) return { valid: false, error: "Source checked date must use YYYY-MM-DD." };
+    const checkedDate = new Date(Date.UTC(Number(checkedMatch[1]), Number(checkedMatch[2]) - 1, Number(checkedMatch[3])));
+    if (checkedDate.getUTCFullYear() !== Number(checkedMatch[1]) || checkedDate.getUTCMonth() !== Number(checkedMatch[2]) - 1 || checkedDate.getUTCDate() !== Number(checkedMatch[3])) {
+      return { valid: false, error: "Source checked date must be a real calendar date." };
+    }
+  }
   const deliverables = Array.isArray(input.deliverables)
     ? input.deliverables.slice(0, 20).map(item => cleanText(item, 160)).filter(Boolean)
     : [];
@@ -99,6 +108,12 @@ function analyzeOpportunity(input, now = new Date()) {
   const deadline = deadlinePoints(item.deadline, now);
   if (deadline !== null) signals.deadline = deadline;
   if (item.risk !== "unknown") signals.risk = item.risk === "low" ? 10 : item.risk === "medium" ? 5 : 0;
+  if (item.sourceCheckedAt) {
+    const checkedDate = new Date(item.sourceCheckedAt + "T00:00:00Z");
+    const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+    const ageDays = Math.floor((today - checkedDate.getTime()) / 86400000);
+    if (ageDays >= 0) signals.sourceFreshness = ageDays <= 7 ? 15 : ageDays <= 30 ? 8 : 0;
+  }
 
   const knownWeight = Object.keys(signals).reduce((sum, key) => sum + WEIGHTS[key], 0);
   const raw = Object.entries(signals).reduce((sum, [key, value]) => sum + value, 0);

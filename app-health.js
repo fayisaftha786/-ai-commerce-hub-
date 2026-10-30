@@ -28,7 +28,7 @@
     ["Social analytics", "socialAnalyticsForm"],
     ["Browser video maker", "videoMakerForm"],
     ["Earning opportunity tracker", "earningOpportunityForm"],
-    ["Earnings record form", "earningRecordForm"],
+    ["Earnings record", "earningRecordForm"],
     ["Full workspace backup export", "exportWorkspaceBackup"],
     ["Full workspace backup restore", "importWorkspaceBackup"],
     ["Saved earning opportunities", "earningOpportunityList"],

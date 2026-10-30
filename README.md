@@ -26,6 +26,16 @@ A lightweight affiliate workspace prototype for evaluating offer details, shortl
 - Automated Node.js regression tests and GitHub Actions CI
 - App Self-Check: local diagnostics for secure context, browser storage, critical modules, required forms and service-worker readiness; it clearly distinguishes local checks from live API connectivity
 
+## Marketplace API access and automation status
+
+The Discover panel links to the official partner routes and states their prerequisites. The app does **not** currently fetch live listings, prices, stock, commissions, order reports or private creator analytics from any marketplace.
+
+- **Amazon India:** New product-catalog integrations should use the Creators API, not the deprecated PA-API 5.0. Amazon's current guide requires an Associates account, API registration and at least 10 qualifying sales in the previous 30 days. Credentials use OAuth 2.0 and belong on a private backend. [Creators API introduction](https://affiliate-program.amazon.in/creatorsapi/docs/en-us/introduction) · [Authentication guide](https://affiliate-program.amazon.in/creatorsapi/docs/en-us/get-started/using-curl).
+- **Flipkart:** Registered affiliates can request a private API token and access product, offer and report APIs. Keyword search returns up to 10 products per request; the documented rate limit is 20 calls per second per affiliate. [Registration and token setup](https://affiliate.flipkart.com/api-docs/af_register.html) · [Product API reference](https://affiliate.flipkart.com/api-docs/af_prod_ref.html).
+- **Meesho:** The official Creator Program is available at [affiliate.meesho.com](https://affiliate.meesho.com/influencer-home). This app does not authenticate to that portal or access private creator metrics. Use only integration credentials or exports explicitly provided for your account; do not scrape private pages or rely on undocumented endpoints.
+
+GitHub Pages serves static files and must never contain API secrets. Live marketplace retrieval needs a separately deployed private backend with server-side credential storage. Until that exists and the account has approved access, use marketplace search links and user-supplied CSV imports. No account connection or API capability is implied by the links in the app.
+
 ## Installable Android app (PWA)
 
 This repository includes a Progressive Web App manifest and a service worker for caching the static app shell. To install it on Android, it must first be hosted over **HTTPS**; opening `index.html` directly as a local file does not enable service workers.

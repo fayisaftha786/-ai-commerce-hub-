@@ -14,6 +14,7 @@ const appHealth = fs.readFileSync(path.join(root, "app-health.js"), "utf8");
 const catalog = fs.readFileSync(path.join(root, "catalog-import.js"), "utf8");
 const serviceWorker = fs.readFileSync(path.join(root, "service-worker.js"), "utf8");
 const clipRewardCore = require("../content-rewards-assistant/core.js");
+const vm = require("node:vm");
 
 test("every direct app event-listener target exists in the HTML", () => {
   const ids = new Set([...html.matchAll(/\bid="([^"]+)"/g)].map((match) => match[1]));
@@ -120,14 +121,34 @@ test("combined workspace backup includes and validates ClipReward Studio data", 
       socialAccounts: [{ id: "clip-social", platform: "Instagram", handle: "@creator" }]
     })
   };
-  assert.doesNotThrow(() => clipRewardCore.parseBackup({
-    app: "ClipReward Studio", version: clipRewardCore.VERSION, ...valid
-  }));
+  const validateStart = app.indexOf("function validateBackup(payload)");
+  const validateEnd = app.indexOf('\\n}\\n\\n$("exportWorkspaceBackup")', validateStart);
+  assert.ok(validateStart >= 0 && validateEnd > validateStart, "workspace backup validator must be extractable for direct tests");
+  const validateSource = app.slice(validateStart, validateEnd + 2);
+  const validateBackup = vm.runInNewContext("(" + validateSource + ")", {
+    window: { ClipRewardCore: clipRewardCore },
+    MAX_PRODUCTS: 100,
+    MAX_CAMPAIGNS: 200,
+    safeCampaignUrl(value) { try { return new URL(value).protocol === "https:" ? value : ""; } catch { return ""; } }
+  });
+  const workspaceBackup = {
+    format: "ai-commerce-hub-backup",
+    version: 1,
+    data: { "clipreward-studio-v1": valid }
+  };
+  assert.equal(validateBackup(workspaceBackup).valid, true);
   const invalid = structuredClone(valid);
   invalid.campaigns.push({ ...invalid.campaigns[0] });
-  assert.throws(() => clipRewardCore.parseBackup({
-    app: "ClipReward Studio", version: clipRewardCore.VERSION, ...invalid
-  }), /duplicate campaign IDs/);
+  assert.equal(validateBackup({
+    ...workspaceBackup,
+    data: { "clipreward-studio-v1": invalid }
+  }).valid, false);
+  assert.equal(validateBackup({
+    ...workspaceBackup,
+    data: { "clipreward-studio-v1": { ...valid, timestamps: "not-an-array" } }
+  }).valid, false);
+  // A pre-combined backup omits ClipReward; validation remains backward compatible.
+  assert.equal(validateBackup({ format: "ai-commerce-hub-backup", version: 1, data: {} }).valid, true);
 });
 
 test("legacy workspace backup restore preserves current ClipReward data", () => {

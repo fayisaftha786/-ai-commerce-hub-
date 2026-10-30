@@ -40,10 +40,12 @@
   }
 
   function parseBudget(text) {
-    const pair = /([$€£₹]\s*[\d,]+(?:\.\d+)?\s*[kKmM]?)\s*\/\s*([$€£₹]\s*[\d,]+(?:\.\d+)?\s*[kKmM]?)/.exec(text);
+    const pair = /([$€£₹]?\s*[\d,]+(?:\.\d+)?\s*[kKmM]?)\s*\/\s*([$€£₹]\s*[\d,]+(?:\.\d+)?\s*[kKmM]?)/.exec(text);
     if (pair) {
-      const spent = parseAmount(pair[1]);
-      const total = parseAmount(pair[2]);
+      const spentRaw = pair[1].trim();
+      const totalRaw = pair[2].trim();
+      const total = parseAmount(totalRaw);
+      const spent = parseAmount(/[€£₹$]/.test(spentRaw) ? spentRaw : total ? total.currency === "USD" ? "$" + spentRaw : total.currency + " " + spentRaw : spentRaw);
       if (spent && total && spent.currency === total.currency && total.value >= spent.value) {
         return { spent, total, remaining: { value: total.value - spent.value, currency: total.currency } };
       }

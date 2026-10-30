@@ -325,7 +325,7 @@ test("ClipReward keeps saved UI state when campaign, timestamp, account and back
   assert.ok(writeAttempts >= 8, "expected each failed mutation to attempt persistence");
 });
 
-test("ClipReward service worker is registered, refreshes v5 assets and scopes offline caching", () => {
+test("ClipReward service worker is registered, refreshes v6 assets and scopes offline caching", () => {
   const workerSource = fs.readFileSync(path.join(__dirname, "..", "service-worker.js"), "utf8");
   const htmlSource = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
   assert.match(workerSource, /const CACHE = "clipreward-static-v6"/);

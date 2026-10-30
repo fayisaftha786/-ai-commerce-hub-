@@ -506,6 +506,104 @@ test("product workspace supports safe optional image URLs and premium image card
 });
 
 
+test("saved product removal confirms, keeps the item on storage failure, and deletes it after a successful save", () => {
+  const savedProduct = {
+    name: "Old saved product",
+    platform: "Amazon",
+    url: "https://example.com/old-product",
+    imageUrl: ""
+  };
+  const storage = {
+    "ai-commerce-hub.products.v1": JSON.stringify([savedProduct]),
+    "ai-commerce-hub.campaigns.v1": "[]",
+    "ai-commerce-hub.candidates.v1": "[]",
+    "ai-commerce-hub.catalog-import.v1": "[]"
+  };
+  let rejectWrites = true;
+  let confirmations = 0;
+  function createElement(id) {
+    return {
+      id, className: "", value: "", textContent: "", innerHTML: "",
+      checked: false, disabled: false, children: [], listeners: {},
+      dataset: {}, style: {},
+      classList: { add() {}, remove() {}, toggle() {} },
+      addEventListener(type, callback) { this.listeners[type] = callback; },
+      append(...items) { this.children.push(...items); },
+      replaceChildren(...items) { this.children = [...items]; },
+      setAttribute() {}, focus() {}, select() {}, scrollIntoView() {},
+      remove() {}, querySelector() { return createElement("nested"); }
+    };
+  }
+  const elements = new Map();
+  const element = (id) => {
+    if (!elements.has(id)) elements.set(id, createElement(id));
+    return elements.get(id);
+  };
+  const document = {
+    body: createElement("body"),
+    getElementById: element,
+    createElement,
+    createTextNode(text) { return { textContent: String(text) }; },
+    addEventListener() {},
+    querySelector() { return null; },
+    querySelectorAll() { return []; }
+  };
+  const localStorage = {
+    getItem(key) { return Object.prototype.hasOwnProperty.call(storage, key) ? storage[key] : null; },
+    setItem(key, value) {
+      if (rejectWrites) throw new Error("QuotaExceededError");
+      storage[key] = String(value);
+    },
+    removeItem(key) { delete storage[key]; }
+  };
+  const window = {
+    confirm() { confirmations += 1; return true; },
+    addEventListener() {},
+    AICommerceProductUtils: {
+      validateProduct(input) {
+        return {
+          valid: true,
+          product: {
+            name: String(input.name || "").trim(),
+            platform: String(input.platform || "Amazon"),
+            url: String(input.url || ""),
+            imageUrl: String(input.imageUrl || "")
+          }
+        };
+      }
+    },
+    AICommerceDiscovery: {}
+  };
+
+  vm.runInNewContext(app, {
+    window, document, localStorage, navigator: {}, URL, Date, Intl, Math,
+    Blob, setTimeout() { return 1; }, clearTimeout() {}
+  });
+
+  const findRemoveButton = () => {
+    const card = element("productList").children.find((item) => item.className === "product product-card");
+    assert.ok(card, "saved product card should be rendered");
+    const body = card.children.find((item) => item.className === "product-card-body");
+    assert.ok(body, "product body should exist");
+    return body.children.find((item) => item.textContent === "Remove product");
+  };
+
+  let removeButton = findRemoveButton();
+  assert.ok(removeButton, "product card should expose a remove action");
+  removeButton.listeners.click();
+  assert.equal(confirmations, 1);
+  assert.equal(element("productList").children.filter((item) => item.className === "product product-card").length, 1);
+  assert.match(element("message").textContent, /product was kept/i);
+  assert.equal(JSON.parse(storage["ai-commerce-hub.products.v1"]).length, 1);
+
+  rejectWrites = false;
+  removeButton = findRemoveButton();
+  removeButton.listeners.click();
+  assert.equal(element("productList").children[0].className, "product-empty");
+  assert.match(element("message").textContent, /Product removed from this device/);
+  assert.equal(JSON.parse(storage["ai-commerce-hub.products.v1"]).length, 0);
+});
+
 test("saved products can prefill the scoring form without inventing evidence", () => {
   assert.match(app, /scoreButton\.textContent = "Score this product"/);
   assert.match(app, /\$\("candidateName"\)\.value = product\.name \|\| ""/);

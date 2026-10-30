@@ -434,6 +434,7 @@
     <section class="panel">
       <h2>10. AI-assisted Reels & Shorts Studio</h2>
       <p>Select “Make a video” on a saved product to prefill its details here. Add a verified benefit and use an authorised image URL or upload images. Video creation runs on this device; images are not uploaded.</p>
+      <form id="videoMakerForm">
       <div class="studio-grid">
         <div>
           <label for="videoMakerImages">Upload 1–8 authorised images (max 10 MB each)
@@ -492,6 +493,7 @@
         <audio id="voiceOverPreview" controls hidden></audio>
       </div>
       <button id="createVideo" type="submit">Create 9:16 Reel / Short</button>
+      </form>
       <p id="videoMakerStatus" role="status" aria-live="polite"></p>
       <video id="videoMakerPreview" controls playsinline hidden style="width:100%;max-width:360px;border-radius:12px;background:#000"></video>
       <p id="videoMakerDownload"></p>

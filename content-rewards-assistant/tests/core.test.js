@@ -138,30 +138,77 @@ test("service worker uses network-first refresh with cached offline fallback", (
 });
 
 
-test("Content Rewards submission records require a public post URL and post time, but other programmes do not", () => {
-  const missingUrl = Core.validateSubmissionRecord({ platform: "Content Rewards", status: "submitted", postedAt: "2026-10-30T10:00:00.000Z" });
+test("Content Rewards submission preflight requires platform-matched public link and both timestamps", () => {
+  const now = "2026-10-30T10:30:00.000Z";
+  const validRecord = {
+    platform: "Content Rewards",
+    status: "submitted",
+    postPlatform: "Instagram",
+    postUrl: "https://www.instagram.com/reel/example/",
+    postedAt: "2026-10-30T10:00:00.000Z",
+    submittedAt: "2026-10-30T10:30:00.000Z"
+  };
+  const missingUrl = Core.validateSubmissionRecord({ ...validRecord, postUrl: "" }, now);
   assert.equal(missingUrl.valid, false);
   assert.match(missingUrl.error, /public post URL/i);
-  const missingTime = Core.validateSubmissionRecord({ platform: "Content Rewards", status: "submitted", postUrl: "https://www.instagram.com/reel/example/" });
-  assert.equal(missingTime.valid, false);
-  assert.match(missingTime.error, /time the public post went live/i);
-  assert.deepEqual(Core.validateSubmissionRecord({
-    platform: "Content Rewards", status: "submitted",
-    postUrl: "https://www.instagram.com/reel/example/",
-    postedAt: "2026-10-30T10:00:00.000Z"
-  }), { valid: true, error: "" });
-  assert.equal(Core.validateSubmissionRecord({ platform: "Whop", status: "submitted" }).valid, true);
-  assert.equal(Core.validateSubmissionRecord({ platform: "Content Rewards", status: "editing" }).valid, true);
+  const missingPlatform = Core.validateSubmissionRecord({ ...validRecord, postPlatform: "" }, now);
+  assert.equal(missingPlatform.valid, false);
+  assert.match(missingPlatform.error, /select the actual supported social platform/i);
+  const missingPostTime = Core.validateSubmissionRecord({ ...validRecord, postedAt: "" }, now);
+  assert.equal(missingPostTime.valid, false);
+  assert.match(missingPostTime.error, /time the public post went live/i);
+  const missingSubmissionTime = Core.validateSubmissionRecord({ ...validRecord, submittedAt: "" }, now);
+  assert.equal(missingSubmissionTime.valid, false);
+  assert.match(missingSubmissionTime.error, /actually submitted the post link/i);
+  assert.deepEqual(Core.validateSubmissionRecord(validRecord, now), { valid: true, error: "" });
+  assert.equal(Core.validateSubmissionRecord({ platform: "Whop", status: "submitted" }, now).valid, true);
+  assert.equal(Core.validateSubmissionRecord({ platform: "Content Rewards", status: "editing" }, now).valid, true);
 });
 
-test("30-minute countdown is scoped to Content Rewards and rejection status matches platform wording", () => {
+test("Content Rewards preflight enforces the 30-minute boundary and rejects inconsistent clocks", () => {
+  const base = {
+    platform: "Content Rewards", status: "submitted", postPlatform: "YouTube",
+    postUrl: "https://youtu.be/example",
+    postedAt: "2026-10-30T10:00:00.000Z",
+    submittedAt: "2026-10-30T10:30:00.000Z"
+  };
+  const tooLate = Core.validateSubmissionRecord({ ...base, submittedAt: "2026-10-30T10:30:01.000Z" }, "2026-10-30T10:31:00.000Z");
+  assert.equal(tooLate.valid, false);
+  assert.match(tooLate.error, /30-minute submission window/i);
+  const beforePost = Core.validateSubmissionRecord({ ...base, submittedAt: "2026-10-30T09:59:00.000Z" }, "2026-10-30T10:30:00.000Z");
+  assert.equal(beforePost.valid, false);
+  assert.match(beforePost.error, /cannot be earlier than the post time/i);
+  const futureSubmission = Core.validateSubmissionRecord({ ...base, submittedAt: "2026-10-30T11:00:00.000Z" }, "2026-10-30T10:30:00.000Z");
+  assert.equal(futureSubmission.valid, false);
+  assert.match(futureSubmission.error, /in the future/i);
+});
+
+test("Content Rewards post URL host must match the selected platform", () => {
+  assert.equal(Core.postUrlMatchesPlatform("https://www.instagram.com/reel/example/", "Instagram"), true);
+  assert.equal(Core.postUrlMatchesPlatform("https://youtube.com/shorts/example", "YouTube"), true);
+  assert.equal(Core.postUrlMatchesPlatform("https://vm.tiktok.com/example", "TikTok"), true);
+  assert.equal(Core.postUrlMatchesPlatform("https://x.com/example/status/1", "X"), true);
+  assert.equal(Core.postUrlMatchesPlatform("https://instagram.com.evil.example/reel/1", "Instagram"), false);
+  assert.equal(Core.validateSubmissionRecord({
+    platform: "Content Rewards", status: "submitted", postPlatform: "YouTube",
+    postUrl: "https://www.instagram.com/reel/example/",
+    postedAt: "2026-10-30T10:00:00.000Z", submittedAt: "2026-10-30T10:05:00.000Z"
+  }, "2026-10-30T10:06:00.000Z").valid, false);
+});
+
+test("submission UI wires exact posting platform and submission time, and labels rejections accurately", () => {
   const appSource = fs.readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
   assert.match(appSource, /rejected: "Rejected"/);
   assert.match(appSource, /campaign\.platform !== "Content Rewards" \|\| !campaign\.postedAt/);
   assert.match(appSource, /Core\.validateSubmissionRecord\(record\)/);
+  assert.match(appSource, /campaign-post-platform/);
+  assert.match(appSource, /campaign-submitted-at/);
   const htmlSource = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
   assert.match(htmlSource, /ROUTE A · MOST CAMPAIGNS/);
   assert.match(htmlSource, /ROUTE B · PRE-APPROVAL CAMPAIGNS/);
   assert.match(htmlSource, /within 30 minutes/);
   assert.match(htmlSource, /does not submit clips or verify approvals/);
+  assert.match(htmlSource, /value="rejected">Rejected/);
+  assert.match(htmlSource, /Instagram Business account/);
+  assert.doesNotMatch(htmlSource, /Instagram Creator account/);
 });

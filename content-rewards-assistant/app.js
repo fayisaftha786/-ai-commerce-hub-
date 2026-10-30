@@ -328,7 +328,7 @@
       const record = Core.normalizeCampaign({
         id: old ? old.id : "",
         name: $("campaign-name").value,
-        platform: $("campaign-platform").value,
+        platform: $("campaign-platform").value || (old ? old.platform : "Other"),
         url: $("campaign-url").value,
         deadline: $("campaign-deadline").value,
         payoutTerms: $("campaign-payout-terms").value,
@@ -336,7 +336,7 @@
         rules: $("campaign-rules").value,
         status: $("campaign-status").value,
         postUrl: $("campaign-post-url").value,
-        postPlatform: $("campaign-post-platform").value,
+        postPlatform: $("campaign-post-platform").value || (old ? old.postPlatform : ""),
         postedAt: $("campaign-posted-at").value ? new Date($("campaign-posted-at").value).toISOString() : "",
         submittedAt: $("campaign-submitted-at").value ? new Date($("campaign-submitted-at").value).toISOString() : "",
         createdAt: old ? old.createdAt : ""

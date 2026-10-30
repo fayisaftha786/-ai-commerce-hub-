@@ -78,11 +78,11 @@
       return '<div class="submission-deadline submitted-deadline"><strong>Local status:</strong> "' + escapeHtml(statusNames[campaign.status]) + '". ' + escapeHtml(recordedAt) + ' Content Rewards receipt and approval are not verified.</div>';
     }
     if (remaining <= 0) {
-      return '<div class="submission-deadline overdue-deadline"><strong>30-minute window may have passed.</strong> Check the official campaign page; this app cannot submit or extend the deadline.</div>';
+      return '<div class="submission-deadline overdue-deadline"><strong>30-minute submission window has expired.</strong> Check the official campaign page; this app cannot submit or extend the deadline.</div>';
     }
     const minutes = Math.floor(remaining / 60000);
     const seconds = Math.floor((remaining % 60000) / 1000);
-    return '<div class="submission-deadline active-deadline" data-posted-at="' + escapeHtml(campaign.postedAt) + '"><strong>Submit clip now:</strong> <span class="deadline-countdown">' + minutes + ':' + String(seconds).padStart(2, "0") + '</span> left · deadline ' + escapeHtml(new Date(deadline).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })) + '</div>';
+    return '<div class="submission-deadline active-deadline" data-posted-at="' + escapeHtml(campaign.postedAt) + '"><strong>Submit clip now (before 30:00):</strong> <span class="deadline-countdown">' + minutes + ':' + String(seconds).padStart(2, "0") + '</span> left · deadline ' + escapeHtml(new Date(deadline).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })) + '</div>';
   }
   function refreshDeadlineCountdowns() {
     document.querySelectorAll("[data-posted-at]").forEach((node) => {

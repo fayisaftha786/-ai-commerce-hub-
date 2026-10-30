@@ -46,6 +46,6 @@ test("workflow guide is deployed and cached for offline use", () => {
   assert.match(html, /<script src="workflow-guide\.js"><\/script>/);
   assert.ok(collectLocalAssets(html).includes("workflow-guide.js"));
   assert.match(serviceWorker, /"\.\/workflow-guide\.js"/);
-  assert.match(serviceWorker, /ai-commerce-hub-pwa-v4/);
+  assert.match(serviceWorker, /ai-commerce-hub-pwa-v5/);
   assert.match(css, /\.workflow-guide-grid/);
 });

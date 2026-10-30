@@ -117,7 +117,8 @@
     ctx.fillStyle = "#85d8bd"; ctx.font = "bold 21px system-ui, sans-serif";
     wrapText(ctx, cta, WIDTH - 84, 1).forEach(line => ctx.fillText(line, 38, 1245));
     ctx.fillStyle = "#f4cb75"; ctx.font = "bold 16px system-ui, sans-serif";
-    ctx.fillText("Affiliate link • I may earn a commission", 34, 30, WIDTH - 68);
+    const disclosure = byId("videoMakerLanguage").value === "Malayalam" ? "അഫിലിയേറ്റ് ലിങ്ക് • വാങ്ങിയാൽ കമ്മീഷൻ ലഭിക്കാം" : "Affiliate link • I may earn a commission";
+    ctx.fillText(disclosure, 34, 30, WIDTH - 68);
   }
 
   async function decodeAudio(context, fileOrBlob) {
@@ -158,7 +159,15 @@
     }
   }
 
+  window.AICommerceVideoStudio = Object.freeze({ generateScript: makeScenes, maxScenes: MAX_SCENES, outputMimeType: "video/webm" });
+
   byId("generateVideoScript").addEventListener("click", makeScenes);
+  byId("copyVideoCaption").addEventListener("click", async () => {
+    const caption = byId("videoMakerCaption").value.trim();
+    if (!caption) { status("Generate a script and caption first."); return; }
+    try { await navigator.clipboard.writeText(caption); status("Caption copied. Review hashtags and campaign rules before posting."); }
+    catch { byId("videoMakerCaption").focus(); byId("videoMakerCaption").select(); status("Clipboard access is blocked. Caption selected; copy it manually."); }
+  });
 
   byId("recordVoiceStart").addEventListener("click", async () => {
     if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {

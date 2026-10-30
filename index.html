@@ -27,7 +27,7 @@
     <a href="#earningHub">Earning Hub</a>
     <a href="#candidateForm">Product score</a>
     <a href="#offerForm">Offer lab</a>
-    <a href="#contentForm">Content studio</a>
+    <a href="#videoMakerForm">Reels / Shorts Studio</a>
     <a href="#runAppHealthCheck">System check</a>
   </nav>
   <main>
@@ -432,41 +432,70 @@
     </section>
 
     <section class="panel">
-      <h2>10. Browser Video Maker</h2>
+      <h2>10. AI-assisted Reels & Shorts Studio</h2>
       <p>Select “Make a video” on a saved product to prefill its details here. Add a verified benefit and use an authorised image URL or upload images. Video creation runs on this device; images are not uploaded.</p>
-      <form id="videoMakerForm">
-        <label for="videoMakerImages">Upload 1–8 authorised product images (optional if image URL works; max 10 MB each)
-          <input id="videoMakerImages" type="file" accept="image/*" multiple>
-        </label>
-        <label for="videoMakerImageUrl">Product image URL (optional; HTTPS and image host must allow canvas access)
-          <input id="videoMakerImageUrl" type="url" maxlength="2048" inputmode="url" placeholder="https://...">
-        </label>
-        <label for="videoMakerName">Product name
-          <input id="videoMakerName" maxlength="100" required placeholder="Product name">
-        </label>
-        <label for="videoMakerBenefit">Main benefit
-          <input id="videoMakerBenefit" maxlength="140" required placeholder="Example: makes small spaces easier to organise">
-        </label>
-        <div class="form-grid">
-          <label for="videoMakerPrice">Verified price (optional)
-            <input id="videoMakerPrice" maxlength="30" placeholder="₹599">
+      <div class="studio-grid">
+        <div>
+          <label for="videoMakerImages">Upload 1–8 authorised images (max 10 MB each)
+            <input id="videoMakerImages" type="file" accept="image/*" multiple>
           </label>
-          <label for="videoMakerCta">Call to action
-            <input id="videoMakerCta" maxlength="100" value="Check details and current price">
+          <label for="videoMakerImageUrl">Direct HTTPS image URL (optional)
+            <input id="videoMakerImageUrl" type="url" maxlength="2048" inputmode="url" placeholder="https://...">
+          </label>
+          <label for="videoMakerName">Product / video topic
+            <input id="videoMakerName" maxlength="100" required placeholder="Product or topic">
+          </label>
+          <label for="videoMakerBenefit">Verified key benefit / main message
+            <input id="videoMakerBenefit" maxlength="140" required placeholder="Only a claim you can substantiate">
+          </label>
+          <div class="form-grid">
+            <label for="videoMakerPrice">Verified price (optional)
+              <input id="videoMakerPrice" maxlength="30" placeholder="₹599">
+            </label>
+            <label for="videoMakerCta">Call to action
+              <input id="videoMakerCta" maxlength="100" value="Check details and current price">
+            </label>
+          </div>
+          <label for="videoMakerLanguage">Script language
+            <select id="videoMakerLanguage">
+              <option value="Bilingual" selected>Malayalam + English</option>
+              <option value="Malayalam">Malayalam</option>
+              <option value="English">English</option>
+            </select>
+          </label>
+          <button id="generateVideoScript" type="button" class="secondary">Generate bilingual script & caption</button>
+        </div>
+        <div>
+          <label for="videoMakerScenes">Storyboard / on-screen subtitles (4–6 scenes, one per line)
+            <textarea id="videoMakerScenes" rows="8" maxlength="1200" required placeholder="Generate a script, then edit each scene."></textarea>
+          </label>
+          <label for="videoMakerCaption">Post caption & hashtags
+            <textarea id="videoMakerCaption" rows="4" maxlength="1200" placeholder="Caption draft appears here."></textarea>
           </label>
         </div>
-        <label for="videoMakerLanguage">Video language / affiliate disclosure
-          <select id="videoMakerLanguage">
-            <option value="Malayalam">Malayalam</option>
-            <option value="English">English</option>
-          </select>
-        </label>
-        <button id="createVideo" type="submit">Create vertical video</button>
-      </form>
+      </div>
+      <div class="audio-studio">
+        <h3>Voice-over & music</h3>
+        <p class="hint">Record your own narration or upload an audio file. Add only music you own or are licensed to use.</p>
+        <div class="form-grid">
+          <label for="videoMakerVoiceFile">Voice-over audio (optional, max 25 MB)
+            <input id="videoMakerVoiceFile" type="file" accept="audio/*">
+          </label>
+          <label for="videoMakerMusicFile">Background music (optional, max 25 MB)
+            <input id="videoMakerMusicFile" type="file" accept="audio/*">
+          </label>
+        </div>
+        <div class="button-row">
+          <button id="recordVoiceStart" type="button" class="secondary">Record voice-over</button>
+          <button id="recordVoiceStop" type="button" class="secondary" disabled>Stop recording</button>
+        </div>
+        <audio id="voiceOverPreview" controls hidden></audio>
+      </div>
+      <button id="createVideo" type="submit">Create 9:16 Reel / Short</button>
       <p id="videoMakerStatus" role="status" aria-live="polite"></p>
       <video id="videoMakerPreview" controls playsinline hidden style="width:100%;max-width:360px;border-radius:12px;background:#000"></video>
       <p id="videoMakerDownload"></p>
-      <p class="hint">Exports a vertical WebM slideshow where your browser supports MediaRecorder; it is not MP4 or a full AI-generated scene. Remote image URLs work only when the image host permits browser canvas access; if blocked, upload an authorised image file instead. This version does not add generated voice-over or music. Check price, claims and media rights before publishing.</p>
+      <p class="hint">Creates a local 720×1280 animated WebM with editable scene subtitles and optional recorded/uploaded narration plus low-volume music. It does not generate AI footage, clone voices, fetch marketplace media or upload/publish posts. Export format depends on browser MediaRecorder support; MP4 conversion is not included.</p>
     </section>
 
     <section class="panel">

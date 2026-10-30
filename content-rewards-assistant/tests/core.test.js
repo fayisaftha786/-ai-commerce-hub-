@@ -2,6 +2,7 @@
 const test = require("node:test");
 const fs = require("node:fs");
 const path = require("node:path");
+const vm = require("node:vm");
 const assert = require("node:assert/strict");
 const Core = require("../core.js");
 
@@ -171,6 +172,154 @@ test("ClipReward rolls back every local data mutation when browser storage rejec
     assert.match(block, /if \(!persisted\) return|if \(!saveOrRestore\(previous\)\) return/,
       "handler must stop after a failed save: " + start);
   }
+});
+
+
+test("ClipReward keeps saved UI state when campaign, timestamp, account and backup writes fail", () => {
+  const appSource = fs.readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
+  const savedCampaign = Core.normalizeCampaign({
+    id: "saved-campaign", name: "Saved campaign", platform: "Content Rewards", status: "idea"
+  });
+  const savedTimestamp = Core.normalizeTimestamp({
+    id: "saved-timestamp", timestamp: "00:10", note: "Saved timestamp"
+  });
+  const savedAccount = Core.normalizeAccount({
+    displayName: "Saved profile",
+    socialAccounts: [{ id: "saved-social", platform: "Instagram", handle: "@saved" }]
+  });
+  const initialState = {
+    campaigns: [savedCampaign],
+    timestamps: [savedTimestamp],
+    account: savedAccount
+  };
+  const importedState = Core.createBackup({
+    campaigns: [Core.normalizeCampaign({
+      id: "imported-campaign", name: "Imported campaign", platform: "Content Rewards", status: "idea"
+    })],
+    timestamps: [],
+    account: Core.normalizeAccount({ displayName: "Imported profile" })
+  });
+
+  const elements = new Map();
+  function makeElement(id) {
+    return {
+      id,
+      value: "",
+      innerHTML: "",
+      textContent: "",
+      hidden: false,
+      checked: false,
+      dataset: {},
+      style: {},
+      listeners: {},
+      resetCount: 0,
+      classList: { add() {}, remove() {}, toggle() {} },
+      addEventListener(type, callback) { this.listeners[type] = callback; },
+      reset() { this.resetCount += 1; this.value = ""; },
+      focus() {},
+      select() {}
+    };
+  }
+  function element(id) {
+    if (!elements.has(id)) elements.set(id, makeElement(id));
+    return elements.get(id);
+  }
+  const accountCheck = makeElement("account-check");
+  accountCheck.dataset.accountCheck = "loggedIn";
+  const document = {
+    body: { style: {} },
+    getElementById: element,
+    querySelectorAll(selector) {
+      return selector === "[data-account-check]" ? [accountCheck] : [];
+    },
+    addEventListener() {},
+    createElement: makeElement
+  };
+  let writeAttempts = 0;
+  const localStorage = {
+    getItem(key) {
+      return key === "clipreward-studio-v1" ? JSON.stringify(initialState) : null;
+    },
+    setItem() {
+      writeAttempts += 1;
+      throw new Error("QuotaExceededError");
+    }
+  };
+  class FakeFileReader {
+    readAsText() {
+      this.result = JSON.stringify(importedState);
+      this.onload();
+    }
+  }
+  const window = {
+    ClipRewardCore: Core,
+    confirm() { return true; },
+    setInterval() { return 1; },
+    addEventListener() {},
+    isSecureContext: false
+  };
+  vm.runInNewContext(appSource, {
+    window,
+    document,
+    localStorage,
+    navigator: {},
+    location: { protocol: "file:", hostname: "" },
+    URL,
+    Date,
+    Intl,
+    FileReader: FakeFileReader,
+    setTimeout() { return 1; },
+    clearTimeout() {}
+  });
+
+  const submit = (id) => element(id).listeners.submit({ preventDefault() {} });
+  const click = (id, selector, recordId) => element(id).listeners.click({
+    target: { closest(value) { return value === selector ? { dataset: { id: recordId } } : null; } }
+  });
+
+  element("add-campaign-button").listeners.click();
+  element("campaign-name").value = "Unsaved campaign";
+  submit("campaign-form");
+  assert.match(element("campaign-list").innerHTML, /Saved campaign/);
+  assert.doesNotMatch(element("campaign-list").innerHTML, /Unsaved campaign/);
+  assert.equal(element("campaign-modal").hidden, false);
+
+  click("campaign-list", ".delete-campaign", "saved-campaign");
+  assert.match(element("campaign-list").innerHTML, /Saved campaign/);
+
+  element("timestamp-input").value = "00:20";
+  element("timestamp-note").value = "Unsaved timestamp";
+  submit("timestamp-form");
+  assert.match(element("timestamp-list").innerHTML, /Saved timestamp/);
+  assert.doesNotMatch(element("timestamp-list").innerHTML, /Unsaved timestamp/);
+  assert.equal(element("timestamp-form").resetCount, 0);
+
+  click("timestamp-list", ".remove-time", "saved-timestamp");
+  assert.match(element("timestamp-list").innerHTML, /Saved timestamp/);
+
+  element("account-display-name").value = "Unsaved profile";
+  submit("account-profile-form");
+  assert.equal(element("account-display-name").value, "Saved profile");
+
+  element("social-platform").value = "Instagram";
+  element("social-handle").value = "@unsaved";
+  submit("social-account-form");
+  assert.equal(element("social-handle").value, "@unsaved");
+  assert.match(element("social-account-list").innerHTML, /@saved/);
+  assert.doesNotMatch(element("social-account-list").innerHTML, /@unsaved/);
+
+  click("social-account-list", ".remove-social", "saved-social");
+  assert.match(element("social-account-list").innerHTML, /@saved/);
+
+  accountCheck.checked = true;
+  accountCheck.listeners.change();
+  assert.equal(accountCheck.checked, false);
+
+  element("import-file").files = [{ size: 100 }];
+  element("import-file").listeners.change({ target: element("import-file") });
+  assert.match(element("campaign-list").innerHTML, /Saved campaign/);
+  assert.doesNotMatch(element("campaign-list").innerHTML, /Imported campaign/);
+  assert.ok(writeAttempts >= 8, "expected each failed mutation to attempt persistence");
 });
 
 test("service worker uses network-first refresh with cached offline fallback", () => {

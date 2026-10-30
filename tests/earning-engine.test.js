@@ -39,6 +39,7 @@ test("score reports evidence coverage and blocks ineligible or high-risk opportu
   assert.equal(full.valid, true);
   assert.equal(full.analysis.coverage, 100);
   assert.equal(full.analysis.blocked, false);
+  assert.ok(full.analysis.score >= 0 && full.analysis.score <= 100);
   const blocked = engine.analyzeOpportunity({ ...base, eligibility: "ineligible" });
   assert.equal(blocked.analysis.blocked, true);
   const risky = engine.analyzeOpportunity({ ...base, risk: "high" });

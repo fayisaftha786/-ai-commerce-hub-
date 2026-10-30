@@ -31,6 +31,21 @@
       return false;
     }
   }
+  function snapshotState() {
+    return {
+      campaigns: state.campaigns.slice(),
+      timestamps: state.timestamps.slice(),
+      account: state.account
+    };
+  }
+  function saveOrRestore(previous) {
+    const persisted = save();
+    if (!persisted) {
+      state = previous;
+      render();
+    }
+    return persisted;
+  }
   function load() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -344,8 +359,10 @@
       const submissionValidation = Core.validateSubmissionRecord(record);
       if (!submissionValidation.valid) throw new Error(submissionValidation.error);
       if (!old && state.campaigns.length >= Core.MAX_CAMPAIGNS) throw new Error("Campaign limit reached. Export a backup before adding more.");
+      const previous = snapshotState();
       state.campaigns = old ? state.campaigns.map((c) => c.id === old.id ? record : c) : [record, ...state.campaigns];
-      const persisted = save();
+      const persisted = saveOrRestore(previous);
+      if (!persisted) return;
       closeModal();
       render();
       if (persisted) showToast(record.status === "submitted" ? "Submission recorded locally. Approval is not yet confirmed." : "Campaign saved on this device.");
@@ -355,8 +372,10 @@
     const campaign = campaignById(id);
     if (!campaign) return;
     if (!window.confirm('Delete "' + campaign.name + '" from this device?')) return;
+    const previous = snapshotState();
     state.campaigns = state.campaigns.filter((c) => c.id !== id);
-    const persisted = save();
+    const persisted = saveOrRestore(previous);
+    if (!persisted) return;
     render();
     if (persisted) showToast("Campaign removed.");
   }
@@ -368,8 +387,10 @@
       if (state.timestamps.some((t) => t.seconds === item.seconds && t.note.toLowerCase() === item.note.toLowerCase())) {
         showToast("That timestamp and note are already saved."); return;
       }
+      const previous = snapshotState();
       state.timestamps.push(item);
-      const persisted = save();
+      const persisted = saveOrRestore(previous);
+      if (!persisted) return;
       $("timestamp-form").reset();
       renderTimestamps();
       if (persisted) showToast("Editing note saved.");
@@ -425,8 +446,10 @@
       try {
         const imported = Core.parseBackup(String(reader.result || ""));
         if (!window.confirm("Replace this device's " + state.campaigns.length + " campaigns, " + state.timestamps.length + " timestamps and account checklist with " + imported.campaigns.length + " campaigns, " + imported.timestamps.length + " timestamps and the account checklist from this backup?")) return;
+        const previous = snapshotState();
         state = imported;
-        const persisted = save();
+        const persisted = saveOrRestore(previous);
+        if (!persisted) return;
         render();
         if (persisted) showToast("Backup imported.");
       } catch (error) { showToast(error.message || "Could not import backup."); }
@@ -460,16 +483,20 @@
   $("timestamp-list").addEventListener("click", (event) => {
     const button = event.target.closest(".remove-time");
     if (!button) return;
+    const previous = snapshotState();
     state.timestamps = state.timestamps.filter((t) => t.id !== button.dataset.id);
-    const persisted = save();
+    const persisted = saveOrRestore(previous);
+    if (!persisted) return;
     renderTimestamps();
     if (persisted) showToast("Timestamp removed.");
   });
   $("account-profile-form").addEventListener("submit", (event) => {
     event.preventDefault();
     try {
+      const previous = snapshotState();
       state.account = Core.normalizeAccount({ ...state.account, displayName: $("account-display-name").value, updatedAt: new Date().toISOString() });
-      const persisted = save();
+      const persisted = saveOrRestore(previous);
+      if (!persisted) return;
       renderAccount();
       if (persisted) showToast("Creator label saved on this device.");
     } catch (error) { showToast(error.message || "Could not save creator label."); }
@@ -478,6 +505,7 @@
     event.preventDefault();
     try {
       if (state.account.socialAccounts.length >= Core.MAX_SOCIAL_ACCOUNTS) throw new Error("Social-account limit reached. Remove an entry you no longer use.");
+      const previous = snapshotState();
       state.account = Core.normalizeAccount({
         ...state.account,
         socialAccounts: [...state.account.socialAccounts, {
@@ -487,7 +515,8 @@
         }],
         updatedAt: new Date().toISOString()
       });
-      const persisted = save();
+      const persisted = saveOrRestore(previous);
+      if (!persisted) return;
       $("social-handle").value = "";
       renderAccount();
       if (persisted) showToast("Social handle saved. Verify connection on the official platform.");
@@ -500,21 +529,25 @@
     if (!id) return;
     try {
       if (confirm) {
+        const previous = snapshotState();
         state.account = Core.normalizeAccount({
           ...state.account,
           socialAccounts: state.account.socialAccounts.map((item) => item.id === id ? { ...item, confirmedConnected: !item.confirmedConnected, updatedAt: new Date().toISOString() } : item),
           updatedAt: new Date().toISOString()
         });
-        const persisted = save();
+        const persisted = saveOrRestore(previous);
+        if (!persisted) return;
         renderAccount();
         if (persisted) showToast("Local reminder updated; live connection was not queried.");
       } else if (remove && window.confirm("Remove this saved social-account reminder from this device?")) {
+        const previous = snapshotState();
         state.account = Core.normalizeAccount({
           ...state.account,
           socialAccounts: state.account.socialAccounts.filter((item) => item.id !== id),
           updatedAt: new Date().toISOString()
         });
-        const persisted = save();
+        const persisted = saveOrRestore(previous);
+        if (!persisted) return;
         renderAccount();
         if (persisted) showToast("Saved social-account reminder removed.");
       }
@@ -524,12 +557,14 @@
     input.addEventListener("change", () => {
       const key = input.dataset.accountCheck;
       if (!Core.ACCOUNT_CHECKS.includes(key)) return;
+      const previous = snapshotState();
       state.account = Core.normalizeAccount({
         ...state.account,
         checklist: { ...state.account.checklist, [key]: input.checked },
         updatedAt: new Date().toISOString()
       });
-      save(); renderAccount();
+      if (!saveOrRestore(previous)) return;
+      renderAccount();
     });
   });
   $("campaign-scout-form").addEventListener("submit", analyseCampaignBrief);

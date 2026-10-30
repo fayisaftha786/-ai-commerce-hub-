@@ -220,6 +220,8 @@ test("submission UI wires exact posting platform and submission time, and labels
   assert.match(appSource, /campaign\.platform !== "Content Rewards" \|\| !campaign\.postedAt/);
   assert.match(appSource, /Core\.validateSubmissionRecord\(record\)/);
   assert.match(appSource, /campaign-post-platform/);
+  assert.match(appSource, /platform: \$\("campaign-platform"\)\.value \|\| \(old \? old\.platform : "Other"\)/);
+  assert.match(appSource, /postPlatform: \$\("campaign-post-platform"\)\.value \|\| \(old \? old\.postPlatform : ""\)/);
   assert.match(appSource, /campaign-submitted-at/);
   const htmlSource = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
   assert.match(htmlSource, /ROUTE A · MOST CAMPAIGNS/);

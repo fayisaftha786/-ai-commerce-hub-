@@ -8,15 +8,17 @@
   const STORAGE_KEY = "ai-commerce-hub.earning-opportunities.v1";
   const TASK_KEY = "ai-commerce-hub.earning-tasks.v1";
   const EARNINGS_KEY = "ai-commerce-hub.earning-records.v1";
-  const MAX_RECORDS = engine.MAX_OPPORTUNITIES;
-  let opportunities = loadArray(STORAGE_KEY);
-  let tasks = loadArray(TASK_KEY);
-  let earnings = loadArray(EARNINGS_KEY);
+  const MAX_OPPORTUNITIES = engine.MAX_OPPORTUNITIES;
+  const MAX_TASKS = 1000;
+  const MAX_EARNINGS = 1000;
+  let opportunities = loadArray(STORAGE_KEY, MAX_OPPORTUNITIES);
+  let tasks = loadArray(TASK_KEY, MAX_TASKS);
+  let earnings = loadArray(EARNINGS_KEY, MAX_EARNINGS);
 
-  function loadArray(key) {
+  function loadArray(key, limit) {
     try {
       const value = JSON.parse(localStorage.getItem(key) || "[]");
-      return Array.isArray(value) ? value.slice(0, MAX_RECORDS) : [];
+      return Array.isArray(value) ? value.slice(-limit) : [];
     } catch { return []; }
   }
 
@@ -144,7 +146,7 @@
     if (!result.valid) { $("earningHubMessage").textContent = result.error; return; }
     const existing = new Set(tasks.map(task => task.id));
     const additions = result.tasks.filter(task => !existing.has(task.id));
-    const nextTasks = [...tasks, ...additions].slice(-1000);
+    const nextTasks = [...tasks, ...additions].slice(-MAX_TASKS);
     if (!save(TASK_KEY, nextTasks)) { $("earningHubMessage").textContent = "Storage failed. Task plan was not saved."; return; }
     tasks = nextTasks;
     $("earningHubMessage").textContent = additions.length + " tasks saved locally. Account checks and publishing still need your approval.";
@@ -182,7 +184,7 @@
       $("earningHubMessage").textContent = "ഈ opportunity ഇതിനകം ചേർത്തിട്ടുണ്ട്.";
       return;
     }
-    if (opportunities.length >= MAX_RECORDS) { $("earningHubMessage").textContent = "Opportunity limit reached. Close or export older records first."; return; }
+    if (opportunities.length >= MAX_OPPORTUNITIES) { $("earningHubMessage").textContent = "Opportunity limit reached. Close or export older records first."; return; }
     opportunities.push(checked.opportunity);
     if (!save(STORAGE_KEY, opportunities)) {
       opportunities.pop();
@@ -217,7 +219,7 @@
       $("earningHubMessage").textContent = "Add an official evidence link before recording confirmed or paid earnings.";
       return;
     }
-    if (earnings.length >= 1000) {
+    if (earnings.length >= MAX_EARNINGS) {
       $("earningHubMessage").textContent = "Earnings record limit reached. Export a backup before adding more.";
       return;
     }
@@ -243,6 +245,6 @@
 
   render();
   window.addEventListener("storage", event => {
-    if ([STORAGE_KEY, TASK_KEY, EARNINGS_KEY].includes(event.key)) { opportunities = loadArray(STORAGE_KEY); tasks = loadArray(TASK_KEY); earnings = loadArray(EARNINGS_KEY); render(); }
+    if ([STORAGE_KEY, TASK_KEY, EARNINGS_KEY].includes(event.key)) { opportunities = loadArray(STORAGE_KEY, MAX_OPPORTUNITIES); tasks = loadArray(TASK_KEY, MAX_TASKS); earnings = loadArray(EARNINGS_KEY, MAX_EARNINGS); render(); }
   });
 })();

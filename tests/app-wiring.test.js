@@ -9,6 +9,7 @@ const root = path.join(__dirname, "..");
 const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const css = fs.readFileSync(path.join(root, "style.css"), "utf8");
 const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+const backupExport = app.slice(app.indexOf("function exportWorkspaceBackup"), app.indexOf("function validateBackup"));
 const appHealth = fs.readFileSync(path.join(root, "app-health.js"), "utf8");
 const catalog = fs.readFileSync(path.join(root, "catalog-import.js"), "utf8");
 
@@ -81,16 +82,30 @@ test("campaign records reject unsafe stored URLs and require a parseable timesta
   assert.match(html, /not sales analytics/);
 });
 
+test("full workspace backup includes Earning Hub records", () => {
+  const keys = [
+    "ai-commerce-hub.earning-opportunities.v1",
+    "ai-commerce-hub.earning-tasks.v1",
+    "ai-commerce-hub.earning-records.v1"
+  ];
+  const backupKeys = app.slice(app.indexOf("const BACKUP_KEYS"), app.indexOf("const MAX_BACKUP_BYTES"));
+  for (const key of keys) assert.ok(backupKeys.includes('"' + key + '"'), "backup must include " + key);
+  assert.ok(app.includes("function exportWorkspaceBackup()"));
+  assert.ok(app.includes("function validateBackup(payload)"));
+  assert.match(html, /Earning opportunities, task plans and earnings records are included in Full Workspace Backup & Restore/);
+  assert.doesNotMatch(html, /until backup schema support is added/i);
+});
+
 test("workspace backup and restore controls are present and validated", () => {
   assert.ok(html.includes('id="exportWorkspaceBackup"'));
   assert.ok(html.includes('id="importWorkspaceBackup"'));
   assert.ok(html.includes('id="backupMessage"'));
   assert.match(app, /format: "ai-commerce-hub-backup", version: 1/);
-  assert.match(app, /function validateBackup\(payload\)/);
+  assert.ok(app.includes("function validateBackup(payload)"));
   assert.match(app, /MAX_BACKUP_BYTES = 2 \* 1024 \* 1024/);
   assert.match(app, /window\.confirm\("Restore this backup\?/);
   assert.match(app, /best-effort rollback/);
-  const backupExport = app.slice(app.indexOf("function exportWorkspaceBackup"), app.indexOf("function validateBackup"));
+  assert.ok(app.includes("function exportWorkspaceBackup()"));
   assert.match(backupExport, /anchor\.click\(\);[\s\S]*anchor\.remove\(\);[\s\S]*setTimeout\(\(\) => URL\.revokeObjectURL\(url\), 1000\)/);
   assert.doesNotMatch(backupExport, /URL\.revokeObjectURL\(url\);/);
 });

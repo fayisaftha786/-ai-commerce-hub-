@@ -1,12 +1,14 @@
 "use strict";
 
-const CACHE_NAME = "ai-commerce-hub-pwa-v2";
+const CACHE_NAME = "ai-commerce-hub-pwa-v3";
 const ASSET_PATHS = [
   "./",
   "./index.html",
   "./style.css",
   "./manifest.webmanifest",
   "./icon.svg",
+  "./earning-engine.js",
+  "./earning-hub.js",
   "./product-utils.js",
   "./offer-engine.js",
   "./discovery-engine.js",

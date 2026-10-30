@@ -28,4 +28,9 @@ test("earning hub uses local storage and explains its limits", () => {
   assert.match(app, /ai-commerce-hub\.earning-tasks\.v1/);
   assert.match(html, /not a payout promise/i);
   assert.match(html, /TikTok/i);
+  assert.ok(html.includes("id=\"earningTaskList\""));
+  assert.ok(html.includes("id=\"earningRecordForm\""));
+  assert.match(app, /function renderTasks\(\)/);
+  assert.match(app, /function renderEarnings\(\)/);
+  assert.match(app, /EARNINGS_KEY/);
 });

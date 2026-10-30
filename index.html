@@ -102,6 +102,28 @@
       </form>
       <p id="earningHubMessage" role="status" aria-live="polite"></p>
       <div id="earningOpportunityList" aria-live="polite"></div>
+      <h3>Task Planner & Evidence Workflow</h3>
+      <p class="hint">Generated tasks are saved on this device. Mark a task complete only after you have actually done it.</p>
+      <div id="earningTaskList" aria-live="polite"></div>
+      <h3>Record real earnings</h3>
+      <form id="earningRecordForm">
+        <div class="form-grid">
+          <label for="earningRecordTitle">Campaign / source
+            <input id="earningRecordTitle" maxlength="120" required placeholder="Campaign name">
+          </label>
+          <label for="earningRecordAmount">Amount (₹)
+            <input id="earningRecordAmount" type="number" min="0.01" max="100000000" step="0.01" required>
+          </label>
+          <label for="earningRecordStatus">Earning status
+            <select id="earningRecordStatus"><option value="estimated">Estimated</option><option value="confirmed">Confirmed by platform</option><option value="paid">Paid / received</option></select>
+          </label>
+          <label for="earningRecordEvidence">Evidence URL (optional, HTTPS)
+            <input id="earningRecordEvidence" type="url" maxlength="2048" placeholder="https://...">
+          </label>
+        </div>
+        <button type="submit">Save earnings record</button>
+      </form>
+      <div id="earningRecordList" aria-live="polite"></div>
       <p class="hint">Score is a review-priority heuristic, not earning probability. Unknown data receives no positive points. Eligibility, reward and payout must be verified in the official platform dashboard. No TikTok integration is included. Records are stored only in this browser; use the existing workspace backup separately until backup schema support is added.</p>
     </section>
 

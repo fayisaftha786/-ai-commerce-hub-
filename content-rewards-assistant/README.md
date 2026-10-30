@@ -67,7 +67,7 @@ Submission and approval status are user-maintained notes. A status marked “App
 
 ## Local data & privacy
 
-Campaign data is stored in this browser's local storage on this device. It is not synchronized across devices or uploaded to a server. Clearing browser data can erase it; use **Export backup** regularly and keep backups private. Import replaces the current workspace only after a confirmation prompt. Treat public URLs and campaign notes as potentially sensitive.
+Campaign data is stored in this browser's local storage on this device. It is not synchronized across devices or uploaded to a server. The main AI Commerce Hub **Export full backup** / **Restore from backup** now includes this ClipReward workspace alongside product and Earning Hub data. ClipReward's standalone backup remains available here too. Clearing browser data can erase it; keep backups private. Treat public URLs and campaign notes as potentially sensitive.
 
 ## Development checks
 

@@ -37,6 +37,7 @@ function makeEnvironment(overrides = {}) {
     AICommerceMarketplaceSearch: { buildMarketplaceSearches() {} },
     AICommerceSocialCenter: { analyzeSocialMetrics() {} },
     AICommerceVideoStudio: { generateScript() {} },
+    ClipRewardCore: { parseBackup() {} },
     ...overrides
   };
 }
@@ -51,6 +52,7 @@ test("self-check passes when secure context, storage, modules, and key forms are
   assert.ok(checks.some((check) => check.title === "Marketplace search" && check.state === "pass"));
   assert.ok(checks.some((check) => check.title === "Social media workflow" && check.state === "pass"));
   assert.ok(checks.some((check) => check.title === "Reels & Shorts studio" && check.state === "pass"));
+  assert.ok(checks.some((check) => check.title === "ClipReward backup validation" && check.state === "pass"));
   assert.ok(checks.some((check) => check.title === "Manual product discovery form/control" && check.state === "pass"));
   assert.ok(checks.some((check) => check.title === "Video maker script wiring" && check.state === "pass"));
   assert.ok(checks.some((check) => check.title === "PWA install script wiring" && check.state === "pass"));
@@ -66,6 +68,7 @@ test("self-check surfaces missing modules, missing forms and insecure context", 
     AICommerceMarketplaceSearch: undefined,
     AICommerceSocialCenter: undefined,
     AICommerceVideoStudio: undefined,
+    ClipRewardCore: undefined,
     document: {
       getElementById(id) { return id === "candidateForm" ? null : { id }; },
       querySelector() { return null; }
@@ -77,6 +80,7 @@ test("self-check surfaces missing modules, missing forms and insecure context", 
   assert.ok(checks.some((check) => check.title === "Marketplace search" && check.state === "fail"));
   assert.ok(checks.some((check) => check.title === "Social media workflow" && check.state === "fail"));
   assert.ok(checks.some((check) => check.title === "Reels & Shorts studio" && check.state === "fail"));
+  assert.ok(checks.some((check) => check.title === "ClipReward backup validation" && check.state === "fail"));
   assert.ok(checks.some((check) => check.title === "Manual product discovery form/control" && check.state === "fail"));
   assert.ok(checks.some((check) => check.title === "PWA manifest" && check.state === "warn"));
 });

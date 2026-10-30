@@ -10,6 +10,7 @@ let lastAnalyzedOffer = null;
 let latestCampaignReport = null;
 const CAMPAIGN_KEY = "ai-commerce-hub.campaigns.v1";
 
+const CLIPREWARD_STORAGE_KEY = "clipreward-studio-v1";
 const BACKUP_KEYS = [
   "ai-commerce-hub.products.v1",
   "ai-commerce-hub.campaigns.v1",
@@ -17,9 +18,10 @@ const BACKUP_KEYS = [
   "ai-commerce-hub.catalog-import.v1",
   "ai-commerce-hub.earning-opportunities.v1",
   "ai-commerce-hub.earning-tasks.v1",
-  "ai-commerce-hub.earning-records.v1"
+  "ai-commerce-hub.earning-records.v1",
+  CLIPREWARD_STORAGE_KEY
 ];
-const MAX_BACKUP_BYTES = 2 * 1024 * 1024;
+const MAX_BACKUP_BYTES = 4 * 1024 * 1024;
 
 function exportWorkspaceBackup() {
   const payload = { format: "ai-commerce-hub-backup", version: 1, exportedAt: new Date().toISOString(), data: {} };
@@ -41,7 +43,7 @@ function exportWorkspaceBackup() {
     anchor.click();
     anchor.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
-    $("backupMessage").textContent = "Backup exported. Keep the file somewhere safe; it may contain your saved product and campaign details.";
+    $("backupMessage").textContent = "Full workspace backup exported, including ClipReward Studio when it has saved data. Keep the file somewhere private and safe.";
   } catch {
     $("backupMessage").textContent = "Backup could not be created. Check browser storage and try again.";
   }
@@ -56,13 +58,31 @@ function validateBackup(payload) {
 
   const allowed = new Set(BACKUP_KEYS);
   const sections = payload.data;
-  for (const [key, value] of Object.entries(sections)) {
-    if (!allowed.has(key)) return { valid: false, error: "Backup contains an unknown data section; nothing was restored." };
-    if (!Array.isArray(value)) return { valid: false, error: "Backup data is malformed; nothing was restored." };
-  }
-
   const invalid = (detail) => ({ valid: false, error: "Backup " + detail + "; nothing was restored." });
   const isRecord = (item) => Boolean(item && typeof item === "object" && !Array.isArray(item));
+  for (const [key, value] of Object.entries(sections)) {
+    if (!allowed.has(key)) return invalid("contains an unknown data section");
+    if (key === CLIPREWARD_STORAGE_KEY) {
+      const core = window.ClipRewardCore;
+      if (!isRecord(value) || !core || typeof core.parseBackup !== "function") {
+        return invalid("contains ClipReward Studio data that cannot be validated in this app version");
+      }
+      try {
+        core.parseBackup({
+          app: "ClipReward Studio",
+          version: core.VERSION,
+          campaigns: value.campaigns,
+          timestamps: value.timestamps,
+          account: value.account
+        });
+      } catch {
+        return invalid("contains invalid ClipReward Studio campaigns, timestamps or account data");
+      }
+      continue;
+    }
+    if (!Array.isArray(value)) return invalid("contains a malformed data section");
+  }
+
   const safeOptionalUrl = (value) => value == null || value === "" || Boolean(safeCampaignUrl(value));
 
   const products = sections["ai-commerce-hub.products.v1"] || [];
@@ -154,7 +174,7 @@ $("importWorkspaceBackup").addEventListener("change", async () => {
   const file = $("importWorkspaceBackup").files?.[0];
   if (!file) return;
   if (file.size > MAX_BACKUP_BYTES) {
-    $("backupMessage").textContent = "Backup file must be 2 MB or smaller.";
+    $("backupMessage").textContent = "Backup file must be 4 MB or smaller.";
     $("importWorkspaceBackup").value = "";
     return;
   }
@@ -165,13 +185,18 @@ $("importWorkspaceBackup").addEventListener("change", async () => {
       $("backupMessage").textContent = validation.error;
       return;
     }
-    if (!window.confirm("Restore this backup? Current saved workspace data will be replaced. Export a backup first if you want to keep it.")) return;
+    if (!window.confirm("Restore this backup? Included workspace data will be replaced. A legacy backup without ClipReward data keeps your current ClipReward workspace. Export a backup first if you want to keep all current data.")) return;
     // Save previous values so a storage failure cannot leave a partially restored workspace.
     const previous = new Map(BACKUP_KEYS.map((key) => [key, localStorage.getItem(key)]));
     try {
       for (const key of BACKUP_KEYS) {
-        if (Object.prototype.hasOwnProperty.call(payload.data, key)) localStorage.setItem(key, JSON.stringify(payload.data[key]));
-        else localStorage.removeItem(key);
+        if (Object.prototype.hasOwnProperty.call(payload.data, key)) {
+          localStorage.setItem(key, JSON.stringify(payload.data[key]));
+        } else if (key !== CLIPREWARD_STORAGE_KEY) {
+          // Backups created before the combined-workspace update did not contain ClipReward data.
+          // Keep the current ClipReward workspace instead of deleting it during a legacy restore.
+          localStorage.removeItem(key);
+        }
       }
     } catch {
       for (const [key, value] of previous) {

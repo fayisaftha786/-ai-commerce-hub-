@@ -39,7 +39,10 @@ test("provider endpoint returns readiness without leaking credential values", as
     const data = await response.json();
     const serialized = JSON.stringify(data);
     assert.equal(response.status, 200);
-    assert.equal(data.providers.length, 2);
+    assert.equal(data.providers.length, 3);
+    assert.equal(data.providers[0].provider, "instagram");
+    assert.equal(data.providers[0].configured, false);
+    assert.match(data.note, /OAuth is not implemented/i);
     assert.equal(data.providers[0].configured, false);
     assert.equal(serialized.includes("sentinel-meta-secret-value"), false);
     assert.equal(serialized.includes("sentinel-google-secret-value"), false);

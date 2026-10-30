@@ -286,8 +286,8 @@ test("workspace backup export refuses files larger than the restore limit", () =
   let message = "";
   const exportBackup = vm.runInNewContext("(" + source + ")", {
     BACKUP_KEYS: ["large-section"],
-    MAX_BACKUP_BYTES: 4,
-    localStorage: { getItem() { return JSON.stringify({ payload: "x".repeat(500) }); } },
+    MAX_BACKUP_BYTES: 4 * 1024 * 1024,
+    localStorage: { getItem() { return JSON.stringify({ payload: "x".repeat(4 * 1024 * 1024) }); } },
     Blob,
     Date,
     URL: { createObjectURL() { objectUrlCreated = true; return "blob:test"; } },
@@ -301,7 +301,7 @@ test("workspace backup export refuses files larger than the restore limit", () =
   exportBackup();
   assert.equal(objectUrlCreated, false);
   assert.equal(anchorCreated, false);
-  assert.match(message, /exceeds 0 MB and was not exported/);
+  assert.match(message, /exceeds 4 MB and was not exported/);
   assert.match(message, /Export the catalogue and campaign CSV files separately/);
 });
 

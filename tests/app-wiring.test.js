@@ -101,7 +101,8 @@ test("full workspace backup includes Earning Hub records", () => {
 
 test("combined workspace backup includes and validates ClipReward Studio data", () => {
   const keys = app.slice(app.indexOf("const BACKUP_KEYS"), app.indexOf("const MAX_BACKUP_BYTES"));
-  assert.ok(keys.includes('"clipreward-studio-v1"'));
+  assert.ok(keys.includes("CLIPREWARD_STORAGE_KEY"));
+  assert.match(app, /CLIPREWARD_STORAGE_KEY = "clipreward-studio-v1"/);
   assert.match(html, /content-rewards-assistant\/core\.js/);
   assert.match(html, /<script src="content-rewards-assistant\/core\.js"><\/script>[\s\S]*?<script src="app\.js"><\/script>/);
   assert.match(serviceWorker, /\.\/content-rewards-assistant\/core\.js/);
@@ -174,7 +175,7 @@ test("workspace backup and restore controls are present and validated", () => {
   assert.ok(html.includes('id="backupMessage"'));
   assert.match(app, /format: "ai-commerce-hub-backup", version: 1/);
   assert.ok(app.includes("function validateBackup(payload)"));
-  assert.match(app, /MAX_BACKUP_BYTES = 4 \\* 1024 \\* 1024/);
+  assert.match(app, /MAX_BACKUP_BYTES = 4 \* 1024 \* 1024/);
   assert.match(app, /window\.confirm\("Restore this backup\?/);
   assert.match(app, /best-effort rollback/);
   assert.ok(app.includes("function exportWorkspaceBackup()"));

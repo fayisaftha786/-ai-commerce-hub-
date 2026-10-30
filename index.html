@@ -24,6 +24,7 @@
   <nav class="workspace-nav" aria-label="Workspace shortcuts">
     <a href="#productForm">Products</a>
     <a href="#marketplaceSearchForm">Discover</a>
+    <a href="#earningHub">Earning Hub</a>
     <a href="#candidateForm">Product score</a>
     <a href="#offerForm">Offer lab</a>
     <a href="#contentForm">Content studio</a>
@@ -44,6 +45,89 @@
       <div id="workflowGuideSteps" class="workflow-guide-grid" aria-live="polite"></div>
       <button id="refreshWorkflowGuide" type="button" class="secondary">Refresh workflow status</button>
       <p class="hint">Product details മാറിയാൽ, പുതിയതായി shortlist/content സേവ് ചെയ്താൽ, അല്ലെങ്കിൽ restore ചെയ്താൽ Refresh അമർത്തി നില പുതുക്കാം.</p>
+    </section>
+
+    <section class="panel" id="earningHub" aria-labelledby="earningHubHeading">
+      <h2 id="earningHubHeading">Multi-Platform Earning Intelligence</h2>
+      <p>ഇന്ത്യയെ മുൻനിർത്തിയുള്ള earning opportunity analysis. YouTube, Facebook, Instagram, Snapchat, X, Amazon, Flipkart, Meesho എന്നിവയ്ക്കുള്ള provider registry ഉൾപ്പെടുത്തിയിട്ടുണ്ട്. താഴെ official source പരിശോധിച്ച opportunity ചേർത്താൽ score, evidence coverage, task plan എന്നിവ സ്വയം തയ്യാറാകും. ഇത് live campaign feed അല്ല; ഇപ്പോൾ source details നിങ്ങൾ ചേർക്കണം.</p>
+      <div class="stats earning-stats">
+        <article><span>Open opportunities</span><strong id="earningOpportunityCount">0</strong></article>
+        <article><span>Confirmed earnings · INR</span><strong id="earningConfirmedTotal">₹0</strong></article>
+        <article><span>Paid earnings · INR</span><strong id="earningPaidTotal">₹0</strong></article>
+      </div>
+      <h3>Supported provider registry · India</h3>
+      <div class="provider-registry">
+        <span>YouTube · account eligibility</span><span>Facebook · programme dependent</span><span>Instagram · feature dependent</span><span>Snapchat · invitation dependent</span><span>X · current programme check</span><span>Amazon India · affiliate approval</span><span>Flipkart · affiliate approval</span><span>Meesho · creator programme</span>
+      </div>
+      <form id="earningOpportunityForm">
+        <h3>Add an opportunity for automatic analysis</h3>
+        <div class="form-grid">
+          <label for="earningTitle">Campaign / reward title
+            <input id="earningTitle" maxlength="120" required placeholder="Example: Instagram brand campaign">
+          </label>
+          <label for="earningPlatform">Platform
+            <select id="earningPlatform" required>
+              <option value="youtube">YouTube</option><option value="facebook">Facebook</option><option value="instagram">Instagram</option><option value="snapchat">Snapchat</option><option value="x">X</option><option value="amazon">Amazon India</option><option value="flipkart">Flipkart</option><option value="meesho">Meesho</option><option value="other">Other verified source</option>
+            </select>
+          </label>
+          <label for="earningSourceUrl">Official campaign / rules URL (HTTPS)
+            <input id="earningSourceUrl" type="url" maxlength="2048" required placeholder="https://...">
+          </label>
+          <label for="earningEligibility">Your eligibility
+            <select id="earningEligibility"><option value="unknown">Not checked</option><option value="eligible">Confirmed eligible</option><option value="likely">Likely — verify</option><option value="ineligible">Not eligible</option></select>
+          </label>
+          <label for="earningReward">Reward amount (₹, if known)
+            <input id="earningReward" type="number" min="0" max="100000000" step="0.01" placeholder="Leave blank if unknown">
+          </label>
+          <label for="earningEffort">Estimated effort (hours)
+            <input id="earningEffort" type="number" min="0.01" max="10000" step="0.25" placeholder="e.g. 3">
+          </label>
+          <label for="earningPayout">Payout evidence
+            <select id="earningPayout"><option value="unknown">Not verified</option><option value="official-terms">Official terms checked</option><option value="verified">Payout independently confirmed</option></select>
+          </label>
+          <label for="earningRisk">Risk assessment
+            <select id="earningRisk"><option value="unknown">Not checked</option><option value="low">Low — reviewed</option><option value="medium">Medium</option><option value="high">High / suspicious</option></select>
+          </label>
+          <label for="earningDeadline">Campaign deadline
+            <input id="earningDeadline" type="date">
+          </label>
+          <label for="earningSourceCheckedAt">Date official source was checked
+            <input id="earningSourceCheckedAt" type="date">
+          </label>
+        </div>
+        <label for="earningDescription">Opportunity details
+          <textarea id="earningDescription" maxlength="1200" rows="2" placeholder="Describe the reward, country rules and key requirements"></textarea>
+        </label>
+        <label for="earningDeliverables">Required tasks (one per line)
+          <textarea id="earningDeliverables" maxlength="2000" rows="3" placeholder="Create original video&#10;Add required disclosure&#10;Submit public post URL"></textarea>
+        </label>
+        <button type="submit">Analyse and save opportunity</button>
+      </form>
+      <p id="earningHubMessage" role="status" aria-live="polite"></p>
+      <div id="earningOpportunityList" aria-live="polite"></div>
+      <h3>Task Planner & Evidence Workflow</h3>
+      <p class="hint">Generated tasks are saved on this device. Mark a task complete only after you have actually done it.</p>
+      <div id="earningTaskList" aria-live="polite"></div>
+      <h3>Record real earnings</h3>
+      <form id="earningRecordForm">
+        <div class="form-grid">
+          <label for="earningRecordTitle">Campaign / source
+            <input id="earningRecordTitle" maxlength="120" required placeholder="Campaign name">
+          </label>
+          <label for="earningRecordAmount">Amount (₹)
+            <input id="earningRecordAmount" type="number" min="0.01" max="100000000" step="0.01" required>
+          </label>
+          <label for="earningRecordStatus">Earning status
+            <select id="earningRecordStatus"><option value="estimated">Estimated</option><option value="confirmed">Confirmed by platform</option><option value="paid">Paid / received</option></select>
+          </label>
+          <label for="earningRecordEvidence">Evidence URL (optional, HTTPS)
+            <input id="earningRecordEvidence" type="url" maxlength="2048" placeholder="https://...">
+          </label>
+        </div>
+        <button type="submit">Save earnings record</button>
+      </form>
+      <div id="earningRecordList" aria-live="polite"></div>
+      <p class="hint">Score is a review-priority heuristic, not earning probability and not a payout promise. Unknown data receives no positive points. Eligibility, reward and payout must be verified in the official platform dashboard. No TikTok integration is included. Records are stored only in this browser; use the existing workspace backup separately until backup schema support is added.</p>
     </section>
 
     <section class="panel" aria-labelledby="backupHeading">
@@ -391,6 +475,8 @@
     </section>
   </main>
   <footer>Prototype · Verify every claim and current price. Follow the affiliate programme's content rules and disclose affiliate relationships clearly.</footer>
+  <script src="earning-engine.js"></script>
+  <script src="earning-hub.js"></script>
   <script src="product-utils.js"></script>
   <script src="offer-engine.js"></script>
   <script src="discovery-engine.js"></script>

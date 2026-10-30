@@ -282,3 +282,33 @@ details > summary::marker { color: var(--gold); }
 .workflow-guide-card p { font-size: 12px; margin: 8px 0 12px; }
 .workflow-guide-card a { font-size: 13px; font-weight: 750; }
 @media (max-width: 650px) { .workflow-guide-grid { grid-template-columns: 1fr; } }
+
+
+/* Multi-platform earning intelligence */
+.earning-stats{grid-template-columns:repeat(3,minmax(0,1fr));margin:18px 0}
+.earning-stats article strong{display:block;font-size:clamp(20px,3vw,28px);margin-top:5px}
+.provider-registry{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:12px 0 22px}
+.provider-registry span{padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface-soft);font-size:12px;color:#c8d5e8}
+#earningOpportunityForm{padding:18px;margin:18px 0;border:1px solid var(--line);border-radius:14px;background:rgba(8,14,25,.42)}
+#earningOpportunityForm h3{margin-top:0}
+#earningOpportunityList{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+#earningOpportunityList .candidate-card{display:flex;flex-direction:column;gap:7px}
+#earningOpportunityList .candidate-card p{margin:0;font-size:13px}
+#earningOpportunityList .candidate-card a{color:var(--blue);overflow-wrap:anywhere}
+#earningOpportunityList .candidate-card .form-grid{margin-top:auto}
+@media(max-width:760px){.provider-registry{grid-template-columns:repeat(2,minmax(0,1fr))}#earningOpportunityList{grid-template-columns:1fr}}
+@media(max-width:480px){.earning-stats{grid-template-columns:1fr}.provider-registry{grid-template-columns:1fr 1fr}}
+
+.earning-task-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;margin:7px 0;border:1px solid var(--line);border-radius:10px;background:var(--surface-soft)}
+.earning-task-row span{font-size:13px;color:#c8d5e8}
+.earning-task-row button{flex:0 0 auto}
+#earningRecordForm{padding:16px;margin:16px 0;border:1px solid var(--line);border-radius:14px;background:rgba(8,14,25,.35)}
+#earningRecordList p{padding:9px 12px;border-bottom:1px solid var(--line);font-size:13px}
+@media(max-width:520px){.earning-task-row{align-items:flex-start;flex-direction:column}.earning-task-row button{width:100%}}
+
+.earning-task-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;margin:7px 0;border:1px solid var(--line);border-radius:10px;background:var(--surface-soft)}
+.earning-task-row span{font-size:13px;color:#c8d5e8}
+.earning-task-row button{flex:0 0 auto}
+#earningRecordForm{padding:16px;margin:16px 0;border:1px solid var(--line);border-radius:14px;background:rgba(8,14,25,.35)}
+#earningRecordList p{padding:9px 12px;border-bottom:1px solid var(--line);font-size:13px}
+@media(max-width:520px){.earning-task-row{align-items:flex-start;flex-direction:column}.earning-task-row button{width:100%}}

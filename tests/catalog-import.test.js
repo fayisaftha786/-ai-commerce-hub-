@@ -87,6 +87,13 @@ test("accepts quoted thousands separators and rejects fractional counts", () => 
   assert.equal(bad.valid, false);
 });
 
+test("rejects unsafe integer counts and implausibly long reporting periods", () => {
+  assert.equal(rankCatalogCsv("name,price,orders\\nLamp,499,9007199254740992").valid, false);
+  assert.equal(rankCatalogCsv("name,price,clicks\\nLamp,499,1e100").valid, false);
+  assert.equal(rankCatalogCsv("name,price,period_days\\nLamp,499,3651").valid, false);
+  assert.equal(rankCatalogCsv("name,price,reviews\\nLamp,499,100000001").valid, false);
+});
+
 test("does not award stock points when stock is unknown", () => {
   const result = rankCatalogCsv("name,price\nLamp,499");
   assert.equal(result.valid, true);

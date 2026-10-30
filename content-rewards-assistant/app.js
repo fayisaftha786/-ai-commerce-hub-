@@ -117,13 +117,15 @@
     $("campaign-list").innerHTML = campaigns.map((campaign) => {
       const campaignUrl = safeExternalUrl(campaign.url);
       const deadline = campaign.deadline ? '<div class="campaign-deadline">Deadline: ' + escapeHtml(dateLabel(campaign.deadline)) + '</div>' : "";
+      const payout = campaign.payoutTerms ? '<span class="mini-tag">' + escapeHtml(campaign.payoutTerms) + '</span>' : "";
+      const budget = campaign.budgetTerms ? '<span class="mini-tag">' + escapeHtml(campaign.budgetTerms) + '</span>' : "";
       const rules = campaign.rules ? '<p class="campaign-rules">' + escapeHtml(campaign.rules) + '</p>' : "";
       const campaignLink = campaignUrl ? '<a class="text-button" href="' + escapeHtml(campaignUrl) + '" target="_blank" rel="noopener noreferrer">View campaign ↗</a>' : "";
       const postLink = campaign.postUrl ? '<a class="text-button" href="' + escapeHtml(campaign.postUrl) + '" target="_blank" rel="noopener noreferrer">View post ↗</a>' : "";
       return '<article class="campaign-card" data-id="' + escapeHtml(campaign.id) + '">' +
         '<div class="campaign-card-top"><div><h3>' + escapeHtml(campaign.name) + '</h3><div class="campaign-meta"><span class="mini-tag">' + escapeHtml(campaign.platform) + '</span>' +
         (campaign.deadline && campaign.deadline < new Date().toISOString().slice(0, 10) && campaign.status !== "approved" ? '<span class="mini-tag" style="color:#ffaaaa">Deadline passed</span>' : "") +
-        (campaign.postPlatform && campaign.postPlatform !== "Other" ? '<span class="mini-tag">Posted on ' + escapeHtml(campaign.postPlatform) + '</span>' : '') +
+        (campaign.postPlatform && campaign.postPlatform !== "Other" ? '<span class="mini-tag">Posted on ' + escapeHtml(campaign.postPlatform) + '</span>' : '') + payout + budget +
         '</div></div>' + statusBadge(campaign.status) + '</div>' + rules + deadline + submissionDeadlineMarkup(campaign) +
         '<div class="campaign-actions">' + campaignLink + postLink +
         '<button class="text-button edit-campaign" type="button" data-id="' + escapeHtml(campaign.id) + '">Edit</button>' +
@@ -195,6 +197,16 @@
     campaignScoutResult = result;
     $("scout-result-title").textContent = result.title || "Campaign details found";
     $("scout-confidence").textContent = result.confidence;
+    $("scout-confidence").classList.toggle("scout-match", result.platformMatch === "match");
+    $("scout-confidence").classList.toggle("scout-mismatch", result.platformMatch === "mismatch");
+    $("scout-confidence").classList.toggle("scout-unknown", result.platformMatch === "unknown");
+    $("scout-source-note").textContent = result.platformMatch === "match"
+      ? result.requestedPlatform + " appears in the accepted platform names copied from this brief. Verify it on the live campaign page."
+      : result.platformMatch === "mismatch"
+        ? result.requestedPlatform + " is not listed in the copied brief. Autofill is blocked to avoid saving a wrong-platform campaign."
+        : result.platformMatch === "unknown"
+          ? result.requestedPlatform + " is not stated in the copied text. You may autofill the draft, but must verify platform eligibility on the official brief."
+          : "Findings come only from the text you pasted. Unknown values stay unknown.";
     const found = result.findings.map((item) =>
       '<article class="scout-found-card"><small>' + escapeHtml(item.label) + '</small><strong>' + escapeHtml(item.value) + '</strong></article>'
     ).join("");
@@ -205,7 +217,7 @@
     $("scout-missing").innerHTML = result.missing.length
       ? result.missing.map((line) => "<li>" + escapeHtml(line) + "</li>").join("")
       : "<li>No missing fields detected by this parser. Still verify the official campaign page.</li>";
-    $("scout-autofill-button").disabled = !result.title && !result.sourceUrl;
+    $("scout-autofill-button").disabled = (!result.title && !result.sourceUrl) || result.platformMatch === "mismatch";
     $("scout-results").hidden = false;
   }
 
@@ -214,6 +226,7 @@
     try {
       const result = window.ClipRewardScout.parseCampaignBrief({
         url: $("scout-source-url").value,
+        requestedPlatform: $("scout-target-platform").value,
         text: $("scout-brief-text").value
       });
       renderCampaignScout(result);
@@ -233,13 +246,39 @@
     $("campaign-platform").value = "Content Rewards";
     $("campaign-url").value = result.sourceUrl || "";
     $("campaign-deadline").value = result.deadline || "";
+    $("campaign-payout-terms").value = result.rate ? result.rate.label : "";
+    $("campaign-budget-terms").value = result.budget
+      ? (result.budget.spent ? window.ClipRewardScout.formatAmount(result.budget.spent) + " used / " : "") +
+        window.ClipRewardScout.formatAmount(result.budget.total) + " total" +
+        (result.budget.remaining ? " / " + window.ClipRewardScout.formatAmount(result.budget.remaining) + " remaining" : "")
+      : "";
     $("campaign-rules").value = window.ClipRewardScout.buildTrackerNotes(result);
     $("campaign-status").value = "idea";
     $("campaign-post-url").value = "";
     $("campaign-post-platform").value = "";
     $("campaign-posted-at").value = "";
     $("campaign-submitted-at").value = "";
-    showToast("Tracker fields autofilled. Check every value before saving.");
+    showToast(result.platformMatch === "match"
+      ? result.requestedPlatform + " campaign details autofilled. Verify the official brief before saving."
+      : "Details autofilled, but platform is not stated. Check eligibility on the official brief before saving.");
+  }
+
+  async function pasteCampaignBriefFromClipboard() {
+    if (!navigator.clipboard || typeof navigator.clipboard.readText !== "function" || !window.isSecureContext) {
+      showToast("Clipboard access is unavailable. Copy the campaign brief and paste it into the text box.");
+      $("scout-brief-text").focus();
+      return;
+    }
+    try {
+      const value = await navigator.clipboard.readText();
+      if (!value.trim()) throw new Error("Clipboard is empty. Copy the visible campaign brief first.");
+      $("scout-brief-text").value = value.slice(0, 20000);
+      showToast("Copied campaign text inserted. Press Find details & analyse.");
+      $("scout-brief-text").focus();
+    } catch (error) {
+      showToast(error.message || "Clipboard permission denied. Paste the brief manually.");
+      $("scout-brief-text").focus();
+    }
   }
 
   function clearCampaignScout() {
@@ -258,6 +297,8 @@
     $("campaign-platform").value = editing ? campaign.platform : "Content Rewards";
     $("campaign-url").value = editing ? campaign.url : "";
     $("campaign-deadline").value = editing ? campaign.deadline : "";
+    $("campaign-payout-terms").value = editing ? campaign.payoutTerms : "";
+    $("campaign-budget-terms").value = editing ? campaign.budgetTerms : "";
     $("campaign-rules").value = editing ? campaign.rules : "";
     $("campaign-status").value = editing ? campaign.status : "idea";
     $("campaign-post-url").value = editing ? campaign.postUrl : "";
@@ -289,6 +330,8 @@
         platform: $("campaign-platform").value,
         url: $("campaign-url").value,
         deadline: $("campaign-deadline").value,
+        payoutTerms: $("campaign-payout-terms").value,
+        budgetTerms: $("campaign-budget-terms").value,
         rules: $("campaign-rules").value,
         status: $("campaign-status").value,
         postUrl: $("campaign-post-url").value,
@@ -489,6 +532,12 @@
     });
   });
   $("campaign-scout-form").addEventListener("submit", analyseCampaignBrief);
+  $("scout-paste-button").addEventListener("click", pasteCampaignBriefFromClipboard);
+  document.querySelectorAll("[data-scout-platform-link]").forEach((link) => {
+    link.addEventListener("click", () => {
+      $("scout-target-platform").value = link.dataset.scoutPlatformLink;
+    });
+  });
   $("scout-autofill-button").addEventListener("click", autofillCampaignTracker);
   $("scout-clear-button").addEventListener("click", clearCampaignScout);
   $("draft-form").addEventListener("submit", generateDraft);

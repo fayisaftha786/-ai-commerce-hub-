@@ -4,7 +4,7 @@ A lightweight affiliate workspace prototype for evaluating offer details, shortl
 
 ## Current features
 
-- Standalone ClipReward Studio prototype for creator campaign tracking, content draft scaffolds, clip timestamps, submission logs, local backup/restore and mobile-friendly offline-ready UI: [open the assistant source](content-rewards-assistant/README.md)
+- Standalone ClipReward Studio with a Content Rewards public Discover shortcut, clipboard-based campaign brief findings/autofill, submission preflight, content drafts, clip timestamps and local backup/restore: [open the assistant source](content-rewards-assistant/README.md)
 
 - Add product entries for Amazon, Flipkart and Meesho
 - HTTPS product URL validation and local-only product storage

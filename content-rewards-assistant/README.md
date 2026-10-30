@@ -23,6 +23,16 @@ Or run the existing root project as usual and open \`content-rewards-assistant/i
 - Responsive dark dashboard, mobile navigation, local-first storage and best-effort static-asset caching.
 - Node.js regression tests for the core data validation and backup format.
 
+## Campaign finder and autofill
+
+Use the dedicated **Find Instagram**, **Find Facebook** or **Find YouTube** link to open the live [Content Rewards Discover page](https://contentrewards.com/c/discover); it preselects the matching target platform in ClipReward Studio. On Discover, set the Platform filter to the same platform, search by campaign name if needed, and use the campaign card/details. Copy the public card/brief text, return to ClipReward Studio, press **Paste copied brief** (or paste manually), add the official campaign URL and press **Find details & analyse**.
+
+The local parser can extract a campaign title, CPM/per-post/retainer model, spent/total/remaining budget (including compact cards such as `0/$1.3K`), accepted social platforms, category, ISO deadline and requirement lines. It compares the selected Instagram/Facebook/YouTube filter with the platforms written in the copied text. An explicit platform mismatch blocks autofill; an unstated platform is flagged for manual verification. Choose **Autofill campaign tracker** to fill campaign name, source URL, deadline, payout rate, budget and requirements in the tracker form. Those fields are stored separately and shown on the campaign card. Review and edit everything before saving.
+
+**Finding boundary:** this is official Discover navigation + clipboard-assisted findings/autofill, not live API-backed automatic discovery. Content Rewards states that it has no API today. We do not scrape private or signed-in pages, read account sessions, apply/join campaigns or infer missing eligibility. Private campaigns are invitation-only and will not appear in public Discover.
+
+Extraction is only as accurate as the text copied from the official page. A value shown as missing was not recognised; it is not zero. The app does not estimate your eligibility, infer a missing payout, validate campaign availability, join/apply to campaigns, or access private invitations. Some campaigns are private and arrive only by invitation. Do not paste passwords, one-time codes, cookies or private account data. The official platform remains the source of truth for remaining budget, accepted accounts, eligibility and application status.
+
 ## Content Rewards submission workflow
 
 The in-app submission guide now separates the two official routes: standard campaigns (publish a public clip, then submit its link while the post is less than 30 minutes old) and pre-approval campaigns (upload a draft first, wait for approval, publish from an approved connected account, then submit the live link while the post is less than 30 minutes old). The local reminder timer applies only to Content Rewards campaigns; it does not impose Content Rewards' 30-minute rule on other programmes.

@@ -107,11 +107,17 @@ test("campaign post time normalizes to ISO, is optional for old backups, and rej
     platform: "Content Rewards",
     postedAt: "2026-10-30T04:40:00+05:30",
     postPlatform: "Instagram",
+    payoutTerms: "CPM — $2 per 1,000 views",
+    budgetTerms: "$1K used / $5K total",
     submittedAt: "2026-10-30T05:00:00+05:30"
   }, "2026-10-30T00:00:00.000Z");
   assert.equal(item.postedAt, "2026-10-29T23:10:00.000Z");
   assert.equal(item.submittedAt, "2026-10-29T23:30:00.000Z");
   assert.equal(item.postPlatform, "Instagram");
+  assert.equal(item.payoutTerms, "CPM — $2 per 1,000 views");
+  assert.equal(item.budgetTerms, "$1K used / $5K total");
+  assert.equal(Core.normalizeCampaign({ name: "Legacy campaign" }).payoutTerms, "");
+  assert.equal(Core.normalizeCampaign({ name: "Legacy campaign" }).budgetTerms, "");
   assert.equal(Core.normalizeCampaign({ name: "Legacy campaign" }).postedAt, "");
   assert.throws(() => Core.normalizeCampaign({ name: "Bad post time", postedAt: "not-a-date" }), /valid date and time/);
   assert.throws(() => Core.normalizeCampaign({ name: "Bad submission time", submittedAt: "not-a-date" }), /Submission time must be a valid date and time/);
@@ -133,7 +139,7 @@ test("local persistence failures are not followed by success confirmations", () 
 
 test("service worker uses network-first refresh with cached offline fallback", () => {
   const workerSource = fs.readFileSync(path.join(__dirname, "..", "service-worker.js"), "utf8");
-  assert.match(workerSource, /const CACHE = "clipreward-static-v2"/);
+  assert.match(workerSource, /const CACHE = "clipreward-static-v3"/);
   const networkFetch = workerSource.indexOf("event.respondWith(\n    fetch(request)");
   const offlineFallback = workerSource.indexOf("caches.match(request).then((cached)");
   assert.ok(networkFetch >= 0, "service worker should try the network first");

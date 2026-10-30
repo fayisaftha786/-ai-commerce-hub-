@@ -45,7 +45,9 @@ The current official flow requires the exact posting account to be connected and
 
 Complete account linking inside Content Rewards under Settings → Connected accounts. A Whop link does not count. The exact account that publishes the clip must be connected and verified on the same platform; each social account can belong to only one Content Rewards account at a time.
 
-- **TikTok and Instagram:** Content Rewards gives you a `CR-XXXXXX` verification code. Put the exact code in the public profile bio, save, then press Verify account. Codes expire after 24 hours. Instagram must be a professional **Business** account.
+- **Instagram:** Content Rewards gives you a `CR-XXXXXX` verification code. Put the exact code in the public profile bio, save, then press Verify account. Codes expire after 24 hours. Instagram must be a professional **Business** account.
+
+For this India-first workspace, TikTok is not offered as a posting destination because it is not available in India. The parser may still detect TikTok in a copied international campaign brief, but it flags it separately and does not treat it as an available India workflow.
 - **YouTube and X:** use the official platform sign-in window, choose the exact channel/account you post from, and approve the requested access. For YouTube, select the Google login that owns the channel and keep the requested channel permissions enabled.
 - **Facebook:** place the Content Rewards code in a Facebook Reel caption, set the Reel audience to Public, copy that Reel's own link into the verification box, and press Verify. A check can take around 30 seconds.
 

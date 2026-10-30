@@ -113,6 +113,29 @@ test("autofill notes preserve uncertainty and include extracted evidence", () =>
   assert.match(notes, /Not found/);
 });
 
+test("India workflow flags TikTok from a public campaign brief without treating it as an available destination", () => {
+  const result = Scout.parseCampaignBrief({
+    requestedPlatform: "Instagram",
+    text: ["Campaign: India creator offer", "$2/1K views", "Platforms: TikTok and Instagram", "Must publish original clips."].join("\\n")
+  });
+  assert.equal(result.platformMatch, "match");
+  assert.deepEqual(result.unsupportedPlatforms, ["TikTok"]);
+  assert.ok(result.findings.some((item) => item.label === "Not available in India" && /TikTok/.test(item.value)));
+  assert.ok(result.missing.some((item) => /TikTok is not available in the India workflow/.test(item)));
+  assert.match(Scout.buildTrackerNotes(result), /Platforms unavailable in the India workflow: TikTok/);
+});
+
+test("India ClipReward selectors default to supported platforms and do not offer TikTok", () => {
+  const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
+  for (const id of ["social-platform", "draft-platform", "campaign-platform", "campaign-post-platform"]) {
+    const match = html.match(new RegExp('<select id="' + id + '"[^>]*>([\\s\\S]*?)</select>'));
+    assert.ok(match, "missing selector " + id);
+    assert.doesNotMatch(match[1], /TikTok/i, id + " must not offer TikTok in the India workflow");
+  }
+  assert.match(html, /<select id="draft-platform"><option>Instagram Reels<\\/option>/);
+  assert.match(html, /TikTok is not available in India/i);
+});
+
 test("campaign finder is wired to official Discover, local parser, and existing tracker autofill", () => {
   const root = path.join(__dirname, "..");
   const html = fs.readFileSync(path.join(root, "index.html"), "utf8");

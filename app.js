@@ -34,6 +34,11 @@ function exportWorkspaceBackup() {
       }
     }
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    if (blob.size > MAX_BACKUP_BYTES) {
+      const limitMb = Math.floor(MAX_BACKUP_BYTES / (1024 * 1024));
+      $("backupMessage").textContent = "Full backup exceeds " + limitMb + " MB and was not exported. Export the catalogue and campaign CSV files separately, remove older records, and try again.";
+      return;
+    }
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;

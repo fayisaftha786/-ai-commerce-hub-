@@ -77,6 +77,113 @@ test("product workspace blocks duplicate links on the same marketplace before sa
   assert.ok(app.indexOf("if (duplicate)") < app.indexOf("products.push(result.product)"));
 });
 
+test("new product, candidate and campaign additions roll back when local storage is full", () => {
+  function createElement(id) {
+    return {
+      id,
+      className: "",
+      value: "",
+      textContent: "",
+      innerHTML: "",
+      checked: false,
+      disabled: false,
+      children: [],
+      listeners: {},
+      dataset: {},
+      style: {},
+      classList: { add() {}, remove() {}, toggle() {} },
+      addEventListener(type, callback) { this.listeners[type] = callback; },
+      append(...items) { this.children.push(...items); },
+      replaceChildren(...items) { this.children = [...items]; },
+      setAttribute() {},
+      focus() {},
+      select() {},
+      scrollIntoView() {},
+      remove() {},
+      querySelector() { return createElement("nested"); }
+    };
+  }
+  const elements = new Map();
+  const element = (id) => {
+    if (!elements.has(id)) elements.set(id, createElement(id));
+    return elements.get(id);
+  };
+  const document = {
+    body: createElement("body"),
+    getElementById: element,
+    createElement: createElement,
+    createTextNode(text) { return { textContent: String(text) }; },
+    addEventListener() {},
+    querySelector() { return null; },
+    querySelectorAll() { return []; }
+  };
+  const writes = [];
+  const localStorage = {
+    getItem() { return null; },
+    setItem(key) { writes.push(key); throw new Error("QuotaExceededError"); },
+    removeItem() {}
+  };
+  const window = {
+    crypto: { randomUUID() { return "test-campaign-id"; } },
+    confirm() { return true; },
+    addEventListener() {},
+    AICommerceProductUtils: {
+      validateProduct(input) {
+        return { valid: true, product: { ...input, platform: input.platform, url: input.url } };
+      }
+    },
+    AICommerceDiscovery: {
+      scoreCandidate() {
+        return {
+          valid: true,
+          candidate: {
+            name: "Retry candidate", score: 80, label: "Review",
+            price: 100, commission: 5, rating: 4, reviews: 10,
+            demand: 3, competition: 2, inStock: true,
+            source: "manual test", checkedAt: "2026-10-30",
+            evidenceFreshness: "current", evidenceAgeDays: 0,
+            evidenceTraceable: true, confidence: "Medium",
+            estimatedCommission: 5, checks: ["manual evidence"], url: "https://example.com/item"
+          }
+        };
+      }
+    }
+  };
+
+  vm.runInNewContext(app, {
+    window, document, localStorage, navigator: {}, URL, Date, Intl, Math,
+    Blob, setTimeout() { return 1; }, clearTimeout() {}
+  });
+
+  element("productName").value = "Retry product";
+  element("platform").value = "Amazon";
+  element("productUrl").value = "https://example.com/product";
+  element("productForm").listeners.submit({ preventDefault() {} });
+  assert.equal(element("productName").value, "Retry product");
+  assert.equal(element("productUrl").value, "https://example.com/product");
+  assert.match(element("message").textContent, /Product was not added/);
+  assert.equal(element("productList").children[0].className, "product-empty");
+
+  element("candidateName").value = "Retry candidate";
+  element("candidatePrice").value = "100";
+  element("candidateForm").listeners.submit({ preventDefault() {} });
+  element("saveCandidate").listeners.click();
+  assert.equal(element("candidateList").children[0].textContent, "No saved candidates yet. Score a product and save it to your shortlist.");
+  assert.match(element("candidateResult").children.at(-1).textContent, /shortlist was not changed/i);
+
+  element("contentOutput").value = "Reviewed draft";
+  element("contentName").value = "Retry campaign";
+  element("contentPlatform").value = "Instagram";
+  element("contentType").value = "Reel";
+  for (const id of ["reviewClaims", "reviewPrice", "reviewAffiliate", "reviewLink"]) element(id).checked = true;
+  element("saveContentCampaign").listeners.click();
+  assert.equal(element("campaignList").children[0].textContent, "No campaign records saved yet. Create content, then save it here.");
+  assert.match(element("campaignMessage").textContent, /No campaign was added/);
+  assert.ok(writes.includes("ai-commerce-hub.products.v1"));
+  assert.ok(writes.includes("ai-commerce-hub.candidates.v1"));
+  assert.ok(writes.includes("ai-commerce-hub.campaigns.v1"));
+});
+
 test("campaign records reject unsafe stored URLs and require a parseable timestamp", () => {
   assert.match(app, /function safeCampaignUrl\(value\)/);
   assert.match(app, /parsed\.protocol === "https:" && parsed\.hostname && !parsed\.username && !parsed\.password/);

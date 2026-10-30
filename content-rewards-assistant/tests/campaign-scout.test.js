@@ -13,6 +13,7 @@ test("campaign brief parser extracts title, CPM, used and total budget, platform
       "Creator campaign",
       "$2.50/1K views",
       "$1.2K/$5K",
+      "Join Campaign",
       "Platforms: TikTok, YouTube and Instagram",
       "Category: Gaming",
       "Deadline: 2026-12-01",
@@ -38,7 +39,7 @@ test("campaign brief parser extracts title, CPM, used and total budget, platform
 
 test("campaign brief parser recognises per-post and retainer models without inventing a CPM", () => {
   const perPost = Scout.parseCampaignBrief({
-    text: ["Title: Product demo", "$250 per post", "Platform: Instagram", "Budget: $2K"].join("\n")
+    text: ["Title: Product demo", "$250 per post", "Platform: Instagram", "Budget: $2K", "Apply now"].join("\n")
   });
   assert.equal(perPost.rate.model, "Per post");
   assert.equal(perPost.rate.amount.value, 250);

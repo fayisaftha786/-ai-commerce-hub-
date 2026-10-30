@@ -101,9 +101,9 @@ function analyzeOpportunity(input, now = new Date()) {
   if (!checked.valid) return checked;
   const item = checked.opportunity;
   const signals = {};
-  if (item.eligibility !== "unknown") signals.eligibility = item.eligibility === "eligible" ? 25 : item.eligibility === "likely" ? 15 : 0;
-  if (item.reward !== null) signals.reward = item.reward > 0 ? Math.min(25, 8 + Math.log10(item.reward + 1) * 7) : 0;
-  if (item.effortHours !== null) signals.effort = Math.max(0, 15 - Math.min(15, Math.log2(item.effortHours + 1) * 4));
+  if (item.eligibility !== "unknown") signals.eligibility = item.eligibility === "eligible" ? 20 : item.eligibility === "likely" ? 12 : 0;
+  if (item.reward !== null) signals.reward = item.reward > 0 ? Math.min(20, 6 + Math.log10(item.reward + 1) * 5.6) : 0;
+  if (item.effortHours !== null) signals.effort = Math.max(0, 10 - Math.min(10, Math.log2(item.effortHours + 1) * 2.7));
   if (item.payoutConfidence !== "unknown") signals.payout = item.payoutConfidence === "verified" ? 15 : 10;
   const deadline = deadlinePoints(item.deadline, now);
   if (deadline !== null) signals.deadline = deadline;
@@ -117,7 +117,7 @@ function analyzeOpportunity(input, now = new Date()) {
 
   const knownWeight = Object.keys(signals).reduce((sum, key) => sum + WEIGHTS[key], 0);
   const raw = Object.entries(signals).reduce((sum, [key, value]) => sum + value, 0);
-  const score = knownWeight ? Math.round(raw / knownWeight * 100) : 0;
+  const score = knownWeight ? Math.max(0, Math.min(100, Math.round(raw / knownWeight * 100))) : 0;
   const coverage = Math.round(knownWeight / 100 * 100);
   const blocked = item.status !== "open" || item.eligibility === "ineligible" || item.risk === "high" || (item.deadline && deadline === 0);
   const label = blocked ? "Do not prioritise" : coverage < 60 ? "Need more evidence" : score >= 75 ? "High-priority review" : score >= 55 ? "Review next" : "Research more";

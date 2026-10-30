@@ -109,6 +109,30 @@
       <p id="marketplaceSearchStatus" role="status" aria-live="polite"></p>
       <div id="marketplaceSearchResults" aria-live="polite"></div>
       <p class="hint">This free prototype opens marketplace search pages; it cannot read private sales rankings or automatically import live product details from those pages. Use the catalogue CSV importer below to rank products with verified prices, ratings, clicks, orders, commissions and returns. Never treat popularity estimates as confirmed sales.</p>
+
+      <h3>Official marketplace programme & API access</h3>
+      <p class="hint">These are the legitimate routes for product data and affiliate access. None is connected to this app yet. API credentials must stay on a private server; never paste them into this page, browser storage, or a public GitHub repository.</p>
+      <div class="workflow-guide-grid" aria-label="Marketplace programme setup">
+        <article class="candidate-card">
+          <h3>Amazon India · Creators API</h3>
+          <p><strong>App status:</strong> Not connected — server integration and approved credentials required.</p>
+          <p>Join Amazon Associates for India, qualify for API access (the current guide requires at least 10 qualifying sales in the past 30 days), register a Creators API credential, then use its OAuth 2.0 token flow. Amazon's old PA-API 5.0 has been deprecated; new work should use Creators API.</p>
+          <p><a href="https://affiliate-program.amazon.in/creatorsapi/docs/en-us/introduction" target="_blank" rel="noopener noreferrer">Creators API guide</a> · <a href="https://affiliate-program.amazon.in/creatorsapi/docs/en-us/get-started/using-curl" target="_blank" rel="noopener noreferrer">Authentication & request setup</a> · <a href="https://affiliate-program.amazon.in/" target="_blank" rel="noopener noreferrer">Associates India</a></p>
+        </article>
+        <article class="candidate-card">
+          <h3>Flipkart · Affiliate API</h3>
+          <p><strong>App status:</strong> Not connected — affiliate registration and private API token required.</p>
+          <p>Registered affiliates can use product search/details, offer and report APIs. Keyword search returns up to 10 products per request and the published API limit is 20 calls per second per affiliate. The API token must be sent as a server-side request header.</p>
+          <p><a href="https://affiliate.flipkart.com/registerme" target="_blank" rel="noopener noreferrer">Join Flipkart Affiliate</a> · <a href="https://affiliate.flipkart.com/api-docs/af_register.html" target="_blank" rel="noopener noreferrer">Token setup</a> · <a href="https://affiliate.flipkart.com/api-docs/af_prod_ref.html" target="_blank" rel="noopener noreferrer">Product API reference</a></p>
+        </article>
+        <article class="candidate-card">
+          <h3>Meesho · Creator Program</h3>
+          <p><strong>App status:</strong> Not connected — use the official creator portal for product selection, affiliate links and account performance.</p>
+          <p>Meesho's creator programme is available through its creator portal. This app does not sign in to the portal or read private creator metrics. Use only an API or export that Meesho explicitly enables for your account; do not use private endpoints or scrape logged-in pages.</p>
+          <p><a href="https://affiliate.meesho.com/influencer-home" target="_blank" rel="noopener noreferrer">Meesho Creator Program</a> · <a href="https://www.meesho.com/legal?embed=true" target="_blank" rel="noopener noreferrer">Meesho terms & policies</a></p>
+        </article>
+      </div>
+      <p class="hint">GitHub Pages hosts this app as a static site and cannot safely hold marketplace API secrets. A private backend deployment is required before live product data can be fetched. Until then, marketplace search links and user-supplied CSV files remain the supported workflow.</p>
     </section>
 
     <section class="panel">

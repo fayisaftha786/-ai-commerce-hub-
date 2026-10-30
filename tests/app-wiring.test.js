@@ -359,3 +359,19 @@ test("saved shortlist can restart evidence review without carrying stale product
   assert.match(app, /Previous price, commission, rating, reviews, demand, competition, stock, source and date were cleared/);
   assert.match(app, /card\.append\(recheckButton, contentButton, remove\)/);
 });
+
+
+test("marketplace integration panel links only to official programme and API documentation", () => {
+  assert.match(html, /Amazon India · Creators API/);
+  assert.match(html, /at least 10 qualifying sales in the past 30 days/);
+  assert.match(html, /old PA-API 5\.0 has been deprecated/);
+  assert.ok(html.includes('href="https://affiliate-program.amazon.in/creatorsapi/docs/en-us/introduction"'));
+  assert.match(html, /Flipkart · Affiliate API/);
+  assert.match(html, /20 calls per second per affiliate/);
+  assert.ok(html.includes('href="https://affiliate.flipkart.com/api-docs/af_prod_ref.html"'));
+  assert.match(html, /Meesho · Creator Program/);
+  assert.ok(html.includes('href="https://affiliate.meesho.com/influencer-home"'));
+  assert.match(html, /does not sign in to the portal or read private creator metrics/);
+  assert.match(html, /cannot safely hold marketplace API secrets/);
+  assert.match(html, /do not use private endpoints or scrape logged-in pages/);
+});

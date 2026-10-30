@@ -27,14 +27,23 @@
     if (all.some((n) => !Number.isFinite(n) || n < 0 || !Number.isSafeInteger(n))) {
       return { valid: false, error: "Enter whole numbers of zero or more for every metric." };
     }
+    const interactions = likes + comments + shares;
+    if (!Number.isSafeInteger(interactions)) {
+      return { valid: false, error: "The combined likes, comments and shares exceed the safe numeric range." };
+    }
     const rate = (numerator, denominator) => denominator > 0 ? numerator / denominator * 100 : null;
+    const warnings = [];
+    if (orders > clicks) {
+      warnings.push("Orders exceed clicks; order rate is withheld. Check attribution IDs, metric definitions and matching reporting periods.");
+    }
     return {
       valid: true,
       reach,
-      interactions: likes + comments + shares,
-      engagementRate: rate(likes + comments + shares, reach),
+      interactions,
+      engagementRate: rate(interactions, reach),
       clickThroughRate: rate(clicks, reach),
-      orderRate: rate(orders, clicks),
+      orderRate: orders <= clicks ? rate(orders, clicks) : null,
+      warnings,
       note: "Calculated from manually entered platform insights; not independently verified."
     };
   }
@@ -153,6 +162,16 @@
       const note = root.document.createElement("p");
       note.textContent = result.note;
       card.append(heading, list, note);
+      if (result.warnings.length) {
+        const warningList = root.document.createElement("ul");
+        warningList.setAttribute("aria-label", "Data quality warnings");
+        for (const warningText of result.warnings) {
+          const warning = root.document.createElement("li");
+          warning.textContent = warningText;
+          warningList.append(warning);
+        }
+        card.append(warningList);
+      }
       output.append(card);
     });
   }

@@ -106,7 +106,7 @@ test("marketplace search cards can hand the keyword to scoring without carrying 
     assert.match(source, new RegExp(id + ': ""'));
   }
   assert.match(source, /search links do not contain live listing data/);
-  assert.match(source, /form\.scrollIntoView/);
+  assert.match(source, /candidateForm\.scrollIntoView/);
 });
 
 test("search UI exists and module loads before app initialisation", () => {

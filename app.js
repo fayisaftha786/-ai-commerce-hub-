@@ -14,7 +14,10 @@ const BACKUP_KEYS = [
   "ai-commerce-hub.products.v1",
   "ai-commerce-hub.campaigns.v1",
   "ai-commerce-hub.candidates.v1",
-  "ai-commerce-hub.catalog-import.v1"
+  "ai-commerce-hub.catalog-import.v1",
+  "ai-commerce-hub.earning-opportunities.v1",
+  "ai-commerce-hub.earning-tasks.v1",
+  "ai-commerce-hub.earning-records.v1"
 ];
 const MAX_BACKUP_BYTES = 2 * 1024 * 1024;
 
@@ -114,6 +117,33 @@ function validateBackup(payload) {
         !Array.isArray(item.recommendationReasons) || item.recommendationReasons.some((entry) => typeof entry !== "string")) {
       return invalid("contains an invalid ranked catalogue record");
     }
+  }
+
+  const earningOpportunities = sections["ai-commerce-hub.earning-opportunities.v1"] || [];
+  if (earningOpportunities.length > 300) return invalid("contains more than 300 earning opportunities");
+  const earningValidator = window.AIEarningEngine?.validateOpportunity;
+  if (earningOpportunities.length && typeof earningValidator !== "function") return invalid("cannot be checked because earning validation is unavailable");
+  const earningIds = new Set();
+  for (const item of earningOpportunities) {
+    const checked = isRecord(item) && earningValidator ? earningValidator(item) : { valid: false };
+    if (!checked.valid || earningIds.has(item.id)) return invalid("contains an invalid or duplicate earning opportunity");
+    earningIds.add(item.id);
+  }
+
+  const earningTasks = sections["ai-commerce-hub.earning-tasks.v1"] || [];
+  if (earningTasks.length > 1000 || earningTasks.some(item => !isRecord(item) ||
+      typeof item.id !== "string" || !item.id.trim() || typeof item.title !== "string" || !item.title.trim() ||
+      !["todo", "done"].includes(item.status) || typeof item.requiresApproval !== "boolean")) {
+    return invalid("contains invalid earning task records");
+  }
+
+  const earningRecords = sections["ai-commerce-hub.earning-records.v1"] || [];
+  if (earningRecords.length > 1000 || earningRecords.some(item => !isRecord(item) ||
+      typeof item.id !== "string" || !item.id.trim() || typeof item.title !== "string" || !item.title.trim() ||
+      !Number.isFinite(item.amount) || item.amount <= 0 || item.amount > 100000000 ||
+      item.currency !== "INR" || !["estimated", "confirmed", "paid"].includes(item.status) ||
+      (item.evidenceUrl != null && item.evidenceUrl !== "" && !safeOptionalUrl(item.evidenceUrl)))) {
+    return invalid("contains invalid earning records");
   }
 
   return { valid: true };

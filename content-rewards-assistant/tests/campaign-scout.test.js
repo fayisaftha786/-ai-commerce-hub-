@@ -102,3 +102,11 @@ test("campaign finder is wired to official Discover, local parser, and existing 
   assert.match(worker, /clipreward-static-v3/);
   assert.match(worker, /campaign-scout\.js/);
 });
+
+
+test("campaign finder distinguishes direct join from application review", () => {
+  const direct = Scout.parseCampaignBrief({ text: ["Campaign: Open campaign", "Join Campaign", "TikTok"].join("\n") });
+  assert.equal(direct.entryMode, "Open campaign / direct join");
+  const application = Scout.parseCampaignBrief({ text: ["Campaign: Screened campaign", "Apply now", "Instagram"].join("\n") });
+  assert.equal(application.entryMode, "Application / brand review");
+});

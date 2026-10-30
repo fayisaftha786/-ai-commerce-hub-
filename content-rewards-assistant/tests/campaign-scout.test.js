@@ -28,6 +28,10 @@ test("campaign brief parser extracts title, CPM, used and total budget, platform
   assert.equal(result.budget.spent.value, 1200);
   assert.equal(result.budget.total.value, 5000);
   assert.equal(result.budget.remaining.value, 3800);
+  const compactBudget = Scout.parseCampaignBrief({ text: "Campaign: Compact pool\\n$2/1K views\\n0/$1.3K\\nInstagram" });
+  assert.equal(compactBudget.budget.spent.value, 0);
+  assert.equal(compactBudget.budget.total.value, 1300);
+  assert.equal(compactBudget.budget.remaining.value, 1300);
   assert.equal(result.entryMode, "Open campaign / direct join");
   assert.deepEqual(result.platforms, ["TikTok", "Instagram", "YouTube"]);
   assert.equal(result.category, "Gaming");

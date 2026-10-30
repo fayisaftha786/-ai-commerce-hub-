@@ -77,7 +77,10 @@ test("GitHub Pages deployment workflow publishes only the static runtime assets 
   assert.match(workflow, /pages: write/);
   assert.match(workflow, /id-token: write/);
   assert.match(workflow, /github\.ref == 'refs\/heads\/main'/);
-  assert.match(workflow, /actions\/configure-pages@v5/);
+  assert.match(workflow, /actions\/checkout@v7/);
+  assert.match(workflow, /actions\/setup-node@v7/);
+  assert.match(workflow, /node-version: 24/);
+  assert.match(workflow, /actions\/configure-pages@v6/);
   assert.match(workflow, /id: pages[\s\S]*?enablement: true/);
   assert.doesNotMatch(workflow, /continue-on-error: true/);
   assert.doesNotMatch(workflow, /Explain missing Pages setup/);
@@ -86,9 +89,9 @@ test("GitHub Pages deployment workflow publishes only the static runtime assets 
   const publishedAssets = collectLocalAssets(html);
   assert.match(pageBuilder, /collectLocalAssets/);
   assert.match(pageBuilder, /content-rewards-assistant/);
-  assert.match(workflow, /name: Deploy Pages[\s\S]*?actions\/deploy-pages@v4/);
-  assert.match(workflow, /actions\/upload-pages-artifact@v4/);
-  assert.match(workflow, /actions\/deploy-pages@v4/);
+  assert.match(workflow, /name: Deploy Pages[\s\S]*?actions\/deploy-pages@v5/);
+  assert.match(workflow, /actions\/upload-pages-artifact@v5/);
+  assert.match(workflow, /actions\/deploy-pages@v5/);
   assert.match(workflow, /path: _site/);
   for (const asset of ["index.html", "style.css", "manifest.webmanifest", "earning-engine.js", "earning-hub.js", "video-maker.js", "service-worker.js", "pwa-install.js", "app-health.js", "app.js"]) {
     assert.ok(publishedAssets.includes(asset), "Pages bundle is missing " + asset);

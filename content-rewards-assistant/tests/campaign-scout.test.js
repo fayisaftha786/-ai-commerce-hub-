@@ -135,6 +135,8 @@ test("India ClipReward selectors default to supported platforms and do not offer
   const draftOptions = html.match(/<select id="draft-platform"[^>]*>([\s\S]*?)<\/select>/)[1];
   assert.ok(draftOptions.trim().startsWith("<option>Instagram Reels</option>"));
   assert.match(html, /TikTok is not available in India/i);
+  assert.match(html, /18\+ only/i);
+  assert.doesNotMatch(html, /CR-XXXXXX|code expires after 24 hours/i);
 });
 
 test("campaign finder is wired to official Discover, local parser, and existing tracker autofill", () => {
@@ -152,6 +154,8 @@ test("campaign finder is wired to official Discover, local parser, and existing 
   assert.ok(html.includes("studio.youtube.com"));
   assert.match(html, /creator marketplace/i);
   assert.match(html, /id="scout-target-platform"/);
+  assert.match(html, /<option value="X">X<\/option>/);
+  assert.match(html, /data-scout-platform-link="X"/);
   assert.match(html, /id="scout-paste-button"/);
   assert.match(html, /campaign-scout\.js/);
   assert.match(app, /ClipRewardScout\.parseCampaignBrief/);
@@ -161,7 +165,7 @@ test("campaign finder is wired to official Discover, local parser, and existing 
   assert.ok(app.includes("analyseCampaignBrief();"));
   assert.ok(app.includes('addEventListener("input"'));
   assert.match(app, /result\.platformMatch === "mismatch"/);
-  assert.match(worker, /clipreward-static-v5/);
+  assert.match(worker, /clipreward-static-v6/);
   assert.match(worker, /campaign-scout\.js/);
 });
 
@@ -173,15 +177,15 @@ test("campaign finder distinguishes direct join from application review", () => 
   assert.equal(application.entryMode, "Application / brand review");
 });
 
-test("platform-specific finder matches Instagram, Facebook and YouTube, and blocks an explicit mismatch", () => {
+test("platform-specific finder matches Instagram, Facebook, YouTube and X, and blocks an explicit mismatch", () => {
   const brief = [
-    "Campaign: Three platform launch",
+    "Campaign: Four platform launch",
     "$2/1K views",
     "$1K/$5K",
-    "Platforms: Instagram, Facebook and YouTube",
+    "Platforms: Instagram, Facebook, YouTube and X",
     "Must use original clips only."
   ].join("\n");
-  for (const platform of ["Instagram", "Facebook", "YouTube"]) {
+  for (const platform of ["Instagram", "Facebook", "YouTube", "X"]) {
     const match = Scout.parseCampaignBrief({ requestedPlatform: platform, text: brief });
     assert.equal(match.platformMatch, "match", platform);
     assert.equal(match.requestedPlatform, platform);
@@ -197,4 +201,15 @@ test("platform-specific finder matches Instagram, Facebook and YouTube, and bloc
     text: "Campaign: No platform stated\n$2/1K views"
   });
   assert.equal(unknown.platformMatch, "unknown");
+});
+
+test("campaign parser recognises shared pool payout models without inventing a per-view rate", () => {
+  const result = Scout.parseCampaignBrief({
+    requestedPlatform: "X",
+    text: ["Campaign: Creator pool", "Payout model: Pool", "Platforms: X and Instagram", "Deadline: 2026-12-15"].join("\n")
+  });
+  assert.equal(result.rate.model, "Pool");
+  assert.equal(result.rate.amount, null);
+  assert.match(result.rate.label, /variable allocation/i);
+  assert.equal(result.platformMatch, "match");
 });

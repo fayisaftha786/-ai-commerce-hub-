@@ -157,15 +157,14 @@ test("ClipReward rolls back every local data mutation when browser storage rejec
     ["function deleteCampaign", "function addTimestamp"],
     ["function addTimestamp", "function generateDraft"],
     ["function importBackup", '$("today-label")'],
-    ['$ ("timestamp-list")', '$("account-profile-form")'],
-    ['$ ("account-profile-form")', '$("social-account-form")'],
-    ['$ ("social-account-form")', '$("social-account-list")'],
-    ['$ ("social-account-list")', 'document.querySelectorAll("[data-account-check]")'],
-    ['document.querySelectorAll("[data-account-check]")', '$("campaign-scout-form")']
+    ['$("timestamp-list").addEventListener("click"', '$("account-profile-form").addEventListener("submit"'],
+    ['$("account-profile-form").addEventListener("submit"', '$("social-account-form").addEventListener("submit"'],
+    ['$("social-account-form").addEventListener("submit"', '$("social-account-list").addEventListener("click"'],
+    ['$("social-account-list").addEventListener("click"', 'document.querySelectorAll("[data-account-check]").forEach((input) => {\n    input.addEventListener("change"'],
+    ['document.querySelectorAll("[data-account-check]").forEach((input) => {\n    input.addEventListener("change"', '$("campaign-scout-form")']
   ];
 
-  for (const [rawStart, end] of mutatingHandlers) {
-    const start = rawStart.replace("$ (", "$(");
+  for (const [start, end] of mutatingHandlers) {
     const block = sourceBlock(start, end);
     assert.match(block, /snapshotState\(\)/, "missing state snapshot in " + start);
     assert.match(block, /saveOrRestore\(previous\)/, "missing persistence rollback in " + start);

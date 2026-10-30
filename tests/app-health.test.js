@@ -8,7 +8,7 @@ function makeEnvironment(overrides = {}) {
   const ids = new Set([
     "productForm", "marketplaceSearchForm", "candidateForm", "catalogForm",
     "contentForm", "campaignReportForm", "socialAnalyticsForm", "videoMakerForm",
-    "installAppButton"
+    "installAppButton", "generateVideoScript", "recordVoiceStart", "copyVideoCaption"
   ]);
   const values = new Map();
   const storage = {
@@ -36,6 +36,7 @@ function makeEnvironment(overrides = {}) {
     AICommerceCampaignReport: { parseCampaignReport() {}, compareCampaignReports() {}, summarizeCampaignComparison() {} },
     AICommerceMarketplaceSearch: { buildMarketplaceSearches() {} },
     AICommerceSocialCenter: { analyzeSocialMetrics() {} },
+    AICommerceVideoStudio: { generateScript() {} },
     ...overrides
   };
 }
@@ -49,6 +50,7 @@ test("self-check passes when secure context, storage, modules, and key forms are
   assert.ok(checks.some((check) => check.title === "Product discovery" && check.state === "pass"));
   assert.ok(checks.some((check) => check.title === "Marketplace search" && check.state === "pass"));
   assert.ok(checks.some((check) => check.title === "Social media workflow" && check.state === "pass"));
+  assert.ok(checks.some((check) => check.title === "Reels & Shorts studio" && check.state === "pass"));
   assert.ok(checks.some((check) => check.title === "Manual product discovery form/control" && check.state === "pass"));
   assert.ok(checks.some((check) => check.title === "Video maker script wiring" && check.state === "pass"));
   assert.ok(checks.some((check) => check.title === "PWA install script wiring" && check.state === "pass"));
@@ -63,6 +65,7 @@ test("self-check surfaces missing modules, missing forms and insecure context", 
     AICommerceDiscovery: undefined,
     AICommerceMarketplaceSearch: undefined,
     AICommerceSocialCenter: undefined,
+    AICommerceVideoStudio: undefined,
     document: {
       getElementById(id) { return id === "candidateForm" ? null : { id }; },
       querySelector() { return null; }
@@ -73,6 +76,7 @@ test("self-check surfaces missing modules, missing forms and insecure context", 
   assert.ok(checks.some((check) => check.title === "Product discovery" && check.state === "fail"));
   assert.ok(checks.some((check) => check.title === "Marketplace search" && check.state === "fail"));
   assert.ok(checks.some((check) => check.title === "Social media workflow" && check.state === "fail"));
+  assert.ok(checks.some((check) => check.title === "Reels & Shorts studio" && check.state === "fail"));
   assert.ok(checks.some((check) => check.title === "Manual product discovery form/control" && check.state === "fail"));
   assert.ok(checks.some((check) => check.title === "PWA manifest" && check.state === "warn"));
 });

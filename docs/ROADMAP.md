@@ -12,7 +12,8 @@ Help a solo affiliate marketer identify products worth testing, understand the e
 - [x] Keep product scores explainable and mark missing demand, competition, stock, commission, and performance as unknown.
 - [x] Import user-authorized catalogue/performance CSVs and flag suspicious click/order/return data.
 - [x] Track where product evidence came from and when it was checked, and block shortlist readiness when the source is missing or the check date is stale/invalid/future-dated.
-- [ ] Keep syntax checks and regression tests green before merging.
+- [x] Keep syntax checks and regression tests green before merging.
+- [x] Build the GitHub Pages artifact from the app's actual local HTML dependencies and test that every referenced module is present.
 - Acceptance: imported rows show evidence completeness and freshness warnings; unknown data is never silently converted to a positive signal; a high score cannot overcome missing or stale evidence.
 
 ### 1. Make product research a reusable data model
@@ -56,7 +57,7 @@ Help a solo affiliate marketer identify products worth testing, understand the e
 - Run unit, wiring, input-validation, provider-adapter, and end-to-end happy-path tests.
 - Validate small screens, keyboard/accessibility labels, storage failure, malformed CSV, stale data, provider timeouts, and unauthorized API responses.
 - Write setup instructions, privacy/data-retention notes, API prerequisites, and a list of unimplemented features.
-- Acceptance: green CI on the target branch, no secrets in repository/client bundles, and documentation matches actual behavior.
+- Acceptance: green CI on the target branch, no secrets in repository/client bundles, and documentation matches actual behavior. Pages packaging is now generated from `index.html` dependencies and covered by regression tests; real provider connections still require account approval, credentials and a private backend.
 
 ## Build strategy to finish faster
 

@@ -11,6 +11,7 @@ const manifest = JSON.parse(fs.readFileSync(path.join(root, "manifest.webmanifes
 const serviceWorker = fs.readFileSync(path.join(root, "service-worker.js"), "utf8");
 const pwaInstall = fs.readFileSync(path.join(root, "pwa-install.js"), "utf8");
 const readme = fs.readFileSync(path.join(root, "README.md"), "utf8");
+const { collectLocalAssets } = require("../scripts/pages-build");
 
 test("PWA manifest is installable and uses relative scope for project subpaths", () => {
   assert.equal(manifest.name, "AI Commerce Hub");
@@ -29,6 +30,10 @@ test("service worker precaches the local app shell and uses offline fallback", (
     "./manifest.webmanifest",
     "./icon.svg",
     "./product-utils.js",
+    "./earning-engine.js",
+    "./earning-hub.js",
+    "./video-maker.js",
+    "./workflow-guide.js",
     "./discovery-engine.js",
     "./catalog-import.js",
     "./app.js",
@@ -76,13 +81,17 @@ test("GitHub Pages deployment workflow publishes only the static runtime assets 
   assert.match(workflow, /id: pages[\s\S]*?enablement: true/);
   assert.doesNotMatch(workflow, /continue-on-error: true/);
   assert.doesNotMatch(workflow, /Explain missing Pages setup/);
-  assert.match(workflow, /name: Assemble static site files[\s\S]*?cp index\.html/);
+  assert.match(workflow, /name: Assemble and validate static site files[\s\S]*?node scripts\/pages-build\.js _site/);
+  const pageBuilder = fs.readFileSync(path.join(root, "scripts", "pages-build.js"), "utf8");
+  const publishedAssets = collectLocalAssets(html);
+  assert.match(pageBuilder, /collectLocalAssets/);
+  assert.match(pageBuilder, /content-rewards-assistant/);
   assert.match(workflow, /name: Deploy Pages[\s\S]*?actions\/deploy-pages@v4/);
   assert.match(workflow, /actions\/upload-pages-artifact@v4/);
   assert.match(workflow, /actions\/deploy-pages@v4/);
   assert.match(workflow, /path: _site/);
-  for (const asset of ["index.html", "style.css", "manifest.webmanifest", "service-worker.js", "pwa-install.js", "app-health.js", "app.js"]) {
-    assert.ok(workflow.includes(asset), "deployment is missing " + asset);
+  for (const asset of ["index.html", "style.css", "manifest.webmanifest", "earning-engine.js", "earning-hub.js", "video-maker.js", "service-worker.js", "pwa-install.js", "app-health.js", "app.js"]) {
+    assert.ok(publishedAssets.includes(asset), "Pages bundle is missing " + asset);
   }
   assert.match(readme, /select \*\*GitHub Actions\*\*/);
 });

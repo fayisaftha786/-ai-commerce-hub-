@@ -103,6 +103,11 @@
       /require|must\b|minimum|min\b|maximum|max\b|eligible|eligib|original|disclos|language|country|region|follower|views?|tag|hashtag|watermark|no\s+repost|no\s+collab|deadline|apply|approval/i.test(line)
     ).slice(0, 8);
     const deadline = parseDeadline(rawText);
+    const entryMode = /\\bapply\\b|\\bapplication\\b/i.test(rawText)
+      ? "Application / brand review"
+      : /join\\s+campaign|join\\s+now/i.test(rawText)
+        ? "Open campaign / direct join"
+        : "";
     const url = clean(source.url, 500);
     let sourceUrl = "";
     try {
@@ -117,11 +122,13 @@
     if (title) findings.push({ kind: "found", label: "Campaign name", value: title });
     if (rate) findings.push({ kind: "found", label: "Payout model", value: rate.label });
     if (budget) findings.push({ kind: "found", label: "Campaign budget", value: budget.spent
-      ? formatAmount(budget.spent) + " used / " + formatAmount(budget.total) + " total"
+      ? formatAmount(budget.spent) + " used / " + formatAmount(budget.total) + " total" +
+        (budget.remaining ? " / " + formatAmount(budget.remaining) + " remaining" : "")
       : formatAmount(budget.total) + " total" });
     if (platforms.length) findings.push({ kind: "found", label: "Platforms", value: platforms.join(", ") });
     if (category) findings.push({ kind: "found", label: "Category", value: category });
     if (deadline) findings.push({ kind: "found", label: "Deadline", value: deadline });
+    if (entryMode) findings.push({ kind: "found", label: "Joining method", value: entryMode });
     if (requirementLines.length) findings.push({ kind: "found", label: "Brief requirements", value: requirementLines.length + " requirement line(s) detected" });
 
     const missing = [];
@@ -138,6 +145,7 @@
       title,
       sourceUrl,
       deadline,
+      entryMode,
       rate,
       budget,
       platforms,
@@ -154,7 +162,8 @@
     const lines = [
       "Imported from Content Rewards public brief — verify against the official campaign page.",
       "Detected payout: " + (result.rate ? result.rate.label : "Not found"),
-      "Detected budget: " + (result.budget ? (result.budget.spent ? formatAmount(result.budget.spent) + " used / " : "") + formatAmount(result.budget.total) + " total" : "Not found"),
+      "Detected budget: " + (result.budget ? (result.budget.spent ? formatAmount(result.budget.spent) + " used / " : "") + formatAmount(result.budget.total) + " total" + (result.budget.remaining ? " / " + formatAmount(result.budget.remaining) + " remaining" : "") : "Not found"),
+      "Joining method: " + (result.entryMode || "Not stated — check the official campaign page"),
       "Detected platforms: " + (result.platforms.length ? result.platforms.join(", ") : "Not found"),
       "Detected category: " + (result.category || "Not found"),
       "Deadline: " + (result.deadline || "Not found")

@@ -353,7 +353,7 @@ test("campaign register search filters by product, platform, format, and campaig
 
 test("campaign CSV import drops duplicate IDs within the incoming batch and existing records", () => {
   const start = app.indexOf("function uniqueCampaignRecords(records, existingIds)");
-  const end = app.indexOf('\\n}\\n\\n$("importCampaigns")', start);
+  const end = app.indexOf("\n}\n\n$(\"importCampaigns\")", start);
   assert.ok(start >= 0 && end > start, "campaign deduplication helper must be present");
   const helperSource = app.slice(start, end + 2);
   const uniqueCampaignRecords = vm.runInNewContext("(" + helperSource + ")");
@@ -372,7 +372,7 @@ test("campaign register CSV import validates the exported schema and protects ex
   assert.match(app, /function parseCampaignCsv\(text\)/);
   assert.match(app, /CSV columns do not match the exported campaign register format/);
   assert.match(app, /file\.size > 1024 \* 1024/);
-  assert.match(app, /const duplicates = parsed\.records\.length - unique\.length/);
+  assert.match(app, /const duplicates = deduplicated\\.duplicates/);
   assert.match(app, /Existing records will be kept/);
   assert.match(app, /Import could not be saved to browser storage\. Existing records were preserved/);
   assert.match(app, /safeCampaignUrl\(link\.trim\(\)\)/);

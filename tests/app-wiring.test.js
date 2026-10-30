@@ -351,6 +351,21 @@ test("campaign register search filters by product, platform, format, and campaig
   assert.match(app, /No campaigns match this search/);
 });
 
+test("campaign CSV import drops duplicate IDs within the incoming batch and existing records", () => {
+  const start = app.indexOf("function uniqueCampaignRecords(records, existingIds)");
+  const end = app.indexOf('\\n}\\n\\n$("importCampaigns")', start);
+  assert.ok(start >= 0 && end > start, "campaign deduplication helper must be present");
+  const helperSource = app.slice(start, end + 2);
+  const uniqueCampaignRecords = vm.runInNewContext("(" + helperSource + ")");
+  const existing = { id: "already-saved", productName: "Existing" };
+  const first = { id: "new-campaign", productName: "First row" };
+  const repeated = { id: "new-campaign", productName: "Duplicate row" };
+  const other = { id: "other-campaign", productName: "Other row" };
+  const result = uniqueCampaignRecords([first, repeated, existing, other], ["already-saved"]);
+  assert.deepEqual(result.records, [first, other]);
+  assert.equal(result.duplicates, 2);
+});
+
 test("campaign register CSV import validates the exported schema and protects existing records", () => {
   assert.ok(html.includes('id="importCampaignsCsv"'));
   assert.ok(html.includes('id="importCampaigns"'));

@@ -120,6 +120,7 @@
       return '<article class="campaign-card" data-id="' + escapeHtml(campaign.id) + '">' +
         '<div class="campaign-card-top"><div><h3>' + escapeHtml(campaign.name) + '</h3><div class="campaign-meta"><span class="mini-tag">' + escapeHtml(campaign.platform) + '</span>' +
         (campaign.deadline && campaign.deadline < new Date().toISOString().slice(0, 10) && campaign.status !== "approved" ? '<span class="mini-tag" style="color:#ffaaaa">Deadline passed</span>' : "") +
+        (campaign.postPlatform && campaign.postPlatform !== "Other" ? '<span class="mini-tag">Posted on ' + escapeHtml(campaign.postPlatform) + '</span>' : '') +
         '</div></div>' + statusBadge(campaign.status) + '</div>' + rules + deadline + submissionDeadlineMarkup(campaign) +
         '<div class="campaign-actions">' + campaignLink + postLink +
         '<button class="text-button edit-campaign" type="button" data-id="' + escapeHtml(campaign.id) + '">Edit</button>' +
@@ -156,7 +157,7 @@
       const post = safeExternalUrl(c.postUrl);
       return "<tr><td>" + escapeHtml(c.name) + '<br><span class="mini-tag">' + escapeHtml(c.platform) + "</span></td><td>" +
         (post ? '<a class="table-link" href="' + escapeHtml(post) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(post) + "</a>" : '<span class="muted">Not added</span>') +
-        "</td><td>" + escapeHtml(new Date(c.updatedAt).toLocaleDateString()) + "</td><td>" + statusBadge(c.status) + '</td><td><button type="button" class="text-button edit-campaign" data-id="' + escapeHtml(c.id) + '">Update</button></td></tr>';
+        "</td><td>" + escapeHtml(c.submittedAt ? new Date(c.submittedAt).toLocaleString() : "Legacy / not recorded") + "</td><td>" + statusBadge(c.status) + '</td><td><button type="button" class="text-button edit-campaign" data-id="' + escapeHtml(c.id) + '">Update</button></td></tr>';
     }).join("");
     $("submission-empty").hidden = entries.length > 0;
   }
@@ -197,7 +198,9 @@
     $("campaign-rules").value = editing ? campaign.rules : "";
     $("campaign-status").value = editing ? campaign.status : "idea";
     $("campaign-post-url").value = editing ? campaign.postUrl : "";
+    $("campaign-post-platform").value = editing ? campaign.postPlatform : "";
     $("campaign-posted-at").value = editing ? localDateTimeValue(campaign.postedAt) : "";
+    $("campaign-submitted-at").value = editing ? localDateTimeValue(campaign.submittedAt) : "";
     $("campaign-modal").hidden = false;
     document.body.style.overflow = "hidden";
     $("campaign-name").focus();
@@ -226,7 +229,9 @@
         rules: $("campaign-rules").value,
         status: $("campaign-status").value,
         postUrl: $("campaign-post-url").value,
+        postPlatform: $("campaign-post-platform").value,
         postedAt: $("campaign-posted-at").value ? new Date($("campaign-posted-at").value).toISOString() : "",
+        submittedAt: $("campaign-submitted-at").value ? new Date($("campaign-submitted-at").value).toISOString() : "",
         createdAt: old ? old.createdAt : ""
       });
       const submissionValidation = Core.validateSubmissionRecord(record);

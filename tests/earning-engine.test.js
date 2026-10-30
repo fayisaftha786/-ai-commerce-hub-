@@ -8,7 +8,7 @@ const base = {
   id: "opp-1", title: "Creator campaign", platform: "instagram",
   sourceUrl: "https://example.com/campaign", eligibility: "eligible",
   reward: 2500, effortHours: 5, payoutConfidence: "official-terms",
-  risk: "low", deadline: "2026-11-10", deliverables: ["Create one original short video"]
+  risk: "low", deadline: "2026-11-10", sourceCheckedAt: "2026-10-30", deliverables: ["Create one original short video"]
 };
 
 test("India provider registry excludes TikTok and lists the supported provider categories", () => {
@@ -45,8 +45,15 @@ test("score reports evidence coverage and blocks ineligible or high-risk opportu
   assert.equal(risky.analysis.blocked, true);
 });
 
+test("stale source evidence lowers the score and impossible source dates are rejected", () => {
+  const fresh = engine.analyzeOpportunity(base, new Date("2026-10-30T00:00:00Z"));
+  const stale = engine.analyzeOpportunity({ ...base, sourceCheckedAt: "2026-09-01" }, new Date("2026-10-30T00:00:00Z"));
+  assert.ok(stale.analysis.score < fresh.analysis.score);
+  assert.equal(engine.validateOpportunity({ ...base, sourceCheckedAt: "2026-02-31" }).valid, false);
+});
+
 test("unknown fields lower evidence coverage rather than receiving positive points", () => {
-  const result = engine.analyzeOpportunity({ ...base, eligibility: "unknown", reward: null, effortHours: null, payoutConfidence: "unknown", risk: "unknown", deadline: "" });
+  const result = engine.analyzeOpportunity({ ...base, eligibility: "unknown", reward: null, effortHours: null, payoutConfidence: "unknown", risk: "unknown", deadline: "", sourceCheckedAt: "" });
   assert.equal(result.analysis.coverage, 0);
   assert.equal(result.analysis.score, 0);
   assert.equal(result.analysis.label, "Need more evidence");

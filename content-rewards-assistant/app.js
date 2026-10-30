@@ -72,7 +72,10 @@
     const deadline = new Date(campaign.postedAt).getTime() + 30 * 60 * 1000;
     const remaining = deadline - Date.now();
     if (["submitted", "approved", "rejected"].includes(campaign.status)) {
-      return '<div class="submission-deadline submitted-deadline"><strong>Submission status:</strong> Marked "' + escapeHtml(statusNames[campaign.status]) + '" in this app. Platform receipt is not verified.</div>';
+      const recordedAt = campaign.submittedAt
+        ? "Link submission time recorded locally: " + new Date(campaign.submittedAt).toLocaleString() + "."
+        : "This is an older local entry; its link-submission time was not recorded.";
+      return '<div class="submission-deadline submitted-deadline"><strong>Local status:</strong> "' + escapeHtml(statusNames[campaign.status]) + '". ' + escapeHtml(recordedAt) + ' Content Rewards receipt and approval are not verified.</div>';
     }
     if (remaining <= 0) {
       return '<div class="submission-deadline overdue-deadline"><strong>30-minute window may have passed.</strong> Check the official campaign page; this app cannot submit or extend the deadline.</div>';

@@ -29,24 +29,19 @@
     const input = doc.getElementById("marketplaceSearchQuery");
     const results = doc.getElementById("marketplaceSearchResults");
     const status = doc.getElementById("marketplaceSearchStatus");
-    doc.querySelectorAll(".keyword-preset").forEach((button) => {
-      button.addEventListener("click", () => {
-        input.value = button.dataset.keyword || "";
-        input.focus();
-        status.textContent = "Research prompt selected. Submit to open marketplace searches; this does not indicate verified demand.";
-      });
-    });
-    form.addEventListener("submit", (event) => {
-      event.preventDefault();
-      const result = buildMarketplaceSearches(input.value);
+
+    function runSearch(query) {
+      const result = buildMarketplaceSearches(query);
       results.replaceChildren();
       if (!result.valid) {
         status.textContent = result.error;
         return;
       }
+
       const intro = doc.createElement("p");
-      intro.textContent = "Compare the same keyword across all three marketplaces. Open each result and collect only information you can verify.";
+      intro.textContent = "Your research links are ready. Open a marketplace, compare actual listings, then import an authorised catalogue CSV to analyse multiple products together.";
       results.append(intro);
+
       for (const item of result.searches) {
         const card = doc.createElement("article");
         card.className = "candidate-card";
@@ -56,11 +51,12 @@
         link.href = item.url;
         link.target = "_blank";
         link.rel = "noopener noreferrer";
-        link.textContent = "Search " + item.platform + " for “" + result.query + "”";
+        link.textContent = "Open " + item.platform + " results for “" + result.query + "”";
+
         const scoreButton = doc.createElement("button");
         scoreButton.type = "button";
         scoreButton.className = "secondary";
-        scoreButton.textContent = "Start scoring this keyword";
+        scoreButton.textContent = "Analyse a product from this search";
         scoreButton.addEventListener("click", () => {
           const fields = {
             candidateName: result.query,
@@ -79,18 +75,32 @@
             const field = doc.getElementById(id);
             if (field) field.value = value;
           }
-          const form = doc.getElementById("candidateForm");
-          if (form) {
-            form.scrollIntoView({ behavior: "smooth", block: "start" });
+          const candidateForm = doc.getElementById("candidateForm");
+          if (candidateForm) {
+            candidateForm.scrollIntoView({ behavior: "smooth", block: "start" });
             const name = doc.getElementById("candidateName");
             if (name) name.focus({ preventScroll: true });
           }
-          status.textContent = "Keyword transferred. Enter verified product details before scoring; marketplace search links do not provide verified evidence.";
+          status.textContent = "Research keyword transferred. Enter verified listing evidence before scoring; search links do not contain live listing data.";
         });
+
         card.append(title, link, scoreButton);
         results.append(card);
       }
-      status.textContent = "Search links ready. These links open marketplace pages; they do not fetch live listings into the app.";
+
+      status.textContent = "One-tap discovery ready for “" + result.query + "”. These are live marketplace search pages, not product data imported into this app.";
+    }
+
+    doc.querySelectorAll(".keyword-preset").forEach((button) => {
+      button.addEventListener("click", () => {
+        input.value = button.dataset.keyword || "";
+        runSearch(input.value);
+      });
+    });
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      runSearch(input.value);
     });
   }
 

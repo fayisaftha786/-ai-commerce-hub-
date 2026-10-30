@@ -25,11 +25,27 @@ Or run the existing root project as usual and open \`content-rewards-assistant/i
 
 ## Content Rewards submission workflow
 
-The in-app submission guide now separates the two official routes: standard campaigns (publish a public clip, then submit its link within 30 minutes) and pre-approval campaigns (upload a draft first, wait for approval, publish from an approved connected account, then submit the live link within 30 minutes). The local reminder timer applies only to Content Rewards campaigns; it does not impose Content Rewards' 30-minute rule on other programmes.
+The in-app submission guide now separates the two official routes: standard campaigns (publish a public clip, then submit its link while the post is less than 30 minutes old) and pre-approval campaigns (upload a draft first, wait for approval, publish from an approved connected account, then submit the live link while the post is less than 30 minutes old). The local reminder timer applies only to Content Rewards campaigns; it does not impose Content Rewards' 30-minute rule on other programmes.
 
-When a Content Rewards campaign is marked Submitted in the local tracker, select the actual posting platform, provide a matching public HTTPS post link, record when the post went live, and record when you actually submitted the link inside Content Rewards. The preflight rejects platform/link mismatches, submission times before posting, submissions later than 30 minutes, and future timestamps. This checks the information entered in this browser only; it cannot prove that the link was actually submitted or accepted on Content Rewards. Rejected is labelled as Rejected, not as a request for changes.
+When a Content Rewards campaign is marked Submitted in the local tracker, select the actual posting platform, provide a matching public HTTPS post link, record when the post went live, and record when you actually submitted the link inside Content Rewards. The preflight rejects platform/link mismatches, submission times before posting, submissions at or beyond 30 minutes, and future timestamps. This checks the information entered in this browser only; it cannot prove that the link was actually submitted or accepted on Content Rewards. Rejected is labelled as Rejected, not as a request for changes.
 
 The current official flow requires the exact posting account to be connected and verified in Content Rewards (a Whop account connection alone does not count), Instagram Business account type, and each submission is checked for a connected account, duplicate submission to the same campaign and post age under 30 minutes. Pre-approval drafts are reviewed before posting and the final live post is reviewed again. See the official [submission guide](https://help.contentrewards.com/en/articles/15319814-submit-a-video), [account connection guide](https://help.contentrewards.com/en/articles/16746780-connect-your-social-accounts), and [approval and review guide](https://help.contentrewards.com/en/articles/15319801-approval-and-review).
+
+## Platform account verification
+
+Complete account linking inside Content Rewards under Settings → Connected accounts. A Whop link does not count. The exact account that publishes the clip must be connected and verified on the same platform; each social account can belong to only one Content Rewards account at a time.
+
+- **TikTok and Instagram:** Content Rewards gives you a `CR-XXXXXX` verification code. Put the exact code in the public profile bio, save, then press Verify account. Codes expire after 24 hours. Instagram must be a professional **Business** account.
+- **YouTube and X:** use the official platform sign-in window, choose the exact channel/account you post from, and approve the requested access. For YouTube, select the Google login that owns the channel and keep the requested channel permissions enabled.
+- **Facebook:** place the Content Rewards code in a Facebook Reel caption, set the Reel audience to Public, copy that Reel's own link into the verification box, and press Verify. A check can take around 30 seconds.
+
+A green local checkbox in ClipReward Studio is only your reminder; it cannot verify the platform state. See the official [connection guide](https://help.contentrewards.com/en/articles/16746780-connect-your-social-accounts) and [account troubleshooting guide](https://help.contentrewards.com/en/articles/16817242-your-account-shows-as-not-linked).
+
+## Submission timing and duplicate rules
+
+A standard post must be public and **strictly less than 30 minutes old when you press Submit clip**. Exactly 30:00 is too old. Every post can be submitted to a particular campaign once. The official dialog accepts several post links, one per line, and checks each independently. For a pre-approval campaign, upload a draft first, wait for that draft to be approved, publish from an account approved on that draft, then submit the live link under the same less-than-30-minute rule.
+
+ClipReward Studio records one post URL per local campaign record. It does not call the Content Rewards dialog, submit multiple links, detect duplicate submissions on the live service, upload pre-approval drafts, or prove that the receipt was accepted. Keep the official Submissions page as the source of truth. See [Submit a video](https://help.contentrewards.com/en/articles/15319814-submit-a-video).
 
 ## Important limitations — read before using
 

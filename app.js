@@ -455,17 +455,18 @@ function sanitizeCampaignRecords(saved) {
       discarded += 1;
       continue;
     }
-    if (seenIds.has(item.id)) {
+    const id = item.id.trim();
+    if (seenIds.has(id)) {
       discarded += 1;
       continue;
     }
-    seenIds.add(item.id);
+    seenIds.add(id);
     if (records.length >= MAX_CAMPAIGNS) {
       discarded += 1;
       continue;
     }
     records.push({
-      id: item.id,
+      id,
       createdAt: item.createdAt,
       productName: item.productName.trim(),
       platform: item.platform,

@@ -83,10 +83,40 @@
   }
 
   function parseDeadline(text) {
+    const monthMap = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12 };
     const iso = /(?:deadline|ends?|end date|expires?)\s*[:=-]?\s*(20\d{2}-\d{2}-\d{2})/i.exec(text);
     if (iso) {
       const date = new Date(iso[1] + "T00:00:00Z");
       if (!Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === iso[1]) return iso[1];
+    }
+    const monthFirst = /(?:deadline|ends?|end date|expires?)\s*[:=-]?\s*([A-Za-z]{3,9})\s+(\d{1,2}),?\s+(20\d{2})/i.exec(text);
+    const dayFirst = /(?:deadline|ends?|end date|expires?)\s*[:=-]?\s*(\d{1,2})\s+([A-Za-z]{3,9})\s+(20\d{2})/i.exec(text);
+    const named = monthFirst || dayFirst;
+    if (named) {
+      const month = monthMap[(monthFirst ? named[1] : named[2]).slice(0, 3).toLowerCase()];
+      const day = Number(monthFirst ? named[2] : named[1]);
+      const year = Number(named[3]);
+      if (month && day >= 1 && day <= 31) {
+        const normalized = year + "-" + String(month).padStart(2, "0") + "-" + String(day).padStart(2, "0");
+        const date = new Date(normalized + "T00:00:00Z");
+        if (!Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === normalized) return normalized;
+      }
+    }
+    return "";
+  }
+
+  function findCampaignUrl(inputUrl, rawText) {
+    const candidates = [clean(inputUrl, 500)];
+    const embedded = /https:\/\/(?:www\.)?(?:[a-z0-9-]+\.)*contentrewards\.com\/c\/[^\s<>"')\]]+/ig;
+    let match;
+    while ((match = embedded.exec(rawText)) !== null) candidates.push(match[0].replace(/[.,;!?]+$/, ""));
+    for (const candidate of candidates) {
+      try {
+        const parsed = new URL(candidate);
+        if (parsed.protocol === "https:" && !parsed.username && !parsed.password &&
+            (parsed.hostname === "contentrewards.com" || parsed.hostname.endsWith(".contentrewards.com")) &&
+            /^\/c\//.test(parsed.pathname)) return parsed.href;
+      } catch (_) {}
     }
     return "";
   }
@@ -113,15 +143,7 @@
       : /join\s+campaign|join\s+now/i.test(rawText)
         ? "Open campaign / direct join"
         : "";
-    const url = clean(source.url, 500);
-    let sourceUrl = "";
-    try {
-      const parsed = new URL(url);
-      if (parsed.protocol === "https:" && !parsed.username && !parsed.password &&
-          (parsed.hostname === "contentrewards.com" || parsed.hostname.endsWith(".contentrewards.com"))) {
-        sourceUrl = parsed.href;
-      }
-    } catch (_) {}
+    const sourceUrl = findCampaignUrl(source.url, rawText);
 
     const findings = [];
     if (title) findings.push({ kind: "found", label: "Campaign name", value: title });

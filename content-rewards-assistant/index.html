@@ -98,20 +98,45 @@
     <div><div class="section-kicker">CAMPAIGN FINDER · AUTOFILL</div><h2>Find campaigns & import briefs</h2><p class="muted">Browse official public listings, paste a campaign card or brief, and let the local parser fill your tracker.</p></div>
     <span class="panel-symbol">⌕</span>
   </div>
-  <div class="scout-discover-row">
-    <div><strong>Step 1 · Choose your platform</strong><p class="muted small-text">Open the live public campaign list, choose the matching platform filter on Discover, then copy a campaign card or full brief.</p></div>
-    <div class="scout-platform-links">
-      <a class="button button-primary" data-scout-platform-link="Instagram" href="https://contentrewards.com/c/discover" target="_blank" rel="noopener noreferrer">Find Instagram ↗</a>
-      <a class="button button-primary" data-scout-platform-link="Facebook" href="https://contentrewards.com/c/discover" target="_blank" rel="noopener noreferrer">Find Facebook ↗</a>
-      <a class="button button-primary" data-scout-platform-link="YouTube" href="https://contentrewards.com/c/discover" target="_blank" rel="noopener noreferrer">Find YouTube ↗</a>
-    </div>
+  <div class="scout-platform-tiles">
+    <article class="scout-platform-tile">
+      <div class="section-kicker">INSTAGRAM</div><h3>Brand deals & creator marketplace</h3>
+      <p>Instagram app → Professional dashboard → Creator Marketplace / Partnership messages (when available to your account).</p>
+      <div class="scout-platform-actions">
+        <a class="button button-secondary" href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer">Open Instagram ↗</a>
+        <a class="button button-quiet" data-scout-platform-link="Instagram" href="https://contentrewards.com/c/discover" target="_blank" rel="noopener noreferrer">Find CR campaigns ↗</a>
+      </div>
+      <a class="text-button" href="https://about.fb.com/news/2024/02/creator-marketplace-for-brands-and-creators-to-collaborate-on-instagram/" target="_blank" rel="noopener noreferrer">Official Creator Marketplace guide ↗</a>
+    </article>
+    <article class="scout-platform-tile">
+      <div class="section-kicker">FACEBOOK</div><h3>Monetization & creator offers</h3>
+      <p>Facebook → Professional dashboard → Monetization. Check Content Monetization and any interest / invitation option shown for your account.</p>
+      <div class="scout-platform-actions">
+        <a class="button button-secondary" href="https://www.facebook.com/" target="_blank" rel="noopener noreferrer">Open Facebook ↗</a>
+        <a class="button button-quiet" data-scout-platform-link="Facebook" href="https://contentrewards.com/c/discover" target="_blank" rel="noopener noreferrer">Find CR campaigns ↗</a>
+      </div>
+      <a class="text-button" href="https://about.fb.com/news/2026/03/creator-fast-track-grow-your-audience-earn-money-on-facebook/" target="_blank" rel="noopener noreferrer">Official Facebook creator programs ↗</a>
+    </article>
+    <article class="scout-platform-tile">
+      <div class="section-kicker">YOUTUBE</div><h3>Creator partnerships & Shorts</h3>
+      <p>YouTube Studio → Earn → Creator Partnerships. India is supported for eligible channels; access still depends on YPP and account requirements.</p>
+      <div class="scout-platform-actions">
+        <a class="button button-secondary" href="https://studio.youtube.com/" target="_blank" rel="noopener noreferrer">Open YouTube Studio ↗</a>
+        <a class="button button-quiet" data-scout-platform-link="YouTube" href="https://contentrewards.com/c/discover" target="_blank" rel="noopener noreferrer">Find CR campaigns ↗</a>
+      </div>
+      <a class="text-button" href="https://support.google.com/youtube/answer/9385307?hl=en" target="_blank" rel="noopener noreferrer">Official Creator Partnerships eligibility ↗</a>
+    </article>
   </div>
-  <div class="account-warning"><strong>Important:</strong> the official site does not document a public campaign API. This assistant does not scrape your private account. Copy text from the public campaign card/detail page and paste it below. No passwords, verification codes or cookies are needed.</div>
+  <div class="scout-discover-row">
+    <div><strong>Content Rewards · public campaign marketplace</strong><p class="muted small-text">One live Discover page contains open campaigns across accepted social platforms. Select the same platform in Discover after opening it.</p></div>
+    <a class="button button-primary" href="https://contentrewards.com/c/discover" target="_blank" rel="noopener noreferrer">Open live Discover ↗</a>
+  </div>
+  <div class="account-warning"><strong>Automatic findings:</strong> after you paste a public campaign card or brief, the app extracts fields and shows findings automatically; use Autofill to open a pre-filled tracker. <strong>Not automated:</strong> private campaign search, native dashboard scraping, login, joining/applying or posting. No passwords, verification codes or cookies are needed.</div>
   <form id="campaign-scout-form" class="scout-form">
     <label>Target platform <span class="optional">(select one to filter the findings and autofill)</span><select id="scout-target-platform"><option value="Instagram">Instagram</option><option value="Facebook">Facebook</option><option value="YouTube">YouTube</option></select></label>
     <label>Official campaign URL <span class="optional">(paste the campaign page link)</span><input id="scout-source-url" type="url" inputmode="url" maxlength="500" placeholder="https://contentrewards.com/c/..."></label>
     <label>Campaign card or full brief text <span class="optional">(copy from Discover / campaign page)</span><textarea id="scout-brief-text" rows="7" maxlength="20000" placeholder="Paste the campaign name, rate, budget, accepted platforms and requirements here…"></textarea></label>
-    <div class="scout-actions"><button class="button button-secondary" id="scout-paste-button" type="button">Paste copied brief</button><button class="button button-primary" type="submit">⌕ Find details & analyse</button><button class="button button-quiet" id="scout-clear-button" type="button">Clear</button></div>
+    <div class="scout-actions"><button class="button button-secondary" id="scout-paste-button" type="button">Paste & analyse brief</button><button class="button button-primary" type="submit">⌕ Find details & analyse</button><button class="button button-quiet" id="scout-clear-button" type="button">Clear</button></div>
   </form>
   <section id="scout-results" class="scout-results" hidden aria-live="polite">
     <div class="scout-result-heading"><div><div class="section-kicker">AUTOMATIC FINDINGS</div><h3 id="scout-result-title">Campaign analysis</h3></div><span id="scout-confidence" class="instagram-status">Partial extraction</span></div>

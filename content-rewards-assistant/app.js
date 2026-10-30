@@ -222,7 +222,7 @@
   }
 
   function analyseCampaignBrief(event) {
-    event.preventDefault();
+    if (event && typeof event.preventDefault === "function") event.preventDefault();
     try {
       const result = window.ClipRewardScout.parseCampaignBrief({
         url: $("scout-source-url").value,
@@ -273,8 +273,9 @@
       const value = await navigator.clipboard.readText();
       if (!value.trim()) throw new Error("Clipboard is empty. Copy the visible campaign brief first.");
       $("scout-brief-text").value = value.slice(0, 20000);
-      showToast("Copied campaign text inserted. Press Find details & analyse.");
+      analyseCampaignBrief();
       $("scout-brief-text").focus();
+      if (campaignScoutResult) showToast("Brief pasted and analysed. Review findings, then use Autofill campaign tracker.");
     } catch (error) {
       showToast(error.message || "Clipboard permission denied. Paste the brief manually.");
       $("scout-brief-text").focus();
@@ -532,6 +533,21 @@
     });
   });
   $("campaign-scout-form").addEventListener("submit", analyseCampaignBrief);
+  $("scout-brief-text").addEventListener("input", () => {
+    if ($("scout-brief-text").value.trim().length < 12) {
+      campaignScoutResult = null;
+      $("scout-results").hidden = true;
+      $("scout-autofill-button").disabled = true;
+      return;
+    }
+    analyseCampaignBrief();
+  });
+  $("scout-source-url").addEventListener("change", () => {
+    if ($("scout-brief-text").value.trim().length >= 12) analyseCampaignBrief();
+  });
+  $("scout-target-platform").addEventListener("change", () => {
+    if ($("scout-brief-text").value.trim().length >= 12) analyseCampaignBrief();
+  });
   $("scout-paste-button").addEventListener("click", pasteCampaignBriefFromClipboard);
   document.querySelectorAll("[data-scout-platform-link]").forEach((link) => {
     link.addEventListener("click", () => {

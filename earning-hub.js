@@ -171,6 +171,7 @@
       payoutConfidence: $("earningPayout").value,
       risk: $("earningRisk").value,
       deadline: $("earningDeadline").value,
+      sourceCheckedAt: $("earningSourceCheckedAt").value,
       deliverables: $("earningDeliverables").value.split("\n").map(value => value.trim()).filter(Boolean)
     };
     const checked = engine.validateOpportunity(raw);

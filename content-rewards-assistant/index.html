@@ -41,6 +41,18 @@
     </div>
     <div class="instagram-setup-note"><strong>Important:</strong> This is Content Rewards' own account-linking flow, not Meta developer OAuth for a separate publishing app. ClipReward Studio does not log in, publish, or query connection status. <a href="https://help.contentrewards.com/en/articles/16746780-connect-your-social-accounts" target="_blank" rel="noopener noreferrer">Open the current official guide ↗</a></div>
   </div>
+  <div class="account-checklist-panel" id="platform-verification-guide">
+    <div class="account-subheading">Verify each platform inside Content Rewards</div>
+    <p class="muted small-text">A saved handle in ClipReward Studio is only a reminder. Use Settings → Connected accounts in Content Rewards and finish the platform's own verification. The account that posts must be the exact account shown as verified.</p>
+    <div class="instagram-setup-grid">
+      <article class="instagram-setup-step"><span>TT</span><div><strong>TikTok</strong><p>Choose Connect account in Content Rewards. Copy its <code>CR-XXXXXX</code> code into your public TikTok bio, save, then press Verify account. The code expires after 24 hours.</p></div></article>
+      <article class="instagram-setup-step"><span>IG</span><div><strong>Instagram Business</strong><p>Use a Business professional account. Put the exact <code>CR-XXXXXX</code> code in the public profile bio, save, then press Verify account in Content Rewards. The code expires after 24 hours.</p></div></article>
+      <article class="instagram-setup-step"><span>YT</span><div><strong>YouTube</strong><p>Choose the Google login that owns the channel you publish from, sign in through Content Rewards, select the correct channel, and approve the requested access. Keep the required access boxes checked.</p></div></article>
+      <article class="instagram-setup-step"><span>X</span><div><strong>X</strong><p>Connect through the official X sign-in window and approve access for the exact account you publish from.</p></div></article>
+      <article class="instagram-setup-step"><span>FB</span><div><strong>Facebook</strong><p>Copy the code shown by Content Rewards, put it in a Facebook Reel caption, set that Reel to Public, copy the Reel's own link, paste it into the verification box and press Verify. A check can take around 30 seconds.</p></div></article>
+    </div>
+    <div class="instagram-setup-note"><strong>Verification reminders:</strong> the profile must be public, the code must match exactly and be within 24 hours. A Whop connection does not count. One social account can be linked to one Content Rewards account at a time. For draft-preapproval campaigns, publish only from an account approved on that draft. <a href="https://help.contentrewards.com/en/articles/16817242-your-account-shows-as-not-linked" target="_blank" rel="noopener noreferrer">Troubleshoot account verification ↗</a></div>
+  </div>
   <div class="account-layout">
     <div class="account-column">
       <div class="account-subheading">Official account shortcuts</div>
@@ -75,7 +87,7 @@
       <label><input type="checkbox" data-account-check="socialVerified"><span><strong>Social account verified</strong><small>The account I will post from shows Connected in Content Rewards settings.</small></span></label>
       <label><input type="checkbox" data-account-check="campaignReady"><span><strong>Campaign approved or joined</strong><small>I checked the brief, platform, eligibility and requirements.</small></span></label>
       <label><input type="checkbox" data-account-check="postPublished"><span><strong>Public clip posted</strong><small>The clip was posted on the correct connected account, using permitted content.</small></span></label>
-      <label><input type="checkbox" data-account-check="submissionSent"><span><strong>Submission sent</strong><small>I submitted the post link through Content Rewards within 30 minutes.</small></span></label>
+      <label><input type="checkbox" data-account-check="submissionSent"><span><strong>Submission sent</strong><small>I submitted the post link while the post was less than 30 minutes old.</small></span></label>
     </div>
     <p class="account-checklist-note">These checkboxes are saved locally and are not synced to, or verified by, Content Rewards. Approval and payment still depend on their review.</p>
   </div>
@@ -92,7 +104,7 @@
         <li>Join the campaign, or apply and wait until the brand approves you.</li>
         <li>Read the brief. Use permitted footage/audio, place a clear disclosure at the beginning, and do not use Collab/co-posting unless the brief allows it.</li>
         <li>Publish the clip publicly from the exact account connected and verified in Content Rewards.</li>
-        <li>Open that campaign, paste the public post link and submit it within 30 minutes of posting.</li>
+        <li>Open that campaign, paste the public post link and submit it while the post is less than 30 minutes old.</li>
       </ol>
       <p class="muted small-text"><strong>Content Rewards checks:</strong> the posting account is linked, the post has not already been submitted to this campaign, and it was posted less than 30 minutes ago.</p>
       <a class="text-button" href="https://help.contentrewards.com/en/articles/15319814-submit-a-video" target="_blank" rel="noopener noreferrer">Official standard submission steps ↗</a>
@@ -104,7 +116,7 @@
         <li>Use Submit clip to upload your draft file before publishing it.</li>
         <li>Choose the connected account you intend to post from and wait for the campaign team to approve the draft or request changes.</li>
         <li>After approval, publish from one of the accounts approved on that draft.</li>
-        <li>Submit the live public post link within 30 minutes, just like the standard route.</li>
+        <li>Submit the live public post link while the post is less than 30 minutes old, just like the standard route.</li>
       </ol>
       <p class="muted small-text">A draft approval is not the same as approval of the final live submission. The posted clip is reviewed again.</p>
       <a class="text-button" href="https://help.contentrewards.com/en/articles/15319814-submit-a-video" target="_blank" rel="noopener noreferrer">Official pre-approval instructions ↗</a>
@@ -148,7 +160,7 @@
 <label>Platform where you posted <span class="optional">(required for a Content Rewards submission)</span><select id="campaign-post-platform"><option value="">Choose platform</option><option>TikTok</option><option>Instagram</option><option>YouTube</option><option>Facebook</option><option>X</option><option>Other</option></select></label>
 <label>Time you posted <span class="optional">(starts the Content Rewards 30-minute window)</span><input id="campaign-posted-at" type="datetime-local"></label>
 <label>Time you submitted the link inside Content Rewards <span class="optional">(actual submission time; required before marking Submitted)</span><input id="campaign-submitted-at" type="datetime-local"></label>
-<p class="muted small-text deadline-help">To mark a Content Rewards record Submitted, select the platform, use its matching public post link, and record both times. The app checks that the link-submission time is not before the post and is no more than 30 minutes later. Enter the time you actually pressed Submit clip; this app still cannot submit or verify the receipt.</p><div class="modal-actions"><button class="button button-quiet" id="cancel-modal" type="button">Cancel</button><button class="button button-primary" type="submit">Save campaign</button></div></form>
+<p class="muted small-text deadline-help">To mark a Content Rewards record Submitted, select the platform, use its matching public post link, and record both times. The app checks that the link-submission time is not before the post and is strictly less than 30 minutes later. Enter the time you actually pressed Submit clip; this app still cannot submit or verify the receipt.</p><div class="modal-actions"><button class="button button-quiet" id="cancel-modal" type="button">Cancel</button><button class="button button-primary" type="submit">Save campaign</button></div></form>
 </section></div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <script src="./core.js"></script><script src="./app.js"></script>

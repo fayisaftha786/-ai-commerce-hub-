@@ -27,6 +27,7 @@ test("campaign brief parser extracts title, CPM, used and total budget, platform
   assert.equal(result.budget.spent.value, 1200);
   assert.equal(result.budget.total.value, 5000);
   assert.equal(result.budget.remaining.value, 3800);
+  assert.equal(result.entryMode, "Open campaign / direct join");
   assert.deepEqual(result.platforms, ["TikTok", "Instagram", "YouTube"]);
   assert.equal(result.category, "Gaming");
   assert.equal(result.deadline, "2026-12-01");
@@ -42,6 +43,7 @@ test("campaign brief parser recognises per-post and retainer models without inve
   assert.equal(perPost.rate.model, "Per post");
   assert.equal(perPost.rate.amount.value, 250);
   assert.equal(perPost.budget.total.value, 2000);
+  assert.equal(perPost.entryMode, "Application / brand review");
 
   const retainer = Scout.parseCampaignBrief({
     text: "Campaign: Monthly clips\nRetainer partnership\nYouTube"
@@ -80,6 +82,7 @@ test("autofill notes preserve uncertainty and include extracted evidence", () =>
   assert.match(notes, /verify against the official campaign page/i);
   assert.match(notes, /\$1.5 per 1,000 views/);
   assert.match(notes, /TikTok/);
+  assert.match(notes, /Joining method: Not stated/);
   assert.match(notes, /Must be original/);
   assert.match(notes, /Not found/);
 });

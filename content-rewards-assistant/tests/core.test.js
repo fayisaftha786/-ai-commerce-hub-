@@ -183,7 +183,7 @@ test("Content Rewards preflight enforces the 30-minute boundary and rejects inco
   const beforePost = Core.validateSubmissionRecord({ ...base, submittedAt: "2026-10-30T09:59:00.000Z" }, "2026-10-30T10:30:00.000Z");
   assert.equal(beforePost.valid, false);
   assert.match(beforePost.error, /cannot be earlier than the post time/i);
-  const futureSubmission = Core.validateSubmissionRecord({ ...base, submittedAt: "2026-10-30T11:00:00.000Z" }, "2026-10-30T10:30:00.000Z");
+  const futureSubmission = Core.validateSubmissionRecord({ ...base, submittedAt: "2026-10-30T10:20:00.000Z" }, "2026-10-30T10:10:00.000Z");
   assert.equal(futureSubmission.valid, false);
   assert.match(futureSubmission.error, /in the future/i);
 });

@@ -81,3 +81,5 @@
 .scout-platform-tile>.text-button{font-size:10px}
 @media(max-width:900px){.scout-platform-tiles{grid-template-columns:1fr 1fr}}
 @media(max-width:560px){.scout-platform-tiles{grid-template-columns:1fr}.scout-platform-actions{display:grid;grid-template-columns:1fr 1fr}.scout-platform-actions .button{width:100%}}
+
+.status-applied{background:#3a2c4e;color:#dfc3ff}.status-joined{background:#213b50;color:#a8ddff}

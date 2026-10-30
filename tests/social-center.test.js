@@ -34,3 +34,24 @@ test("social desk clearly labels manual posting and includes upload and analytic
   assert.ok(html.includes("does not sign in to accounts or publish automatically"));
   assert.ok(html.includes('src="social-center.js"'));
 });
+
+test("social analytics withholds order rate when orders exceed clicks", () => {
+  const result = social.analyzeSocialMetrics({ reach: 1000, likes: 50, comments: 10, shares: 5, clicks: 20, orders: 25 });
+  assert.equal(result.valid, true);
+  assert.equal(result.orderRate, null);
+  assert.equal(result.warnings.length, 1);
+  assert.match(result.warnings[0], /Orders exceed clicks/);
+});
+
+test("social analytics rejects an unsafe aggregate interaction count", () => {
+  const result = social.analyzeSocialMetrics({
+    reach: 100,
+    likes: Number.MAX_SAFE_INTEGER,
+    comments: 1,
+    shares: 0,
+    clicks: 10,
+    orders: 1
+  });
+  assert.equal(result.valid, false);
+  assert.match(result.error, /safe numeric range/);
+});

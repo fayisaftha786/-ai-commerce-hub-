@@ -67,10 +67,51 @@
     <p class="account-checklist-note">These checkboxes are saved locally and are not synced to, or verified by, Content Rewards. Approval and payment still depend on their review.</p>
   </div>
 </section>
+
+<section id="content-rewards-workflow" class="panel">
+  <div class="panel-header"><div><div class="section-kicker">OFFICIAL PLATFORM WORKFLOW</div><h2>Content Rewards submission guide</h2><p class="muted">Use the matching route from the campaign brief. This guide is a checklist; ClipReward Studio does not submit clips or verify approvals.</p></div><span class="panel-symbol">↗</span></div>
+  <div class="account-warning"><strong>Before you post:</strong> the account must be connected and verified inside Content Rewards itself. A social account connected only in Whop does not count. Instagram must be a Business account. <a href="https://help.contentrewards.com/en/articles/16746780-connect-your-social-accounts" target="_blank" rel="noopener noreferrer">Open the official account-connection guide</a>.</div>
+  <div class="account-layout">
+    <article class="campaign-card">
+      <div class="section-kicker">ROUTE A · MOST CAMPAIGNS</div>
+      <h3>Post first, then submit the link</h3>
+      <ol>
+        <li>Join the campaign, or apply and wait until the brand approves you.</li>
+        <li>Read the brief. Use permitted footage/audio, place a clear disclosure at the beginning, and do not use Collab/co-posting unless the brief allows it.</li>
+        <li>Publish the clip publicly from the exact account connected and verified in Content Rewards.</li>
+        <li>Open that campaign, paste the public post link and submit it within 30 minutes of posting.</li>
+      </ol>
+      <p class="muted small-text"><strong>Content Rewards checks:</strong> the posting account is linked, the post has not already been submitted to this campaign, and it was posted less than 30 minutes ago.</p>
+      <a class="text-button" href="https://help.contentrewards.com/en/articles/15319814-submit-a-video" target="_blank" rel="noopener noreferrer">Official standard submission steps ↗</a>
+    </article>
+    <article class="campaign-card">
+      <div class="section-kicker">ROUTE B · PRE-APPROVAL CAMPAIGNS</div>
+      <h3>Get the draft approved before posting</h3>
+      <ol>
+        <li>Use Submit clip to upload your draft file before publishing it.</li>
+        <li>Choose the connected account you intend to post from and wait for the campaign team to approve the draft or request changes.</li>
+        <li>After approval, publish from one of the accounts approved on that draft.</li>
+        <li>Submit the live public post link within 30 minutes, just like the standard route.</li>
+      </ol>
+      <p class="muted small-text">A draft approval is not the same as approval of the final live submission. The posted clip is reviewed again.</p>
+      <a class="text-button" href="https://help.contentrewards.com/en/articles/15319814-submit-a-video" target="_blank" rel="noopener noreferrer">Official pre-approval instructions ↗</a>
+    </article>
+  </div>
+  <div class="account-checklist-panel">
+    <div class="account-subheading">After submission</div>
+    <p class="muted small-text">The submission appears as Pending while the campaign team reviews it. Nothing is approved automatically. CPM, per-post and retainer campaigns have different earning and payout schedules; check the official terms instead of treating this local log as earnings data.</p>
+    <div class="campaign-actions">
+      <a class="text-button" href="https://help.contentrewards.com/en/articles/15319801-approval-and-review" target="_blank" rel="noopener noreferrer">Approval & review ↗</a>
+      <a class="text-button" href="https://help.contentrewards.com/en/articles/15319815-payouts" target="_blank" rel="noopener noreferrer">Payout rules ↗</a>
+      <a class="text-button" href="https://help.contentrewards.com/en/articles/16830147-what-you-can-target-and-what-you-can-measure" target="_blank" rel="noopener noreferrer">What is measurable ↗</a>
+    </div>
+    <p class="muted small-text">Content Rewards currently documents no public API for campaign or creator analytics. This app cannot sync campaigns, views, approvals or payouts automatically.</p>
+  </div>
+</section>
 <div class="content-grid">
 <section id="campaigns" class="panel campaigns-panel">
 <div class="panel-header"><div><div class="section-kicker">YOUR PIPELINE</div><h2>Campaign tracker</h2><p class="muted">Track campaign details against their actual terms and deadlines.</p></div><button class="button button-primary" id="add-campaign-button" type="button">＋ Add campaign</button></div>
-<div class="filter-row"><label class="search-box">⌕ <input id="campaign-search" type="search" placeholder="Search campaigns" aria-label="Search campaigns"></label><select id="status-filter" aria-label="Filter campaign status"><option value="all">All statuses</option><option value="idea">Idea</option><option value="editing">Editing</option><option value="ready">Ready to post</option><option value="submitted">Submitted</option><option value="approved">Approved</option><option value="rejected">Needs changes</option></select></div>
+<div class="filter-row"><label class="search-box">⌕ <input id="campaign-search" type="search" placeholder="Search campaigns" aria-label="Search campaigns"></label><select id="status-filter" aria-label="Filter campaign status"><option value="all">All statuses</option><option value="idea">Idea</option><option value="editing">Editing</option><option value="ready">Ready to post</option><option value="submitted">Submitted</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select></div>
 <div id="campaign-list" class="campaign-list"></div><div id="empty-state" class="empty-state"><div class="empty-icon">✳</div><h3>Your workspace starts here</h3><p>Add the campaign name, rules and deadline. Then plan an original or expressly licensed clip.</p><button class="button button-primary" type="button" id="empty-add-button">Add your first campaign</button></div>
 </section>
 <aside class="right-column">
@@ -91,7 +132,7 @@
 </main></div>
 <div id="campaign-modal" class="modal-backdrop" hidden><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-header"><div><div class="section-kicker">CAMPAIGN DETAILS</div><h2 id="modal-title">Add campaign</h2></div><button class="icon-button" id="close-modal" type="button" aria-label="Close dialog">×</button></div>
 <form id="campaign-form" class="form-stack"><input id="campaign-id" type="hidden"><label>Campaign name<input id="campaign-name" required maxlength="120" placeholder="Campaign or brief name"></label><label>Platform<select id="campaign-platform"><option>Content Rewards</option><option>Whop</option><option>TikTok campaign</option><option>Instagram campaign</option><option>YouTube campaign</option><option>Other</option></select></label><label>Campaign or rules URL<input id="campaign-url" type="url" placeholder="https://…" maxlength="500"></label><label>Deadline <span class="optional">(optional)</span><input id="campaign-deadline" type="date"></label><label>Reward terms / requirements<textarea id="campaign-rules" rows="3" maxlength="2000" placeholder="Required duration, disclosure, submission window, permitted assets…"></textarea></label><label>Status<select id="campaign-status"><option value="idea">Idea</option><option value="editing">Editing</option><option value="ready">Ready to post</option><option value="submitted">Submitted</option><option value="approved">Approved</option><option value="rejected">Needs changes</option></select></label><label>Public post URL <span class="optional">(for submission log)</span><input id="campaign-post-url" type="url" placeholder="https://…" maxlength="500"></label>
-<label>Time you posted <span class="optional">(starts the 30-minute submission countdown)</span><input id="campaign-posted-at" type="datetime-local"></label><p class="muted small-text deadline-help">Use the time the public post went live. The timer is a local reminder only; it does not submit or verify anything on Content Rewards.</p><div class="modal-actions"><button class="button button-quiet" id="cancel-modal" type="button">Cancel</button><button class="button button-primary" type="submit">Save campaign</button></div></form>
+<label>Time you posted <span class="optional">(Content Rewards: starts the 30-minute submission window)</span><input id="campaign-posted-at" type="datetime-local"></label><p class="muted small-text deadline-help">Use the time the public post went live. The 30-minute rule applies to Content Rewards, not every creator programme. This timer is a local reminder only; it does not submit or verify anything on Content Rewards.</p><div class="modal-actions"><button class="button button-quiet" id="cancel-modal" type="button">Cancel</button><button class="button button-primary" type="submit">Save campaign</button></div></form>
 </section></div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <script src="./core.js"></script><script src="./app.js"></script>

@@ -22,6 +22,14 @@ Or run the existing root project as usual and open \`content-rewards-assistant/i
 - Responsive dark dashboard, mobile navigation, local-first storage and best-effort static-asset caching.
 - Node.js regression tests for the core data validation and backup format.
 
+## Content Rewards submission workflow
+
+The in-app submission guide now separates the two official routes: standard campaigns (publish a public clip, then submit its link within 30 minutes) and pre-approval campaigns (upload a draft first, wait for approval, publish from an approved connected account, then submit the live link within 30 minutes). The local reminder timer applies only to Content Rewards campaigns; it does not impose Content Rewards' 30-minute rule on other programmes.
+
+When a Content Rewards campaign is marked Submitted in the local tracker, a public HTTPS post URL and the time the post went live are required. This checks the local record only; it does not confirm that the link was actually submitted on the Content Rewards site. Rejected is labelled as Rejected, not as a request for changes.
+
+The current official flow requires the exact posting account to be connected and verified in Content Rewards (a Whop account connection alone does not count), and each submission is checked for a connected account, duplicate submission to the same campaign and post age under 30 minutes. Pre-approval drafts are reviewed before posting and the final live post is reviewed again. See the official [submission guide](https://help.contentrewards.com/en/articles/15319814-submit-a-video), [account connection guide](https://help.contentrewards.com/en/articles/16746780-connect-your-social-accounts), and [approval and review guide](https://help.contentrewards.com/en/articles/15319801-approval-and-review).
+
 ## Important limitations — read before using
 
 This is **not an official Content Rewards or Whop integration**. The Account Center only opens official pages and saves local reminders; it does not sign in, control the session, read account data, or verify that a social account is really connected. The 30-minute countdown is a local reminder, not a platform submission or verified receipt. No account login/OAuth connection, live campaign feed, reward eligibility verification, video rendering, social publishing, views ingestion, payout tracking, or connected AI API is implemented in this MVP. The content generator is a local template helper, not a claim that an AI model has been connected. A true AI API requires a secure server-side integration; do not put secret API keys in frontend code or GitHub.

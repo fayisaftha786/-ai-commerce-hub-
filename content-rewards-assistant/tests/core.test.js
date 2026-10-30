@@ -136,3 +136,32 @@ test("service worker uses network-first refresh with cached offline fallback", (
   assert.match(workerSource, /request.mode === "navigate"/);
   assert.match(workerSource, /return Response.error\(\)/);
 });
+
+
+test("Content Rewards submission records require a public post URL and post time, but other programmes do not", () => {
+  const missingUrl = Core.validateSubmissionRecord({ platform: "Content Rewards", status: "submitted", postedAt: "2026-10-30T10:00:00.000Z" });
+  assert.equal(missingUrl.valid, false);
+  assert.match(missingUrl.error, /public post URL/i);
+  const missingTime = Core.validateSubmissionRecord({ platform: "Content Rewards", status: "submitted", postUrl: "https://www.instagram.com/reel/example/" });
+  assert.equal(missingTime.valid, false);
+  assert.match(missingTime.error, /time the public post went live/i);
+  assert.deepEqual(Core.validateSubmissionRecord({
+    platform: "Content Rewards", status: "submitted",
+    postUrl: "https://www.instagram.com/reel/example/",
+    postedAt: "2026-10-30T10:00:00.000Z"
+  }), { valid: true, error: "" });
+  assert.equal(Core.validateSubmissionRecord({ platform: "Whop", status: "submitted" }).valid, true);
+  assert.equal(Core.validateSubmissionRecord({ platform: "Content Rewards", status: "editing" }).valid, true);
+});
+
+test("30-minute countdown is scoped to Content Rewards and rejection status matches platform wording", () => {
+  const appSource = fs.readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
+  assert.match(appSource, /rejected: "Rejected"/);
+  assert.match(appSource, /campaign\.platform !== "Content Rewards" \|\| !campaign\.postedAt/);
+  assert.match(appSource, /Core\.validateSubmissionRecord\(record\)/);
+  const htmlSource = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
+  assert.match(htmlSource, /ROUTE A · MOST CAMPAIGNS/);
+  assert.match(htmlSource, /ROUTE B · PRE-APPROVAL CAMPAIGNS/);
+  assert.match(htmlSource, /within 30 minutes/);
+  assert.match(htmlSource, /does not submit clips or verify approvals/);
+});

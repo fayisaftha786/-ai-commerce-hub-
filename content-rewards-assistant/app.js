@@ -5,7 +5,7 @@
   const $ = (id) => document.getElementById(id);
   let state = { campaigns: [], timestamps: [], account: Core.normalizeAccount({}) };
   let toastTimer;
-  const statusNames = { idea: "Idea", editing: "Editing", ready: "Ready to post", submitted: "Awaiting review", approved: "Approved", rejected: "Needs changes" };
+  const statusNames = { idea: "Idea", editing: "Editing", ready: "Ready to post", submitted: "Awaiting review", approved: "Approved", rejected: "Rejected" };
 
   function escapeHtml(value) {
     return String(value == null ? "" : value).replace(/[&<>"']/g, (ch) => ({
@@ -68,7 +68,7 @@
     return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
   }
   function submissionDeadlineMarkup(campaign) {
-    if (!campaign.postedAt) return "";
+    if (campaign.platform !== "Content Rewards" || !campaign.postedAt) return "";
     const deadline = new Date(campaign.postedAt).getTime() + 30 * 60 * 1000;
     const remaining = deadline - Date.now();
     if (["submitted", "approved", "rejected"].includes(campaign.status)) {
@@ -229,6 +229,8 @@
         postedAt: $("campaign-posted-at").value ? new Date($("campaign-posted-at").value).toISOString() : "",
         createdAt: old ? old.createdAt : ""
       });
+      const submissionValidation = Core.validateSubmissionRecord(record);
+      if (!submissionValidation.valid) throw new Error(submissionValidation.error);
       if (!old && state.campaigns.length >= Core.MAX_CAMPAIGNS) throw new Error("Campaign limit reached. Export a backup before adding more.");
       state.campaigns = old ? state.campaigns.map((c) => c.id === old.id ? record : c) : [record, ...state.campaigns];
       const persisted = save();

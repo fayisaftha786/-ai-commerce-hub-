@@ -189,6 +189,66 @@
     renderTimestamps();
     renderSubmissions();
   }
+  let campaignScoutResult = null;
+
+  function renderCampaignScout(result) {
+    campaignScoutResult = result;
+    $("scout-result-title").textContent = result.title || "Campaign details found";
+    $("scout-confidence").textContent = result.confidence;
+    const found = result.findings.map((item) =>
+      '<article class="scout-found-card"><small>' + escapeHtml(item.label) + '</small><strong>' + escapeHtml(item.value) + '</strong></article>'
+    ).join("");
+    $("scout-found-grid").innerHTML = found || '<p class="muted small-text">No reliable fields were recognised. Paste more of the campaign brief.</p>';
+    $("scout-requirements").innerHTML = result.requirementLines.length
+      ? result.requirementLines.map((line) => "<li>" + escapeHtml(line) + "</li>").join("")
+      : "<li>Not found in pasted text. Review the official brief.</li>";
+    $("scout-missing").innerHTML = result.missing.length
+      ? result.missing.map((line) => "<li>" + escapeHtml(line) + "</li>").join("")
+      : "<li>No missing fields detected by this parser. Still verify the official campaign page.</li>";
+    $("scout-autofill-button").disabled = !result.title && !result.sourceUrl;
+    $("scout-results").hidden = false;
+  }
+
+  function analyseCampaignBrief(event) {
+    event.preventDefault();
+    try {
+      const result = window.ClipRewardScout.parseCampaignBrief({
+        url: $("scout-source-url").value,
+        text: $("scout-brief-text").value
+      });
+      renderCampaignScout(result);
+      showToast("Campaign details extracted from pasted text. Review the findings.");
+    } catch (error) {
+      campaignScoutResult = null;
+      $("scout-results").hidden = true;
+      showToast(error.message || "Could not analyse this campaign brief.");
+    }
+  }
+
+  function autofillCampaignTracker() {
+    if (!campaignScoutResult) return;
+    const result = campaignScoutResult;
+    openModal(null);
+    $("campaign-name").value = result.title || "Content Rewards campaign — rename this";
+    $("campaign-platform").value = "Content Rewards";
+    $("campaign-url").value = result.sourceUrl || "";
+    $("campaign-deadline").value = result.deadline || "";
+    $("campaign-rules").value = window.ClipRewardScout.buildTrackerNotes(result);
+    $("campaign-status").value = "idea";
+    $("campaign-post-url").value = "";
+    $("campaign-post-platform").value = "";
+    $("campaign-posted-at").value = "";
+    $("campaign-submitted-at").value = "";
+    showToast("Tracker fields autofilled. Check every value before saving.");
+  }
+
+  function clearCampaignScout() {
+    $("campaign-scout-form").reset();
+    $("scout-results").hidden = true;
+    $("scout-found-grid").innerHTML = "";
+    campaignScoutResult = null;
+  }
+
   function openModal(campaign) {
     const editing = Boolean(campaign);
     $("campaign-form").reset();
@@ -428,6 +488,9 @@
       save(); renderAccount();
     });
   });
+  $("campaign-scout-form").addEventListener("submit", analyseCampaignBrief);
+  $("scout-autofill-button").addEventListener("click", autofillCampaignTracker);
+  $("scout-clear-button").addEventListener("click", clearCampaignScout);
   $("draft-form").addEventListener("submit", generateDraft);
   $("copy-draft").addEventListener("click", copyDraft);
   $("export-button").addEventListener("click", exportBackup);

@@ -21,7 +21,7 @@ A lightweight affiliate workspace prototype for evaluating offer details, shortl
 - Generate three distinct hook options and three CTA options for simple creative testing; compare results manually because the prototype does not track conversions
 - Save a local campaign register with a unique ID per content variant and export campaign metadata as CSV
 - Import authorised campaign-performance CSVs, group by exact campaign ID and reporting period, detect exact duplicate rows and overlapping date windows, and calculate conversion only when click/order counts are plausible
-- Export/restore a versioned JSON backup of local products, campaigns, shortlist and imported catalogue data
+- Export/restore one versioned full-workspace JSON backup covering products, campaigns, shortlist, imported catalogue data, Earning Hub opportunities/tasks/earnings, and ClipReward Studio campaigns/timestamps/account checklist
 - Copy content for Instagram, Facebook, WhatsApp and YouTube Shorts workflows
 - Automated Node.js regression tests and GitHub Actions CI
 - App Self-Check: local diagnostics for secure context, browser storage, critical modules, required forms and service-worker readiness; it clearly distinguishes local checks from live API connectivity
@@ -94,7 +94,7 @@ Live marketplace access will be enabled only after account eligibility, current 
 ## Known limitations
 
 - This is a prototype, not a production affiliate platform.
-- Product, campaign and shortlist data are stored only in the current browser's local storage; there is no account or automatic cloud sync. You can manually export and restore a JSON backup; keep it private and store it safely.
+- All workspace data, including ClipReward Studio, is stored only in this browser's local storage; there is no account or automatic cloud sync. Use the main **Export full backup** / **Restore from backup** controls to export or restore all workspace sections in one file. Older main-app backups that do not contain ClipReward data preserve the current ClipReward data during restore. Keep backups private and store them safely.
 - The click counter records link-click events in the current page session. It does not confirm successful page loads, purchases, conversions or commissions.
 - Campaign IDs are organisational labels only. The registry does not track external clicks or sales and does not modify affiliate URLs with tracking parameters. Use programme-approved campaign/sub-ID fields only if available, then compare authorised performance reports.
 - Content is template-generated; no live AI API is connected.

@@ -125,7 +125,7 @@ test("campaign finder is wired to official Discover, local parser, and existing 
   assert.match(html, /data-scout-platform-link="Facebook"/);
   assert.match(html, /data-scout-platform-link="YouTube"/);
   assert.match(html, /professional dashboard/i);
-  assert.match(html, /studio\\.youtube\\.com/);
+  assert.ok(html.includes("studio.youtube.com"));
   assert.match(html, /creator marketplace/i);
   assert.match(html, /id="scout-target-platform"/);
   assert.match(html, /id="scout-paste-button"/);
@@ -134,8 +134,8 @@ test("campaign finder is wired to official Discover, local parser, and existing 
   assert.match(app, /ClipRewardScout\.buildTrackerNotes/);
   assert.match(app, /autofillCampaignTracker/);
   assert.match(app, /pasteCampaignBriefFromClipboard/);
-  assert.match(app, /analyseCampaignBrief\\(\\);/);
-  assert.match(app, /addEventListener\\("input"/);
+  assert.ok(app.includes("analyseCampaignBrief();"));
+  assert.ok(app.includes('addEventListener("input"'));
   assert.match(app, /result\.platformMatch === "mismatch"/);
   assert.match(worker, /clipreward-static-v4/);
   assert.match(worker, /campaign-scout\.js/);

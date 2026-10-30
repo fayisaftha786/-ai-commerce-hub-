@@ -119,3 +119,16 @@ A separate early-stage creator workspace is in [`content-rewards-assistant/`](co
 ## Development roadmap
 
 See [docs/ROADMAP.md](docs/ROADMAP.md) for phased delivery, marketplace API prerequisites, acceptance criteria, and the strategy for reducing rework.
+
+
+## Multi-platform Earning Intelligence (first release)
+
+The Earning Hub adds an India-first provider registry for YouTube, Facebook, Instagram, Snapchat, X, Amazon India, Flipkart and Meesho. TikTok is intentionally excluded for the India-focused workflow.
+
+- Add an opportunity with an official HTTPS source, platform, eligibility, reward (if known), effort, payout evidence, risk, deadline, deliverables and source-check date.
+- Rank opportunities using explainable weighted signals and evidence coverage. Unknown fields do not receive positive points; stale source checks reduce the score; ineligible, high-risk, closed and expired opportunities are blocked from priority.
+- Generate a local task plan with explicit user approval gates for account eligibility, publishing and payout reconciliation.
+- Record estimated, confirmed and paid INR amounts separately. Confirmed and paid records require an HTTPS evidence link, but the link and amount remain user-entered and are not independently verified by this app.
+- Opportunity, task and earnings records are included in the validated workspace backup and restore.
+
+**Integration boundary:** this is automatic analysis after a user adds a source-backed opportunity, not a live campaign discovery feed. No social account login, API connection, automatic publishing, platform submission or payout verification is implemented. Provider availability and account eligibility must be checked in the official account dashboard. All Earning Hub records are stored locally in the current browser until you export a backup.

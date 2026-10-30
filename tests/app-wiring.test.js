@@ -129,6 +129,17 @@ test("combined workspace backup includes and validates ClipReward Studio data", 
     window: { ClipRewardCore: clipRewardCore },
     MAX_PRODUCTS: 100,
     MAX_CAMPAIGNS: 200,
+    CLIPREWARD_STORAGE_KEY: "clipreward-studio-v1",
+    BACKUP_KEYS: [
+      "ai-commerce-hub.products.v1",
+      "ai-commerce-hub.campaigns.v1",
+      "ai-commerce-hub.candidates.v1",
+      "ai-commerce-hub.catalog-import.v1",
+      "ai-commerce-hub.earning-opportunities.v1",
+      "ai-commerce-hub.earning-tasks.v1",
+      "ai-commerce-hub.earning-records.v1",
+      "clipreward-studio-v1"
+    ],
     safeCampaignUrl(value) { try { return new URL(value).protocol === "https:" ? value : ""; } catch { return ""; } }
   });
   const workspaceBackup = {

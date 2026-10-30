@@ -818,10 +818,15 @@ function renderCandidates() {
     remove.className = "secondary";
     remove.textContent = "Remove";
     remove.addEventListener("click", () => {
-      const index = candidates.findIndex((item) => item.name === candidate.name && item.price === candidate.price);
-      if (index >= 0) candidates.splice(index, 1);
-      saveCandidates();
+      const index = candidates.indexOf(candidate);
+      if (index < 0) return;
+      candidates.splice(index, 1);
+      const saved = saveCandidates();
+      if (!saved) candidates.splice(index, 0, candidate);
       renderCandidates();
+      $("candidateResult").textContent = saved
+        ? "Candidate removed and saved on this device."
+        : "Could not remove candidate because browser storage is unavailable. The shortlist was restored; try again after freeing storage space.";
     });
     card.append(title, details, provenance, evidence);
     const savedUrl = safeCampaignUrl(candidate.url);

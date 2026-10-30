@@ -96,10 +96,17 @@ test("campaign finder is wired to official Discover, local parser, and existing 
   assert.match(html, /https:\/\/contentrewards\.com\/c\/discover/);
   assert.match(html, /id="campaign-scout-form"/);
   assert.match(html, /id="scout-autofill-button"/);
+  assert.match(html, /data-scout-platform-link="Instagram"/);
+  assert.match(html, /data-scout-platform-link="Facebook"/);
+  assert.match(html, /data-scout-platform-link="YouTube"/);
+  assert.match(html, /id="scout-target-platform"/);
+  assert.match(html, /id="scout-paste-button"/);
   assert.match(html, /campaign-scout\.js/);
   assert.match(app, /ClipRewardScout\.parseCampaignBrief/);
   assert.match(app, /ClipRewardScout\.buildTrackerNotes/);
   assert.match(app, /autofillCampaignTracker/);
+  assert.match(app, /pasteCampaignBriefFromClipboard/);
+  assert.match(app, /result\.platformMatch === "mismatch"/);
   assert.match(worker, /clipreward-static-v3/);
   assert.match(worker, /campaign-scout\.js/);
 });
@@ -110,4 +117,30 @@ test("campaign finder distinguishes direct join from application review", () => 
   assert.equal(direct.entryMode, "Open campaign / direct join");
   const application = Scout.parseCampaignBrief({ text: ["Campaign: Screened campaign", "Apply now", "Instagram"].join("\n") });
   assert.equal(application.entryMode, "Application / brand review");
+});
+
+test("platform-specific finder matches Instagram, Facebook and YouTube, and blocks an explicit mismatch", () => {
+  const brief = [
+    "Campaign: Three platform launch",
+    "$2/1K views",
+    "$1K/$5K",
+    "Platforms: Instagram, Facebook and YouTube",
+    "Must use original clips only."
+  ].join("\n");
+  for (const platform of ["Instagram", "Facebook", "YouTube"]) {
+    const match = Scout.parseCampaignBrief({ requestedPlatform: platform, text: brief });
+    assert.equal(match.platformMatch, "match", platform);
+    assert.equal(match.requestedPlatform, platform);
+  }
+  const mismatch = Scout.parseCampaignBrief({
+    requestedPlatform: "Instagram",
+    text: "Campaign: YouTube only\n$2/1K views\nPlatforms: YouTube"
+  });
+  assert.equal(mismatch.platformMatch, "mismatch");
+  assert.ok(mismatch.missing.some((item) => /Instagram is not listed/i.test(item)));
+  const unknown = Scout.parseCampaignBrief({
+    requestedPlatform: "Facebook",
+    text: "Campaign: No platform stated\n$2/1K views"
+  });
+  assert.equal(unknown.platformMatch, "unknown");
 });

@@ -112,6 +112,14 @@ test("saved candidate shortlist uses readiness-first sorting", () => {
 });
 
 
+test("shortlist removal targets the exact candidate and restores it when storage save fails", () => {
+  assert.match(app, /const index = candidates\.indexOf\(candidate\)/);
+  assert.match(app, /candidates\.splice\(index, 1\);\s*const saved = saveCandidates\(\);\s*if \(!saved\) candidates\.splice\(index, 0, candidate\)/);
+  assert.match(app, /Candidate removed and saved on this device/);
+  assert.match(app, /The shortlist was restored; try again after freeing storage space/);
+  assert.match(app, /\$\("candidateResult"\)\.textContent = saved/);
+});
+
 test("saved candidate cards explain evidence coverage and handle older records", () => {
   assert.match(app, /Evidence coverage:/);
   assert.match(app, /candidate\.evidenceCoverage/);

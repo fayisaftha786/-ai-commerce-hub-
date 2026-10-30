@@ -14,7 +14,8 @@
     ["Campaign reporting", "AICommerceCampaignReport", ["parseCampaignReport", "compareCampaignReports", "summarizeCampaignComparison"]],
     ["Marketplace search", "AICommerceMarketplaceSearch", ["buildMarketplaceSearches"]],
     ["Social media workflow", "AICommerceSocialCenter", ["analyzeSocialMetrics"]],
-    ["Reels & Shorts studio", "AICommerceVideoStudio", ["generateScript"]]
+    ["Reels & Shorts studio", "AICommerceVideoStudio", ["generateScript"]],
+    ["ClipReward backup validation", "ClipRewardCore", ["parseBackup"]]
   ];
   const CONTROLS = [
     ["Product workspace", "productForm"],

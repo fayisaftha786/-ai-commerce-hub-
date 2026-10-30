@@ -147,6 +147,7 @@
     tasks = [...tasks, ...additions].slice(-1000);
     if (!save(TASK_KEY, tasks)) { $("earningHubMessage").textContent = "Storage failed. Task plan was not saved."; return; }
     $("earningHubMessage").textContent = additions.length + " tasks saved locally. Account checks and publishing still need your approval.";
+    renderTasks();
   }
 
   function closeOpportunity(id) {

@@ -2,7 +2,7 @@
 
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { createServer } = require("../server.js");
+const { createServer, getListenConfig } = require("../server.js");
 
 async function withServer(run) {
   const server = createServer({
@@ -19,6 +19,33 @@ async function withServer(run) {
     await new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
   }
 }
+
+test("development server defaults to loopback and the standard port", () => {
+  assert.deepEqual(getListenConfig({}), { host: "127.0.0.1", port: 3000 });
+});
+
+test("production server binds to all interfaces for container hosting", () => {
+  assert.deepEqual(
+    getListenConfig({ NODE_ENV: "production", PORT: "8080" }),
+    { host: "0.0.0.0", port: 8080 }
+  );
+});
+
+test("explicit HOST overrides the production default", () => {
+  assert.deepEqual(
+    getListenConfig({ NODE_ENV: "production", HOST: "127.0.0.1", PORT: "4000" }),
+    { host: "127.0.0.1", port: 4000 }
+  );
+});
+
+test("rejects invalid ports and host strings before listening", () => {
+  for (const PORT of ["0", "65536", "not-a-port"]) {
+    assert.throws(() => getListenConfig({ PORT }), /PORT must be an integer/);
+  }
+  for (const HOST of ["bad host", "https://example.com/path", "/tmp/socket"]) {
+    assert.throws(() => getListenConfig({ HOST }), /HOST must be a hostname or IP address/);
+  }
+});
 
 test("health endpoint confirms service status without claiming OAuth works", async () => {
   await withServer(async (base) => {

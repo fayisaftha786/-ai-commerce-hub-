@@ -103,9 +103,9 @@
       /require|must\b|minimum|min\b|maximum|max\b|eligible|eligib|original|disclos|language|country|region|follower|views?|tag|hashtag|watermark|no\s+repost|no\s+collab|deadline|apply|approval/i.test(line)
     ).slice(0, 8);
     const deadline = parseDeadline(rawText);
-    const entryMode = /\\bapply\\b|\\bapplication\\b/i.test(rawText)
+    const entryMode = /\bapply\b|\bapplication\b/i.test(rawText)
       ? "Application / brand review"
-      : /join\\s+campaign|join\\s+now/i.test(rawText)
+      : /join\s+campaign|join\s+now/i.test(rawText)
         ? "Open campaign / direct join"
         : "";
     const url = clean(source.url, 500);

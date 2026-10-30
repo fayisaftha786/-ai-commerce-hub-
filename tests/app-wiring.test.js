@@ -415,11 +415,53 @@ test("legacy saved campaigns are deduplicated and normalized before restore or b
   assert.equal(result.discarded, 2);
 });
 
+test("corrupt saved campaign data blocks full backup export and campaign writes", () => {
+  const exportStart = app.indexOf("function exportWorkspaceBackup()");
+  const exportEnd = app.indexOf("\n}\n\nfunction validateBackup", exportStart);
+  const exportSource = app.slice(exportStart, exportEnd + 2);
+  let reads = 0;
+  let downloadCreated = false;
+  let message = "";
+  const exportBackup = vm.runInNewContext("(" + exportSource + ")", {
+    campaignLoadResult: { corrupt: true },
+    BACKUP_KEYS: ["ai-commerce-hub.campaigns.v1"],
+    CAMPAIGN_KEY: "ai-commerce-hub.campaigns.v1",
+    campaigns: [],
+    MAX_BACKUP_BYTES: 4 * 1024 * 1024,
+    localStorage: { getItem() { reads += 1; return "{broken-json"; } },
+    Blob,
+    Date,
+    URL: { createObjectURL() { downloadCreated = true; return "blob:bad"; } },
+    document: { body: { append() {} }, createElement() { downloadCreated = true; return { click() {}, remove() {} }; } },
+    setTimeout() {},
+    $() { return { set textContent(value) { message = value; } }; }
+  });
+  exportBackup();
+  assert.equal(reads, 0, "corrupt storage must be detected before exporting any section");
+  assert.equal(downloadCreated, false);
+  assert.match(message, /campaign register is corrupt/);
+  assert.match(message, /Full backup was not exported/);
+
+  const saveStart = app.indexOf("function saveCampaigns()");
+  const saveEnd = app.indexOf("\n}\n\nfunction persistCampaignMigration", saveStart);
+  const saveSource = app.slice(saveStart, saveEnd + 2);
+  let writes = 0;
+  const saveCampaigns = vm.runInNewContext("(" + saveSource + ")", {
+    campaignLoadResult: { corrupt: true },
+    CAMPAIGN_KEY: "ai-commerce-hub.campaigns.v1",
+    campaigns: [],
+    localStorage: { setItem() { writes += 1; } }
+  });
+  assert.equal(saveCampaigns(), false);
+  assert.equal(writes, 0, "corrupt records must not be overwritten by new operations");
+});
+
 test("legacy campaign migration persists sanitized data when possible and backup uses the sanitized register", () => {
   assert.match(app, /const campaignLoadResult = loadCampaigns\(\);\s*const campaigns = campaignLoadResult\.records/);
   assert.match(app, /function persistCampaignMigration\(\)/);
   assert.match(app, /persistCampaignMigration\(\);/);
   assert.match(app, /if \(campaignLoadResult\.corrupt\)/);
+  assert.match(app, /if \(campaignLoadResult\.corrupt\) return false/);
   assert.match(app, /payload\.data\[key\] = key === CAMPAIGN_KEY \? campaigns : JSON\.parse\(raw\)/);
   assert.match(app, /Full backup export will use the cleaned register/);
 });

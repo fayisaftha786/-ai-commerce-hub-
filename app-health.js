@@ -13,7 +13,8 @@
     ["Catalogue importer", "AICommerceCatalogImport", ["rankCatalogCsv", "catalogRecordsToCsv"]],
     ["Campaign reporting", "AICommerceCampaignReport", ["parseCampaignReport", "compareCampaignReports", "summarizeCampaignComparison"]],
     ["Marketplace search", "AICommerceMarketplaceSearch", ["buildMarketplaceSearches"]],
-    ["Social media workflow", "AICommerceSocialCenter", ["analyzeSocialMetrics"]]
+    ["Social media workflow", "AICommerceSocialCenter", ["analyzeSocialMetrics"]],
+    ["Reels & Shorts studio", "AICommerceVideoStudio", ["generateScript"]]
   ];
   const CONTROLS = [
     ["Product workspace", "productForm"],
@@ -24,6 +25,9 @@
     ["Campaign report", "campaignReportForm"],
     ["Social analytics", "socialAnalyticsForm"],
     ["Browser video maker", "videoMakerForm"],
+    ["Video script generator", "generateVideoScript"],
+    ["Voice-over recorder", "recordVoiceStart"],
+    ["Caption copy control", "copyVideoCaption"],
     ["PWA install control", "installAppButton"]
   ];
 

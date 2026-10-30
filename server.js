@@ -34,10 +34,11 @@ function createServer(options = {}) {
     if (pathname === "/api/social/providers") {
       return sendJson(response, 200, {
         providers: [
+          getProviderReadiness("instagram", env),
           getProviderReadiness("meta", env),
           getProviderReadiness("youtube", env)
         ],
-        note: "Configuration readiness only; no accounts are connected."
+        note: "Configuration readiness only; no accounts are connected and OAuth is not implemented."
       });
     }
 

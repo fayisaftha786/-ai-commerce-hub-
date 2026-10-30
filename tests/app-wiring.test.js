@@ -81,6 +81,20 @@ test("campaign records reject unsafe stored URLs and require a parseable timesta
   assert.match(html, /not sales analytics/);
 });
 
+test("full workspace backup includes Earning Hub records", () => {
+  const keys = [
+    "ai-commerce-hub.earning-opportunities.v1",
+    "ai-commerce-hub.earning-tasks.v1",
+    "ai-commerce-hub.earning-records.v1"
+  ];
+  const backupKeys = app.slice(app.indexOf("const BACKUP_KEYS"), app.indexOf("const MAX_BACKUP_BYTES"));
+  for (const key of keys) assert.ok(backupKeys.includes('"' + key + '"'), "backup must include " + key);
+  assert.match(app, /function exportWorkspaceBackup\\(\\)/);
+  assert.match(app, /function validateBackup\\(payload\\)/);
+  assert.match(html, /Earning opportunities, task plans and earnings records are included in Full Workspace Backup & Restore/);
+  assert.doesNotMatch(html, /until backup schema support is added/i);
+});
+
 test("workspace backup and restore controls are present and validated", () => {
   assert.ok(html.includes('id="exportWorkspaceBackup"'));
   assert.ok(html.includes('id="importWorkspaceBackup"'));

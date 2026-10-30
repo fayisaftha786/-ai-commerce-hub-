@@ -1,5 +1,5 @@
 "use strict";
-const CACHE = "clipreward-static-v4";
+const CACHE = "clipreward-static-v5";
 const ASSETS = ["./", "./index.html", "./style.css", "./campaign-scout.js", "./core.js", "./app.js", "./manifest.webmanifest", "./icon.svg"];
 
 self.addEventListener("install", (event) => {
@@ -22,7 +22,7 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET") return;
 
   const url = new URL(request.url);
-  if (url.origin !== self.location.origin) return;
+  if (url.origin !== self.location.origin || !url.href.startsWith(self.registration.scope)) return;
 
   // Network-first keeps deployed app updates fresh; cached files remain available offline.
   event.respondWith(

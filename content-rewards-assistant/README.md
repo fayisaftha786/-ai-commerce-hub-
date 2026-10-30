@@ -20,7 +20,8 @@ Or run the existing root project as usual and open \`content-rewards-assistant/i
 - Generate English, Malayalam, or bilingual caption/script scaffolds from local templates.
 - Save and sort mm:ss or hh:mm:ss editing notes.
 - Export and validate a versioned JSON backup, with duplicate-ID, date, timestamp, URL-scheme, size and record-count checks; account-center records are included, and older backups without them still import.
-- Responsive dark dashboard, mobile navigation, local-first storage and best-effort static-asset caching.
+- Responsive dark dashboard, mobile navigation and local-first browser storage.
+- On HTTPS/localhost, the page registers its own scoped service worker and refreshes a versioned v5 asset cache using network-first requests with an offline fallback. Open the page online at least once after an update before relying on the new files offline; `file://` usage does not install the worker.
 - Node.js regression tests for the core data validation and backup format.
 
 ## Campaign finder and autofill

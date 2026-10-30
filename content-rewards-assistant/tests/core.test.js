@@ -322,9 +322,17 @@ test("ClipReward keeps saved UI state when campaign, timestamp, account and back
   assert.ok(writeAttempts >= 8, "expected each failed mutation to attempt persistence");
 });
 
-test("service worker uses network-first refresh with cached offline fallback", () => {
+test("ClipReward service worker is registered, refreshes v5 assets and scopes offline caching", () => {
   const workerSource = fs.readFileSync(path.join(__dirname, "..", "service-worker.js"), "utf8");
-  assert.match(workerSource, /const CACHE = "clipreward-static-v4"/);
+  const htmlSource = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
+  assert.match(workerSource, /const CACHE = "clipreward-static-v5"/);
+  for (const asset of ["./index.html", "./style.css", "./campaign-scout.js", "./core.js", "./app.js", "./manifest.webmanifest", "./icon.svg"]) {
+    assert.ok(workerSource.includes('"' + asset + '"'), "missing ClipReward offline asset " + asset);
+  }
+  assert.match(workerSource, /url\.href\.startsWith\(self\.registration\.scope\)/);
+  assert.match(htmlSource, /navigator\.serviceWorker\.register\("\.\/service-worker\.js"\)/);
+  assert.match(htmlSource, /location\.protocol !== "file:"/);
+  assert.match(htmlSource, /data-register-service-worker/);
   const networkFetch = workerSource.indexOf("event.respondWith(\n    fetch(request)");
   const offlineFallback = workerSource.indexOf("caches.match(request).then((cached)");
   assert.ok(networkFetch >= 0, "service worker should try the network first");

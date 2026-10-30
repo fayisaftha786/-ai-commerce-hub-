@@ -3,7 +3,7 @@
 const CACHE_NAME = "ai-commerce-hub-pwa-v5";
 const ASSET_PATHS = [
   "./",
-  "./index.html",
+  "./index.html", "./content-rewards-assistant/core.js",
   "./style.css",
   "./manifest.webmanifest",
   "./icon.svg",

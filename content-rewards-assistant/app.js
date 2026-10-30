@@ -196,7 +196,7 @@
   function renderCampaignScout(result) {
     campaignScoutResult = result;
     $("scout-result-title").textContent = result.title || "Campaign details found";
-    $("scout-confidence").textContent = result.confidence;
+    $("scout-confidence").textContent = "Extraction only · " + result.confidence;
     $("scout-confidence").classList.toggle("scout-match", result.platformMatch === "match");
     $("scout-confidence").classList.toggle("scout-mismatch", result.platformMatch === "mismatch");
     $("scout-confidence").classList.toggle("scout-unknown", result.platformMatch === "unknown");
@@ -206,7 +206,7 @@
         ? result.requestedPlatform + " is not listed in the copied brief. Autofill is blocked to avoid saving a wrong-platform campaign."
         : result.platformMatch === "unknown"
           ? result.requestedPlatform + " is not stated in the copied text. You may autofill the draft, but must verify platform eligibility on the official brief."
-          : "Findings come only from the text you pasted. Unknown values stay unknown.";
+          : "Extraction quality only — not a campaign verification, eligibility check or payout guarantee. Findings come only from the text you pasted.";
     const found = result.findings.map((item) =>
       '<article class="scout-found-card"><small>' + escapeHtml(item.label) + '</small><strong>' + escapeHtml(item.value) + '</strong></article>'
     ).join("");

@@ -92,6 +92,19 @@ test("workspace backup and restore controls are present and validated", () => {
   assert.match(app, /best-effort rollback/);
 });
 
+test("workspace backup validates each dataset before replacing browser storage", () => {
+  assert.match(app, /products\.length > MAX_PRODUCTS/);
+  assert.match(app, /productValidator\(item\)\.valid/);
+  assert.match(app, /campaignIds\.has\(item\.id\)/);
+  assert.match(app, /campaignRecords\.length > MAX_CAMPAIGNS/);
+  assert.match(app, /candidateRecords\.length > 50/);
+  assert.match(app, /item\.score < 0 \|\| item\.score > 100/);
+  assert.match(app, /catalogRecords\.length > 5000/);
+  assert.match(app, /item\.recommendationReasons\.some/);
+  assert.match(app, /Backup contains an invalid or duplicate campaign record/);
+  assert.match(app, /Backup contains an invalid ranked catalogue record/);
+});
+
 
 test("saved candidate shortlist uses readiness-first sorting", () => {
   assert.match(app, /compareCandidatesByReadiness/);

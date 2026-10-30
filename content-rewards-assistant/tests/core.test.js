@@ -31,9 +31,12 @@ test("timestamp parser accepts mm:ss and hh:mm:ss and rejects malformed values",
 
 test("stats count only explicit campaign statuses", () => {
   assert.deepEqual(Core.stats([
-    { status: "idea" }, { status: "editing" }, { status: "ready" },
-    { status: "submitted" }, { status: "approved" }, { status: "rejected" }
-  ]), { total: 6, progress: 2, review: 1, approved: 1 });
+    { status: "idea" }, { status: "applied" }, { status: "joined" },
+    { status: "editing" }, { status: "ready" }, { status: "submitted" },
+    { status: "approved" }, { status: "rejected" }
+  ]), { total: 8, progress: 4, review: 1, approved: 1 });
+  assert.equal(Core.normalizeCampaign({ name: "Applied offer", status: "applied" }).status, "applied");
+  assert.equal(Core.normalizeCampaign({ name: "Joined offer", status: "joined" }).status, "joined");
 });
 
 test("draft generator uses requested language and safe disclosure guidance", () => {
@@ -322,10 +325,10 @@ test("ClipReward keeps saved UI state when campaign, timestamp, account and back
   assert.ok(writeAttempts >= 8, "expected each failed mutation to attempt persistence");
 });
 
-test("ClipReward service worker is registered, refreshes v5 assets and scopes offline caching", () => {
+test("ClipReward service worker is registered, refreshes v6 assets and scopes offline caching", () => {
   const workerSource = fs.readFileSync(path.join(__dirname, "..", "service-worker.js"), "utf8");
   const htmlSource = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
-  assert.match(workerSource, /const CACHE = "clipreward-static-v5"/);
+  assert.match(workerSource, /const CACHE = "clipreward-static-v6"/);
   for (const asset of ["./index.html", "./style.css", "./campaign-scout.js", "./core.js", "./app.js", "./manifest.webmanifest", "./icon.svg"]) {
     assert.ok(workerSource.includes('"' + asset + '"'), "missing ClipReward offline asset " + asset);
   }
@@ -421,8 +424,13 @@ test("submission UI wires exact posting platform and submission time, and labels
   assert.match(htmlSource, /ROUTE B · PRE-APPROVAL CAMPAIGNS/);
   assert.match(htmlSource, /less than 30 minutes old/);
   assert.match(htmlSource, /does not submit clips or verify approvals/);
-  assert.match(htmlSource, /CR-XXXXXX/);
-  assert.match(htmlSource, /code expires after 24 hours/);
+  assert.match(htmlSource, /18\+ only/);
+  assert.match(htmlSource, /contentrewards\.com\/login/);
+  assert.doesNotMatch(htmlSource, /CR-XXXXXX|code expires after 24 hours/);
+  assert.match(htmlSource, /Instagram professional Business account/);
+  assert.match(htmlSource, /value="applied">Applied/);
+  assert.match(htmlSource, /value="joined">Joined/);
+  assert.match(htmlSource, /A pool is a shared allocation/i);
   assert.match(htmlSource, /Facebook Reel caption/);
   assert.match(htmlSource, /Your account shows as not linked/);
   assert.match(htmlSource, /X sign-in window/);

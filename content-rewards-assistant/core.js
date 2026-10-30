@@ -6,7 +6,7 @@
   "use strict";
 
   const VERSION = 1;
-  const STATUSES = Object.freeze(["idea", "editing", "ready", "submitted", "approved", "rejected"]);
+  const STATUSES = Object.freeze(["idea", "applied", "joined", "editing", "ready", "submitted", "approved", "rejected"]);
   const PLATFORMS = Object.freeze(["Content Rewards", "Whop", "TikTok campaign", "Instagram campaign", "YouTube campaign", "Other"]);
   const MAX_CAMPAIGNS = 500;
   const MAX_TIMESTAMPS = 1000;
@@ -212,7 +212,7 @@
     const safe = Array.isArray(campaigns) ? campaigns : [];
     return {
       total: safe.length,
-      progress: safe.filter((item) => item.status === "editing" || item.status === "ready").length,
+      progress: safe.filter((item) => ["applied", "joined", "editing", "ready"].includes(item.status)).length,
       review: safe.filter((item) => item.status === "submitted").length,
       approved: safe.filter((item) => item.status === "approved").length
     };

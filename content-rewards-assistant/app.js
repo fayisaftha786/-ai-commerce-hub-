@@ -5,7 +5,7 @@
   const $ = (id) => document.getElementById(id);
   let state = { campaigns: [], timestamps: [], account: Core.normalizeAccount({}) };
   let toastTimer;
-  const statusNames = { idea: "Idea", editing: "Editing", ready: "Ready to post", submitted: "Awaiting review", approved: "Approved", rejected: "Rejected" };
+  const statusNames = { idea: "Found / idea", applied: "Applied · waiting", joined: "Joined", editing: "Editing", ready: "Ready to post", submitted: "Awaiting review", approved: "Approved", rejected: "Rejected" };
 
   function escapeHtml(value) {
     return String(value == null ? "" : value).replace(/[&<>"']/g, (ch) => ({

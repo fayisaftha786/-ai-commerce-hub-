@@ -67,7 +67,7 @@
       Instagram: ["instagram.com"],
       YouTube: ["youtube.com", "youtu.be"],
       Facebook: ["facebook.com", "fb.watch"],
-      X: ["x.com", "twitter.com"]
+      X: ["x.com", "twitter.com", "t.co"]
     }[platform];
     return Boolean(domains && domains.some((domain) => host === domain || host.endsWith("." + domain)));
   }
@@ -102,7 +102,7 @@
     if (submittedMs < postedMs) {
       return { valid: false, error: "The Content Rewards submission time cannot be earlier than the post time." };
     }
-    if (submittedMs - postedMs > MAX_SUBMISSION_WINDOW_MS) {
+    if (submittedMs - postedMs >= MAX_SUBMISSION_WINDOW_MS) {
       return { valid: false, error: "The official 30-minute submission window has passed. This local app cannot extend it." };
     }
     const nowMs = typeof now === "number" ? now : new Date(now || Date.now()).getTime();

@@ -4,20 +4,20 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 function collectLocalAssets(html) {
-  const assets = new Set(["service-worker.js"]);
-  const tags = html.match(/<(?:script|link)\\b[^>]*>/gi) || [];
+  const assets = new Set(["index.html", "service-worker.js"]);
+  const tags = html.match(/<(?:script|link)\b[^>]*>/gi) || [];
   for (const tag of tags) {
-    const isScript = /^<script\\b/i.test(tag);
-    const isLink = /^<link\\b/i.test(tag);
+    const isScript = /^<script\b/i.test(tag);
+    const isLink = /^<link\b/i.test(tag);
     if (!isScript && !isLink) continue;
     if (isLink) {
-      const rel = (tag.match(/\\brel=["']([^"']+)["']/i) || [])[1] || "";
-      if (!/\\b(stylesheet|manifest|icon)\\b/i.test(rel)) continue;
+      const rel = (tag.match(/\brel=["']([^"']+)["']/i) || [])[1] || "";
+      if (!/\b(stylesheet|manifest|icon)\b/i.test(rel)) continue;
     }
-    const attr = isScript ? "src" : "href";
-    const value = (tag.match(new RegExp("\\\\b" + attr + "=[\\\\\"']([^\\\\\"']+)[\\\\\"']", "i")) || [])[1];
-    if (!value || /^(?:[a-z]+:|\\/\\/|#)/i.test(value)) continue;
-    const clean = value.split(/[?#]/, 1)[0].replace(/^\\.\\//, "");
+    const attrPattern = isScript ? /\bsrc=["']([^"']+)["']/i : /\bhref=["']([^"']+)["']/i;
+    const value = (tag.match(attrPattern) || [])[1];
+    if (!value || /^(?:[a-z]+:|\/\/|#)/i.test(value)) continue;
+    const clean = value.split(/[?#]/, 1)[0].replace(/^\.\//, "");
     if (!clean || clean.startsWith("/") || clean.split("/").includes("..")) {
       throw new Error("Unsafe local asset path in index.html: " + value);
     }
@@ -32,8 +32,7 @@ function assembleSite(options = {}) {
   if (outputDir === rootDir || rootDir.startsWith(outputDir + path.sep)) {
     throw new Error("Output directory must not overwrite or contain the source project.");
   }
-  const htmlPath = path.join(rootDir, "index.html");
-  const html = fs.readFileSync(htmlPath, "utf8");
+  const html = fs.readFileSync(path.join(rootDir, "index.html"), "utf8");
   const assets = collectLocalAssets(html);
   fs.rmSync(outputDir, { recursive: true, force: true });
   fs.mkdirSync(outputDir, { recursive: true });
@@ -61,9 +60,9 @@ if (require.main === module) {
   try {
     const outputDir = process.argv[2] || path.join(__dirname, "..", "_site");
     const result = assembleSite({ outputDir });
-    process.stdout.write("GitHub Pages site assembled: " + result.assets.length + " root assets + Content Rewards assistant\\n");
+    process.stdout.write("GitHub Pages site assembled: " + result.assets.length + " root assets + Content Rewards assistant\n");
   } catch (error) {
-    process.stderr.write((error instanceof Error ? error.message : String(error)) + "\\n");
+    process.stderr.write((error instanceof Error ? error.message : String(error)) + "\n");
     process.exitCode = 1;
   }
 }

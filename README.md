@@ -16,6 +16,8 @@ A lightweight affiliate workspace prototype for evaluating offer details, shortl
 - Save and sort a local shortlist of up to 50 product candidates
 - Generate Malayalam, English or bilingual product captions
 - Generate a short vertical-video plan with hook, shot guidance, voice-over, CTA and affiliate disclosure
+- Browser Video Maker: render an animated 9:16 WebM clip locally from up to 8 authorised images (10 MB each), with optional direct HTTPS image URL when its host permits canvas access; output uses browser canvas/MediaRecorder, not a generative AI video service
+- Social Desk: preview up to 5 selected image/video files locally (50 MB each), copy captions, open official social platforms for manual publishing, and calculate metrics from manually entered insights
 - Generate three distinct hook options and three CTA options for simple creative testing; compare results manually because the prototype does not track conversions
 - Save a local campaign register with a unique ID per content variant and export campaign metadata as CSV
 - Import authorised campaign-performance CSVs, group by exact campaign ID and reporting period, detect exact duplicate rows and overlapping date windows, and calculate conversion only when click/order counts are plausible
@@ -73,7 +75,7 @@ The manual candidate score is a transparent shortlist heuristic based on data en
 
 ## Video and media rights
 
-The content studio generates a storyboard/script and caption; it does not render a finished video or download media from Meesho. Use original footage you film or product assets/video explicitly supplied for your permitted promotional use. Do not assume that a listing image or video can be reused commercially. Check the current Meesho creator/affiliate programme terms and any platform-specific rules before publishing. A future media-import integration should use an authorised source or official API, not scrape private or protected media.
+The Content Studio generates text storyboards/scripts and captions. The separate Browser Video Maker can render a simple animated vertical WebM using images you upload or an optional direct HTTPS image that allows cross-origin canvas access. It does not generate AI footage, create MP4, add recorded narration/music, fetch product assets from marketplaces, or publish the video. Use only original footage or product media you are explicitly permitted to use. Do not assume that a listing image or video can be reused commercially. Check current creator/affiliate programme terms and platform rules before publishing. Any future marketplace media import must use an authorised source or official API, not scrape private or protected media.
 
 ## Marketplace API permission gate
 
@@ -86,7 +88,7 @@ Live marketplace access will be enabled only after account eligibility, current 
 - The click counter records link-click events in the current page session. It does not confirm successful page loads, purchases, conversions or commissions.
 - Campaign IDs are organisational labels only. The registry does not track external clicks or sales and does not modify affiliate URLs with tracking parameters. Use programme-approved campaign/sub-ID fields only if available, then compare authorised performance reports.
 - Content is template-generated; no live AI API is connected.
-- Live product feeds, affiliate link creation, commission data, video rendering and social publishing are not connected.
+- Live product feeds, automated affiliate-link creation, live commission/payout data, generative AI video creation, and automatic social publishing are not connected. The local WebM Video Maker and manual Social Desk are separate browser features.
 - CSV imports are user-supplied only; the app does not authenticate to marketplace dashboards or fetch current sales data.
 - The app cannot verify that a URL is an official marketplace listing or that the user is approved for an affiliate programme.
 

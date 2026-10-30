@@ -51,7 +51,14 @@ function validateOpportunity(input) {
   if (reward !== null && (!Number.isFinite(reward) || reward < 0 || reward > 100000000)) return { valid: false, error: "Reward must be a non-negative amount up to 100,000,000." };
   if (effortHours !== null && (!Number.isFinite(effortHours) || effortHours <= 0 || effortHours > 10000)) return { valid: false, error: "Effort must be greater than zero and no more than 10,000 hours." };
   if (!/^[A-Z]{3}$/.test(currency)) return { valid: false, error: "Currency must be a 3-letter code such as INR." };
-  if (deadline && (!/^\d{4}-\d{2}-\d{2}$/.test(deadline) || !Number.isFinite(Date.parse(deadline + "T00:00:00Z")))) return { valid: false, error: "Deadline must use YYYY-MM-DD." };
+  if (deadline) {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(deadline);
+    if (!match) return { valid: false, error: "Deadline must use YYYY-MM-DD." };
+    const parsed = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])));
+    if (parsed.getUTCFullYear() !== Number(match[1]) || parsed.getUTCMonth() !== Number(match[2]) - 1 || parsed.getUTCDate() !== Number(match[3])) {
+      return { valid: false, error: "Deadline must use a real calendar date." };
+    }
+  }
   return {
     valid: true,
     opportunity: {

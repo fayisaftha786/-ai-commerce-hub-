@@ -30,7 +30,7 @@ function exportWorkspaceBackup() {
       const raw = localStorage.getItem(key);
       if (raw !== null) {
         // Refuse to export corrupt stored JSON rather than silently creating an incomplete backup.
-        payload.data[key] = JSON.parse(raw);
+        payload.data[key] = key === CAMPAIGN_KEY ? campaigns : JSON.parse(raw);
       }
     }
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
@@ -220,7 +220,8 @@ $("importWorkspaceBackup").addEventListener("change", async () => {
 });
 
 const MAX_CAMPAIGNS = 200;
-const campaigns = loadCampaigns();
+const campaignLoadResult = loadCampaigns();
+const campaigns = campaignLoadResult.records;
 
 function loadProducts() {
   try {
@@ -444,27 +445,52 @@ function safeCampaignUrl(value) {
   }
 }
 
-function loadCampaigns() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(CAMPAIGN_KEY) || "[]");
-    if (!Array.isArray(saved)) return [];
-    return saved.filter((item) =>
-      item && typeof item.id === "string" && item.id.length <= 100 &&
-      typeof item.productName === "string" && item.productName.trim().length > 0 &&
-      item.productName.length <= 120 && typeof item.createdAt === "string" &&
-      Number.isFinite(Date.parse(item.createdAt)) &&
-      typeof item.platform === "string" && item.platform.length <= 40 &&
-      typeof item.format === "string" && item.format.length <= 40
-    ).slice(0, MAX_CAMPAIGNS).map((item) => ({
-      id: item.id,
+function sanitizeCampaignRecords(saved) {
+  if (!Array.isArray(saved)) return { records: [], discarded: 0 };
+  const seenIds = new Set();
+  const records = [];
+  let discarded = 0;
+  for (const item of saved) {
+    if (!item || typeof item.id !== "string" || !item.id.trim() || item.id.length > 100 ||
+        typeof item.productName !== "string" || !item.productName.trim() ||
+        item.productName.length > 120 || typeof item.createdAt !== "string" ||
+        !Number.isFinite(Date.parse(item.createdAt)) ||
+        typeof item.platform !== "string" || item.platform.length > 40 ||
+        typeof item.format !== "string" || item.format.length > 40) {
+      discarded += 1;
+      continue;
+    }
+    const id = item.id.trim();
+    if (seenIds.has(id)) {
+      discarded += 1;
+      continue;
+    }
+    seenIds.add(id);
+    if (records.length >= MAX_CAMPAIGNS) {
+      discarded += 1;
+      continue;
+    }
+    records.push({
+      id,
       createdAt: item.createdAt,
       productName: item.productName.trim(),
       platform: item.platform,
       format: item.format,
       link: safeCampaignUrl(item.link)
-    }));
+    });
+  }
+  return { records, discarded };
+}
+
+function loadCampaigns() {
+  try {
+    const raw = localStorage.getItem(CAMPAIGN_KEY);
+    if (raw === null) return { records: [], discarded: 0, corrupt: false };
+    const saved = JSON.parse(raw);
+    if (!Array.isArray(saved)) return { records: [], discarded: 0, corrupt: true };
+    return { ...sanitizeCampaignRecords(saved), corrupt: false };
   } catch {
-    return [];
+    return { records: [], discarded: 0, corrupt: true };
   }
 }
 
@@ -476,6 +502,29 @@ function saveCampaigns() {
     return false;
   }
 }
+
+function persistCampaignMigration() {
+  if (campaignLoadResult.corrupt) {
+    $("campaignMessage").textContent = "The saved campaign register could not be read. It was not overwritten; restore a known-good workspace backup before adding campaigns.";
+    return;
+  }
+  try {
+    const raw = localStorage.getItem(CAMPAIGN_KEY);
+    if (raw === null || JSON.stringify(JSON.parse(raw)) === JSON.stringify(campaigns)) return;
+    if (saveCampaigns()) {
+      if (campaignLoadResult.discarded > 0) {
+        $("campaignMessage").textContent = campaignLoadResult.discarded +
+          " duplicate or invalid old campaign row(s) were removed from the saved register.";
+      }
+    } else {
+      $("campaignMessage").textContent = campaignLoadResult.discarded +
+        " duplicate or invalid old campaign row(s) were filtered for this session, but browser storage could not save the cleanup. Full backup export will use the cleaned register.";
+    }
+  } catch {
+    $("campaignMessage").textContent = "The saved campaign register could not be migrated safely. It was not overwritten; export a backup before continuing.";
+  }
+}
+persistCampaignMigration();
 
 function createCampaignId() {
   if (window.crypto && typeof window.crypto.randomUUID === "function") {

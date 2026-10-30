@@ -11,6 +11,7 @@ const manifest = JSON.parse(fs.readFileSync(path.join(root, "manifest.webmanifes
 const serviceWorker = fs.readFileSync(path.join(root, "service-worker.js"), "utf8");
 const pwaInstall = fs.readFileSync(path.join(root, "pwa-install.js"), "utf8");
 const readme = fs.readFileSync(path.join(root, "README.md"), "utf8");
+const { collectLocalAssets } = require("../scripts/pages-build");
 
 test("PWA manifest is installable and uses relative scope for project subpaths", () => {
   assert.equal(manifest.name, "AI Commerce Hub");
@@ -82,6 +83,7 @@ test("GitHub Pages deployment workflow publishes only the static runtime assets 
   assert.doesNotMatch(workflow, /Explain missing Pages setup/);
   assert.match(workflow, /name: Assemble and validate static site files[\s\S]*?node scripts\/pages-build\.js _site/);
   const pageBuilder = fs.readFileSync(path.join(root, "scripts", "pages-build.js"), "utf8");
+  const publishedAssets = collectLocalAssets(html);
   assert.match(pageBuilder, /collectLocalAssets/);
   assert.match(pageBuilder, /content-rewards-assistant/);
   assert.match(workflow, /name: Deploy Pages[\s\S]*?actions\/deploy-pages@v4/);
@@ -89,7 +91,7 @@ test("GitHub Pages deployment workflow publishes only the static runtime assets 
   assert.match(workflow, /actions\/deploy-pages@v4/);
   assert.match(workflow, /path: _site/);
   for (const asset of ["index.html", "style.css", "manifest.webmanifest", "earning-engine.js", "earning-hub.js", "video-maker.js", "service-worker.js", "pwa-install.js", "app-health.js", "app.js"]) {
-    assert.ok(pageBuilder.includes(asset), "Pages assembler is missing " + asset);
+    assert.ok(publishedAssets.includes(asset), "Pages bundle is missing " + asset);
   }
   assert.match(readme, /select \*\*GitHub Actions\*\*/);
 });

@@ -130,7 +130,7 @@ test("service worker uses network-first refresh with cached offline fallback", (
   const workerSource = fs.readFileSync(path.join(__dirname, "..", "service-worker.js"), "utf8");
   assert.match(workerSource, /const CACHE = "clipreward-static-v2"/);
   const networkFetch = workerSource.indexOf("event.respondWith(\n    fetch(request)");
-  const offlineFallback = workerSource.indexOf("return caches.match(request)");
+  const offlineFallback = workerSource.indexOf("caches.match(request).then((cached)");
   assert.ok(networkFetch >= 0, "service worker should try the network first");
   assert.ok(offlineFallback > networkFetch, "cache should be used only after a network failure");
   assert.match(workerSource, /request.mode === "navigate"/);

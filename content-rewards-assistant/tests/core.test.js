@@ -1,5 +1,7 @@
 "use strict";
 const test = require("node:test");
+const fs = require("node:fs");
+const path = require("node:path");
 const assert = require("node:assert/strict");
 const Core = require("../core.js");
 
@@ -108,4 +110,18 @@ test("campaign post time normalizes to ISO, is optional for old backups, and rej
   assert.equal(item.postedAt, "2026-10-29T23:10:00.000Z");
   assert.equal(Core.normalizeCampaign({ name: "Legacy campaign" }).postedAt, "");
   assert.throws(() => Core.normalizeCampaign({ name: "Bad post time", postedAt: "not-a-date" }), /valid date and time/);
+});
+
+test("campaign cards render and refresh the 30-minute submission countdown", () => {
+  const appSource = fs.readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
+  assert.match(appSource, /rules \+ deadline \+ submissionDeadlineMarkup\(campaign\)/);
+  assert.match(appSource, /window\.setInterval\(refreshDeadlineCountdowns, 1000\)/);
+  assert.match(appSource, /node\.classList\.add\("overdue-deadline"\)/);
+});
+
+test("local persistence failures are not followed by success confirmations", () => {
+  const appSource = fs.readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
+  assert.match(appSource, /Changes remain only in this open session/);
+  assert.match(appSource, /if \(persisted\) showToast\(/);
+  assert.doesNotMatch(appSource, /save\(\);\s*[^;]*;\s*showToast\(/);
 });

@@ -357,7 +357,26 @@ function render() {
       $("candidateCheckedAt").dispatchEvent(new Event("input", { bubbles: true }));
       $("candidateForm").querySelector("button[type='submit']")?.focus({ preventScroll: true });
     });
-    body.append(platform, title, link, contentButton, videoButton, scoreButton);
+    const removeButton = document.createElement("button");
+    removeButton.type = "button";
+    removeButton.className = "secondary product-remove-button";
+    removeButton.textContent = "Remove product";
+    removeButton.setAttribute("aria-label", "Remove saved product " + product.name);
+    removeButton.addEventListener("click", () => {
+      const index = products.indexOf(product);
+      if (index < 0) return;
+      if (!window.confirm('Remove "' + product.name + '" from this device?')) return;
+      products.splice(index, 1);
+      if (!saveProducts()) {
+        products.splice(index, 0, product);
+        render();
+        $("message").textContent = "Could not save the removal because browser storage is unavailable or full. The product was kept.";
+        return;
+      }
+      render();
+      $("message").textContent = "Product removed from this device.";
+    });
+    body.append(platform, title, link, contentButton, videoButton, scoreButton, removeButton);
     item.append(media, body);
     list.append(item);
   }

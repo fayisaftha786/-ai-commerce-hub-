@@ -395,13 +395,15 @@ $("productForm").addEventListener("submit", (event) => {
   }
 
   products.push(result.product);
-  const saved = saveProducts();
+  if (!saveProducts()) {
+    products.pop();
+    $("message").textContent = "Browser storage is unavailable or full. Product was not added; your form details were kept so you can retry.";
+    return;
+  }
   $("productName").value = "";
   $("productUrl").value = "";
   $("productImageUrl").value = "";
-  $("message").textContent = saved
-    ? "Product added and saved on this device."
-    : "Product added for this session, but browser storage is unavailable.";
+  $("message").textContent = "Product added and saved on this device.";
   render();
 });
 
@@ -673,11 +675,14 @@ $("saveContentCampaign").addEventListener("click", () => {
     link: safeLink
   };
   campaigns.push(campaign);
-  const saved = saveCampaigns();
+  if (!saveCampaigns()) {
+    campaigns.pop();
+    renderCampaigns();
+    $("campaignMessage").textContent = "Browser storage is unavailable or full. No campaign was added; your content remains in Content Studio so you can retry.";
+    return;
+  }
   renderCampaigns();
-  $("campaignMessage").textContent = saved
-    ? "Campaign saved on this device. ID: " + campaign.id
-    : "Campaign added for this session only; browser storage is unavailable. ID: " + campaign.id;
+  $("campaignMessage").textContent = "Campaign saved on this device. ID: " + campaign.id;
 });
 
 $("importCampaigns").addEventListener("click", async () => {
@@ -1002,9 +1007,14 @@ $("saveCandidate").addEventListener("click", () => {
     return;
   }
   candidates.push(latestCandidate);
-  const saved = saveCandidates();
+  if (!saveCandidates()) {
+    candidates.pop();
+    renderCandidates();
+    $("candidateResult").append(document.createTextNode(" Could not save because browser storage is unavailable or full. The shortlist was not changed; this score remains available so you can retry."));
+    return;
+  }
   renderCandidates();
-  $("candidateResult").append(document.createTextNode(saved ? " Saved to this device." : " Added for this session only; browser storage is unavailable."));
+  $("candidateResult").append(document.createTextNode(" Saved to this device."));
 });
 
 let selectedCatalogContentEvidence = null;

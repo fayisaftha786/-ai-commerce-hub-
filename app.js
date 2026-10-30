@@ -50,14 +50,72 @@ function validateBackup(payload) {
       !payload.data || typeof payload.data !== "object" || Array.isArray(payload.data)) {
     return { valid: false, error: "This is not a supported AI Commerce Hub backup file." };
   }
+
   const allowed = new Set(BACKUP_KEYS);
-  for (const [key, value] of Object.entries(payload.data)) {
+  const sections = payload.data;
+  for (const [key, value] of Object.entries(sections)) {
     if (!allowed.has(key)) return { valid: false, error: "Backup contains an unknown data section; nothing was restored." };
-    if (key === "ai-commerce-hub.products.v1" || key === "ai-commerce-hub.campaigns.v1" ||
-        key === "ai-commerce-hub.candidates.v1" || key === "ai-commerce-hub.catalog-import.v1") {
-      if (!Array.isArray(value)) return { valid: false, error: "Backup data is malformed; nothing was restored." };
+    if (!Array.isArray(value)) return { valid: false, error: "Backup data is malformed; nothing was restored." };
+  }
+
+  const invalid = (detail) => ({ valid: false, error: "Backup " + detail + "; nothing was restored." });
+  const isRecord = (item) => Boolean(item && typeof item === "object" && !Array.isArray(item));
+  const safeOptionalUrl = (value) => value == null || value === "" || Boolean(safeCampaignUrl(value));
+
+  const products = sections["ai-commerce-hub.products.v1"] || [];
+  if (products.length > MAX_PRODUCTS) return invalid("contains more than " + MAX_PRODUCTS + " products");
+  const productValidator = window.AICommerceProductUtils?.validateProduct;
+  if (products.length && typeof productValidator !== "function") return invalid("cannot be checked because product validation is unavailable");
+  if (products.some((item) => !isRecord(item) || !productValidator(item).valid)) {
+    return invalid("contains an invalid product record");
+  }
+
+  const campaignRecords = sections["ai-commerce-hub.campaigns.v1"] || [];
+  if (campaignRecords.length > MAX_CAMPAIGNS) return invalid("contains more than " + MAX_CAMPAIGNS + " campaign records");
+  const campaignIds = new Set();
+  for (const item of campaignRecords) {
+    if (!isRecord(item) || typeof item.id !== "string" || !item.id.trim() || item.id.length > 100 ||
+        campaignIds.has(item.id) || typeof item.productName !== "string" || !item.productName.trim() ||
+        item.productName.length > 120 || typeof item.createdAt !== "string" || !Number.isFinite(Date.parse(item.createdAt)) ||
+        typeof item.platform !== "string" || item.platform.length > 40 ||
+        typeof item.format !== "string" || item.format.length > 40 || !safeOptionalUrl(item.link)) {
+      return invalid("contains an invalid or duplicate campaign record");
+    }
+    campaignIds.add(item.id);
+  }
+
+  const candidateRecords = sections["ai-commerce-hub.candidates.v1"] || [];
+  if (candidateRecords.length > 50) return invalid("contains more than 50 shortlist candidates");
+  for (const item of candidateRecords) {
+    if (!isRecord(item) || typeof item.name !== "string" || !item.name.trim() || item.name.length > 120 ||
+        !Number.isFinite(item.score) || item.score < 0 || item.score > 100 ||
+        !Number.isFinite(item.price) || item.price <= 0 ||
+        !(item.inStock === true || item.inStock === false || item.inStock == null) ||
+        !safeOptionalUrl(item.url) ||
+        (item.checks != null && (!Array.isArray(item.checks) || item.checks.some((entry) => typeof entry !== "string")))) {
+      return invalid("contains an invalid shortlist candidate");
+    }
+    if (item.rating != null && (!Number.isFinite(item.rating) || item.rating < 0 || item.rating > 5)) return invalid("contains an invalid candidate rating");
+    if (item.reviews != null && (!Number.isSafeInteger(item.reviews) || item.reviews < 0)) return invalid("contains an invalid candidate review count");
+    if (item.commission != null && (!Number.isFinite(item.commission) || item.commission < 0 || item.commission > 100)) return invalid("contains an invalid candidate commission");
+    if (item.demand != null && (!Number.isInteger(item.demand) || item.demand < 1 || item.demand > 5)) return invalid("contains an invalid candidate demand signal");
+    if (item.competition != null && (!Number.isInteger(item.competition) || item.competition < 1 || item.competition > 5)) return invalid("contains an invalid candidate competition signal");
+  }
+
+  const catalogRecords = sections["ai-commerce-hub.catalog-import.v1"] || [];
+  const catalogPlatforms = new Set(["Meesho", "Amazon", "Flipkart", "Other"]);
+  if (catalogRecords.length > 5000) return invalid("contains more than 5,000 catalogue records");
+  for (const item of catalogRecords) {
+    if (!isRecord(item) || typeof item.name !== "string" || !item.name.trim() || item.name.length > 120 ||
+        !catalogPlatforms.has(item.platform) || !Number.isFinite(item.price) || item.price <= 0 ||
+        !Number.isFinite(item.score) || item.score < 0 || item.score > 100 ||
+        !Number.isInteger(item.rowNumber) || item.rowNumber < 1 || !safeOptionalUrl(item.url) ||
+        !Array.isArray(item.warnings) || item.warnings.some((entry) => typeof entry !== "string") ||
+        !Array.isArray(item.recommendationReasons) || item.recommendationReasons.some((entry) => typeof entry !== "string")) {
+      return invalid("contains an invalid ranked catalogue record");
     }
   }
+
   return { valid: true };
 }
 

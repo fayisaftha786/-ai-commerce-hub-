@@ -105,11 +105,16 @@ test("campaign post time normalizes to ISO, is optional for old backups, and rej
     id: "posted-time",
     name: "Recent clip",
     platform: "Content Rewards",
-    postedAt: "2026-10-30T04:40:00+05:30"
+    postedAt: "2026-10-30T04:40:00+05:30",
+    postPlatform: "Instagram",
+    submittedAt: "2026-10-30T05:00:00+05:30"
   }, "2026-10-30T00:00:00.000Z");
   assert.equal(item.postedAt, "2026-10-29T23:10:00.000Z");
+  assert.equal(item.submittedAt, "2026-10-29T23:30:00.000Z");
+  assert.equal(item.postPlatform, "Instagram");
   assert.equal(Core.normalizeCampaign({ name: "Legacy campaign" }).postedAt, "");
   assert.throws(() => Core.normalizeCampaign({ name: "Bad post time", postedAt: "not-a-date" }), /valid date and time/);
+  assert.throws(() => Core.normalizeCampaign({ name: "Bad submission time", submittedAt: "not-a-date" }), /Submission time must be a valid date and time/);
 });
 
 test("campaign cards render and refresh the 30-minute submission countdown", () => {
@@ -211,4 +216,34 @@ test("submission UI wires exact posting platform and submission time, and labels
   assert.match(htmlSource, /value="rejected">Rejected/);
   assert.match(htmlSource, /Instagram Business account/);
   assert.doesNotMatch(htmlSource, /Instagram Creator account/);
+});
+
+
+test("backup keeps new submission evidence, rejects invalid new records, and imports legacy submitted records", () => {
+  const valid = {
+    app: "ClipReward Studio",
+    version: Core.VERSION,
+    exportedAt: "2026-10-29T12:00:00.000Z",
+    campaigns: [{
+      id: "valid-submission", name: "Past campaign", platform: "Content Rewards", status: "submitted",
+      postPlatform: "YouTube", postUrl: "https://youtu.be/example",
+      postedAt: "2026-10-28T10:00:00.000Z", submittedAt: "2026-10-28T10:29:00.000Z"
+    }],
+    timestamps: []
+  };
+  const imported = Core.parseBackup(valid);
+  assert.equal(imported.campaigns[0].postPlatform, "YouTube");
+  assert.equal(imported.campaigns[0].submittedAt, "2026-10-28T10:29:00.000Z");
+
+  const late = structuredClone(valid);
+  late.campaigns[0].submittedAt = "2026-10-28T10:31:00.000Z";
+  assert.throws(() => Core.parseBackup(late), /invalid Content Rewards submission record.*30-minute/i);
+
+  const legacy = structuredClone(valid);
+  delete legacy.campaigns[0].postPlatform;
+  delete legacy.campaigns[0].submittedAt;
+  const legacyImport = Core.parseBackup(legacy);
+  assert.equal(legacyImport.campaigns[0].status, "submitted");
+  assert.equal(legacyImport.campaigns[0].postPlatform, "Other");
+  assert.equal(legacyImport.campaigns[0].submittedAt, "");
 });

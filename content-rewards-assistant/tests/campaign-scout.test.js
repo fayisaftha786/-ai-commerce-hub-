@@ -37,10 +37,7 @@ test("campaign brief parser extracts title, CPM, used and total budget, platform
 
 test("campaign brief parser recognises per-post and retainer models without inventing a CPM", () => {
   const perPost = Scout.parseCampaignBrief({
-    text: "Title: Product demo
-$250 per post
-Platform: Instagram
-Budget: $2K"
+    text: ["Title: Product demo", "$250 per post", "Platform: Instagram", "Budget: $2K"].join("\n")
   });
   assert.equal(perPost.rate.model, "Per post");
   assert.equal(perPost.rate.amount.value, 250);

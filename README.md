@@ -63,6 +63,8 @@ npm test
 
 Open `index.html` in a modern browser to try the frontend. Clipboard access depends on browser security settings.
 
+The private Node.js API starter can be run with `npm start`; it is only a health/readiness service today, not an OAuth or social-publishing backend. See [docs/BACKEND.md](docs/BACKEND.md) before deploying it.
+
 ## CSV import validation
 
 The importer rejects malformed quoting, duplicate normalised headers, mismatched row widths, invalid numeric values, non-integer count metrics and files larger than 2 MB or 5,000 product rows. Quoted thousands separators such as `\"1,299\"` are supported. Unknown stock status receives no stock bonus and produces a warning. Date-only offer expiry is interpreted in the viewer's local calendar time and impossible calendar dates are rejected.

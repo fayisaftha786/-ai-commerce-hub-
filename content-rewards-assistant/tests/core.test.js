@@ -133,7 +133,7 @@ test("local persistence failures are not followed by success confirmations", () 
 
 test("service worker uses network-first refresh with cached offline fallback", () => {
   const workerSource = fs.readFileSync(path.join(__dirname, "..", "service-worker.js"), "utf8");
-  assert.match(workerSource, /const CACHE = "clipreward-static-v2"/);
+  assert.match(workerSource, /const CACHE = "clipreward-static-v3"/);
   const networkFetch = workerSource.indexOf("event.respondWith(\n    fetch(request)");
   const offlineFallback = workerSource.indexOf("caches.match(request).then((cached)");
   assert.ok(networkFetch >= 0, "service worker should try the network first");

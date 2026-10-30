@@ -16,7 +16,7 @@ A lightweight affiliate workspace prototype for evaluating offer details, shortl
 - Save and sort a local shortlist of up to 50 product candidates
 - Generate Malayalam, English or bilingual product captions
 - Generate a short vertical-video plan with hook, shot guidance, voice-over, CTA and affiliate disclosure
-- Browser Video Maker: render an animated 9:16 WebM clip locally from up to 8 authorised images (10 MB each), with optional direct HTTPS image URL when its host permits canvas access; output uses browser canvas/MediaRecorder, not a generative AI video service
+- AI-assisted Reels & Shorts Studio: create editable Malayalam, English or bilingual 4–6 scene scripts and captions; render animated 9:16 WebM locally from up to 8 authorised images; record or upload voice-over and optionally mix licensed background music
 - Social Desk: preview up to 5 selected image/video files locally (50 MB each), copy captions, open official social platforms for manual publishing, and calculate metrics from manually entered insights
 - Generate three distinct hook options and three CTA options for simple creative testing; compare results manually because the prototype does not track conversions
 - Save a local campaign register with a unique ID per content variant and export campaign metadata as CSV
@@ -85,7 +85,7 @@ The manual candidate score is a transparent shortlist heuristic based on data en
 
 ## Video and media rights
 
-The Content Studio generates text storyboards/scripts and captions. The separate Browser Video Maker can render a simple animated vertical WebM using images you upload or an optional direct HTTPS image that allows cross-origin canvas access. It does not generate AI footage, create MP4, add recorded narration/music, fetch product assets from marketplaces, or publish the video. Use only original footage or product media you are explicitly permitted to use. Do not assume that a listing image or video can be reused commercially. Check current creator/affiliate programme terms and platform rules before publishing. Any future marketplace media import must use an authorised source or official API, not scrape private or protected media.
+The Reels & Shorts Studio creates editable Malayalam, English or bilingual template-based scripts and captions; records microphone narration or accepts uploaded audio; optionally mixes user-supplied licensed music; and renders a vertical 720×1280 WebM locally from authorised images. It does not generate original footage, clone voices, create MP4, fetch marketplace media or publish posts. Use only original footage or media you are permitted to use. A product listing image is not automatically licensed for reuse. Verify campaign rules, claims, prices and disclosure before publishing.
 
 ## Marketplace API permission gate
 
@@ -132,3 +132,10 @@ The Earning Hub adds an India-first provider registry for YouTube, Facebook, Ins
 - Opportunity, task and earnings records are included in the validated workspace backup and restore.
 
 **Integration boundary:** this is automatic analysis after a user adds a source-backed opportunity, not a live campaign discovery feed. No social account login, API connection, automatic publishing, platform submission or payout verification is implemented. Provider availability and account eligibility must be checked in the official account dashboard. All Earning Hub records are stored locally in the current browser until you export a backup.
+
+
+## AI-assisted Reels & Shorts Studio
+
+The browser studio supports Malayalam, English and bilingual script/caption drafts, editable 4–6 scene subtitles, 9:16 720×1280 animated WebM export, up to 8 authorised images (10 MB each), microphone-recorded or uploaded narration, and optional user-supplied background music (25 MB each). Voice and music are mixed locally in the browser using Web Audio APIs; music is reduced to a lower level. Output is WebM; MP4 conversion is not implemented.
+
+The script generator is deterministic template-based assistance using the user's topic and stated benefit. It is not a connected generative AI model and cannot research or fact-check claims. The user must edit and verify every line. No text-to-speech, voice cloning, AI-generated footage, marketplace image import, cloud processing, social account connection or automatic publishing is implemented. Microphone access requires HTTPS/localhost and permission. Audio codec support varies by browser/device; try current Chrome if export fails. Files are processed locally by this feature and are not uploaded. Use only original or licensed images, voice and music, and retain required campaign/affiliate disclosure.

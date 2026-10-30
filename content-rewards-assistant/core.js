@@ -55,6 +55,22 @@
     return { ok: true, seconds: total, normalized, error: "" };
   }
 
+  function validateSubmissionRecord(input) {
+    const source = input && typeof input === "object" && !Array.isArray(input) ? input : {};
+    if (source.platform !== "Content Rewards" || source.status !== "submitted") {
+      return { valid: true, error: "" };
+    }
+    if (!safeUrl(source.postUrl)) {
+      return { valid: false, error: "For a Content Rewards submission, add the public post URL before marking it submitted." };
+    }
+    const postedAt = text(source.postedAt, 40);
+    const postedAtDate = postedAt ? new Date(postedAt) : null;
+    if (!postedAtDate || Number.isNaN(postedAtDate.getTime())) {
+      return { valid: false, error: "For a Content Rewards submission, record the time the public post went live." };
+    }
+    return { valid: true, error: "" };
+  }
+
   function normalizeCampaign(input, now) {
     const source = input && typeof input === "object" && !Array.isArray(input) ? input : {};
     const name = text(source.name, 120);
@@ -218,7 +234,7 @@
 
   return Object.freeze({
     VERSION, STATUSES, PLATFORMS, MAX_CAMPAIGNS, MAX_TIMESTAMPS, MAX_SOCIAL_ACCOUNTS, SOCIAL_PLATFORMS, ACCOUNT_CHECKS,
-    validDate, safeUrl, validateTimestamp, normalizeCampaign, normalizeTimestamp, normalizeAccount,
+    validDate, safeUrl, validateTimestamp, validateSubmissionRecord, normalizeCampaign, normalizeTimestamp, normalizeAccount,
     stats, makeDraft, createBackup, parseBackup
   });
 });

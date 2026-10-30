@@ -105,12 +105,12 @@ function rankCatalogCsv(csvText) {
     const returns = numeric(cells, "returns", { defaultValue: null, optional: true });
     const periodDays = numeric(cells, "period_days", { defaultValue: null, optional: true });
     const countValues = [reviews, clicks, orders, returns, periodDays].filter((item) => item !== null);
-    const countsAreWhole = countValues.every((item) => Number.isInteger(item));
+    const countsAreWhole = countValues.every((item) => Number.isSafeInteger(item));
     if (![price, commission, rating, reviews].every(Number.isFinite) || price <= 0 ||
         (clicks !== null && !Number.isFinite(clicks)) ||
         (orders !== null && !Number.isFinite(orders)) ||
         (returns !== null && !Number.isFinite(returns)) ||
-        (periodDays !== null && (!Number.isFinite(periodDays) || periodDays <= 0)) || !countsAreWhole) {
+        (periodDays !== null && (!Number.isFinite(periodDays) || periodDays <= 0 || periodDays > 3650)) || reviews > 100000000 || !countsAreWhole) {
       errors.push("Row " + (i + 1) + ": invalid price, commission, rating, review, click, order, return or period value.");
       continue;
     }

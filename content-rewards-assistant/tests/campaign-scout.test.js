@@ -78,6 +78,27 @@ test("campaign source link rejects credentials and non-Content Rewards hosts", (
   assert.equal(result.sourceUrl, "");
 });
 
+test("campaign parser detects embedded Content Rewards URL and named-month deadlines", () => {
+  const result = Scout.parseCampaignBrief({
+    requestedPlatform: "Facebook",
+    text: [
+      "Campaign: Creator Launch",
+      "https://contentrewards.com/c/campaign/creator-launch",
+      "$2/1K views",
+      "Platforms: Facebook, Instagram and YouTube",
+      "Deadline: December 1, 2026",
+      "Must publish original clips and include disclosure."
+    ].join("\n")
+  });
+  assert.equal(result.sourceUrl, "https://contentrewards.com/c/campaign/creator-launch");
+  assert.equal(result.deadline, "2026-12-01");
+  assert.equal(result.platformMatch, "match");
+  const dayFirst = Scout.parseCampaignBrief({ text: "Campaign: Day first\nDeadline: 2 Dec 2026\nYouTube" });
+  assert.equal(dayFirst.deadline, "2026-12-02");
+  const invalid = Scout.parseCampaignBrief({ text: "Campaign: Bad date\nDeadline: February 31, 2027\nInstagram" });
+  assert.equal(invalid.deadline, "");
+});
+
 test("autofill notes preserve uncertainty and include extracted evidence", () => {
   const result = Scout.parseCampaignBrief({
     url: "https://contentrewards.com/c/demo",
@@ -103,6 +124,9 @@ test("campaign finder is wired to official Discover, local parser, and existing 
   assert.match(html, /data-scout-platform-link="Instagram"/);
   assert.match(html, /data-scout-platform-link="Facebook"/);
   assert.match(html, /data-scout-platform-link="YouTube"/);
+  assert.match(html, /professional dashboard/i);
+  assert.match(html, /studio\\.youtube\\.com/);
+  assert.match(html, /creator marketplace/i);
   assert.match(html, /id="scout-target-platform"/);
   assert.match(html, /id="scout-paste-button"/);
   assert.match(html, /campaign-scout\.js/);
@@ -110,8 +134,10 @@ test("campaign finder is wired to official Discover, local parser, and existing 
   assert.match(app, /ClipRewardScout\.buildTrackerNotes/);
   assert.match(app, /autofillCampaignTracker/);
   assert.match(app, /pasteCampaignBriefFromClipboard/);
+  assert.match(app, /analyseCampaignBrief\\(\\);/);
+  assert.match(app, /addEventListener\\("input"/);
   assert.match(app, /result\.platformMatch === "mismatch"/);
-  assert.match(worker, /clipreward-static-v3/);
+  assert.match(worker, /clipreward-static-v4/);
   assert.match(worker, /campaign-scout\.js/);
 });
 

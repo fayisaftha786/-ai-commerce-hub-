@@ -158,7 +158,7 @@ test("Content Rewards submission preflight requires platform-matched public link
   assert.match(missingUrl.error, /public post URL/i);
   const missingPlatform = Core.validateSubmissionRecord({ ...validRecord, postPlatform: "" }, now);
   assert.equal(missingPlatform.valid, false);
-  assert.match(missingPlatform.error, /select the actual supported social platform/i);
+  assert.match(missingPlatform.error, /choose the actual supported social platform/i);
   const missingPostTime = Core.validateSubmissionRecord({ ...validRecord, postedAt: "" }, now);
   assert.equal(missingPostTime.valid, false);
   assert.match(missingPostTime.error, /time the public post went live/i);

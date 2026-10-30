@@ -22,15 +22,91 @@ test("rejects empty search and bounds the keyword length", () => {
   assert.equal(buildMarketplaceSearches("x".repeat(200)).query.length, 120);
 });
 
+test("one-tap category preset renders all three marketplace links and clears old scoring evidence", () => {
+  const { init } = require("../marketplace-search.js");
+  const elements = new Map();
+  const makeNode = (id) => ({
+    id,
+    value: "",
+    textContent: "",
+    innerHTML: "",
+    children: [],
+    dataset: {},
+    listeners: {},
+    addEventListener(type, callback) { this.listeners[type] = callback; },
+    append(...items) { this.children.push(...items); },
+    replaceChildren(...items) { this.children = [...items]; },
+    scrollIntoView() {},
+    focus() {}
+  });
+  const get = (id) => {
+    if (!elements.has(id)) elements.set(id, makeNode(id));
+    return elements.get(id);
+  };
+  const preset = makeNode("preset");
+  preset.dataset.keyword = "kitchen organiser";
+  const document = {
+    getElementById: get,
+    querySelectorAll(selector) { return selector === ".keyword-preset" ? [preset] : []; },
+    createElement(tag) { return makeNode(tag); }
+  };
+
+  init({ document });
+  preset.listeners.click();
+
+  assert.equal(get("marketplaceSearchQuery").value, "kitchen organiser");
+  assert.equal(get("marketplaceSearchResults").children.length, 4);
+  const cards = get("marketplaceSearchResults").children.slice(1);
+  assert.deepEqual(cards.map((card) => card.children[0].textContent), ["Amazon", "Flipkart", "Meesho"]);
+  assert.match(cards[0].children[1].href, /amazon\.in\/s\?k=kitchen%20organiser/);
+  assert.match(cards[1].children[1].href, /flipkart\.com\/search\?q=kitchen%20organiser/);
+  assert.match(cards[2].children[1].href, /meesho\.com\/search\?q=kitchen%20organiser/);
+  assert.match(get("marketplaceSearchStatus").textContent, /One-tap discovery ready/);
+
+  get("candidatePrice").value = "999";
+  get("candidateCommission").value = "12";
+  cards[0].children[2].listeners.click();
+  assert.equal(get("candidateName").value, "kitchen organiser");
+  assert.equal(get("candidatePrice").value, "");
+  assert.equal(get("candidateCommission").value, "");
+  assert.match(get("marketplaceSearchStatus").textContent, /search links do not contain live listing data/);
+});
+
+test("manual keyword submission uses the same marketplace search flow", () => {
+  const { init } = require("../marketplace-search.js");
+  const elements = new Map();
+  const makeNode = (id) => ({
+    id, value: "", textContent: "", children: [], listeners: {},
+    addEventListener(type, callback) { this.listeners[type] = callback; },
+    append(...items) { this.children.push(...items); },
+    replaceChildren(...items) { this.children = [...items]; },
+    scrollIntoView() {}, focus() {}
+  });
+  const get = (id) => {
+    if (!elements.has(id)) elements.set(id, makeNode(id));
+    return elements.get(id);
+  };
+  const document = {
+    getElementById: get,
+    querySelectorAll() { return []; },
+    createElement(tag) { return makeNode(tag); }
+  };
+  init({ document });
+  get("marketplaceSearchQuery").value = "mobile stand";
+  get("marketplaceSearchForm").listeners.submit({ preventDefault() {} });
+  assert.equal(get("marketplaceSearchResults").children.length, 4);
+  assert.match(get("marketplaceSearchStatus").textContent, /One-tap discovery ready/);
+});
+
 test("marketplace search cards can hand the keyword to scoring without carrying over old evidence", () => {
   const source = fs.readFileSync(path.join(root, "marketplace-search.js"), "utf8");
-  assert.match(source, /scoreButton\.textContent = "Start scoring this keyword"/);
+  assert.match(source, /scoreButton\.textContent = "Analyse a product from this search"/);
   assert.match(source, /candidateName: result\.query/);
   for (const id of ["candidatePrice", "candidateCommission", "candidateDemand", "candidateCompetition", "candidateUrl", "candidateSource", "candidateCheckedAt", "candidateStock"]) {
     assert.match(source, new RegExp(id + ': ""'));
   }
-  assert.match(source, /marketplace search links do not provide verified evidence/);
-  assert.match(source, /form\.scrollIntoView/);
+  assert.match(source, /search links do not contain live listing data/);
+  assert.match(source, /candidateForm\.scrollIntoView/);
 });
 
 test("search UI exists and module loads before app initialisation", () => {
@@ -45,11 +121,10 @@ test("search UI exists and module loads before app initialisation", () => {
 });
 
 
-test("keyword presets are clearly framed as research prompts and wired to the search input", () => {
+test("keyword presets are clearly framed as research prompts and wired to one-tap search", () => {
   const source = fs.readFileSync(path.join(root, "marketplace-search.js"), "utf8");
   assert.match(html, /data-keyword="kitchen organiser"/);
   assert.match(html, /not verified bestsellers/i);
   assert.ok(source.includes('querySelectorAll(".keyword-preset")'));
   assert.match(source, /input\.value = button\.dataset\.keyword/);
-  assert.match(source, /does not indicate verified demand/);
 });

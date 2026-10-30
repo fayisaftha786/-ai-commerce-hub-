@@ -144,15 +144,17 @@
     if (!result.valid) { $("earningHubMessage").textContent = result.error; return; }
     const existing = new Set(tasks.map(task => task.id));
     const additions = result.tasks.filter(task => !existing.has(task.id));
-    tasks = [...tasks, ...additions].slice(-1000);
-    if (!save(TASK_KEY, tasks)) { $("earningHubMessage").textContent = "Storage failed. Task plan was not saved."; return; }
+    const nextTasks = [...tasks, ...additions].slice(-1000);
+    if (!save(TASK_KEY, nextTasks)) { $("earningHubMessage").textContent = "Storage failed. Task plan was not saved."; return; }
+    tasks = nextTasks;
     $("earningHubMessage").textContent = additions.length + " tasks saved locally. Account checks and publishing still need your approval.";
     renderTasks();
   }
 
   function closeOpportunity(id) {
-    opportunities = opportunities.map(item => item.id === id ? { ...item, status: "closed" } : item);
-    if (!save(STORAGE_KEY, opportunities)) { $("earningHubMessage").textContent = "Storage failed. Opportunity status was not changed."; return; }
+    const nextOpportunities = opportunities.map(item => item.id === id ? { ...item, status: "closed" } : item);
+    if (!save(STORAGE_KEY, nextOpportunities)) { $("earningHubMessage").textContent = "Storage failed. Opportunity status was not changed."; return; }
+    opportunities = nextOpportunities;
     render();
     $("earningHubMessage").textContent = "Opportunity marked closed on this device.";
   }

@@ -12,6 +12,7 @@
     ["X", /(?:^|\W)X(?:$|\W)|\btwitter\b/i],
     ["Facebook", /\bfacebook\b|\bFB\b/i]
   ];
+  const INDIA_UNAVAILABLE_PLATFORMS = Object.freeze(["TikTok"]);
   const CATEGORY_NAMES = [
     "Finance", "Gaming", "Entertainment", "Technology", "Health & Wellness",
     "Music", "Podcasts", "Lifestyle", "Education", "Apps", "Sports", "Beauty"
@@ -131,6 +132,7 @@
     const rate = parseRate(rawText);
     const budget = parseBudget(rawText);
     const platforms = PLATFORM_NAMES.filter(([, pattern]) => pattern.test(rawText)).map(([name]) => name);
+    const unsupportedPlatforms = platforms.filter((name) => INDIA_UNAVAILABLE_PLATFORMS.includes(name));
     const platformMatch = !requestedPlatform ? "not-selected" :
       platforms.includes(requestedPlatform) ? "match" : platforms.length ? "mismatch" : "unknown";
     const category = CATEGORY_NAMES.find((name) => new RegExp("\\b" + name.replace(/[.*+?^|]/g, "\\$&") + "\\b", "i").test(rawText)) || "";
@@ -153,6 +155,7 @@
         (budget.remaining ? " / " + formatAmount(budget.remaining) + " remaining" : "")
       : formatAmount(budget.total) + " total" });
     if (platforms.length) findings.push({ kind: "found", label: "Accepted platforms in brief", value: platforms.join(", ") });
+    if (unsupportedPlatforms.length) findings.push({ kind: "warning", label: "Not available in India", value: unsupportedPlatforms.join(", ") + " — do not use as an India posting destination" });
     if (requestedPlatform) findings.push({
       kind: platformMatch === "match" ? "found" : platformMatch === "mismatch" ? "warning" : "unknown",
       label: requestedPlatform + " filter",
@@ -169,6 +172,7 @@
     if (!rate) missing.push("Payout rate/model not found");
     if (!budget) missing.push("Campaign budget not found");
     if (!platforms.length) missing.push("Accepted platform not found");
+    unsupportedPlatforms.forEach((name) => missing.push(name + " is not available in the India workflow; do not select it as a publishing destination"));
     if (platformMatch === "mismatch") missing.push(requestedPlatform + " is not listed among accepted platforms");
     if (platformMatch === "unknown") missing.push(requestedPlatform + " acceptance is not stated in pasted text");
     if (!requirementLines.length) missing.push("Eligibility/brief requirements not found");
@@ -187,6 +191,7 @@
       rate,
       budget,
       platforms,
+      unsupportedPlatforms,
       category,
       requirementLines,
       findings,
@@ -203,6 +208,7 @@
       "Detected budget: " + (result.budget ? (result.budget.spent ? formatAmount(result.budget.spent) + " used / " : "") + formatAmount(result.budget.total) + " total" + (result.budget.remaining ? " / " + formatAmount(result.budget.remaining) + " remaining" : "") : "Not found"),
       "Joining method: " + (result.entryMode || "Not stated — check the official campaign page"),
       "Accepted platforms detected: " + (result.platforms.length ? result.platforms.join(", ") : "Not found"),
+      "Platforms unavailable in the India workflow: " + (result.unsupportedPlatforms.length ? result.unsupportedPlatforms.join(", ") + " — do not select as a posting destination" : "None detected"),
       "Selected platform filter: " + (result.requestedPlatform || "Not selected"),
       "Selected platform fit: " + (result.platformMatch === "match" ? "Listed as accepted in copied brief" : result.platformMatch === "mismatch" ? "Not listed as accepted; check or skip" : result.platformMatch === "unknown" ? "Not stated; official brief verification required" : "Not checked"),
       "Detected category: " + (result.category || "Not found"),

@@ -13,6 +13,8 @@
   const MAX_SOCIAL_ACCOUNTS = 20;
   const MAX_TEXT = 2000;
   const SOCIAL_PLATFORMS = Object.freeze(["TikTok", "Instagram", "YouTube", "Facebook", "X", "Other"]);
+  const MAX_SUBMISSION_WINDOW_MS = 30 * 60 * 1000;
+  const FUTURE_CLOCK_TOLERANCE_MS = 5 * 60 * 1000;
   const ACCOUNT_CHECKS = Object.freeze(["loggedIn", "socialVerified", "campaignReady", "postPublished", "submissionSent"]);
 
   function text(value, maxLength) {
@@ -55,7 +57,22 @@
     return { ok: true, seconds: total, normalized, error: "" };
   }
 
-  function validateSubmissionRecord(input) {
+  function postUrlMatchesPlatform(value, platform) {
+    const normalized = safeUrl(value);
+    if (!normalized) return false;
+    if (platform === "Other") return true;
+    const host = new URL(normalized).hostname.toLowerCase();
+    const domains = {
+      TikTok: ["tiktok.com"],
+      Instagram: ["instagram.com"],
+      YouTube: ["youtube.com", "youtu.be"],
+      Facebook: ["facebook.com", "fb.watch"],
+      X: ["x.com", "twitter.com"]
+    }[platform];
+    return Boolean(domains && domains.some((domain) => host === domain || host.endsWith("." + domain)));
+  }
+
+  function validateSubmissionRecord(input, now) {
     const source = input && typeof input === "object" && !Array.isArray(input) ? input : {};
     if (source.platform !== "Content Rewards" || source.status !== "submitted") {
       return { valid: true, error: "" };
@@ -63,10 +80,34 @@
     if (!safeUrl(source.postUrl)) {
       return { valid: false, error: "For a Content Rewards submission, add the public post URL before marking it submitted." };
     }
-    const postedAt = text(source.postedAt, 40);
-    const postedAtDate = postedAt ? new Date(postedAt) : null;
-    if (!postedAtDate || Number.isNaN(postedAtDate.getTime())) {
-      return { valid: false, error: "For a Content Rewards submission, record the time the public post went live." };
+    const postPlatform = text(source.postPlatform, 30);
+    if (!SOCIAL_PLATFORMS.includes(postPlatform) || postPlatform === "Other") {
+      return { valid: false, error: "Choose the actual supported social platform where you published the clip." };
+    }
+    if (!postUrlMatchesPlatform(source.postUrl, postPlatform)) {
+      return { valid: false, error: "The public post URL does not match the selected social platform." };
+    }
+    const postedAtRaw = text(source.postedAt, 40);
+    const submittedAtRaw = text(source.submittedAt, 40);
+    const postedAt = postedAtRaw ? new Date(postedAtRaw) : null;
+    const submittedAt = submittedAtRaw ? new Date(submittedAtRaw) : null;
+    if (!postedAt || Number.isNaN(postedAt.getTime())) {
+      return { valid: false, error: "Record the time the public post went live." };
+    }
+    if (!submittedAt || Number.isNaN(submittedAt.getTime())) {
+      return { valid: false, error: "Record the time you actually submitted the post link inside Content Rewards." };
+    }
+    const postedMs = postedAt.getTime();
+    const submittedMs = submittedAt.getTime();
+    if (submittedMs < postedMs) {
+      return { valid: false, error: "The Content Rewards submission time cannot be earlier than the post time." };
+    }
+    if (submittedMs - postedMs > MAX_SUBMISSION_WINDOW_MS) {
+      return { valid: false, error: "The official 30-minute submission window has passed. This local app cannot extend it." };
+    }
+    const nowMs = typeof now === "number" ? now : new Date(now || Date.now()).getTime();
+    if (!Number.isFinite(nowMs) || submittedMs > nowMs + FUTURE_CLOCK_TOLERANCE_MS) {
+      return { valid: false, error: "The recorded Content Rewards submission time is in the future. Check your device clock and time zone." };
     }
     return { valid: true, error: "" };
   }
@@ -79,9 +120,14 @@
     const campaignUrl = safeUrl(source.url);
     const postUrl = safeUrl(source.postUrl);
     const postedAtRaw = text(source.postedAt, 40);
+    const submittedAtRaw = text(source.submittedAt, 40);
     const postedAtDate = postedAtRaw ? new Date(postedAtRaw) : null;
+    const submittedAtDate = submittedAtRaw ? new Date(submittedAtRaw) : null;
     if (postedAtRaw && (!postedAtDate || Number.isNaN(postedAtDate.getTime()))) throw new Error("Post time must be a valid date and time.");
+    if (submittedAtRaw && (!submittedAtDate || Number.isNaN(submittedAtDate.getTime()))) throw new Error("Submission time must be a valid date and time.");
     const postedAt = postedAtDate ? postedAtDate.toISOString() : "";
+    const submittedAt = submittedAtDate ? submittedAtDate.toISOString() : "";
+    const postPlatform = SOCIAL_PLATFORMS.includes(source.postPlatform) ? source.postPlatform : "Other";
     if (!name) throw new Error("Campaign name is required.");
     if (campaignUrl === null) throw new Error("Campaign URL must be a valid HTTPS link.");
     if (postUrl === null) throw new Error("Post URL must be a valid HTTPS link.");
@@ -97,7 +143,9 @@
       rules: text(source.rules, MAX_TEXT),
       status,
       postUrl,
+      postPlatform,
       postedAt,
+      submittedAt,
       createdAt: text(source.createdAt, 40) || stamp,
       updatedAt: text(source.updatedAt, 40) || stamp
     };
@@ -218,6 +266,10 @@
     const campaigns = data.campaigns.map((item) => {
       const normalized = normalizeCampaign(item);
       if (ids.has(normalized.id)) throw new Error("Backup contains duplicate campaign IDs.");
+      if (normalized.platform === "Content Rewards" && normalized.status === "submitted" && normalized.submittedAt) {
+        const validation = validateSubmissionRecord(normalized);
+        if (!validation.valid) throw new Error("Backup contains an invalid Content Rewards submission record: " + validation.error);
+      }
       ids.add(normalized.id);
       return normalized;
     });
@@ -234,7 +286,7 @@
 
   return Object.freeze({
     VERSION, STATUSES, PLATFORMS, MAX_CAMPAIGNS, MAX_TIMESTAMPS, MAX_SOCIAL_ACCOUNTS, SOCIAL_PLATFORMS, ACCOUNT_CHECKS,
-    validDate, safeUrl, validateTimestamp, validateSubmissionRecord, normalizeCampaign, normalizeTimestamp, normalizeAccount,
+    MAX_SUBMISSION_WINDOW_MS, validDate, safeUrl, postUrlMatchesPlatform, validateTimestamp, validateSubmissionRecord, normalizeCampaign, normalizeTimestamp, normalizeAccount,
     stats, makeDraft, createBackup, parseBackup
   });
 });

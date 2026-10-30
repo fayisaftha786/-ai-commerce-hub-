@@ -288,6 +288,7 @@ test("workspace backup export refuses files larger than the restore limit", () =
     BACKUP_KEYS: ["large-section"],
     CAMPAIGN_KEY: "campaign-key",
     campaigns: [],
+    campaignLoadResult: { corrupt: false },
     MAX_BACKUP_BYTES: 4 * 1024 * 1024,
     localStorage: { getItem() { return JSON.stringify({ payload: "x".repeat(4 * 1024 * 1024) }); } },
     Blob,

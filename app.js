@@ -24,6 +24,10 @@ const BACKUP_KEYS = [
 const MAX_BACKUP_BYTES = 4 * 1024 * 1024;
 
 function exportWorkspaceBackup() {
+  if (campaignLoadResult.corrupt) {
+    $("backupMessage").textContent = "Full backup was not exported because the saved campaign register is corrupt. Restore a known-good workspace backup before replacing or deleting that data.";
+    return;
+  }
   const payload = { format: "ai-commerce-hub-backup", version: 1, exportedAt: new Date().toISOString(), data: {} };
   try {
     for (const key of BACKUP_KEYS) {
@@ -495,6 +499,7 @@ function loadCampaigns() {
 }
 
 function saveCampaigns() {
+  if (campaignLoadResult.corrupt) return false;
   try {
     localStorage.setItem(CAMPAIGN_KEY, JSON.stringify(campaigns));
     return true;

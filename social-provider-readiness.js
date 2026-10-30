@@ -4,6 +4,7 @@
 // and does not perform OAuth or claim that a provider is connected.
 
 const PROVIDERS = Object.freeze({
+  instagram: ["INSTAGRAM_APP_ID", "INSTAGRAM_APP_SECRET", "INSTAGRAM_REDIRECT_URI"],
   meta: ["META_APP_ID", "META_APP_SECRET", "META_REDIRECT_URI"],
   youtube: ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "GOOGLE_REDIRECT_URI"]
 });

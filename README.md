@@ -44,7 +44,7 @@ This repository includes a Progressive Web App manifest and a service worker for
 
 1. Open this repository on GitHub and choose **Settings → Pages**.
 2. Under **Build and deployment → Source**, select **GitHub Actions** and save. This is the one-time setting an owner must enable; repository code cannot turn it on by itself.
-3. After that, every successful push to `main` triggers `.github/workflows/deploy-pages.yml`, which publishes only the files needed to run the static app. Check the **Actions** tab for deployment status.
+3. After that, every successful push to `main` triggers `.github/workflows/deploy-pages.yml`. Its tested `scripts/pages-build.js` assembler discovers every local script, stylesheet, manifest and icon referenced by `index.html`, copies the service worker, and includes the Content Rewards sub-app. The CI suite checks that the published bundle contains all referenced files (including the earning intelligence modules). Check the **Actions** tab for deployment status.
 4. Wait until GitHub Pages shows the live HTTPS site URL. The expected address is `https://fayisaftha786.github.io/-ai-commerce-hub-/`; trust the actual URL reported by GitHub if it differs.
 5. Open that HTTPS site in Chrome on Android, load it once while online, then tap the app's **Install app** button. If the browser doesn't offer a prompt, use Chrome's menu and choose **Install app** or **Add to Home screen**.
 

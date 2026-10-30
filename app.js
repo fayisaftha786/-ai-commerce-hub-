@@ -704,6 +704,21 @@ $("saveContentCampaign").addEventListener("click", () => {
   $("campaignMessage").textContent = "Campaign saved on this device. ID: " + campaign.id;
 });
 
+function uniqueCampaignRecords(records, existingIds) {
+  const seenIds = new Set(existingIds || []);
+  const unique = [];
+  let duplicates = 0;
+  for (const record of Array.isArray(records) ? records : []) {
+    if (!record || typeof record.id !== "string" || !record.id.trim() || seenIds.has(record.id)) {
+      duplicates += 1;
+      continue;
+    }
+    seenIds.add(record.id);
+    unique.push(record);
+  }
+  return { records: unique, duplicates };
+}
+
 $("importCampaigns").addEventListener("click", async () => {
   const file = $("importCampaignsCsv").files && $("importCampaignsCsv").files[0];
   if (!file) {
@@ -721,11 +736,11 @@ $("importCampaigns").addEventListener("click", async () => {
     $("campaignMessage").textContent = error.message || "Could not read this campaign CSV.";
     return;
   }
-  const existingIds = new Set(campaigns.map((item) => item.id));
-  const unique = parsed.records.filter((item) => !existingIds.has(item.id));
+  const deduplicated = uniqueCampaignRecords(parsed.records, campaigns.map((item) => item.id));
+  const unique = deduplicated.records;
   const available = Math.max(0, MAX_CAMPAIGNS - campaigns.length);
   const accepted = unique.slice(0, available);
-  const duplicates = parsed.records.length - unique.length;
+  const duplicates = deduplicated.duplicates;
   if (!accepted.length) {
     $("campaignMessage").textContent = "No new valid campaign records to import. Duplicates: " + duplicates + "; skipped invalid rows: " + parsed.skipped + ".";
     return;

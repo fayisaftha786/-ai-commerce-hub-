@@ -37,7 +37,7 @@ function exportWorkspaceBackup() {
     document.body.append(anchor);
     anchor.click();
     anchor.remove();
-    URL.revokeObjectURL(url);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
     $("backupMessage").textContent = "Backup exported. Keep the file somewhere safe; it may contain your saved product and campaign details.";
   } catch {
     $("backupMessage").textContent = "Backup could not be created. Check browser storage and try again.";

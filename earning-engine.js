@@ -42,7 +42,7 @@ function validateOpportunity(input) {
   const risk = ALLOWED_RISK.has(input.risk) ? input.risk : "unknown";
   const reward = input.reward == null || input.reward === "" ? null : Number(input.reward);
   const effortHours = input.effortHours == null || input.effortHours === "" ? null : Number(input.effortHours);
-  const currency = cleanText(input.currency || "INR", 3).toUpperCase();
+  const currency = cleanText(input.currency || "INR", 10).toUpperCase();
   const deadline = cleanText(input.deadline, 10);
   const sourceCheckedAt = cleanText(input.sourceCheckedAt, 10);
   if (sourceCheckedAt) {
@@ -148,7 +148,7 @@ function createTaskPlan(input) {
     ...item.deliverables.map((title, index) => ({ id: item.id + "-deliverable-" + (index + 1), title, status: "todo", requiresApproval: false })),
     { id: item.id + "-publish", title: "Review and publish using an approved platform workflow", status: "todo", requiresApproval: true },
     { id: item.id + "-evidence", title: "Save the public post URL and submission evidence", status: "todo", requiresApproval: false },
-    { id: item.id + "-payout", title: "Reconcile confirmed and paid earnings from the official report", status: "todo", requiresApproval: true }
+    { id: item.id + "-payout", title: "Verify payout and reconcile confirmed earnings from the official report", status: "todo", requiresApproval: true }
   ];
   return { valid: true, tasks };
 }

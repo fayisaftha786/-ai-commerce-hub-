@@ -137,6 +137,42 @@ test("local persistence failures are not followed by success confirmations", () 
   assert.doesNotMatch(appSource, /save\(\);\s*[^;]*;\s*showToast\(/);
 });
 
+
+test("ClipReward rolls back every local data mutation when browser storage rejects a save", () => {
+  const appSource = fs.readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
+  assert.match(appSource, /function snapshotState\(\)/);
+  assert.match(appSource, /function saveOrRestore\(previous\)/);
+  assert.match(appSource, /if \(!persisted\) \{\s*state = previous;\s*render\(\);\s*\}/);
+
+  function sourceBlock(startMarker, endMarker) {
+    const start = appSource.indexOf(startMarker);
+    assert.ok(start >= 0, "missing handler: " + startMarker);
+    const end = appSource.indexOf(endMarker, start + startMarker.length);
+    assert.ok(end > start, "missing handler boundary: " + endMarker);
+    return appSource.slice(start, end);
+  }
+
+  const mutatingHandlers = [
+    ["function onCampaignSubmit", "function deleteCampaign"],
+    ["function deleteCampaign", "function addTimestamp"],
+    ["function addTimestamp", "function generateDraft"],
+    ["function importBackup", '$("today-label")'],
+    ['$("timestamp-list").addEventListener("click"', '$("account-profile-form").addEventListener("submit"'],
+    ['$("account-profile-form").addEventListener("submit"', '$("social-account-form").addEventListener("submit"'],
+    ['$("social-account-form").addEventListener("submit"', '$("social-account-list").addEventListener("click"'],
+    ['$("social-account-list").addEventListener("click"', 'document.querySelectorAll("[data-account-check]").forEach((input) => {\n    input.addEventListener("change"'],
+    ['document.querySelectorAll("[data-account-check]").forEach((input) => {\n    input.addEventListener("change"', '$("campaign-scout-form")']
+  ];
+
+  for (const [start, end] of mutatingHandlers) {
+    const block = sourceBlock(start, end);
+    assert.match(block, /snapshotState\(\)/, "missing state snapshot in " + start);
+    assert.match(block, /saveOrRestore\(previous\)/, "missing persistence rollback in " + start);
+    assert.match(block, /if \(!persisted\) return|if \(!saveOrRestore\(previous\)\) return/,
+      "handler must stop after a failed save: " + start);
+  }
+});
+
 test("service worker uses network-first refresh with cached offline fallback", () => {
   const workerSource = fs.readFileSync(path.join(__dirname, "..", "service-worker.js"), "utf8");
   assert.match(workerSource, /const CACHE = "clipreward-static-v4"/);

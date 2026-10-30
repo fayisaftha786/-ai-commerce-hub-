@@ -27,7 +27,7 @@
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       return true;
     } catch (_) {
-      showToast("Could not save locally. Export a backup and check browser storage.");
+      showToast("Could not save locally. Changes remain only in this open session; export a backup before closing.");
       return false;
     }
   }
@@ -231,10 +231,10 @@
       });
       if (!old && state.campaigns.length >= Core.MAX_CAMPAIGNS) throw new Error("Campaign limit reached. Export a backup before adding more.");
       state.campaigns = old ? state.campaigns.map((c) => c.id === old.id ? record : c) : [record, ...state.campaigns];
-      save();
+      const persisted = save();
       closeModal();
       render();
-      showToast(record.status === "submitted" ? "Submission recorded locally. Approval is not yet confirmed." : "Campaign saved on this device.");
+      if (persisted) showToast(record.status === "submitted" ? "Submission recorded locally. Approval is not yet confirmed." : "Campaign saved on this device.");
     } catch (error) { showToast(error.message || "Could not save campaign."); }
   }
   function deleteCampaign(id) {
@@ -242,7 +242,9 @@
     if (!campaign) return;
     if (!window.confirm('Delete "' + campaign.name + '" from this device?')) return;
     state.campaigns = state.campaigns.filter((c) => c.id !== id);
-    save(); render(); showToast("Campaign removed.");
+    const persisted = save();
+    render();
+    if (persisted) showToast("Campaign removed.");
   }
   function addTimestamp(event) {
     event.preventDefault();
@@ -253,7 +255,10 @@
         showToast("That timestamp and note are already saved."); return;
       }
       state.timestamps.push(item);
-      save(); $("timestamp-form").reset(); renderTimestamps(); showToast("Editing note saved.");
+      const persisted = save();
+      $("timestamp-form").reset();
+      renderTimestamps();
+      if (persisted) showToast("Editing note saved.");
     } catch (error) { showToast(error.message || "Could not save timestamp."); }
   }
   function generateDraft(event) {
@@ -307,7 +312,9 @@
         const imported = Core.parseBackup(String(reader.result || ""));
         if (!window.confirm("Replace this device's " + state.campaigns.length + " campaigns, " + state.timestamps.length + " timestamps and account checklist with " + imported.campaigns.length + " campaigns, " + imported.timestamps.length + " timestamps and the account checklist from this backup?")) return;
         state = imported;
-        save(); render(); showToast("Backup imported.");
+        const persisted = save();
+        render();
+        if (persisted) showToast("Backup imported.");
       } catch (error) { showToast(error.message || "Could not import backup."); }
       finally { $("import-file").value = ""; }
     };
@@ -340,13 +347,17 @@
     const button = event.target.closest(".remove-time");
     if (!button) return;
     state.timestamps = state.timestamps.filter((t) => t.id !== button.dataset.id);
-    save(); renderTimestamps(); showToast("Timestamp removed.");
+    const persisted = save();
+    renderTimestamps();
+    if (persisted) showToast("Timestamp removed.");
   });
   $("account-profile-form").addEventListener("submit", (event) => {
     event.preventDefault();
     try {
       state.account = Core.normalizeAccount({ ...state.account, displayName: $("account-display-name").value, updatedAt: new Date().toISOString() });
-      save(); renderAccount(); showToast("Creator label saved on this device.");
+      const persisted = save();
+      renderAccount();
+      if (persisted) showToast("Creator label saved on this device.");
     } catch (error) { showToast(error.message || "Could not save creator label."); }
   });
   $("social-account-form").addEventListener("submit", (event) => {
@@ -362,8 +373,10 @@
         }],
         updatedAt: new Date().toISOString()
       });
-      save(); $("social-handle").value = ""; renderAccount();
-      showToast("Social handle saved. Verify connection on the official platform.");
+      const persisted = save();
+      $("social-handle").value = "";
+      renderAccount();
+      if (persisted) showToast("Social handle saved. Verify connection on the official platform.");
     } catch (error) { showToast(error.message || "Could not save this social account."); }
   });
   $("social-account-list").addEventListener("click", (event) => {
@@ -378,15 +391,18 @@
           socialAccounts: state.account.socialAccounts.map((item) => item.id === id ? { ...item, confirmedConnected: !item.confirmedConnected, updatedAt: new Date().toISOString() } : item),
           updatedAt: new Date().toISOString()
         });
-        save(); renderAccount();
-        showToast("Local reminder updated; live connection was not queried.");
+        const persisted = save();
+        renderAccount();
+        if (persisted) showToast("Local reminder updated; live connection was not queried.");
       } else if (remove && window.confirm("Remove this saved social-account reminder from this device?")) {
         state.account = Core.normalizeAccount({
           ...state.account,
           socialAccounts: state.account.socialAccounts.filter((item) => item.id !== id),
           updatedAt: new Date().toISOString()
         });
-        save(); renderAccount(); showToast("Saved social-account reminder removed.");
+        const persisted = save();
+        renderAccount();
+        if (persisted) showToast("Saved social-account reminder removed.");
       }
     } catch (error) { showToast(error.message || "Could not update this account reminder."); }
   });

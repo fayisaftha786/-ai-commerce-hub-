@@ -68,6 +68,9 @@
       return amount ? { model: "Per post", amount, label: formatAmount(amount) + " per post" } : null;
     }
     if (/\bretainer\b/i.test(text)) return { model: "Retainer", amount: null, label: "Retainer (amount not parsed)" };
+    if (/\b(?:payout|reward|payment)\s*(?:model|type)?\s*[:=-]?\s*pool\b|\bpool[- ]based\s+(?:payout|reward)\b|\bpool\s+campaign\b/i.test(text)) {
+      return { model: "Pool", amount: null, label: "Shared pool — variable allocation; confirm the campaign payout formula" };
+    }
     return null;
   }
 
@@ -124,7 +127,7 @@
 
   function parseCampaignBrief(input) {
     const source = input && typeof input === "object" ? input : {};
-    const requestedPlatform = ["Instagram", "Facebook", "YouTube"].includes(source.requestedPlatform) ? source.requestedPlatform : "";
+    const requestedPlatform = ["Instagram", "Facebook", "YouTube", "X"].includes(source.requestedPlatform) ? source.requestedPlatform : "";
     const rawText = clean(source.text, 20000);
     if (rawText.length < 12) throw new Error("Paste the public campaign card or brief text first.");
     const lines = rawText.split("\n").map((line) => clean(line, 500)).filter(Boolean);

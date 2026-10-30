@@ -23,6 +23,14 @@ Or run the existing root project as usual and open \`content-rewards-assistant/i
 - Responsive dark dashboard, mobile navigation, local-first storage and best-effort static-asset caching.
 - Node.js regression tests for the core data validation and backup format.
 
+## Campaign finder and autofill
+
+Open the official [Content Rewards Discover page](https://contentrewards.com/c/discover), use its search and filters for campaign name, accepted platform, payout model and category, then open a campaign and copy the visible card or brief text. Paste the campaign URL and copied text into **Find campaigns & import briefs** in ClipReward Studio, then choose **Find details & analyse**.
+
+The local parser can extract a campaign title, CPM or per-post rate, a spent/total budget pair, accepted social platforms, selected categories, ISO-format deadline and lines that look like requirements. It then shows missing fields and opens the existing campaign tracker with the detected details filled in. Review and edit every field before saving. This is clipboard-based assisted import, not direct account access or a live API feed.
+
+Extraction is only as accurate as the text copied from the official page. A value shown as missing was not recognised; it is not zero. The app does not estimate your eligibility, infer a missing payout, validate campaign availability, join/apply to campaigns, or access private invitations. Some campaigns are private and arrive only by invitation. Do not paste passwords, one-time codes, cookies or private account data. The official platform remains the source of truth for remaining budget, accepted accounts, eligibility and application status.
+
 ## Content Rewards submission workflow
 
 The in-app submission guide now separates the two official routes: standard campaigns (publish a public clip, then submit its link while the post is less than 30 minutes old) and pre-approval campaigns (upload a draft first, wait for approval, publish from an approved connected account, then submit the live link while the post is less than 30 minutes old). The local reminder timer applies only to Content Rewards campaigns; it does not impose Content Rewards' 30-minute rule on other programmes.

@@ -39,11 +39,11 @@
     if (!safe) return "";
     try {
       const url = new URL(safe);
-      if (!/^\\/c\\//i.test(url.pathname) || /^\\/c\\/discover(?:\\/|$)/i.test(url.pathname)) return "";
+      if (!/^\/c\//i.test(url.pathname) || /^\/c\/discover(?:\/|$)/i.test(url.pathname)) return "";
       if (url.pathname.split("/").filter(Boolean).length < 2) return "";
       url.search = "";
       url.hash = "";
-      url.pathname = url.pathname.replace(/\\/+$/, "");
+      url.pathname = url.pathname.replace(/\/+$/, "");
       return url.href;
     } catch (_) {
       return "";

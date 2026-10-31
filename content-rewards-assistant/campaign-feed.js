@@ -97,14 +97,14 @@
       campaign.brand ? "Brand: " + campaign.brand : "",
       "Campaign type: " + (campaign.type || "Not stated in third-party record"),
       "Platform: " + (selected ? selected.platform : "Not verified"),
-      selected && selected.ratePerKViews != null ? "Rate per 1,000 views: $" + selected.ratePerKViews : "",
+      selected && selected.ratePerKViews != null ? "CPM: $" + selected.ratePerKViews + " per 1,000 views" : "",
       selected && selected.minViewsRequired != null ? "Minimum views: " + selected.minViewsRequired : "",
       selected && selected.maxPayoutPerSubmission != null ? "Maximum payout per submission: $" + selected.maxPayoutPerSubmission : "",
       campaign.budgetUsd != null ? "Budget: $" + campaign.spentUsd + " spent / $" + campaign.budgetUsd + " total" : "",
       campaign.remainingUsd != null ? "Budget remaining (derived from snapshot): $" + campaign.remainingUsd : "",
       campaign.description,
       campaign.requirementsText,
-      "Third-party snapshot date: " + (campaign.snapshotDate || "Not stated"),
+      "Third-party scraped snapshot date: " + (campaign.snapshotDate || "Not stated"),
       "Important: This is a third-party scraped snapshot, not an official campaign brief. Verify all details, current availability, eligibility and rules on the official Content Rewards page before applying."
     ];
     return lines.filter(Boolean).join("\n");

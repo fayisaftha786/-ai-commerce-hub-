@@ -1,6 +1,6 @@
 "use strict";
-const CACHE = "clipreward-static-v7";
-const ASSETS = ["./", "./index.html", "./style.css", "./campaign-scout.js", "./core.js", "./app.js", "./manifest.webmanifest", "./icon.svg"];
+const CACHE = "clipreward-static-v8";
+const ASSETS = ["./", "./index.html", "./style.css", "./campaign-scout.js", "./rewards-intelligence.js", "./core.js", "./app.js", "./manifest.webmanifest", "./icon.svg"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(ASSETS)).then(() => self.skipWaiting()));

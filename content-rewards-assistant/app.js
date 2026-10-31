@@ -242,14 +242,19 @@
     const assessment = window.ClipRewardIntelligence.assessAll({
       brief: result,
       platform: $("scout-target-platform").value,
-      today: new Date().toISOString().slice(0, 10),
+      today: new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10),
       account: state.account
     });
     const campaign = assessment.campaign;
     const stateClass = campaign.state === "blocked" ? "ri-blocked" : campaign.state === "promising" ? "ri-promising" : "ri-verify";
+    const reasons = campaign.reasons.length
+      ? '<ul>' + campaign.reasons.map((reason) => '<li>' + escapeHtml(reason) + '</li>').join("") + '</ul>'
+      : "";
     $("ri-campaign-summary").innerHTML =
       '<div class="ri-summary ' + stateClass + '"><strong>' + escapeHtml(campaign.stateLabel) + '</strong>' +
-      '<p>' + escapeHtml(campaign.nextStep) + '</p><small>' + escapeHtml(campaign.earningsNote) + '</small></div>';
+      '<p>' + escapeHtml(campaign.nextStep) + '</p>' + reasons + '<small>' + escapeHtml(campaign.earningsNote) + '</small></div>' +
+      '<div class="ri-payout"><strong>Reward calculation · ' + escapeHtml(campaign.payout.model) + '</strong><p>' +
+      escapeHtml(campaign.payout.formula) + '</p></div>';
     $("ri-rule-checks").innerHTML = campaign.checks.map((item) =>
       '<article class="ri-check"><span class="ri-status ri-' + escapeHtml(item.status) + '">' + escapeHtml(item.status.toUpperCase()) +
       '</span><strong>' + escapeHtml(item.label) + '</strong><p>' + escapeHtml(item.detail) + '</p></article>'

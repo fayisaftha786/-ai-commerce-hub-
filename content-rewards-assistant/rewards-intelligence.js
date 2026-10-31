@@ -119,6 +119,14 @@
     if (source.entryMode === "Private / invitation-only" || /\bprivate campaign\b|\binvitation[- ]only\b|\binvite[- ]only\b/i.test(raw)) {
       add("private-access", "Private campaign access", "This appears to be an invitation-only campaign. Use the official invite route; it will not be discoverable through the public campaign list.");
     }
+    if (source.hiddenRequirements && source.hiddenRequirements.locked) {
+      const count = source.hiddenRequirements.count;
+      const files = source.hiddenRequirements.referenceFiles;
+      add("locked-requirements", "Creator requirements not yet visible",
+        (count == null ? "The official page hides its requirements until you join." : count + " requirement(s) are hidden until you join.") +
+        (files == null ? "" : " " + files + " reference file(s) are also locked.") +
+        " The visible campaign description is not the complete brief; open and analyse the rules after joining, before creating or publishing.");
+    }
     const groups = source.ruleGroups && typeof source.ruleGroups === "object" ? source.ruleGroups : {};
     const prohibited = Array.isArray(groups.prohibited) && groups.prohibited.length
       ? groups.prohibited
@@ -151,7 +159,7 @@
     return { percent: null, label: "Creator fee is not recognised; confirm the official campaign terms.", source };
   }
 
-  function payoutGuidance(rate, budget, capPerClip) {
+  function payoutGuidance(rate, budget, capPerClip, minimumPayout) {
     const fee = creatorFee(rate, budget);
     if (!rate) return {
       model: "Not stated",
@@ -160,9 +168,10 @@
     };
     if (rate.model === "CPM") return {
       model: "CPM",
-      formula: "Gross clip earnings = CPM rate × eligible qualified views counted by Content Rewards ÷ 1,000, limited by the per-platform maximum per clip and remaining campaign budget. The creator fee is then deducted; views and approval are determined by Content Rewards and the campaign team.",
+      formula: "Gross clip earnings = CPM rate × eligible qualified views counted by Content Rewards ÷ 1,000, limited by the per-platform maximum per clip and remaining campaign budget. A minimum payout threshold may apply before settlement. The creator fee is then deducted; views and approval are determined by Content Rewards and the campaign team.",
       amountKnown: Boolean(rate.amount),
       capPerClip: capPerClip || null,
+      minimumPayout: minimumPayout || null,
       creatorFee: fee
     };
     if (rate.model === "Per post") return {
@@ -234,7 +243,8 @@
       (platformMinimumViews.length ? null : brief.minimumViews);
     const maximumViews = selectedMaximum ? selectedMaximum.value :
       (platformMaximumViews.length ? null : brief.maximumViews);
-    const payout = payoutGuidance(rate, brief.budget, capPerClip);
+    const minimumPayout = brief.minimumPayout || null;
+    const payout = payoutGuidance(rate, brief.budget, capPerClip, minimumPayout);
     const requirements = inferBriefRequirements(brief);
 
     if (state !== "blocked") {
@@ -246,9 +256,11 @@
       if (rate && rate.model === "CPM" && !capPerClip) reasons.push("CPM maximum per clip is not recognised.");
       if (rate && rate.model === "CPM" && minimumViews == null) reasons.push("CPM minimum views are not recognised.");
       if (brief.minimumFollowers != null) reasons.push("Confirm that your selected posting account meets the stated follower threshold.");
+      if (brief.hiddenRequirements && brief.hiddenRequirements.locked) reasons.push("The full creator requirements are still hidden until you join; this visible-page analysis cannot clear those rules.");
       reasons.push("Creator-account eligibility and campaign approval must still be confirmed on Content Rewards.");
       const coreComplete = brief.platformMatch === "match" && Boolean(rate) &&
         Boolean(brief.budget && brief.budget.remaining) && Boolean(brief.deadline) && Boolean(brief.entryMode) &&
+        !(brief.hiddenRequirements && brief.hiddenRequirements.locked) &&
         (rate.model !== "CPM" || (Boolean(capPerClip) && minimumViews != null));
       state = coreComplete ? "promising" : "verify";
     }
@@ -281,6 +293,19 @@
         detail: minimumViews != null ? "Detected minimum: " + Number(minimumViews).toLocaleString("en") + " views." :
           rate && rate.model === "CPM" ? "Minimum views were not recognised. Confirm the threshold on the campaign page." :
             "No minimum-view threshold was recognised in the copied text."
+      },
+      {
+        label: "Minimum payout threshold",
+        status: minimumPayout ? "pass" : "unknown",
+        detail: minimumPayout ? "Detected minimum amount before payout: " + minimumPayout.currency + " " + minimumPayout.value :
+          "Minimum payout threshold was not visible in the copied page."
+      },
+      {
+        label: "Full creator requirements",
+        status: brief.hiddenRequirements && brief.hiddenRequirements.locked ? "unknown" : "unknown",
+        detail: brief.hiddenRequirements && brief.hiddenRequirements.locked
+          ? "Locked until you join. " + (brief.hiddenRequirements.count == null ? "" : brief.hiddenRequirements.count + " requirement(s) hidden. ") + "Review all rules and files inside Content Rewards before creating content."
+          : "The app can analyse only the text you copied. Confirm the complete Requirements section on the official campaign page."
       },
       {
         label: "Maximum views",
@@ -330,7 +355,7 @@
       stateLabel: state === "blocked" ? "Blocked / do not proceed yet" :
         state === "promising" ? "Promising copied brief · verify before joining" : "More evidence required",
       reasons, missing, platform, acceptedPlatforms: accepted, excludedPlatforms: excluded, rate, payout, requirements, checks,
-      capPerClip, minimumViews, maximumViews, creatorFee: payout.creatorFee,
+      capPerClip, minimumPayout, minimumViews, maximumViews, creatorFee: payout.creatorFee,
       nextStep,
       earningsNote: "This is a rule and evidence assessment, not an earnings forecast. No views, campaign approval, actual payout or paid balance is assumed."
     };

@@ -257,7 +257,7 @@
       '<div class="ri-payout"><strong>Reward calculation · ' + escapeHtml(campaign.payout.model) + '</strong><p>' +
       escapeHtml(campaign.payout.formula) + '</p><small>' +
       escapeHtml(campaign.payout.creatorFee && campaign.payout.creatorFee.label ? campaign.payout.creatorFee.label : "Creator fee: not recognised") +
-      '</small></div>';
+      '</small><a class="ri-fee-link" href="' + escapeHtml(campaign.payout.creatorFee && campaign.payout.creatorFee.source ? campaign.payout.creatorFee.source : "https://contentrewards.com/terms") + '" target="_blank" rel="noopener noreferrer">Official creator fee terms ↗</a></div>';
     $("ri-rule-checks").innerHTML = campaign.checks.map((item) =>
       '<article class="ri-check"><span class="ri-status ri-' + escapeHtml(item.status) + '">' + escapeHtml(item.status.toUpperCase()) +
       '</span><strong>' + escapeHtml(item.label) + '</strong><p>' + escapeHtml(item.detail) + '</p></article>'

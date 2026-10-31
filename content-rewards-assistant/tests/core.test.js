@@ -254,6 +254,7 @@ test("ClipReward keeps saved UI state when campaign, timestamp, account and back
       resetCount: 0,
       classList: { add() {}, remove() {}, toggle() {} },
       addEventListener(type, callback) { this.listeners[type] = callback; },
+      querySelectorAll() { return []; },
       reset() { this.resetCount += 1; this.value = ""; },
       focus() {},
       select() {}
@@ -292,6 +293,12 @@ test("ClipReward keeps saved UI state when campaign, timestamp, account and back
   }
   const window = {
     ClipRewardCore: Core,
+    ClipRewardDiscovery: {
+      readState() { return { campaigns: [], scans: [], updatedAt: "" }; },
+      readSettings() { return { enabled: false, intervalHours: 6, notify: false }; },
+      writeState() { return true; },
+      writeSettings() { return true; }
+    },
     confirm() { return true; },
     setInterval() { return 1; },
     addEventListener() {},
@@ -364,11 +371,12 @@ test("ClipReward keeps saved UI state when campaign, timestamp, account and back
 test("ClipReward service worker is registered, refreshes v6 assets and scopes offline caching", () => {
   const workerSource = fs.readFileSync(path.join(__dirname, "..", "service-worker.js"), "utf8");
   const htmlSource = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
-  assert.match(workerSource, /const CACHE = "clipreward-static-v14"/);
-  for (const asset of ["./index.html", "./style.css", "./campaign-scout.js", "./campaign-feed.js", "./video-studio.js", "./video-studio-ui.js", "./core.js", "./app.js", "./manifest.webmanifest", "./icon.svg"]) {
+  assert.match(workerSource, /const CACHE = "clipreward-static-v15"/);
+  for (const asset of ["./index.html", "./style.css", "./campaign-scout.js", "./campaign-feed.js", "./discovery-engine.js", "./video-studio.js", "./video-studio-ui.js", "./core.js", "./app.js", "./manifest.webmanifest", "./icon.svg"]) {
     assert.ok(workerSource.includes('"' + asset + '"'), "missing ClipReward offline asset " + asset);
   }
   assert.match(workerSource, /url\.href\.startsWith\(self\.registration\.scope\)/);
+  assert.match(htmlSource, /discovery-engine\.js/);
   assert.match(htmlSource, /navigator\.serviceWorker\.register\("\.\/service-worker\.js"\)/);
   assert.match(htmlSource, /location\.protocol !== "file:"/);
   assert.match(htmlSource, /data-register-service-worker/);

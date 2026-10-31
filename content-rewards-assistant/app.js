@@ -241,6 +241,108 @@
   }
 
 
+  let discoveryState = window.ClipRewardDiscovery.readState();
+  let discoverySettings = window.ClipRewardDiscovery.readSettings();
+  let discoveryTimer = null;
+  let discoveryBusy = false;
+
+  function renderDiscovery() {
+    const campaigns = discoveryState.campaigns || [];
+    const scans = discoveryState.scans || [];
+    const latest = scans[0];
+    $("discovery-total").textContent = campaigns.length;
+    $("discovery-high").textContent = campaigns.filter((row) => row.opportunity && row.opportunity.tier === "high").length;
+    $("discovery-new").textContent = latest ? latest.newCount : "—";
+    $("discovery-last-scan").textContent = latest ? new Date(latest.at).toLocaleString() : "Not scanned yet";
+    $("discovery-mode").textContent = discoverySettings.enabled ? "Auto-scan enabled while this page is open" : "Auto-scan paused";
+    $("discovery-toggle").textContent = discoverySettings.enabled ? "Pause auto-scan" : "Resume auto-scan";
+    $("discovery-interval").value = String(discoverySettings.intervalHours);
+    const rows = campaigns.slice(0, 8);
+    $("discovery-list").innerHTML = rows.length ? rows.map((row, index) => {
+      const payout = (row.payouts || []).find((item) => item.platform === $("scout-target-platform").value) || (row.payouts || [])[0];
+      const rate = payout && payout.ratePerKViews != null ? "$" + payout.ratePerKViews + " / 1K views" : "Rate unknown";
+      const tier = row.opportunity ? row.opportunity.tier.toUpperCase() : "UNRATED";
+      const freshness = row.opportunity ? row.opportunity.status.replace(/-/g, " ") : "unknown";
+      return '<article class="discovery-card"><div class="discovery-card-head"><strong>' + escapeHtml(row.title) + '</strong><span class="discovery-tier discovery-tier-' + escapeHtml(tier.toLowerCase()) + '">' + escapeHtml(tier) + ' · ' + escapeHtml(row.opportunity ? row.opportunity.score : 0) + '/100</span></div><p>' + escapeHtml(row.brand || "Brand not stated") + ' · ' + escapeHtml((row.platforms || []).join(", ") || "Platform unknown") + '</p><div class="feed-metrics"><span>' + escapeHtml(rate) + '</span><span>' + escapeHtml(freshness) + '</span></div><small>' + escapeHtml(row.opportunity ? row.opportunity.explanation : "Verify source details.") + '</small><div class="feed-card-actions"><button class="button button-secondary" type="button" data-discovery-import="' + index + '">Analyse campaign</button>' + (row.officialUrl ? '<a class="text-button" href="' + escapeHtml(row.officialUrl) + '" target="_blank" rel="noopener noreferrer">Verify official page ↗</a>' : '') + '</div></article>';
+    }).join("") : '<p class="muted small-text">No saved discoveries yet. Run the first scan to check the available public feed.</p>';
+    $("discovery-list").querySelectorAll("[data-discovery-import]").forEach((button) => button.addEventListener("click", () => {
+      campaignFeedRows = rows;
+      importFeedCampaign(Number(button.dataset.discoveryImport));
+    }));
+    $("discovery-history").textContent = scans.length ? scans.slice(0, 5).map((scan) =>
+      new Date(scan.at).toLocaleString() + " · " + scan.checkedCount + " checked · " + scan.newCount + " new" + (scan.error ? " · failed" : "")
+    ).join(" | ") : "No scan history yet.";
+  }
+
+  async function runDiscoveryScan(automatic) {
+    if (discoveryBusy) return;
+    discoveryBusy = true;
+    $("discovery-scan-now").disabled = true;
+    $("discovery-status").textContent = automatic ? "Automatic scan running…" : "Scanning the connected public feed…";
+    try {
+      const result = await window.ClipRewardDiscovery.scan({
+        feed: window.ClipRewardFeed,
+        platform: $("scout-target-platform").value,
+        search: $("campaign-feed-search").value
+      });
+      const merged = window.ClipRewardDiscovery.mergeHistory(discoveryState.campaigns, result.campaigns);
+      const scan = { at: result.fetchedAt, checkedCount: merged.checkedCount, newCount: merged.newCount, source: result.sourceLabel, error: false };
+      discoveryState = { campaigns: merged.campaigns, scans: [scan, ...(discoveryState.scans || [])].slice(0, 50) };
+      if (!window.ClipRewardDiscovery.writeState(discoveryState)) throw new Error("Browser storage is full or unavailable; discoveries were not saved.");
+      $("discovery-status").textContent = result.summary.found + " campaigns checked · " + merged.newCount + " new · " + result.summary.high + " high-information leads. Feed is third-party data, not verified availability.";
+      if (merged.newCount > 0 && discoverySettings.notify && "Notification" in window && Notification.permission === "granted") {
+        new Notification("ClipReward · new campaign leads", { body: merged.newCount + " new lead(s) found. Open the app to review and verify them." });
+      }
+      renderDiscovery();
+    } catch (error) {
+      const message = error && error.message ? error.message : "Discovery scan failed.";
+      discoveryState.scans = [{ at: new Date().toISOString(), checkedCount: 0, newCount: 0, source: "feed", error: true }, ...(discoveryState.scans || [])].slice(0, 50);
+      window.ClipRewardDiscovery.writeState(discoveryState);
+      $("discovery-status").textContent = message + " Use the official Discover page and paste its public brief if the feed is unavailable.";
+      renderDiscovery();
+    } finally {
+      discoveryBusy = false;
+      $("discovery-scan-now").disabled = false;
+    }
+  }
+
+  function scheduleDiscovery() {
+    if (discoveryTimer) window.clearInterval(discoveryTimer);
+    discoveryTimer = null;
+    if (!discoverySettings.enabled) return;
+    discoveryTimer = window.setInterval(() => {
+      if (document.visibilityState === "visible") runDiscoveryScan(true);
+    }, discoverySettings.intervalHours * 60 * 60 * 1000);
+  }
+
+  function configureDiscovery() {
+    discoverySettings = window.ClipRewardDiscovery.readSettings();
+    $("discovery-toggle").addEventListener("click", () => {
+      discoverySettings.enabled = !discoverySettings.enabled;
+      window.ClipRewardDiscovery.writeSettings(discoverySettings);
+      scheduleDiscovery();
+      renderDiscovery();
+    });
+    $("discovery-interval").addEventListener("change", () => {
+      discoverySettings.intervalHours = Number($("discovery-interval").value);
+      window.ClipRewardDiscovery.writeSettings(discoverySettings);
+      scheduleDiscovery();
+      showToast("Auto-scan interval saved. Scans run only while this page is open.");
+    });
+    $("discovery-scan-now").addEventListener("click", () => runDiscoveryScan(false));
+    $("discovery-notify").addEventListener("click", async () => {
+      if (!("Notification" in window)) { showToast("Browser notifications are not supported here."); return; }
+      const permission = await Notification.requestPermission();
+      discoverySettings.notify = permission === "granted";
+      window.ClipRewardDiscovery.writeSettings(discoverySettings);
+      showToast(discoverySettings.notify ? "New-discovery notifications enabled." : "Notification permission was not granted.");
+    });
+    renderDiscovery();
+    scheduleDiscovery();
+    const latest = discoveryState.scans[0];
+    if (discoverySettings.enabled && (!latest || Date.now() - Date.parse(latest.at) > 30 * 60 * 1000)) runDiscoveryScan(true);
+  }
+
   let campaignFeedRows = [];
 
   function renderCampaignFeed(result) {
@@ -725,6 +827,7 @@
   $("import-file").addEventListener("change", (event) => importBackup(event.target.files && event.target.files[0]));
   load();
   render();
+  configureDiscovery();
   window.setInterval(refreshDeadlineCountdowns, 1000);
   if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
     window.addEventListener("load", () => navigator.serviceWorker.register("./service-worker.js").catch(() => {

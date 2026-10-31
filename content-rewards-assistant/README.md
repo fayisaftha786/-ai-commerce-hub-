@@ -53,6 +53,14 @@ After a campaign brief is analysed, the engine creates an action plan for the se
 
 This is an evidence-first decision aid: it helps decide what to verify and prepare next; it cannot create eligibility, guarantee views or rewards, or mark estimated/pending money as paid.
 
+## Real Reels / Shorts video export
+
+ClipReward Studio now includes a browser-side video renderer. On a supported mobile/desktop browser, the creator can choose up to 8 local photo/video files (150 MB combined), optionally add one voice-over or music file (40 MB), set a 15/30/60-second duration, add one caption line per scene, and render a vertical 720 × 1280 / 24 fps video locally in the browser. Uploaded source-video audio is muted; a separate audio file can be mixed into the export. The Clip Studio can copy lines from the generated script into the scene-caption editor.
+
+The Studio includes a four-second **Test this phone** action that exercises the device's actual canvas → MediaRecorder → Blob → metadata-read path before the creator commits to a longer export. The renderer checks for MediaRecorder, canvas capture, animation-frame support and a supported codec before enabling export. It prefers MP4 only when the browser explicitly reports an MP4 MediaRecorder codec; otherwise it uses a supported WebM codec and labels the output honestly. It verifies that the resulting file is a readable video with the expected 9:16 dimensions and duration before enabling Save. It supports cancellation and reports render/decode/storage errors instead of showing a false success.
+
+**Device requirements and limitations:** this is deterministic editing of media the creator uploads, not a text-to-video AI generator. It does not invent new scenes, generate Malayalam speech, remove watermarks, or upload/publish. Audio must be supplied as a permitted file. Media decode support and MP4/WebM codecs differ by browser/device; the capability check and output verification are authoritative for each session. A successful Node regression suite does not substitute for a real-device export test. Test with a short original clip in the target phone browser before using large files or a campaign deadline. Use only media you own or have permission to use, and separately confirm that the campaign allows the source material, music, AI-generated elements and the final format.
+
 ## Content Rewards submission workflow
 
 The in-app submission guide now separates the two official routes: standard campaigns (publish a public clip, then submit its link while the post is less than 30 minutes old) and pre-approval campaigns (upload a draft first, wait for approval, publish from an approved connected account, then submit the live link while the post is less than 30 minutes old). The local reminder timer applies only to Content Rewards campaigns; it does not impose Content Rewards' 30-minute rule on other programmes.

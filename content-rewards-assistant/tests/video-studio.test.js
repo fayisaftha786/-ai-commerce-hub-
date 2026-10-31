@@ -92,6 +92,8 @@ test("Clip Studio exposes media upload, audio, preflight, progress, preview and 
   ]) assert.ok(html.includes('id="' + id + '"'), "missing video studio UI control " + id);
   assert.match(html, /video-studio\.js/);
   assert.match(html, /video-studio-ui\.js/);
+  assert.ok(html.includes('id="video-device-test-button"'));
+  assert.equal(typeof Studio.renderDeviceTest, "function");
   assert.match(worker, /clipreward-static-v12/);
   assert.match(worker, /video-studio\.js/);
   assert.match(worker, /video-studio-ui\.js/);

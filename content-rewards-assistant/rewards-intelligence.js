@@ -321,10 +321,10 @@
     const nextStep = state === "blocked"
       ? "Do not spend time producing this clip yet. Resolve the blocker or choose another campaign."
       : brief.entryMode === "Private / invitation-only"
-        ? "Use the official invitation link or account notification, confirm the exact posting account is connected, and read the full brief before creating the draft."
+        ? "Use the official invitation link or account notification, confirm the exact account you will post from is connected, and read the full brief before creating the draft."
         : brief.entryMode === "Application / brand review"
-          ? "Open the official campaign, select the exact posting account and confirm it is connected, complete the application, and wait for brand approval before publishing."
-          : "Open the official campaign, confirm the exact posting account is connected, check the full requirements and remaining budget, then Join Campaign. Publish and submit only after joining.";
+          ? "Open the official campaign, select the account you will post from and confirm the exact account is connected, complete the application, and wait for brand approval before publishing."
+          : "Open the official campaign, confirm the exact account you will post from is connected, check the full requirements and remaining budget, then Join Campaign. Publish and submit only after joining.";
     return {
       state,
       stateLabel: state === "blocked" ? "Blocked / do not proceed yet" :

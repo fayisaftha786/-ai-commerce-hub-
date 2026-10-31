@@ -152,3 +152,19 @@
 .video-output-preview{display:block;width:min(100%,300px);max-height:520px;aspect-ratio:9/16;object-fit:contain;margin:12px auto;border:1px solid #43516f;border-radius:12px;background:#050914}
 .video-export-note{font-size:9px;line-height:1.6;color:#8f9db7;margin:12px 0 0}
 @media(max-width:520px){.video-export-grid{grid-template-columns:1fr}.video-export-grid label:nth-child(4){grid-column:auto}.video-export-actions .button{flex:1 1 100%;text-align:center}.video-export-heading{align-items:flex-start}}
+
+
+/* Campaign-aware video preflight */
+.video-campaign-preflight-panel{display:grid;gap:9px;margin:12px 0;padding:12px;border:1px solid #35435f;border-radius:11px;background:#101b2e}
+.video-campaign-preflight-head{display:flex;flex-direction:column;gap:4px}.video-campaign-preflight-panel>label{display:flex;flex-direction:column;gap:6px;font-size:11px;color:#e1e8f5}
+.video-campaign-preflight-panel textarea,.video-campaign-preflight-panel select{width:100%;min-width:0}
+.video-campaign-tag-actions{display:flex;justify-content:flex-start}
+.video-preflight-state{display:grid;gap:7px;padding:10px;border:1px solid #46506a;border-radius:9px;background:#131f34;font-size:10px;line-height:1.5;color:#c5d0e3}
+.video-preflight-state>strong{font-size:11px;color:#f2f5ff}
+.video-preflight-note{margin:0;color:#e7c58b}
+.video-preflight-check{display:grid;grid-template-columns:minmax(82px,110px) 1fr;gap:7px;padding-top:6px;border-top:1px solid rgba(140,155,185,.18)}
+.video-preflight-check>span{text-transform:capitalize;font-weight:700;color:#dfe7f4}
+.video-preflight-check small{font-size:9px;color:#aebbd1}
+.video-preflight-blocked{border-color:#854e58;background:#2a1c27}.video-preflight-blocked>strong{color:#ffc1c1}.video-preflight-blocked .video-preflight-blocked>span{color:#ffc1c1}
+.video-preflight-review{border-color:#75613b}.video-preflight-matched{border-color:#386e5b}
+@media(max-width:520px){.video-campaign-preflight-head{align-items:flex-start}.video-preflight-check{grid-template-columns:1fr;gap:3px}}

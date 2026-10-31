@@ -103,14 +103,14 @@ function canonicalDiscoverUrl(value) {
 }
 
 function extractDiscoverCampaigns(html) {
-  const source = String(html || "").replace(/<!--[\\s\\S]*?-->/g, " ");
+  const source = String(html || "").replace(/<!--[\s\S]*?-->/g, " ");
   const seen = new Set();
   const campaigns = [];
-  const anchors = /<a\\b([^>]*)>([\\s\\S]*?)<\\/a\\s*>/gi;
+  const anchors = /<a\b([^>]*)>([\s\S]*?)<\/a\s*>/gi;
   let match;
   while ((match = anchors.exec(source)) !== null) {
     const attributes = match[1] || "";
-    const hrefMatch = /\\bhref\\s*=\\s*(["'])(.*?)\\1/i.exec(attributes);
+    const hrefMatch = /\bhref\s*=\s*(["'])(.*?)\1/i.exec(attributes);
     if (!hrefMatch) continue;
     let resolved;
     try {
@@ -121,17 +121,17 @@ function extractDiscoverCampaigns(html) {
     const officialUrl = Feed.canonicalCampaignUrl(resolved);
     if (!officialUrl || seen.has(officialUrl)) continue;
     seen.add(officialUrl);
-    const titleAttribute = /\\b(?:aria-label|title)\\s*=\\s*(["'])(.*?)\\1/i.exec(attributes);
+    const titleAttribute = /\b(?:aria-label|title)\s*=\s*(["'])(.*?)\1/i.exec(attributes);
     const anchorBody = match[2] || "";
-    const heading = /<h[1-6]\\b[^>]*>([\\s\\S]*?)<\\/h[1-6]\\s*>/i.exec(anchorBody);
+    const heading = /<h[1-6]\b[^>]*>([\s\S]*?)<\/h[1-6]\s*>/i.exec(anchorBody);
     const headingText = heading
-      ? decodeHtmlEntities(heading[1].replace(/<[^>]+>/g, " ")).replace(/\\s+/g, " ").trim()
+      ? decodeHtmlEntities(heading[1].replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim()
       : "";
     const anchorText = decodeHtmlEntities(anchorBody
-      .replace(/<(script|style|noscript)\\b[^>]*>[\\s\\S]*?<\\/\\1\\s*>/gi, " ")
-      .replace(/<img\\b[^>]*alt=["']([^"']+)["'][^>]*>/gi, " $1 ")
+      .replace(/<(script|style|noscript)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, " ")
+      .replace(/<img\b[^>]*alt=["']([^"']+)["'][^>]*>/gi, " $1 ")
       .replace(/<[^>]+>/g, " "))
-      .replace(/\\s+/g, " ").trim();
+      .replace(/\s+/g, " ").trim();
     const url = new URL(officialUrl);
     const id = url.pathname.split("/").filter(Boolean).pop() || officialUrl;
     const title = (headingText || (titleAttribute && decodeHtmlEntities(titleAttribute[2])) || anchorText || id).slice(0, 180);

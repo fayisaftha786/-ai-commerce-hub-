@@ -78,3 +78,14 @@ test("scheduled scan refuses to overwrite a malformed existing snapshot", async 
     await fs.rm(directory, { recursive: true, force: true });
   }
 });
+
+test("GitHub scheduled workflow writes no credentials and redeploys the static snapshot", async () => {
+  const fs = require("node:fs");
+  const workflow = fs.readFileSync(path.join(__dirname, "..", ".github", "workflows", "scheduled-content-rewards-discovery.yml"), "utf8");
+  assert.match(workflow, /schedule:/);
+  assert.match(workflow, /17 \\*\\/6 \\* \\* \\*/);
+  assert.match(workflow, /contents: write/);
+  assert.match(workflow, /actions\\/deploy-pages@v5/);
+  assert.match(workflow, /git push origin HEAD:main/);
+  assert.match(workflow, /continue-on-error: true/);
+});

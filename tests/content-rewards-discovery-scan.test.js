@@ -144,7 +144,7 @@ test("direct public page fetch is restricted to Content Rewards HTTPS campaign p
   assert.equal(requested.input, url);
   assert.equal(requested.options.method, "GET");
   assert.equal(requested.options.credentials, "omit");
-  assert.equal(requested.options.redirect, "follow");
+  assert.equal(requested.options.redirect, "manual");
   assert.equal(detail.status, "ok");
   assert.equal(detail.pageTitle, "Seasonal Creator Clips");
   assert.equal(detail.detected.rate.model, "CPM");
@@ -155,6 +155,45 @@ test("direct public page fetch is restricted to Content Rewards HTTPS campaign p
   assert.equal(detail.detected.hiddenRequirements.locked, true);
   assert.doesNotMatch(detail.pageText, /must-not-be-indexed/);
   await assert.rejects(fetchPublicCampaignPage("https://evil.example/c/campaigns/x"), /Only public HTTPS Content Rewards/);
+});
+
+test("public campaign fetch validates every redirect before making the next request", async () => {
+  const url = "https://contentrewards.com/c/campaigns/safe";
+  let requests = 0;
+  await assert.rejects(fetchPublicCampaignPage(url, {
+    fetchImpl: async () => {
+      requests += 1;
+      return {
+        ok: false, status: 302, url,
+        headers: { get: (name) => name.toLowerCase() === "location" ? "https://169.254.169.254/latest/meta-data/" : "" },
+        text: async () => ""
+      };
+    }
+  }), /redirect outside the public Content Rewards campaign pages/i);
+  assert.equal(requests, 1, "an untrusted redirect destination must never be fetched");
+});
+
+test("public campaign fetch follows only bounded, validated Content Rewards redirects", async () => {
+  const url = "https://contentrewards.com/c/campaigns/start";
+  const nextUrl = "https://www.contentrewards.com/c/campaigns/final";
+  const requested = [];
+  const detail = await fetchPublicCampaignPage(url, {
+    fetchImpl: async (input, options) => {
+      requested.push({ input, redirect: options.redirect });
+      if (input === url) return {
+        ok: false, status: 302, url,
+        headers: { get: (name) => name.toLowerCase() === "location" ? nextUrl : "" },
+        text: async () => ""
+      };
+      return {
+        ok: true, status: 200, url: nextUrl,
+        headers: { get: (name) => name.toLowerCase() === "content-type" ? "text/html" : "" },
+        text: async () => PUBLIC_HTML
+      };
+    }
+  });
+  assert.deepEqual(requested, [{ input: url, redirect: "manual" }, { input: nextUrl, redirect: "manual" }]);
+  assert.equal(detail.status, "ok");
 });
 
 test("direct public page fetch accepts a redirect to the official Content Rewards www host", async () => {

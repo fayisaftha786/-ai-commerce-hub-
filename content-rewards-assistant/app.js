@@ -272,14 +272,18 @@
         ? discoveryBackendStatus.enabled ? "Server-side scheduler active · " + discoveryBackendStatus.intervalMinutes + " minute interval" : "Backend reachable · server scheduler disabled"
         : "Backend URL saved · checking connection"
       : scheduledSnapshot
-        ? "GitHub Actions snapshot scheduled · approximately every 6 hours (UTC)"
-        : discoverySettings.enabled ? "Browser fallback scan works only while this page is open" : "Browser fallback scan paused";
+        ? latest && latest.status === "failed"
+          ? "GitHub Actions last scan failed · open the workflow to retry"
+          : "GitHub Actions snapshot active · refreshes about every 6 hours (UTC)"
+        : discoverySettings.enabled
+          ? "First GitHub Actions scan pending · browser feed checks run only while this page is open"
+          : "First GitHub Actions scan pending · browser fallback paused";
     $("discovery-toggle").textContent = backendConfigured ? "Server controls auto-scan" : scheduledSnapshot ? "GitHub Actions controls schedule" : discoverySettings.enabled ? "Pause browser fallback" : "Resume browser fallback";
     $("discovery-toggle").disabled = backendConfigured || scheduledSnapshot;
     $("discovery-interval").value = String(discoverySettings.intervalHours);
     $("discovery-interval").disabled = backendConfigured || scheduledSnapshot;
     $("discovery-backend-url").value = discoverySettings.backendUrl || "";
-    $("discovery-scan-now").textContent = backendConfigured ? "↻ Sync latest findings" : "↻ Scan public feed now";
+    $("discovery-scan-now").textContent = backendConfigured ? "↻ Sync latest findings" : "↻ Test feed in browser";
     const rows = campaigns.slice(0, 8);
     $("discovery-list").innerHTML = rows.length ? rows.map((row, index) => {
       const payout = (row.payouts || []).find((item) => item.platform === $("scout-target-platform").value) || (row.payouts || [])[0];
@@ -287,7 +291,7 @@
       const tier = row.opportunity ? row.opportunity.tier.toUpperCase() : "UNRATED";
       const freshness = row.opportunity ? row.opportunity.status.replace(/-/g, " ") : "unknown";
       return '<article class="discovery-card"><div class="discovery-card-head"><strong>' + escapeHtml(row.title) + '</strong><span class="discovery-tier discovery-tier-' + escapeHtml(tier.toLowerCase()) + '">' + escapeHtml(tier) + ' · ' + escapeHtml(row.opportunity ? row.opportunity.score : 0) + '/100</span></div><p>' + escapeHtml(row.brand || "Brand not stated") + ' · ' + escapeHtml((row.platforms || []).join(", ") || "Platform unknown") + '</p><div class="feed-metrics"><span>' + escapeHtml(rate) + '</span><span>' + escapeHtml(freshness) + '</span></div><small>' + escapeHtml(row.opportunity ? row.opportunity.explanation : "Verify source details.") + '</small><div class="feed-card-actions"><button class="button button-secondary" type="button" data-discovery-import="' + index + '">Analyse campaign</button>' + (row.officialUrl ? '<a class="text-button" href="' + escapeHtml(row.officialUrl) + '" target="_blank" rel="noopener noreferrer">Verify official page ↗</a>' : '') + '</div></article>';
-    }).join("") : '<p class="muted small-text">No saved discoveries yet. The scheduled public snapshot will populate this list after its first successful scan; use Scan public feed now for an immediate browser check.</p>';
+    }).join("") : '<p class="muted small-text">No saved discoveries yet. Run the GitHub page-scan workflow for background campaign-page analysis. “Test feed in browser” checks only the public lead feed while this page is open.</p>';
     $("discovery-list").querySelectorAll("[data-discovery-import]").forEach((button) => button.addEventListener("click", () => {
       campaignFeedRows = rows;
       importFeedCampaign(Number(button.dataset.discoveryImport));
@@ -344,7 +348,7 @@
       if (!lastScan) {
         discoveryStaticStatus = null;
         discoveryStaticScans = [];
-        $("discovery-status").textContent = "The GitHub Actions scheduled workflow has not completed its first scan yet.";
+        $("discovery-status").textContent = "The GitHub Actions page-scan workflow has not run yet. Open “Run GitHub page scan” above and select “Run workflow”. The browser feed button cannot start the background crawler.";
         renderDiscovery();
         return null;
       }
@@ -357,7 +361,7 @@
       const fetchedPages = pageDetails.filter((item) => item.status === "ok").length;
       const message = lastScan.status === "failed"
         ? "Latest scheduled scan failed: " + (lastScan.error || "source unavailable") + ". Previous campaign rows were preserved."
-        : "GitHub Actions snapshot loaded · " + result.campaigns.length + " leads · " + fetchedPages + "/" + pageDetails.length + " public campaign pages auto-read · last scan " + new Date(lastScan.completedAt || lastScan.at).toLocaleString() + ".";
+        : "GitHub Actions snapshot loaded · " + result.campaigns.length + " public-feed leads · " + fetchedPages + "/" + pageDetails.length + " campaign pages auto-read · last scan " + new Date(lastScan.completedAt || lastScan.at).toLocaleString() + ".";
       $("discovery-status").textContent = message;
       $("discovery-backend-status").textContent = "GitHub Actions scheduled snapshot is active. No separate backend URL is needed for this public feed.";
       scheduleDiscovery();

@@ -28,7 +28,12 @@ test("scheduled scan writes a schema-versioned snapshot and deduplicates new cam
         fetchedAt: "2026-10-31T00:00:00.000Z",
         sourceLabel: "Third-party public snapshot",
         sourceUrl: "https://contentrewards.xyz/api/cr/campaigns"
-      }) }
+      }) },
+      fetchPageImpl: async (url) => ({
+        ok: true, status: 200, url,
+        headers: { get: () => "text/html" },
+        text: async () => PUBLIC_HTML
+      })
     });
     assert.equal(result.ok, true);
     assert.equal(result.snapshot.schemaVersion, 1);
@@ -93,7 +98,7 @@ test("GitHub scheduled workflow writes no credentials and redeploys the static s
 const PUBLIC_HTML = `<!doctype html><html><body>
 <nav>Discover My work Analytics Settings</nav>
 <main>
-  <h1>Public Campaign: Seasonal Creator Clips</h1>
+  <h1>Campaign: Seasonal Creator Clips</h1>
   <p>Get paid for original short videos and use only licensed audio.</p>
   <div>Accepting clips</div>
   <div>Instagram</div>
@@ -139,7 +144,7 @@ test("direct public page fetch is restricted to Content Rewards HTTPS campaign p
   assert.equal(requested.options.credentials, "omit");
   assert.equal(requested.options.redirect, "follow");
   assert.equal(detail.status, "ok");
-  assert.equal(detail.pageTitle, "Public Campaign: Seasonal Creator Clips");
+  assert.equal(detail.pageTitle, "Seasonal Creator Clips");
   assert.equal(detail.detected.rate.model, "CPM");
   assert.equal(detail.detected.rate.amount.value, 2.5);
   assert.equal(detail.detected.budget.remaining.value, 1750);

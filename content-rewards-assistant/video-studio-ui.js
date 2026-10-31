@@ -47,6 +47,7 @@
         }
       } catch (error) { summary = error.message; }
       $("video-file-summary").textContent = summary;
+      deviceTestButton.disabled = !caps.supported || busy;
       createButton.disabled = !caps.supported || !valid ||
         !$("video-rights-confirm").checked || !$("video-rules-confirm").checked || busy;
       if (busy) return;

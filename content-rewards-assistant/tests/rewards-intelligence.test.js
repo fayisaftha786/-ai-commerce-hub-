@@ -8,7 +8,9 @@ const brief = (overrides = {}) => ({
   title: "Creator Launch", platforms: ["Instagram", "Facebook", "YouTube"], unsupportedPlatforms: [],
   platformMatch: "match", deadline: "2026-12-15", entryMode: "Application / brand review",
   rate: { model: "CPM", label: "$2 per 1,000 views", amount: { value: 2, currency: "USD" } },
-  budget: { remaining: { value: 1200, currency: "USD" } },
+  budget: { remaining: { value: 1200, currency: "USD" }, total: { value: 3000, currency: "USD" } },
+  capPerClip: { value: 50, currency: "USD" },
+  minimumViews: 1000,
   rawExcerpt: "Must publish original clips. Include #ad and @brand. Minimum 30 seconds. Submit within 30 minutes.",
   requirementLines: ["Must publish original clips.", "Include #ad.", "Minimum 30 seconds."], ...overrides
 });
@@ -35,7 +37,7 @@ test("past deadline blocks opportunity recommendation", () => {
 test("unknown platform, payout, budget and deadline remain unknown", () => {
   const result = Engine.assessCampaign({ brief: brief({ platforms: [], platformMatch: "unknown", rate: null, budget: null, deadline: "", entryMode: "" }), platform: "Facebook", today: "2026-10-31" });
   assert.equal(result.state, "verify");
-  for (const label of ["Selected platform", "Payout model", "Budget remaining", "Deadline"]) {
+  for (const label of ["Selected platform", "Platform payout rate", "Budget remaining", "Deadline"]) {
     assert.equal(result.checks.find(x => x.label === label).status, "unknown", label);
   }
 });

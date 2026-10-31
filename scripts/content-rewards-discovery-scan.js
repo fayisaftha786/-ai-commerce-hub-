@@ -107,7 +107,10 @@ function canonicalPublicCampaignDetailUrl(value) {
   if (!canonical) return "";
   try {
     const url = new URL(canonical);
-    return /^\\/c\\/campaigns\\/[^/]+$/i.test(url.pathname) ? canonical : "";
+    const segments = url.pathname.split("/").filter(Boolean);
+    return segments.length === 3 && segments[0] === "c" && segments[1] === "campaigns" && Boolean(segments[2])
+      ? canonical
+      : "";
   } catch (_) {
     return "";
   }
@@ -340,15 +343,17 @@ function enrichOfficialCampaignRows(campaigns, details, now) {
 }
 
 async function fetchPublicCampaignPage(value, options = {}) {
-  const url = Feed.canonicalCampaignUrl(value);
-  if (!url) throw new Error("Only public HTTPS Content Rewards campaign URLs are supported.");
+  const url = canonicalPublicCampaignDetailUrl(value);
+  if (!url) throw new Error("Only public HTTPS Content Rewards campaign URLs using /c/campaigns/{id} are supported.");
   const page = await fetchApprovedHtmlPage(url, canonicalPublicCampaignDetailUrl, options);
   let pageText;
   try {
     pageText = extractVisibleText(page.html);
   } catch (error) {
-    const titleMatch = /<title\\b[^>]*>([\\s\\S]*?)<\\/title\\s*>/i.exec(page.html);
-    const responseTitle = titleMatch ? decodeHtmlEntities(titleMatch[1].replace(/<[^>]+>/g, " ")).replace(/\\s+/g, " ").trim().slice(0, 120) : "";
+    const titleMatch = /<title\b[^>]*>([\s\S]*?)<\/title\s*>/i.exec(page.html);
+    const responseTitle = titleMatch
+      ? decodeHtmlEntities(titleMatch[1].replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim().slice(0, 120)
+      : "";
     const detail = [
       "HTTP " + page.status,
       "content-type " + (page.contentType || "unknown"),

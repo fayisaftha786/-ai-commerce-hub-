@@ -157,6 +157,19 @@ test("direct public page fetch is restricted to Content Rewards HTTPS campaign p
   await assert.rejects(fetchPublicCampaignPage("https://evil.example/c/campaigns/x"), /Only public HTTPS Content Rewards/);
 });
 
+test("direct public page fetch accepts a redirect to the official Content Rewards www host", async () => {
+  const url = "https://contentrewards.com/c/campaigns/safe";
+  const redirected = await fetchPublicCampaignPage(url, {
+    fetchImpl: async () => ({
+      ok: true, status: 200, url: "https://www.contentrewards.com/c/campaigns/safe",
+      headers: { get: () => "text/html" },
+      text: async () => PUBLIC_HTML
+    })
+  });
+  assert.equal(redirected.status, "ok");
+  assert.equal(redirected.url, url);
+});
+
 test("direct public page fetch rejects redirects outside Content Rewards and non-HTML responses", async () => {
   const url = "https://contentrewards.com/c/campaigns/safe";
   await assert.rejects(fetchPublicCampaignPage(url, {
@@ -229,3 +242,17 @@ test("scheduled scan publishes campaign detail pages beside lead metadata", asyn
     await fs.rm(directory, { recursive: true, force: true });
   }
 });
+test("detail crawler marks previously saved pages missing from the latest feed as stale", async () => {
+  const url = "https://contentrewards.com/c/campaigns/old";
+  const previous = {
+    url, status: "ok", fetchedAt: "2026-10-01T00:00:00Z",
+    pageTitle: "Old public campaign", pageText: "Campaign: Old public campaign",
+    textLength: 32, detected: {}
+  };
+  const result = await fetchCampaignDetails([], { previous });
+  assert.equal(result.details.length, 1);
+  assert.equal(result.details[0].status, "stale");
+  assert.equal(result.details[0].notInLatestFeed, true);
+  assert.match(result.details[0].lastError, /not present in the latest public lead feed/i);
+});
+

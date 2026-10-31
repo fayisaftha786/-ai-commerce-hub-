@@ -91,7 +91,7 @@ test("backup preserves account-center data and imports legacy backups without ac
     account: {
       displayName: "My creator setup",
       socialAccounts: [{ id: "social1", platform: "Instagram", handle: "@studio", confirmedConnected: true }],
-      checklist: { loggedIn: true, socialVerified: true, campaignReady: true, postPublished: false, submissionSent: false }
+      checklist: { ageEligible: true, loggedIn: true, socialVerified: true, campaignReady: true, postPublished: false, submissionSent: false }
     }
   }, "2026-10-29T12:00:00.000Z");
   const imported = Core.parseBackup(backup);

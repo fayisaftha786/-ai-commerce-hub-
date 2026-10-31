@@ -287,7 +287,7 @@
     const rows = campaigns.slice(0, 8);
     $("discovery-list").innerHTML = rows.length ? rows.map((row, index) => {
       const payout = (row.payouts || []).find((item) => item.platform === $("scout-target-platform").value) || (row.payouts || [])[0];
-      const rate = payout && payout.ratePerKViews != null ? "$" + payout.ratePerKViews + " / 1K views" : "Rate unknown";
+      const rate = payout && payout.ratePerKViews != null ? "$" + payout.ratePerKViews + " / 1K views" : payout && payout.flatAmount != null ? "$" + payout.flatAmount + " / post" : payout && payout.rateLabel ? payout.rateLabel : "Rate unknown";
       const tier = row.opportunity ? row.opportunity.tier.toUpperCase() : "UNRATED";
       const freshness = row.opportunity ? row.opportunity.status.replace(/-/g, " ") : "unknown";
       return '<article class="discovery-card"><div class="discovery-card-head"><strong>' + escapeHtml(row.title) + '</strong><span class="discovery-tier discovery-tier-' + escapeHtml(tier.toLowerCase()) + '">' + escapeHtml(tier) + ' · ' + escapeHtml(row.opportunity ? row.opportunity.score : 0) + '/100</span></div><p>' + escapeHtml(row.brand || "Brand not stated") + ' · ' + escapeHtml((row.platforms || []).join(", ") || "Platform unknown") + '</p><div class="feed-metrics"><span>' + escapeHtml(rate) + '</span><span>' + escapeHtml(freshness) + '</span></div><small>' + escapeHtml(row.opportunity ? row.opportunity.explanation : "Verify source details.") + '</small><div class="feed-card-actions"><button class="button button-secondary" type="button" data-discovery-import="' + index + '">Analyse campaign</button>' + (row.officialUrl ? '<a class="text-button" href="' + escapeHtml(row.officialUrl) + '" target="_blank" rel="noopener noreferrer">Verify official page ↗</a>' : '') + '</div></article>';
@@ -360,8 +360,8 @@
       const pageDetails = result.campaignDetails || [];
       const fetchedPages = pageDetails.filter((item) => item.status === "ok").length;
       const message = lastScan.status === "failed"
-        ? "Latest scheduled scan failed after " + (lastScan.feedRequestAttempts || 0) + " feed request(s): " + (lastScan.error || "source unavailable") + ". Previous campaign rows were preserved."
-        : "GitHub Actions snapshot loaded · " + result.campaigns.length + " public-feed leads · " + fetchedPages + "/" + pageDetails.length + " campaign pages auto-read · last scan " + new Date(lastScan.completedAt || lastScan.at).toLocaleString() + ".";
+        ? "Latest scheduled scan failed · " + (lastScan.discoverRequestAttempts || 0) + " official Discover request(s), " + (lastScan.feedRequestAttempts || 0) + " fallback feed request(s): " + (lastScan.error || "source unavailable") + ". Previous campaign rows were preserved."
+        : "GitHub Actions snapshot loaded · " + result.campaigns.length + " campaigns · " + fetchedPages + "/" + pageDetails.length + " public campaign pages auto-read · source " + (lastScan.source || "not stated") + " · last scan " + new Date(lastScan.completedAt || lastScan.at).toLocaleString() + ".";
       $("discovery-status").textContent = message;
       $("discovery-backend-status").textContent = "GitHub Actions scheduled snapshot is active. No separate backend URL is needed for this public feed.";
       scheduleDiscovery();

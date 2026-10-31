@@ -4,7 +4,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs/promises");
 const os = require("node:os");
 const path = require("node:path");
-const { runScheduledScan, decodeHtmlEntities, extractVisibleText, fetchPublicCampaignPage, fetchCampaignDetails, fetchFeedWithRetry } = require("../scripts/content-rewards-discovery-scan.js");
+const { runScheduledScan, decodeHtmlEntities, extractVisibleText, canonicalDiscoverUrl, extractDiscoverCampaigns, fetchPublicDiscoverCampaigns, fetchPublicCampaignPage, fetchCampaignDetails, fetchFeedWithRetry } = require("../scripts/content-rewards-discovery-scan.js");
 const Feed = require("../content-rewards-assistant/campaign-feed.js");
 
 function sample(id) {
@@ -23,6 +23,8 @@ test("scheduled scan writes a schema-versioned snapshot and deduplicates new cam
     const result = await runScheduledScan({
       filePath,
       now: Date.parse("2026-10-31T00:00:00Z"),
+      fetchDiscoverImpl: async () => { throw new Error("fixture: official Discover unavailable"); },
+      discoverRetryDelaysMs: [0, 0],
       feed: { fetchCampaigns: async () => ({
         campaigns: [sample("one"), sample("one"), sample("two")],
         totalReceived: 3,
@@ -62,6 +64,8 @@ test("failed scheduled scan retains prior campaign results and publishes a failu
     const result = await runScheduledScan({
       filePath,
       now: Date.parse("2026-10-31T00:00:00Z"),
+      fetchDiscoverImpl: async () => { throw new Error("fixture: official Discover unavailable"); },
+      discoverRetryDelaysMs: [0, 0],
       feed: { fetchCampaigns: async () => { throw new Error("upstream unavailable"); } }
     });
     assert.equal(result.ok, false);
@@ -78,7 +82,7 @@ test("scheduled scan refuses to overwrite a malformed existing snapshot", async 
   const filePath = path.join(directory, "snapshot.json");
   try {
     await fs.writeFile(filePath, "{bad", "utf8");
-    const result = await runScheduledScan({ filePath, feed: { fetchCampaigns: async () => ({ campaigns: [] }) } });
+    const result = await runScheduledScan({ filePath, fetchDiscoverImpl: async () => { throw new Error("fixture: unavailable"); }, discoverRetryDelaysMs: [0, 0], feed: { fetchCampaigns: async () => ({ campaigns: [] }) } });
     assert.equal(result.ok, false);
     assert.match(result.error, /could not be read/i);
     assert.equal(await fs.readFile(filePath, "utf8"), "{bad");
@@ -157,6 +161,8 @@ test("failed scheduled scans persist the number of transient feed attempts", asy
     const result = await runScheduledScan({
       filePath,
       now: Date.parse("2026-10-31T00:00:00Z"),
+      discoverRetryDelaysMs: [0, 0],
+      fetchDiscoverImpl: async () => { throw new Error("fixture: official Discover unavailable"); },
       feedRetryDelaysMs: [0, 0],
       fetchImpl: async () => {
         calls += 1;
@@ -212,6 +218,95 @@ test("campaign-feed retry retries network errors but never retries an aborted re
   assert.equal(abortCalls, 1);
 });
 
+const DISCOVER_HTML = `<!doctype html><html><body><main>
+<a href="/c/campaigns/official-one"><article><h3>Seasonal Creator Clips</h3><p>Sample Brand · Instagram · $2.50 / 1K views</p></article></a>
+<a href="https://www.contentrewards.com/c/campaigns/official-two?ref=discover"><article><h3>Other Creator Campaign</h3></article></a>
+<a href="/c/campaigns/official-one#top">Duplicate link</a>
+<a href="https://evil.example/c/campaigns/unsafe">Do not follow</a>
+<a href="/c/discover">Discover index</a>
+</main></body></html>`;
+
+test("official Discover URL validator accepts only the public Discover index path", () => {
+  assert.equal(canonicalDiscoverUrl("https://contentrewards.com/c/discover?sort=new#top"), "https://contentrewards.com/c/discover");
+  assert.equal(canonicalDiscoverUrl("https://www.contentrewards.com/c/discover/"), "https://www.contentrewards.com/c/discover");
+  assert.equal(canonicalDiscoverUrl("https://contentrewards.com/c/campaigns/abc"), "");
+  assert.equal(canonicalDiscoverUrl("https://evil.example/c/discover"), "");
+  assert.equal(canonicalDiscoverUrl("https://user:pass@contentrewards.com/c/discover"), "");
+  assert.equal(canonicalDiscoverUrl("http://contentrewards.com/c/discover"), "");
+});
+
+test("official Discover HTML extracts unique trusted campaign links and ignores external links", () => {
+  const rows = extractDiscoverCampaigns(DISCOVER_HTML);
+  assert.equal(rows.length, 2);
+  assert.deepEqual(rows.map((row) => row.officialUrl), [
+    "https://contentrewards.com/c/campaigns/official-one",
+    "https://www.contentrewards.com/c/campaigns/official-two"
+  ]);
+  assert.equal(rows[0].title, "Seasonal Creator Clips");
+  assert.equal(rows[0].sourceVerification, "official-public-page");
+});
+
+test("official Discover page fetch parses campaign URLs without using the third-party feed", async () => {
+  let requested;
+  const page = await fetchPublicDiscoverCampaigns({
+    now: Date.parse("2026-10-31T00:00:00Z"),
+    retryDelaysMs: [0, 0],
+    fetchImpl: async (url, options) => {
+      requested = { url, options };
+      return {
+        ok: true, status: 200, url,
+        headers: { get: (name) => name.toLowerCase() === "content-type" ? "text/html; charset=utf-8" : "" },
+        text: async () => DISCOVER_HTML
+      };
+    }
+  });
+  assert.equal(requested.url, "https://contentrewards.com/c/discover");
+  assert.equal(requested.options.redirect, "manual");
+  assert.equal(requested.options.credentials, "omit");
+  assert.equal(page.totalReceived, 2);
+  assert.equal(page.campaigns[0].title.startsWith("Seasonal Creator Clips"), true);
+});
+
+test("scheduled scanner uses official Discover first and enriches campaigns from public detail pages", async () => {
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), "clipreward-official-discover-"));
+  const filePath = path.join(directory, "snapshot.json");
+  let feedCalled = false;
+  try {
+    const result = await runScheduledScan({
+      filePath,
+      now: Date.parse("2026-10-31T00:00:00Z"),
+      discoverRetryDelaysMs: [0, 0],
+      fetchDiscoverImpl: async (url) => ({
+        ok: true, status: 200, url,
+        headers: { get: () => "text/html" },
+        text: async () => DISCOVER_HTML
+      }),
+      fetchPageImpl: async (url) => ({
+        ok: true, status: 200, url,
+        headers: { get: () => "text/html" },
+        text: async () => PUBLIC_HTML
+      }),
+      feed: { fetchCampaigns: async () => { feedCalled = true; throw new Error("third-party feed must not run on the official path"); } }
+    });
+    assert.equal(result.ok, true);
+    assert.equal(feedCalled, false);
+    assert.equal(result.snapshot.source.verification, "official-public-page");
+    assert.equal(result.snapshot.campaigns.length, 2);
+    assert.equal(result.snapshot.lastScan.discoverRequestAttempts, 1);
+    assert.equal(result.snapshot.lastScan.feedRequestAttempts, 0);
+    assert.equal(result.snapshot.lastScan.detailPagesAttempted, 2);
+    assert.equal(result.snapshot.lastScan.detailPagesAvailable, 2);
+    const campaign = result.snapshot.campaigns.find((row) => row.id === "official-one");
+    assert.equal(campaign.title, "Seasonal Creator Clips");
+    assert.equal(campaign.sourceVerification, "official-public-page");
+    assert.equal(campaign.payouts[0].ratePerKViews, 2.5);
+    assert.equal(campaign.budgetUsd, 2000);
+    assert.equal(campaign.remainingUsd, 1750);
+  } finally {
+    await fs.rm(directory, { recursive: true, force: true });
+  }
+});
+
 test("HTML extraction reads visible main content, decodes entities and excludes navigation/scripts", () => {
   assert.equal(decodeHtmlEntities("A &amp; B &#36; &#x20B9; &nbsp;"), "A & B $ ₹  ");
   const visible = extractVisibleText(PUBLIC_HTML);
@@ -262,7 +357,7 @@ test("public campaign fetch validates every redirect before making the next requ
         text: async () => ""
       };
     }
-  }), /redirect outside the public Content Rewards campaign pages/i);
+  }), /redirect outside/i);
   assert.equal(requests, 1, "an untrusted redirect destination must never be fetched");
 });
 
@@ -321,7 +416,7 @@ test("direct public page fetch rejects external redirects and non-HTML responses
       headers: { get: (name) => name.toLowerCase() === "location" ? "https://evil.example/c/campaigns/safe" : "" },
       text: async () => ""
     })
-  }), /redirect outside the public Content Rewards campaign pages/i);
+  }), /redirect outside/i);
   await assert.rejects(fetchPublicCampaignPage(url, {
     fetchImpl: async () => ({ ok: true, status: 200, url, headers: { get: () => "application/json" }, text: async () => "{}" })
   }), /did not return an HTML/);
@@ -368,6 +463,8 @@ test("scheduled scan publishes campaign detail pages beside lead metadata", asyn
       filePath,
       now: Date.parse("2026-10-31T00:00:00Z"),
       detailLimit: 2,
+      fetchDiscoverImpl: async () => { throw new Error("fixture: official Discover unavailable"); },
+      discoverRetryDelaysMs: [0, 0],
       feed: { fetchCampaigns: async () => ({
         campaigns: [sample("one")], totalReceived: 1,
         fetchedAt: "2026-10-31T00:00:00.000Z",

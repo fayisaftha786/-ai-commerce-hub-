@@ -59,7 +59,7 @@ test("scan delegates to feed and reports source provenance", async () => {
   assert.equal(options.platform, "Instagram");
   assert.equal(options.search, "gaming");
   assert.equal(result.summary.found, 1);
-  assert.equal(result.sources[0].verification, "third-party");
+  assert.equal(result.sources[0].verification, "official-public-page");
 });
 
 test("normalizes backend origins and rejects credentials, cleartext remote URLs and URL paths", () => {

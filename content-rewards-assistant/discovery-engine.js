@@ -8,8 +8,8 @@
   const SETTINGS_KEY = "clipreward-discovery-settings-v2";
   const DEFAULT_INTERVAL_HOURS = 6;
   const SOURCES = Object.freeze([
-    { id: "contentrewards-snapshot", name: "Content Rewards public snapshot", type: "third-party-feed", mode: "automatic", verification: "third-party", platforms: ["Instagram", "Facebook", "YouTube", "X"], note: "Public third-party scraped snapshot; may be stale and is not official availability." },
-    { id: "contentrewards-official", name: "Content Rewards official Discover", type: "official-marketplace", mode: "guided", verification: "official-page", platforms: ["Instagram", "Facebook", "YouTube", "X"], note: "Open the official page and verify live campaign status and eligibility. Private or joined-only data is not crawled." }
+    { id: "contentrewards-official-discover", name: "Official Content Rewards Discover", type: "official-public-pages", mode: "automatic", verification: "official-public-page", platforms: ["Instagram", "Facebook", "YouTube", "X"], note: "Automatically reads public campaign links visible on official Discover, then fetches public detail pages. Private, join-only and hidden requirements are not crawled." },
+    { id: "contentrewards-snapshot", name: "Third-party Content Rewards feed", type: "third-party-feed", mode: "fallback", verification: "third-party", platforms: ["Instagram", "Facebook", "YouTube", "X"], note: "Used only if the official public Discover page cannot be read; may be stale and is not official availability." }
   ]);
   function clean(value, max) { return String(value == null ? "" : value).replace(/\s+/g, " ").trim().slice(0, max || 500); }
   function platformList(campaign) {
@@ -71,7 +71,7 @@
     row.discoveryKey = keyFor(row);
     row.platforms = platformList(row);
     row.opportunity = assessOpportunity(row, now);
-    row.verification = row.source === "Official API" ? "official-api" : "third-party";
+    row.verification = row.sourceVerification || (row.source === "Official API" ? "official-api" : "third-party");
     row.lastSeenAt = row.lastSeenAt || new Date(now == null ? Date.now() : now).toISOString();
     return row;
   }

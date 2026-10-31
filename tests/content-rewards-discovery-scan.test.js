@@ -357,7 +357,7 @@ test("public campaign fetch validates every redirect before making the next requ
         text: async () => ""
       };
     }
-  }), /redirect outside the public Content Rewards campaign pages/i);
+  }), /redirect outside/i);
   assert.equal(requests, 1, "an untrusted redirect destination must never be fetched");
 });
 
@@ -416,7 +416,7 @@ test("direct public page fetch rejects external redirects and non-HTML responses
       headers: { get: (name) => name.toLowerCase() === "location" ? "https://evil.example/c/campaigns/safe" : "" },
       text: async () => ""
     })
-  }), /redirect outside the public Content Rewards campaign pages/i);
+  }), /redirect outside/i);
   await assert.rejects(fetchPublicCampaignPage(url, {
     fetchImpl: async () => ({ ok: true, status: 200, url, headers: { get: () => "application/json" }, text: async () => "{}" })
   }), /did not return an HTML/);

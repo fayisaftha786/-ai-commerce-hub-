@@ -83,8 +83,25 @@ jobs:
         if: ${{ always() && steps.snapshot.outcome == 'success' }}
         uses: actions/deploy-pages@v5
 
-      - name: Report source scan failure after publishing retained data
+      - name: Warn when source scan fails; retained snapshot is still published
         if: ${{ always() && steps.scan.outcome == 'failure' }}
         run: |
-          echo "The public source scan failed. Previous campaign rows were retained and the failed scan was recorded in the published snapshot."
-          exit 1
+          echo "::warning::The third-party campaign feed is unavailable. Previous campaign rows were retained; the failed scan status is recorded in the published snapshot."
+          node - <<'NODE'
+          const fs = require("node:fs");
+          const snapshot = JSON.parse(fs.readFileSync("content-rewards-assistant/discovery-snapshot.json", "utf8"));
+          const scan = snapshot.lastScan || {};
+          const lines = [
+            "## Content Rewards discovery source warning",
+            "",
+            "- **Source status:** " + (scan.status || "unknown"),
+            "- **Last attempt:** " + (scan.completedAt || scan.at || "not recorded"),
+            "- **Feed requests:** " + (scan.feedRequestAttempts || 0),
+            "- **Saved campaign leads retained:** " + ((snapshot.campaigns || []).length),
+            "- **Public campaign pages saved:** " + ((snapshot.campaignDetails || []).length),
+            "- **Error:** " + (scan.error || "No error detail recorded"),
+            "",
+            "The workflow published the snapshot safely. A green deployment does not mean the upstream source is healthy; check the source status above and in the app."
+          ];
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, lines.join("\n") + "\n");
+          NODE

@@ -406,8 +406,101 @@
     }
   }
 
+  async function renderDeviceTest(options) {
+    const opts = options || {};
+    const duration = 4;
+    const capabilities = getCapabilities(root);
+    if (!capabilities.supported) throw new Error("This browser cannot export video. Missing: " + capabilities.missing.join(", ") + ".");
+    const canvas = root.document.createElement("canvas");
+    canvas.width = WIDTH;
+    canvas.height = HEIGHT;
+    const context = canvas.getContext("2d", { alpha: false });
+    if (!context) throw new Error("Could not create the device-test drawing surface.");
+    const stream = canvas.captureStream(FPS);
+    const tracks = stream.getTracks();
+    let recorder = null;
+    let animationId = null;
+    let cancelled = false;
+    const signal = opts.signal;
+    const onAbort = () => { cancelled = true; };
+    const abortError = () => {
+      const error = new Error("Device export test was cancelled.");
+      error.name = "AbortError";
+      return error;
+    };
+    if (signal) {
+      if (signal.aborted) throw abortError();
+      signal.addEventListener("abort", onAbort, { once: true });
+    }
+    try {
+      if (!tracks.some((track) => track.kind === "video")) throw new Error("The browser did not create a test video track.");
+      const chunks = [];
+      recorder = createMediaRecorder(stream, 1200000);
+      const stopped = new Promise((resolve, reject) => {
+        recorder.addEventListener("dataavailable", (event) => {
+          if (event.data && event.data.size) chunks.push(event.data);
+        });
+        recorder.addEventListener("error", () => reject(new Error("The device test recorder stopped unexpectedly.")), { once: true });
+        recorder.addEventListener("stop", resolve, { once: true });
+      });
+      recorder.start(300);
+      const startedAt = root.performance.now();
+      await new Promise((resolve, reject) => {
+        const tick = () => {
+          if (cancelled || (signal && signal.aborted)) {
+            reject(abortError());
+            return;
+          }
+          const elapsed = Math.min(duration, (root.performance.now() - startedAt) / 1000);
+          context.fillStyle = "#080d1a";
+          context.fillRect(0, 0, WIDTH, HEIGHT);
+          context.fillStyle = "#8b7cff";
+          context.fillRect(48, 48, WIDTH - 96, 14);
+          context.fillStyle = "#ffffff";
+          context.textAlign = "center";
+          context.textBaseline = "middle";
+          context.font = "bold 48px Arial, sans-serif";
+          context.fillText("VIDEO EXPORT TEST", WIDTH / 2, HEIGHT / 2 - 80);
+          context.font = "32px Arial, sans-serif";
+          context.fillText("ClipReward Studio", WIDTH / 2, HEIGHT / 2 - 12);
+          context.fillText(elapsed.toFixed(1) + " / " + duration + " sec", WIDTH / 2, HEIGHT / 2 + 60);
+          context.fillStyle = "#8b7cff";
+          context.fillRect(48, HEIGHT - 72, (WIDTH - 96) * Math.min(1, elapsed / duration), 12);
+          if (typeof opts.onProgress === "function") opts.onProgress(Math.min(100, Math.round(elapsed / duration * 100)));
+          if (elapsed >= duration) resolve();
+          else animationId = root.requestAnimationFrame(tick);
+        };
+        animationId = root.requestAnimationFrame(tick);
+      });
+      if (recorder.state !== "inactive") recorder.stop();
+      await stopped;
+      if (cancelled || (signal && signal.aborted)) throw abortError();
+      const blob = new root.Blob(chunks, { type: recorder.mimeType || capabilities.mimeType });
+      const metadata = await verifyBlob(blob, duration);
+      return {
+        blob,
+        mimeType: blob.type,
+        extension: blob.type.indexOf("mp4") >= 0 ? "mp4" : "webm",
+        formatLabel: blob.type.indexOf("mp4") >= 0 ? "MP4" : "WebM",
+        duration: metadata.duration,
+        width: metadata.width,
+        height: metadata.height,
+        size: blob.size
+      };
+    } catch (error) {
+      if (recorder && recorder.state !== "inactive") {
+        try { recorder.stop(); } catch (_) {}
+      }
+      throw error;
+    } finally {
+      if (animationId != null && typeof root.cancelAnimationFrame === "function") root.cancelAnimationFrame(animationId);
+      tracks.forEach((track) => { try { track.stop(); } catch (_) {} });
+      if (signal) signal.removeEventListener("abort", onAbort);
+    }
+  }
+
   return Object.freeze({
     MAX_MEDIA_FILES, MAX_MEDIA_BYTES, MAX_AUDIO_BYTES, WIDTH, HEIGHT, FPS, MIME_CANDIDATES,
-    chooseMimeType, createMediaRecorder, getCapabilities, fileKind, validateFiles, splitCaptions, validateRenderedMetadata, verifyBlob, render
+    chooseMimeType, createMediaRecorder, getCapabilities, fileKind, validateFiles, splitCaptions, validateRenderedMetadata, verifyBlob, render, renderDeviceTest
   });
 });

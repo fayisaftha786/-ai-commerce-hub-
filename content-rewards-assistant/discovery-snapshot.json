@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "",
+  "generatedAt": "2026-10-31T17:25:33.443Z",
   "source": {
     "id": "contentrewards-snapshot",
     "verification": "third-party",
@@ -9,7 +9,25 @@
   },
   "totalReceived": 0,
   "campaigns": [],
-  "lastScan": null,
-  "scans": [],
-  "campaignDetails": []
+  "campaignDetails": [],
+  "lastScan": {
+    "at": "2026-10-31T17:25:33.443Z",
+    "completedAt": "2026-10-31T17:25:33.443Z",
+    "status": "failed",
+    "checkedCount": 0,
+    "newCount": 0,
+    "source": "Content Rewards third-party public snapshot",
+    "error": "Third-party campaign feed returned HTTP 500."
+  },
+  "scans": [
+    {
+      "at": "2026-10-31T17:25:33.443Z",
+      "completedAt": "2026-10-31T17:25:33.443Z",
+      "status": "failed",
+      "checkedCount": 0,
+      "newCount": 0,
+      "source": "Content Rewards third-party public snapshot",
+      "error": "Third-party campaign feed returned HTTP 500."
+    }
+  ]
 }

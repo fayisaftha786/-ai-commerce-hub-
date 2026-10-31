@@ -189,7 +189,8 @@ test("Clip Studio exposes media upload, audio, preflight, progress, preview and 
     "video-media-files", "video-audio-file", "video-duration", "video-captions",
     "video-rights-confirm", "video-rules-confirm", "video-create-button",
     "video-cancel-button", "video-export-progress", "video-output-preview", "video-download-link",
-    "video-target-platform", "video-post-caption", "video-add-campaign-tags", "video-campaign-preflight"
+    "video-target-platform", "video-post-caption", "video-add-campaign-tags", "video-campaign-preflight",
+    "video-device-test-button"
   ]) assert.ok(html.includes('id="' + id + '"'), "missing video studio UI control " + id);
   assert.match(html, /video-studio\.js/);
   assert.match(appSource, /data-rules=/);

@@ -20,6 +20,7 @@ async function readSnapshot(filePath) {
     if (!parsed || typeof parsed !== "object" || !Array.isArray(parsed.campaigns) || !Array.isArray(parsed.scans)) {
       throw new Error("Scheduled discovery snapshot has an invalid structure.");
     }
+    parsed.campaignDetails = Array.isArray(parsed.campaignDetails) ? parsed.campaignDetails.slice(0, MAX_DETAIL_PAGES) : [];
     return parsed;
   } catch (error) {
     if (error && error.code === "ENOENT") {

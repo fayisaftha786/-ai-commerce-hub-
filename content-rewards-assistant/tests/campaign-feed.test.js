@@ -93,5 +93,6 @@ test("canonical campaign URLs accept only public Content Rewards campaign pages"
   assert.equal(Feed.canonicalCampaignUrl("https://contentrewards.com/c/"), "");
   assert.equal(Feed.canonicalCampaignUrl("https://evil.example/c/campaigns/abc"), "");
   assert.equal(Feed.canonicalCampaignUrl("http://contentrewards.com/c/campaigns/abc"), "");
+  assert.equal(Feed.canonicalCampaignUrl("https://contentrewards.com:8443/c/campaigns/abc"), "");
   assert.equal(Feed.canonicalCampaignUrl("javascript:alert(1)"), "");
 });

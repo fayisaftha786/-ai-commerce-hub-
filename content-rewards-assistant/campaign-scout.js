@@ -163,7 +163,7 @@
       if (/^(?:tiktok|instagram|facebook|youtube|twitter|x|music|clipping|logo|ugc|cpm|top clippers|views|budget|reference materials|creator requirements)$/i.test(line)) return false;
       return true;
     });
-    const candidate = candidates.find((line) => /[|–—]|\\s-\\s/.test(line) && line.length >= 16) ||
+    const candidate = candidates.find((line) => (/[|–—]/.test(line) || line.includes(" - ")) && line.length >= 16) ||
       candidates.find((line) => line.length >= 18) || candidates[0];
     return clean(candidate || "", 120);
   }
@@ -258,8 +258,8 @@
 
   function detectLockedRequirements(text) {
     const raw = String(text || "");
-    const match = /join\\s+to\\s+unlock\\s+(\\d+)\\s+requirements?/i.exec(raw);
-    const fileMatch = /reference\\s+materials\\s+(\\d+)\\s+files?/i.exec(raw);
+    const match = /join\s+to\s+unlock\s+(\d+)\s+requirements?/i.exec(raw);
+    const fileMatch = /reference\s+materials\s+(\d+)\s+files?/i.exec(raw);
     return {
       locked: /visible once you join|join to unlock/i.test(raw),
       count: match ? Number(match[1]) : null,
@@ -298,7 +298,7 @@
     const match = /(?:campaign\s+type|content\s+type|type)\s*[:=-]\s*(clipping|music|logo|ugc)\b|\b(clipping|music|logo|ugc)\s+campaign\b/i.exec(text);
     const value = match && (match[1] || match[2]);
     if (value) return value.toUpperCase();
-    const standalone = String(text || "").split("\\n").find((line) => /^(clipping|music|logo|ugc)$/i.test(line.trim()));
+    const standalone = String(text || "").split("\n").find((line) => /^(clipping|music|logo|ugc)$/i.test(line.trim()));
     return standalone ? standalone.trim().toUpperCase() : "";
   }
 

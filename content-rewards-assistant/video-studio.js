@@ -174,6 +174,19 @@
     return scenes;
   }
 
+  async function assertVideoPlayback(scenes) {
+    for (const scene of scenes) {
+      if (scene.kind !== "video") continue;
+      try {
+        await scene.element.play();
+        scene.element.pause();
+        scene.element.currentTime = 0;
+      } catch (_) {
+        throw new Error("The browser could not play " + scene.name + ". Try converting it to MP4 or WebM before editing.");
+      }
+    }
+  }
+
   function drawCover(context, source, width, height) {
     const sourceWidth = source.videoWidth || source.naturalWidth || source.width;
     const sourceHeight = source.videoHeight || source.naturalHeight || source.height;
@@ -269,6 +282,7 @@
         audioResume = audioContext.resume();
       }
       const scenes = await loadMedia(files, urls);
+      await assertVideoPlayback(scenes);
       const captions = splitCaptions(opts.captions);
       const sceneDuration = duration / scenes.length;
       const stream = canvas.captureStream(FPS);
@@ -303,13 +317,14 @@
         recorder.addEventListener("stop", resolve, { once: true });
       });
 
+      let playbackError = null;
       function paint(elapsed) {
         const sceneIndex = Math.min(scenes.length - 1, Math.floor(elapsed / sceneDuration));
         const scene = scenes[sceneIndex];
         scenes.forEach((item, index) => {
           if (item.kind !== "video") return;
           if (index === sceneIndex) {
-            if (item.element.paused) item.element.play().catch(() => {});
+            if (item.element.paused) item.element.play().catch(() => { playbackError = new Error("A source video stopped playing during export."); });
           } else if (!item.element.paused) item.element.pause();
         });
         context.fillStyle = "#080d1a";
@@ -346,6 +361,10 @@
           const now = root.performance && root.performance.now ? root.performance.now() : Date.now();
           const elapsed = Math.min(duration, (now - startedAt) / 1000);
           paint(elapsed);
+          if (playbackError) {
+            reject(playbackError);
+            return;
+          }
           if (typeof opts.onProgress === "function") opts.onProgress(Math.min(100, Math.round(elapsed / duration * 100)));
           if (elapsed >= duration) {
             resolve();

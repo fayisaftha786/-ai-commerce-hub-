@@ -249,7 +249,7 @@ test("detail crawler marks previously saved pages missing from the latest feed a
     pageTitle: "Old public campaign", pageText: "Campaign: Old public campaign",
     textLength: 32, detected: {}
   };
-  const result = await fetchCampaignDetails([], { previous });
+  const result = await fetchCampaignDetails([], { previous: [previous] });
   assert.equal(result.details.length, 1);
   assert.equal(result.details[0].status, "stale");
   assert.equal(result.details[0].notInLatestFeed, true);

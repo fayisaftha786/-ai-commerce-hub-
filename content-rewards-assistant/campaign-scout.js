@@ -305,7 +305,7 @@
   function extractAccessMode(text) {
     if (/\b(?:private|invitation[- ]only|invite[- ]only|invite only)\b/i.test(text)) return "Private / invitation-only";
     if (/\bapplication(?:s)?[- ]only\b|\bapply\s+to\s+join\b|\bapply\s+now\b|\bapplication\s+campaign\b/i.test(text)) return "Application / brand review";
-    if (/\bopen\s+campaign\b|\bopen\s+to\s+all\b|\bjoin\s+campaign\b|\bjoin\s+now\b/i.test(text)) return "Open campaign / direct join";
+    if (/\bopen\s+campaign\b|\bopen\s+to\s+all\b|\bjoin\s+campaign\b|\bjoin\s+now\b|\baccepting\s+clips\b/i.test(text)) return "Open campaign / direct join";
     return "";
   }
 
@@ -313,7 +313,7 @@
     if (/\b(?:paused|on\s+hold)\b/i.test(text)) return "Paused";
     if (/\b(?:ended|closed|expired|no\s+longer\s+accepting)\b/i.test(text)) return "Ended / closed";
     if (/\b(?:out\s+of\s+budget|budget\s+exhausted|no\s+budget\s+left)\b/i.test(text)) return "Out of budget";
-    if (/\b(?:live|active|accepting\s+(?:creators|applications)|open\s+campaign)\b/i.test(text)) return "Appears live in copied text";
+    if (/\b(?:live|active|accepting\s+(?:creators|applications|clips|submissions)|open\s+campaign)\b/i.test(text)) return "Appears live in copied text";
     return "Not stated";
   }
 

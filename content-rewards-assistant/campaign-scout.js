@@ -320,7 +320,9 @@
   function extractPlatformTerms(lines) {
     const result = { rates: [], caps: [], minimumViews: [], maximumViews: [] };
     let activePlatform = "";
-    for (const line of lines) {
+    for (let index = 0; index < lines.length; index += 1) {
+      const line = lines[index];
+      const sample = [line, lines[index + 1] || "", lines[index + 2] || ""].join(" ");
       const mentions = PLATFORM_NAMES.filter(([, pattern]) => pattern.test(line)).map(([name]) => name);
       if (mentions.length > 1) {
         activePlatform = "";
@@ -328,14 +330,14 @@
       }
       if (mentions.length === 1) activePlatform = mentions[0];
       if (!activePlatform) continue;
-      const rate = parseRate(line);
-      const cap = extractCap(line);
-      const minimumViews = extractMinimumViews(line);
-      const maximumViews = extractMaximumViews(line);
-      if (rate) result.rates.push({ platform: activePlatform, ...rate, evidence: clean(line, 300) });
-      if (cap) result.caps.push({ platform: activePlatform, amount: cap, evidence: clean(line, 300) });
-      if (minimumViews != null) result.minimumViews.push({ platform: activePlatform, value: minimumViews, evidence: clean(line, 300) });
-      if (maximumViews != null) result.maximumViews.push({ platform: activePlatform, value: maximumViews, evidence: clean(line, 300) });
+      const rate = parseRate(line) || parseRate(sample);
+      const cap = extractCap(line) || extractCap(sample);
+      const minimumViews = extractMinimumViews(line) ?? extractMinimumViews(sample);
+      const maximumViews = extractMaximumViews(line) ?? extractMaximumViews(sample);
+      if (rate) result.rates.push({ platform: activePlatform, ...rate, evidence: clean(sample, 300) });
+      if (cap) result.caps.push({ platform: activePlatform, amount: cap, evidence: clean(sample, 300) });
+      if (minimumViews != null) result.minimumViews.push({ platform: activePlatform, value: minimumViews, evidence: clean(sample, 300) });
+      if (maximumViews != null) result.maximumViews.push({ platform: activePlatform, value: maximumViews, evidence: clean(sample, 300) });
     }
     for (const key of Object.keys(result)) {
       result[key] = result[key].filter((item, index) => result[key].findIndex((other) => other.platform === item.platform) === index);

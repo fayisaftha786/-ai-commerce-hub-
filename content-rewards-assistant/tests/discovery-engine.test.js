@@ -142,3 +142,16 @@ test("rejects missing or malformed scheduled snapshot data", async () => {
     fetchImpl: async () => ({ ok: true, json: async () => ({ campaigns: [] }) })
   }), /unrecognised format/);
 });
+
+test("marks saved campaigns absent from the latest scan as unverified instead of active", () => {
+  const oldTime = Date.parse("2026-10-01T00:00:00Z");
+  const first = Discovery.mergeHistory([], [sample("seen", {
+    snapshotDate: "2026-10-01", ageDays: 0, freshness: "recent"
+  })], oldTime);
+  const next = Discovery.mergeHistory(first.campaigns, [], Date.parse("2026-10-31T00:00:00Z"));
+  const row = next.campaigns[0];
+  assert.equal(row.notSeenInLatestScan, true);
+  assert.equal(row.opportunity.status, "stale");
+  assert.ok(row.opportunity.missing.includes("Not present in the latest public feed scan"));
+  assert.match(row.opportunity.explanation, /not present in the latest public feed scan/i);
+});

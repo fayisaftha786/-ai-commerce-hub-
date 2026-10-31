@@ -231,11 +231,16 @@ async function fetchFeedWithRetry(feed, options = {}) {
   const delays = Array.isArray(options.retryDelaysMs)
     ? options.retryDelaysMs.map((value) => Math.max(0, Math.min(5000, Number(value) || 0))).slice(0, 5)
     : DEFAULT_FEED_RETRY_DELAYS_MS;
+  const onAttempt = typeof options.onAttempt === "function" ? options.onAttempt : null;
+  const feedOptions = { ...options };
+  delete feedOptions.retryDelaysMs;
+  delete feedOptions.onAttempt;
   let attempts = 0;
   const retryingFetch = async (...args) => {
     let lastError = null;
     for (let attempt = 0; attempt <= delays.length; attempt += 1) {
       attempts += 1;
+      if (onAttempt) onAttempt(attempts);
       try {
         const response = await fetcher(...args);
         if (!response || !TRANSIENT_FEED_STATUSES.has(Number(response.status)) || attempt >= delays.length) {
@@ -251,7 +256,7 @@ async function fetchFeedWithRetry(feed, options = {}) {
     }
     throw lastError || new Error("Campaign feed request failed after all retries.");
   };
-  const result = await feed.fetchCampaigns({ ...options, fetchImpl: retryingFetch });
+  const result = await feed.fetchCampaigns({ ...feedOptions, fetchImpl: retryingFetch });
   return { result, attempts };
 }
 
@@ -274,9 +279,10 @@ async function runScheduledScan(options = {}) {
       search: "",
       fetchImpl: options.fetchImpl,
       now,
-      retryDelaysMs: options.feedRetryDelaysMs
+      retryDelaysMs: options.feedRetryDelaysMs,
+      onAttempt: () => { feedRequestAttempts += 1; }
     });
-    feedRequestAttempts = feedResponse.attempts;
+    feedRequestAttempts = Math.max(feedRequestAttempts, feedResponse.attempts);
     const result = feedResponse.result;
     const merged = Discovery.mergeHistory(previous.campaigns, result.campaigns, now);
     const pageDetails = await fetchCampaignDetails(merged.campaigns, {
@@ -353,7 +359,8 @@ async function runScheduledScan(options = {}) {
 if (require.main === module) {
   runScheduledScan().then((result) => {
     if (!result.ok) {
-      process.stderr.write("Scheduled discovery failed: " + result.error + "\n");
+      const attempts = result.snapshot && result.snapshot.lastScan ? result.snapshot.lastScan.feedRequestAttempts || 0 : 0;
+      process.stderr.write("Scheduled discovery failed after " + attempts + " feed request(s): " + result.error + "\n");
       process.exitCode = 1;
       return;
     }

@@ -268,14 +268,14 @@
   }
 
   function extractMinimumViews(text) {
-    const match = /(?:minimum|min\.?)\s*(?:qualified\s*)?(?:views?|view count)\s*[:=-]?\s*([\d,]+(?:\.\d+)?\s*[kKmM]?)|([\d,]+(?:\.\d+)?\s*[kKmM]?)\s*(?:minimum|min\.?)\s+views?/i.exec(text);
-    const value = match && (match[1] || match[2]);
+    const match = /(?:minimum|min\.?)\s*(?:qualified\s*)?(?:views?|view count)\s*[:=-]?\s*([\d,]+(?:\.\d+)?\s*[kKmM]?)|(?:minimum|min\.?)\s*(?:qualified\s*)?([\d,]+(?:\.\d+)?\s*[kKmM]?)\s*(?:views?|view count)|([\d,]+(?:\.\d+)?\s*[kKmM]?)\s*(?:minimum|min\.?)\s+views?/i.exec(String(text || ""));
+    const value = match && (match[1] || match[2] || match[3]);
     return value ? parseCount(value) : null;
   }
 
   function extractMaximumViews(text) {
-    const match = /(?:maximum|max\.?)\s*(?:qualified\s*)?(?:views?|view count)\s*[:=-]?\s*([\d,]+(?:\.\d+)?\s*[kKmM]?)|([\d,]+(?:\.\d+)?\s*[kKmM]?)\s*(?:maximum|max\.?)\s+views?/i.exec(text);
-    const value = match && (match[1] || match[2]);
+    const match = /(?:maximum|max\.?)\s*(?:qualified\s*)?(?:views?|view count)\s*[:=-]?\s*([\d,]+(?:\.\d+)?\s*[kKmM]?)|(?:maximum|max\.?)\s*(?:qualified\s*)?([\d,]+(?:\.\d+)?\s*[kKmM]?)\s*(?:views?|view count)|([\d,]+(?:\.\d+)?\s*[kKmM]?)\s*(?:maximum|max\.?)\s+views?/i.exec(String(text || ""));
+    const value = match && (match[1] || match[2] || match[3]);
     return value ? parseCount(value) : null;
   }
 

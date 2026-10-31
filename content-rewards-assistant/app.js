@@ -239,6 +239,64 @@
     $("scout-results").hidden = false;
   }
 
+
+  let campaignFeedRows = [];
+
+  function renderCampaignFeed(result) {
+    campaignFeedRows = result.campaigns;
+    $("campaign-feed-status").textContent = result.campaigns.length
+      ? result.campaigns.length + " matching leads · " + result.totalReceived + " records received · fetched " + new Date(result.fetchedAt).toLocaleString()
+      : "No matching leads in the returned snapshot. Try another platform or search.";
+    $("campaign-feed-list").innerHTML = result.campaigns.map((campaign, index) => {
+      const payout = campaign.payouts.find((item) => item.platform === $("scout-target-platform").value);
+      const freshness = campaign.freshness === "stale" ? "Snapshot may be stale (" + campaign.ageDays + " days old)" :
+        campaign.freshness === "recent" ? "Snapshot " + campaign.ageDays + " days old" : "Snapshot date unknown";
+      const budget = campaign.remainingUsd == null ? "Remaining budget unknown" : "Snapshot remaining ≈ $" + campaign.remainingUsd.toLocaleString("en");
+      const rate = payout && payout.ratePerKViews != null ? "$" + payout.ratePerKViews + " / 1K views" : "Rate not listed";
+      const official = campaign.officialUrl || window.ClipRewardFeed.OFFICIAL_DISCOVER;
+      return '<article class="feed-campaign-card"><div class="feed-card-top"><strong>' + escapeHtml(campaign.title) + '</strong><span>' + escapeHtml(freshness) + '</span></div>' +
+        '<p>' + escapeHtml(campaign.brand || "Brand not stated") + ' · ' + escapeHtml(campaign.type || "Type unknown") + '</p>' +
+        '<div class="feed-metrics"><span>' + escapeHtml(rate) + '</span><span>' + escapeHtml(budget) + '</span></div>' +
+        '<p class="feed-source-note">Third-party snapshot only. Live status and eligibility are not verified.</p>' +
+        '<div class="feed-card-actions"><button class="button button-secondary" type="button" data-feed-import="' + index + '">Analyse & import</button>' +
+        '<a class="text-button" href="' + escapeHtml(official) + '" target="_blank" rel="noopener noreferrer">Verify on official Discover ↗</a></div></article>';
+    }).join("");
+    $("campaign-feed-results").hidden = false;
+    $("campaign-feed-list").querySelectorAll("[data-feed-import]").forEach((button) => {
+      button.addEventListener("click", () => importFeedCampaign(Number(button.dataset.feedImport)));
+    });
+  }
+
+  async function loadCampaignFeed() {
+    const button = $("campaign-feed-load");
+    button.disabled = true;
+    $("campaign-feed-status").textContent = "Fetching third-party campaign snapshot…";
+    $("campaign-feed-results").hidden = true;
+    try {
+      const result = await window.ClipRewardFeed.fetchCampaigns({
+        platform: $("scout-target-platform").value,
+        search: $("campaign-feed-search").value
+      });
+      renderCampaignFeed(result);
+    } catch (error) {
+      $("campaign-feed-status").textContent = error && error.message ? error.message : "Campaign feed unavailable.";
+      $("campaign-feed-results").hidden = false;
+      $("campaign-feed-list").innerHTML = '<p class="muted small-text">Use the official Discover page and paste its public campaign details below. No campaign data was assumed or fabricated.</p>';
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  function importFeedCampaign(index) {
+    const campaign = campaignFeedRows[index];
+    if (!campaign) return;
+    const platform = $("scout-target-platform").value;
+    $("scout-brief-text").value = window.ClipRewardFeed.campaignToBrief(campaign, platform);
+    $("scout-source-url").value = campaign.officialUrl || "";
+    analyseCampaignBrief();
+    $("scout-results").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   function renderRewardsIntelligence(result) {
     const assessment = window.ClipRewardIntelligence.assessAll({
       brief: result,
@@ -634,6 +692,7 @@
       renderAccount();
     });
   });
+  $("campaign-feed-load").addEventListener("click", loadCampaignFeed);
   $("campaign-scout-form").addEventListener("submit", analyseCampaignBrief);
   $("scout-brief-text").addEventListener("input", () => {
     if ($("scout-brief-text").value.trim().length < 12) {

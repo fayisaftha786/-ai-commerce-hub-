@@ -113,3 +113,17 @@
 
 .ri-fee-link{display:inline-block;margin-top:7px;font-size:9px;font-weight:800;color:#b8adff;text-decoration:none}
 .ri-fee-link:hover{text-decoration:underline}
+
+
+/* Third-party campaign lead feed */
+.campaign-feed-panel{margin:14px 0;padding:16px;border:1px solid #33415e;border-radius:14px;background:#0d1728}
+.feed-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}.feed-heading h3{margin:5px 0;font-size:16px}
+.feed-search-row{display:flex;align-items:center;gap:10px;margin:12px 0}.feed-search-row input{flex:1;min-width:0}
+.feed-status{font-size:11px;color:#c4cce0;margin:10px 0}.campaign-feed-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.feed-campaign-card{padding:12px;border:1px solid #34425f;border-radius:11px;background:#111d32;min-width:0}
+.feed-card-top{display:flex;flex-direction:column;gap:5px}.feed-card-top strong{font-size:12px;color:#f5f7ff}.feed-card-top span{font-size:9px;color:#e6c98c}
+.feed-campaign-card p{font-size:10px;color:#a9b7cf;line-height:1.5;margin:7px 0}
+.feed-metrics{display:flex;flex-wrap:wrap;gap:7px}.feed-metrics span{font-size:10px;padding:5px 7px;border-radius:7px;background:#202c45;color:#d9e2f4}
+.feed-campaign-card .feed-source-note{font-size:9px;color:#e6c98c}.feed-card-actions{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-top:9px}
+.feed-card-actions .button{font-size:10px;padding:8px 10px}.feed-disclaimer{font-size:9px;line-height:1.6;color:#9aa8c1;margin:12px 0 0}
+@media(max-width:650px){.feed-heading{flex-direction:column}.campaign-feed-list{grid-template-columns:1fr}.feed-search-row{align-items:stretch;flex-direction:column}}

@@ -17,21 +17,46 @@
     "Finance", "Gaming", "Entertainment", "Technology", "Health & Wellness",
     "Music", "Podcasts", "Lifestyle", "Education", "Apps", "Sports", "Beauty"
   ];
+  const GENERIC_TITLES = /^(discover|all campaigns|campaign details|brief|overview|requirements|platforms?|budget|rate|creator campaign|creator brief|campaign|open campaign|apply now|join campaign|new campaign)$/i;
 
   function clean(value, max = 500) {
     return String(value == null ? "" : value).replace(/\r/g, "").trim().slice(0, max);
   }
 
-  function parseAmount(raw) {
-    const match = /([$€£₹]|USD|EUR|GBP|INR)\s*([\d,]+(?:\.\d+)?)\s*([kKmM]?)/i.exec(raw || "");
+  function parseCount(raw) {
+    const match = /([\d,]+(?:\.\d+)?)\s*([kKmM]?)/.exec(String(raw || ""));
     if (!match) return null;
-    let value = Number(match[2].replace(/,/g, ""));
-    const suffix = match[3].toLowerCase();
+    let value = Number(match[1].replace(/,/g, ""));
+    const suffix = match[2].toLowerCase();
     if (suffix === "k") value *= 1000;
     if (suffix === "m") value *= 1000000;
-    const symbol = match[1].toUpperCase();
-    const currency = ({ "$": "USD", "€": "EUR", "£": "GBP", "₹": "INR", USD: "USD", EUR: "EUR", GBP: "GBP", INR: "INR" })[symbol];
-    return Number.isFinite(value) ? { value, currency, raw: match[0].trim() } : null;
+    return Number.isSafeInteger(Math.round(value)) && Number.isFinite(value) ? Math.round(value) : null;
+  }
+
+  function parseAmount(raw, fallbackCurrency = "") {
+    const match = /([$€£₹]|USD|EUR|GBP|INR)\s*([\d,]+(?:\.\d+)?)\s*([kKmM]?)/i.exec(raw || "");
+    if (match) {
+      let value = Number(match[2].replace(/,/g, ""));
+      const suffix = match[3].toLowerCase();
+      if (suffix === "k") value *= 1000;
+      if (suffix === "m") value *= 1000000;
+      const symbol = match[1].toUpperCase();
+      const currency = ({ "$": "USD", "€": "EUR", "£": "GBP", "₹": "INR", USD: "USD", EUR: "EUR", GBP: "GBP", INR: "INR" })[symbol];
+      return Number.isFinite(value) ? { value, currency, raw: match[0].trim() } : null;
+    }
+    const suffix = /\b([\d,]+(?:\.\d+)?)\s*([kKmM]?)\s*(USD|EUR|GBP|INR)\b/i.exec(raw || "");
+    if (suffix) {
+      let value = Number(suffix[1].replace(/,/g, ""));
+      if (suffix[2].toLowerCase() === "k") value *= 1000;
+      if (suffix[2].toLowerCase() === "m") value *= 1000000;
+      return Number.isFinite(value) ? { value, currency: suffix[3].toUpperCase(), raw: suffix[0].trim() } : null;
+    }
+    const bare = /([\d,]+(?:\.\d+)?)\s*([kKmM]?)/.exec(raw || "");
+    if (!bare || !fallbackCurrency) return null;
+    let value = Number(bare[1].replace(/,/g, ""));
+    if (bare[2].toLowerCase() === "k") value *= 1000;
+    if (bare[2].toLowerCase() === "m") value *= 1000000;
+    return Number.isFinite(value) ? { value, currency: fallbackCurrency, raw: bare[0].trim() } : null;
   }
 
   function formatAmount(amount) {
@@ -41,46 +66,94 @@
   }
 
   function parseBudget(text) {
-    const pair = /([$€£₹]?\s*[\d,]+(?:\.\d+)?\s*[kKmM]?)\s*\/\s*([$€£₹]\s*[\d,]+(?:\.\d+)?\s*[kKmM]?)/.exec(text);
+    const raw = String(text || "");
+    const pair = /((?:[$€£₹]\s*)?[\d,]+(?:\.\d+)?\s*[kKmM]?)\s*\/\s*([$€£₹]\s*[\d,]+(?:\.\d+)?\s*[kKmM]?)/.exec(raw);
     if (pair) {
-      const spentRaw = pair[1].trim();
-      const totalRaw = pair[2].trim();
-      const total = parseAmount(totalRaw);
-      const spent = parseAmount(/[€£₹$]/.test(spentRaw) ? spentRaw : total ? total.currency === "USD" ? "$" + spentRaw : total.currency + " " + spentRaw : spentRaw);
+      const total = parseAmount(pair[2]);
+      const spent = parseAmount(pair[1], total && total.currency);
       if (spent && total && spent.currency === total.currency && total.value >= spent.value) {
-        return { spent, total, remaining: { value: total.value - spent.value, currency: total.currency } };
+        return {
+          spent,
+          total,
+          remaining: { value: total.value - spent.value, currency: total.currency },
+          source: "spent / total"
+        };
       }
     }
-    const labelled = /(?:total\s+budget|campaign\s+budget|budget|pool|budget\s+size)\s*[:=-]?\s*([$€£₹]\s*[\d,]+(?:\.\d+)?\s*[kKmM]?)/i.exec(text);
-    const total = labelled ? parseAmount(labelled[1]) : null;
-    return total ? { spent: null, total, remaining: null } : null;
+
+    const remainingMatch = /(?:remaining\s+budget|budget\s*(?:left|remaining)|left\s+(?:in\s+)?(?:the\s+)?budget|budget\s+available)\s*[:=-]?\s*([$€£₹]\s*[\d,]+(?:\.\d+)?\s*[kKmM]?|(?:USD|EUR|GBP|INR)\s*[\d,]+(?:\.\d+)?\s*[kKmM]?)/i.exec(raw);
+    const totalMatch = /(?:total\s+budget|campaign\s+budget|funded\s+budget|budget\s+size|total\s+funding|budget)\s*[:=-]?\s*([$€£₹]\s*[\d,]+(?:\.\d+)?\s*[kKmM]?|(?:USD|EUR|GBP|INR)\s*[\d,]+(?:\.\d+)?\s*[kKmM]?)/i.exec(raw);
+    const spentMatch = /(?:budget\s+used|spent|used)\s*[:=-]?\s*([$€£₹]\s*[\d,]+(?:\.\d+)?\s*[kKmM]?|(?:USD|EUR|GBP|INR)\s*[\d,]+(?:\.\d+)?\s*[kKmM]?)/i.exec(raw);
+    const remaining = remainingMatch ? parseAmount(remainingMatch[1]) : null;
+    const total = totalMatch ? parseAmount(totalMatch[1]) : null;
+    const spent = spentMatch ? parseAmount(spentMatch[1]) : null;
+
+    if (remaining || total || spent) {
+      const currency = (remaining || total || spent).currency;
+      if ((remaining && remaining.currency !== currency) || (total && total.currency !== currency) || (spent && spent.currency !== currency)) {
+        return { spent: null, total: null, remaining: null, source: "currency conflict", currencyConflict: true };
+      }
+      const derivedRemaining = remaining || (total && spent && total.value >= spent.value
+        ? { value: total.value - spent.value, currency }
+        : null);
+      return { spent, total, remaining: derivedRemaining, source: remaining ? "remaining" : total && spent ? "spent / total" : total ? "total" : "spent" };
+    }
+    return null;
   }
 
   function parseRate(text) {
-    const cpm = /([$€£₹]\s*[\d,]+(?:\.\d+)?)\s*(?:\/\s*(?:1\s*,?\s*000|1k)|per\s*1\s*,?\s*000(?:\s+views?)?|cpm\b)/i.exec(text);
-    if (cpm) {
-      const amount = parseAmount(cpm[1]);
-      return amount ? { model: "CPM", amount, label: formatAmount(amount) + " per 1,000 views" } : null;
+    const raw = String(text || "");
+    const money = "([$€£₹]\\s*[\\d,]+(?:\\.\\d+)?\\s*[kKmM]?|(?:USD|EUR|GBP|INR)\\s*[\\d,]+(?:\\.\\d+)?\\s*[kKmM]?|[\\d,]+(?:\\.\\d+)?\\s*[kKmM]?\\s*(?:USD|EUR|GBP|INR))";
+    let match = new RegExp(money + "\\s*(?:\\/\\s*(?:1\\s*,?\\s*000|1k)|per\\s*1\\s*,?\\s*000(?:\\s+views?)?|\\bCPM\\b)", "i").exec(raw);
+    if (!match) {
+      match = new RegExp("\\bCPM\\b\\s*[:=-]?\\s*" + money, "i").exec(raw);
+      if (match) {
+        const amount = parseAmount(match[0].replace(/^\s*CPM\s*[:=-]?\s*/i, ""));
+        if (amount) return { model: "CPM", amount, label: formatAmount(amount) + " per 1,000 views" };
+      }
     }
-    const perPost = /([$€£₹]\s*[\d,]+(?:\.\d+)?\s*[kKmM]?)\s*(?:per\s+(?:post|video|clip)|\/\s*(?:post|video|clip))/i.exec(text);
-    if (perPost) {
-      const amount = parseAmount(perPost[1]);
-      return amount ? { model: "Per post", amount, label: formatAmount(amount) + " per post" } : null;
+    if (match) {
+      const amount = parseAmount(match[1]);
+      if (amount) return { model: "CPM", amount, label: formatAmount(amount) + " per 1,000 views" };
     }
-    if (/\bretainer\b/i.test(text)) return { model: "Retainer", amount: null, label: "Retainer (amount not parsed)" };
-    if (/\b(?:payout|reward|payment)\s*(?:model|type)?\s*[:=-]?\s*pool\b|\bpool[- ]based\s+(?:payout|reward)\b|\bpool\s+campaign\b/i.test(text)) {
-      return { model: "Pool", amount: null, label: "Shared pool — variable allocation; confirm the campaign payout formula" };
+
+    match = new RegExp(money + "\\s*(?:per\\s+(?:approved\\s+)?(?:post|video|clip)|\\/\\s*(?:post|video|clip))", "i").exec(raw);
+    if (!match) {
+      match = new RegExp("(?:per\\s+(?:approved\\s+)?(?:post|video|clip)|flat\\s+fee)\\s*[:=-]?\\s*" + money, "i").exec(raw);
+      if (match) {
+        const amount = parseAmount(match[0].replace(/^(?:per\\s+(?:approved\\s+)?(?:post|video|clip)|flat\\s+fee)\\s*[:=-]?\\s*/i, ""));
+        if (amount) return { model: "Per post", amount, label: formatAmount(amount) + " per post" };
+      }
+    }
+    if (match) {
+      const amount = parseAmount(match[1]);
+      if (amount) return { model: "Per post", amount, label: formatAmount(amount) + " per post" };
+    }
+
+    const retainer = new RegExp("\\bretainer\\b(?:\\s*(?:amount|rate|payment))?\\s*[:=-]?\\s*" + money, "i").exec(raw);
+    if (retainer) {
+      const amount = parseAmount(retainer[1]);
+      return { model: "Retainer", amount, label: amount ? formatAmount(amount) + " retainer" : "Retainer (amount not parsed)" };
+    }
+    if (/\bretainer\b/i.test(raw)) return { model: "Retainer", amount: null, label: "Retainer (amount not parsed)" };
+
+    if (/\b(?:payout|reward|payment)\s*(?:model|type)?\s*[:=-]?\s*pool\b|\bpool[- ]based\s+(?:payout|reward)\b|\bpool\s+campaign\b|\bprize\s+pool\b/i.test(raw)) {
+      return { model: "Pool", amount: null, label: "Pool — allocation depends on the campaign's pool rules and eligible views" };
     }
     return null;
   }
 
   function findTitle(lines) {
     const explicit = lines.find((line) => /^(?:campaign|title|name)\s*:/i.test(line));
-    if (explicit) return clean(explicit.replace(/^(?:campaign|title|name)\s*:/i, ""), 120);
+    if (explicit) {
+      const value = clean(explicit.replace(/^(?:campaign|title|name)\s*:/i, ""), 120);
+      if (value && !GENERIC_TITLES.test(value)) return value;
+    }
     const candidate = lines.find((line) => {
       if (line.length < 4 || line.length > 120) return false;
-      if (/^(discover|all campaigns|campaign details|brief|overview|requirements|platforms?|budget|rate)\b/i.test(line)) return false;
-      if (/^https?:\/\//i.test(line)) return false;
+      if (GENERIC_TITLES.test(line) || /^(discover|all campaigns|campaign details|brief|overview|requirements|platforms?|budget|rate|creator campaign|creator brief)\b/i.test(line)) return false;
+      if (/^https?:\/\//i.test(line) || /^[$€£₹\d]/.test(line)) return false;
+      if (/^(?:join|apply|application|deadline|ends?|expires?|minimum|maximum|budget|rate|platforms?)\b/i.test(line)) return false;
       return true;
     });
     return clean(candidate || "", 120);
@@ -88,13 +161,13 @@
 
   function parseDeadline(text) {
     const monthMap = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12 };
-    const iso = /(?:deadline|ends?|end date|expires?)\s*[:=-]?\s*(20\d{2}-\d{2}-\d{2})/i.exec(text);
+    const iso = /(?:deadline|ends?|end date|expires?|application closes?)\s*[:=-]?\s*(20\d{2}-\d{2}-\d{2})/i.exec(text);
     if (iso) {
       const date = new Date(iso[1] + "T00:00:00Z");
       if (!Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === iso[1]) return iso[1];
     }
-    const monthFirst = /(?:deadline|ends?|end date|expires?)\s*[:=-]?\s*([A-Za-z]{3,9})\s+(\d{1,2}),?\s+(20\d{2})/i.exec(text);
-    const dayFirst = /(?:deadline|ends?|end date|expires?)\s*[:=-]?\s*(\d{1,2})\s+([A-Za-z]{3,9})\s+(20\d{2})/i.exec(text);
+    const monthFirst = /(?:deadline|ends?|end date|expires?|application closes?)\s*[:=-]?\s*([A-Za-z]{3,9})\s+(\d{1,2}),?\s+(20\d{2})/i.exec(text);
+    const dayFirst = /(?:deadline|ends?|end date|expires?|application closes?)\s*[:=-]?\s*(\d{1,2})\s+([A-Za-z]{3,9})\s+(20\d{2})/i.exec(text);
     const named = monthFirst || dayFirst;
     if (named) {
       const month = monthMap[(monthFirst ? named[1] : named[2]).slice(0, 3).toLowerCase()];
@@ -125,105 +198,269 @@
     return "";
   }
 
+  function extractPlatforms(lines) {
+    const accepted = new Set();
+    const excluded = new Set();
+    const negative = /\b(?:not\s+(?:accepted|supported|allowed|available|eligible)|no|exclude[sd]?|unsupported|unavailable|do\s+not|don't|must\s+not|cannot|can't|prohibited|except)\b/i;
+    for (const line of lines) {
+      for (const [name, pattern] of PLATFORM_NAMES) {
+        if (!pattern.test(line)) continue;
+        if (negative.test(line)) excluded.add(name);
+        else accepted.add(name);
+      }
+    }
+    for (const name of excluded) accepted.delete(name);
+    return { accepted: PLATFORM_NAMES.filter(([name]) => accepted.has(name)).map(([name]) => name),
+      excluded: PLATFORM_NAMES.filter(([name]) => excluded.has(name)).map(([name]) => name) };
+  }
+
+  function findMoneyNear(text, patterns) {
+    const money = "([$€£₹]\\s*[\\d,]+(?:\\.\\d+)?\\s*[kKmM]?|(?:USD|EUR|GBP|INR)\\s*[\\d,]+(?:\\.\\d+)?\\s*[kKmM]?|[\\d,]+(?:\\.\\d+)?\\s*[kKmM]?\\s*(?:USD|EUR|GBP|INR))";
+    for (const pattern of patterns) {
+      const before = new RegExp(pattern + "\\s*[:=-]?\\s*" + money, "i").exec(text);
+      if (before) return parseAmount(before[1]);
+      const after = new RegExp(money + "\\s*" + pattern, "i").exec(text);
+      if (after) return parseAmount(after[1]);
+    }
+    return null;
+  }
+
+  function extractCap(text) {
+    const amount = findMoneyNear(text, [
+      "(?:maximum|max)\\s*(?:payout\\s*)?(?:per\\s+(?:clip|video|post)|per\\s+creator|cap)",
+      "(?:per\\s+(?:clip|video|post)|clip\\s+cap)\\s*(?:maximum|max|cap)?",
+      "(?:maximum|max)\\s+per\\s+clip"
+    ]);
+    return amount;
+  }
+
+  function extractMinimumViews(text) {
+    const match = /(?:minimum|min\.?)\s*(?:qualified\s*)?(?:views?|view count)\s*[:=-]?\s*([\d,]+(?:\.\d+)?\s*[kKmM]?)|([\d,]+(?:\.\d+)?\s*[kKmM]?)\s*(?:minimum|min\.?)\s+views?/i.exec(text);
+    const value = match && (match[1] || match[2]);
+    return value ? parseCount(value) : null;
+  }
+
+  function extractMaximumViews(text) {
+    const match = /(?:maximum|max\.?)\s*(?:qualified\s*)?(?:views?|view count)\s*[:=-]?\s*([\d,]+(?:\.\d+)?\s*[kKmM]?)|([\d,]+(?:\.\d+)?\s*[kKmM]?)\s*(?:maximum|max\.?)\s+views?/i.exec(text);
+    const value = match && (match[1] || match[2]);
+    return value ? parseCount(value) : null;
+  }
+
+  function extractFollowers(text) {
+    const match = /(?:minimum|min\.?|at\s+least)\s*([\d,]+(?:\.\d+)?\s*[kKmM]?)\s*(?:followers?|subscribers?)|([\d,]+(?:\.\d+)?\s*[kKmM]?)\s*(?:followers?|subscribers?)\s*(?:minimum|min\.?)/i.exec(text);
+    const value = match && (match[1] || match[2]);
+    return value ? parseCount(value) : null;
+  }
+
+  function extractDuration(text) {
+    const range = /(?:video\s*)?(?:length|duration|between)?\s*[:=-]?\s*(\d{1,3})\s*(?:-|to)\s*(\d{1,3})\s*(?:seconds?|secs?|s)\b/i.exec(text);
+    const min = /(?:minimum|min\.?|at\s+least)\s*(\d{1,3})\s*(?:seconds?|secs?|s)\b/i.exec(text);
+    const max = /(?:maximum|max\.?|no\s+more\s+than|up\s+to)\s*(\d{1,3})\s*(?:seconds?|secs?|s)\b/i.exec(text);
+    const minSeconds = range ? Number(range[1]) : min ? Number(min[1]) : null;
+    const maxSeconds = range ? Number(range[2]) : max ? Number(max[1]) : null;
+    return minSeconds != null || maxSeconds != null ? { minSeconds, maxSeconds } : null;
+  }
+
+  function extractCampaignType(text) {
+    const match = /(?:campaign\s+type|content\s+type|type)\s*[:=-]\s*(clipping|music|logo|ugc)\b|\b(clipping|music|logo|ugc)\s+campaign\b/i.exec(text);
+    const value = match && (match[1] || match[2]);
+    return value ? value.charAt(0).toUpperCase() + value.slice(1).toUpperCase() : "";
+  }
+
+  function extractAccessMode(text) {
+    if (/\b(?:private|invitation[- ]only|invite[- ]only|invite only)\b/i.test(text)) return "Private / invitation-only";
+    if (/\bapplication(?:s)?\s+only\b|\bapply\s+to\s+join\b|\bapply\s+now\b|\bapplication\s+campaign\b/i.test(text)) return "Application / brand review";
+    if (/\bopen\s+campaign\b|\bopen\s+to\s+all\b|\bjoin\s+campaign\b|\bjoin\s+now\b/i.test(text)) return "Open campaign / direct join";
+    return "";
+  }
+
+  function extractCampaignStatus(text) {
+    if (/\b(?:paused|on\s+hold)\b/i.test(text)) return "Paused";
+    if (/\b(?:ended|closed|expired|no\s+longer\s+accepting)\b/i.test(text)) return "Ended / closed";
+    if (/\b(?:out\s+of\s+budget|budget\s+exhausted|no\s+budget\s+left)\b/i.test(text)) return "Out of budget";
+    if (/\b(?:live|active|accepting\s+(?:creators|applications)|open\s+campaign)\b/i.test(text)) return "Appears live in copied text";
+    return "Not stated";
+  }
+
+  function extractPlatformRates(lines) {
+    const rates = [];
+    for (const line of lines) {
+      for (const [name, pattern] of PLATFORM_NAMES) {
+        if (pattern.test(line)) {
+          const rate = parseRate(line);
+          if (rate) rates.push({ platform: name, ...rate, evidence: clean(line, 300) });
+        }
+      }
+    }
+    return rates.filter((rate, index) => rates.findIndex((other) => other.platform === rate.platform) === index);
+  }
+
+  function extractRules(lines) {
+    const rulePattern = /require|must\b|minimum|min\.?\b|maximum|max\.?\b|eligible|eligib|original|disclos|language|country|region|follower|views?|tag|hashtag|watermark|repost|collab|deadline|apply|approval|duration|seconds?|format|vertical|ratio|caption|mention|music|audio|logo|asset|footage|source material|copyright|license|licensed|no\s+|don't|do\s+not|prohibit|avoid|forbidden|only\b|public\b|private\b/i;
+    return lines.filter((line) => rulePattern.test(line)).slice(0, 60);
+  }
+
+  function extractRuleGroups(lines) {
+    const groups = { eligibility: [], required: [], prohibited: [], creative: [], submission: [] };
+    for (const line of lines) {
+      if (/followers?|subscribers?|country|region|age|eligible|eligibility|account type|connected account/i.test(line)) groups.eligibility.push(line);
+      if (/must\b|required|include|add\b|mention|hashtag|disclos|tag\b|post\b|publish|upload|submit/i.test(line)) groups.required.push(line);
+      if (/\bno\b|don't|do not|must not|cannot|can't|prohibit|avoid|forbidden|watermark|repost|copyright|unlicensed/i.test(line)) groups.prohibited.push(line);
+      if (/duration|seconds?|format|vertical|ratio|resolution|caption|hook|language|audio|music|logo|footage|asset|original|edit/i.test(line)) groups.creative.push(line);
+      if (/deadline|within|before|after|approval|pre.?approval|submit|submission|public|post age|minutes?/i.test(line)) groups.submission.push(line);
+    }
+    for (const key of Object.keys(groups)) groups[key] = [...new Set(groups[key])].slice(0, 30);
+    return groups;
+  }
+
   function parseCampaignBrief(input) {
     const source = input && typeof input === "object" ? input : {};
     const requestedPlatform = ["Instagram", "Facebook", "YouTube", "X"].includes(source.requestedPlatform) ? source.requestedPlatform : "";
     const rawText = clean(source.text, 20000);
-    if (rawText.length < 12) throw new Error("Paste the public campaign card or brief text first.");
-    const lines = rawText.split("\n").map((line) => clean(line, 500)).filter(Boolean);
+    if (rawText.length < 12) throw new Error("Paste the public campaign card or full brief text first.");
+    const lines = rawText.split("\n").map((line) => clean(line, 700)).filter(Boolean);
     const title = findTitle(lines);
     const rate = parseRate(rawText);
     const budget = parseBudget(rawText);
-    const platforms = PLATFORM_NAMES.filter(([, pattern]) => pattern.test(rawText)).map(([name]) => name);
+    const platformData = extractPlatforms(lines);
+    const platforms = platformData.accepted;
+    const excludedPlatforms = platformData.excluded;
     const unsupportedPlatforms = platforms.filter((name) => INDIA_UNAVAILABLE_PLATFORMS.includes(name));
     const platformMatch = !requestedPlatform ? "not-selected" :
+      excludedPlatforms.includes(requestedPlatform) ? "mismatch" :
       platforms.includes(requestedPlatform) ? "match" : platforms.length ? "mismatch" : "unknown";
     const category = CATEGORY_NAMES.find((name) => new RegExp("\\b" + name.replace(/[.*+?^|]/g, "\\$&") + "\\b", "i").test(rawText)) || "";
-    const requirementLines = lines.filter((line) =>
-      /require|must\b|minimum|min\b|maximum|max\b|eligible|eligib|original|disclos|language|country|region|follower|views?|tag|hashtag|watermark|no\s+repost|no\s+collab|deadline|apply|approval/i.test(line)
-    ).slice(0, 8);
+    const requirementLines = extractRules(lines);
     const deadline = parseDeadline(rawText);
-    const entryMode = /\bapply\b|\bapplication\b/i.test(rawText)
-      ? "Application / brand review"
-      : /join\s+campaign|join\s+now/i.test(rawText)
-        ? "Open campaign / direct join"
-        : "";
+    const entryMode = extractAccessMode(rawText);
     const sourceUrl = findCampaignUrl(source.url, rawText);
+    const capPerClip = extractCap(rawText);
+    const minimumViews = extractMinimumViews(rawText);
+    const maximumViews = extractMaximumViews(rawText);
+    const minimumFollowers = extractFollowers(rawText);
+    const duration = extractDuration(rawText);
+    const platformRates = extractPlatformRates(lines);
+    const campaignType = extractCampaignType(rawText);
+    const campaignStatus = extractCampaignStatus(rawText);
+    const hashtags = [...new Set((rawText.match(/#[a-z0-9_]+/gi) || []).map((tag) => tag.toLowerCase()))].slice(0, 30);
+    const mentions = [...new Set((rawText.match(/@[a-z0-9._]{2,}/gi) || []).map((tag) => tag.toLowerCase()))].slice(0, 20);
+    const languages = [];
+    const languageMatch = /languages?\s*[:=-]\s*([^\n.;]{2,120})/i.exec(rawText);
+    if (languageMatch) languages.push(clean(languageMatch[1], 120));
+    const formatMatch = /(?:format|aspect\s+ratio|video\s+format)\s*[:=-]\s*([^\n.;]{2,100})/i.exec(rawText);
+    const aspectRatio = /(?:9\s*:\s*16|16\s*:\s*9|1\s*:\s*1|4\s*:\s*5)/.exec(rawText);
+    const resolution = /(\d{3,4}\s*[x×]\s*\d{3,4})/i.exec(rawText);
+    const creativeFormat = formatMatch ? clean(formatMatch[1], 100) :
+      aspectRatio ? aspectRatio[0].replace(/\s/g, "") + (resolution ? " · " + resolution[1].replace(/\s/g, "") : "") :
+      resolution ? resolution[1].replace(/\s/g, "") : "";
 
     const findings = [];
-    if (title) findings.push({ kind: "found", label: "Campaign name", value: title });
-    if (rate) findings.push({ kind: "found", label: "Payout model", value: rate.label });
-    if (budget) findings.push({ kind: "found", label: "Campaign budget", value: budget.spent
-      ? formatAmount(budget.spent) + " used / " + formatAmount(budget.total) + " total" +
-        (budget.remaining ? " / " + formatAmount(budget.remaining) + " remaining" : "")
-      : formatAmount(budget.total) + " total" });
-    if (platforms.length) findings.push({ kind: "found", label: "Accepted platforms in brief", value: platforms.join(", ") });
-    if (unsupportedPlatforms.length) findings.push({ kind: "warning", label: "Not available in India", value: unsupportedPlatforms.join(", ") + " — do not use as an India posting destination" });
-    if (requestedPlatform) findings.push({
-      kind: platformMatch === "match" ? "found" : platformMatch === "mismatch" ? "warning" : "unknown",
-      label: requestedPlatform + " filter",
-      value: platformMatch === "match" ? "Listed as accepted" :
-        platformMatch === "mismatch" ? "Not listed in copied brief — do not treat as eligible" :
-        "Not stated in copied text — verify on official campaign page"
-    });
-    if (category) findings.push({ kind: "found", label: "Category", value: category });
-    if (deadline) findings.push({ kind: "found", label: "Deadline", value: deadline });
-    if (entryMode) findings.push({ kind: "found", label: "Joining method", value: entryMode });
-    if (requirementLines.length) findings.push({ kind: "found", label: "Brief requirements", value: requirementLines.length + " requirement line(s) detected" });
+    const addFinding = (kind, label, value) => findings.push({ kind, label, value: clean(value, 500) });
+    if (title) addFinding("found", "Campaign name", title);
+    if (campaignType) addFinding("found", "Campaign type", campaignType);
+    if (rate) addFinding("found", "Payout model", rate.label);
+    if (platformRates.length) addFinding("found", "Platform-specific rates", platformRates.map((item) => item.platform + ": " + item.label).join(" · "));
+    if (capPerClip) addFinding("found", "Maximum per clip", formatAmount(capPerClip));
+    if (minimumViews != null) addFinding("found", "Minimum views", new Intl.NumberFormat("en").format(minimumViews));
+    if (maximumViews != null) addFinding("found", "Maximum views", new Intl.NumberFormat("en").format(maximumViews));
+    if (minimumFollowers != null) addFinding("found", "Minimum followers / subscribers", new Intl.NumberFormat("en").format(minimumFollowers));
+    if (budget) {
+      const budgetParts = [];
+      if (budget.spent) budgetParts.push(formatAmount(budget.spent) + " spent");
+      if (budget.total) budgetParts.push(formatAmount(budget.total) + " total");
+      if (budget.remaining) budgetParts.push(formatAmount(budget.remaining) + " remaining");
+      if (budgetParts.length) addFinding("found", "Campaign budget", budgetParts.join(" · "));
+    }
+    if (platforms.length) addFinding("found", "Accepted platforms in brief", platforms.join(", "));
+    if (excludedPlatforms.length) addFinding("warning", "Excluded platforms", excludedPlatforms.join(", "));
+    if (unsupportedPlatforms.length) addFinding("warning", "Not available in India", unsupportedPlatforms.join(", ") + " — do not use as an India posting destination");
+    if (requestedPlatform) addFinding(platformMatch === "match" ? "found" : platformMatch === "mismatch" ? "warning" : "unknown",
+      requestedPlatform + " filter", platformMatch === "match" ? "Listed as accepted" :
+        platformMatch === "mismatch" ? "Not listed as accepted or explicitly excluded — do not treat as eligible" :
+          "Not stated in copied text — verify on official campaign page");
+    if (category) addFinding("found", "Category", category);
+    if (deadline) addFinding("found", "Deadline", deadline);
+    if (entryMode) addFinding("found", "Access type", entryMode);
+    if (campaignStatus !== "Not stated") addFinding("found", "Campaign status", campaignStatus);
+    if (duration) addFinding("found", "Video duration", (duration.minSeconds != null ? duration.minSeconds + "s minimum" : "") +
+      (duration.minSeconds != null && duration.maxSeconds != null ? " · " : "") +
+      (duration.maxSeconds != null ? duration.maxSeconds + "s maximum" : ""));
+    if (creativeFormat) addFinding("found", "Video format", creativeFormat);
+    if (languages.length) addFinding("found", "Language", languages.join(", "));
+    if (hashtags.length) addFinding("found", "Hashtags found", hashtags.join(" "));
+    if (mentions.length) addFinding("found", "Mentions found", mentions.join(", "));
+    if (requirementLines.length) addFinding("found", "Rule lines detected", requirementLines.length + " rule line(s) captured from the full copied text");
 
     const missing = [];
-    if (!rate) missing.push("Payout rate/model not found");
-    if (!budget) missing.push("Campaign budget not found");
-    if (!platforms.length) missing.push("Accepted platform not found");
-    unsupportedPlatforms.forEach((name) => missing.push(name + " is not available in the India workflow; do not select it as a publishing destination"));
-    if (platformMatch === "mismatch") missing.push(requestedPlatform + " is not listed among accepted platforms");
-    if (platformMatch === "unknown") missing.push(requestedPlatform + " acceptance is not stated in pasted text");
-    if (!requirementLines.length) missing.push("Eligibility/brief requirements not found");
-    if (!deadline) missing.push("Deadline not stated or not recognised");
+    if (!title) missing.push("Campaign title not reliably identified — check the heading on the official page");
+    if (!rate) missing.push("Payout model / rate not recognised");
+    if (!budget || !budget.remaining) missing.push("Remaining campaign budget not recognised — check the live campaign card");
+    if (!platforms.length) missing.push("Accepted platform not recognised — verify the campaign configuration");
+    if (platformMatch === "mismatch") missing.push(requestedPlatform + " is not listed as accepted or is explicitly excluded");
+    if (platformMatch === "unknown") missing.push(requestedPlatform + " acceptance is not stated in the copied text");
+    if (!entryMode) missing.push("Open / application / private access type not recognised");
+    if (!deadline) missing.push("Campaign deadline not stated or not recognised");
+    if (rate && rate.model === "CPM" && !capPerClip) missing.push("CPM maximum per clip not recognised — check the selected platform's campaign page");
+    if (rate && rate.model === "CPM" && minimumViews == null) missing.push("CPM minimum views not recognised — check the campaign page");
+    if (unsupportedPlatforms.length) missing.push(unsupportedPlatforms.join(", ") + " is not available as an India posting destination");
+    if (campaignStatus === "Paused" || campaignStatus === "Ended / closed" || campaignStatus === "Out of budget") {
+      missing.push("Campaign status appears to be " + campaignStatus + " — do not assume new clips are being accepted");
+    }
     if (!sourceUrl) missing.push("Official Content Rewards campaign URL not supplied");
-    const extractedCount = findings.length;
-    const confidence = extractedCount >= 5 ? "Good extraction" : extractedCount >= 3 ? "Partial extraction" : "Limited extraction";
+    const coreFields = [Boolean(title), Boolean(rate), Boolean(budget && budget.remaining), platforms.length > 0, Boolean(entryMode), Boolean(deadline)];
+    const coverageScore = Math.round(coreFields.filter(Boolean).length / coreFields.length * 100);
+    const confidence = coverageScore >= 85 ? "Strong field coverage" : coverageScore >= 55 ? "Partial field coverage" : "Limited field coverage";
 
     return {
-      title,
-      sourceUrl,
-      requestedPlatform,
-      platformMatch,
-      deadline,
-      entryMode,
-      rate,
-      budget,
-      platforms,
-      unsupportedPlatforms,
-      category,
-      requirementLines,
-      findings,
-      missing,
-      confidence,
+      title, sourceUrl, requestedPlatform, platformMatch, deadline, entryMode, rate, budget,
+      platforms, excludedPlatforms, unsupportedPlatforms, category, requirementLines, findings, missing,
+      confidence, coverageScore, campaignType, campaignStatus, capPerClip, minimumViews, maximumViews,
+      minimumFollowers, duration, creativeFormat, languages, hashtags, mentions, platformRates,
+      ruleGroups: extractRuleGroups(lines),
+      rawText,
       rawExcerpt: rawText.slice(0, 1400)
     };
   }
 
   function buildTrackerNotes(result) {
+    const budget = result.budget;
+    const budgetParts = [];
+    if (budget && budget.spent) budgetParts.push(formatAmount(budget.spent) + " spent");
+    if (budget && budget.total) budgetParts.push(formatAmount(budget.total) + " total");
+    if (budget && budget.remaining) budgetParts.push(formatAmount(budget.remaining) + " remaining");
     const lines = [
-      "Imported from Content Rewards public brief — verify against the official campaign page.",
-      "Detected payout: " + (result.rate ? result.rate.label : "Not found"),
-      "Detected budget: " + (result.budget ? (result.budget.spent ? formatAmount(result.budget.spent) + " used / " : "") + formatAmount(result.budget.total) + " total" + (result.budget.remaining ? " / " + formatAmount(result.budget.remaining) + " remaining" : "") : "Not found"),
-      "Joining method: " + (result.entryMode || "Not stated — check the official campaign page"),
-      "Accepted platforms detected: " + (result.platforms.length ? result.platforms.join(", ") : "Not found"),
-      "Platforms unavailable in the India workflow: " + (result.unsupportedPlatforms.length ? result.unsupportedPlatforms.join(", ") + " — do not select as a posting destination" : "None detected"),
-      "Selected platform filter: " + (result.requestedPlatform || "Not selected"),
-      "Selected platform fit: " + (result.platformMatch === "match" ? "Listed as accepted in copied brief" : result.platformMatch === "mismatch" ? "Not listed as accepted; check or skip" : result.platformMatch === "unknown" ? "Not stated; official brief verification required" : "Not checked"),
-      "Detected category: " + (result.category || "Not found"),
-      "Deadline: " + (result.deadline || "Not found")
+      "Imported from copied Content Rewards campaign text — verify against the live campaign page.",
+      "Campaign type: " + (result.campaignType || "Not recognised"),
+      "Payout: " + (result.rate ? result.rate.label : "Not recognised"),
+      "Platform rates: " + (result.platformRates.length ? result.platformRates.map((item) => item.platform + " " + item.label).join("; ") : "Not separately recognised"),
+      "Per-clip cap: " + formatAmount(result.capPerClip),
+      "Minimum views: " + (result.minimumViews == null ? "Not recognised" : result.minimumViews),
+      "Maximum views: " + (result.maximumViews == null ? "Not recognised" : result.maximumViews),
+      "Minimum followers/subscribers: " + (result.minimumFollowers == null ? "Not recognised" : result.minimumFollowers),
+      "Budget: " + (budgetParts.length ? budgetParts.join(" · ") : "Not recognised"),
+      "Access type: " + (result.entryMode || "Not recognised"),
+      "Campaign status: " + result.campaignStatus,
+      "Accepted platforms: " + (result.platforms.length ? result.platforms.join(", ") : "Not recognised"),
+      "Excluded platforms: " + (result.excludedPlatforms.length ? result.excludedPlatforms.join(", ") : "None detected"),
+      "India-unavailable platforms: " + (result.unsupportedPlatforms.length ? result.unsupportedPlatforms.join(", ") : "None detected"),
+      "Deadline: " + (result.deadline || "Not recognised"),
+      "Video duration: " + (result.duration ? JSON.stringify(result.duration) : "Not recognised"),
+      "Video format: " + (result.creativeFormat || "Not recognised"),
+      "Languages: " + (result.languages.length ? result.languages.join(", ") : "Not recognised"),
+      "Hashtags: " + (result.hashtags.length ? result.hashtags.join(" ") : "Not recognised"),
+      "Mentions: " + (result.mentions.length ? result.mentions.join(", ") : "Not recognised"),
+      "Rule lines: " + result.requirementLines.length
     ];
     if (result.requirementLines.length) {
-      lines.push("Brief requirements (review the full official brief):");
-      result.requirementLines.forEach((line) => lines.push("- " + line));
+      lines.push("Captured rules (review all lines on the official page):");
+      result.requirementLines.slice(0, 18).forEach((line) => lines.push("- " + line));
     }
-    lines.push("Source excerpt: " + result.rawExcerpt.replace(/\s+/g, " ").slice(0, 500));
+    lines.push("Source excerpt: " + result.rawExcerpt.replace(/\s+/g, " ").slice(0, 350));
     return lines.join("\n").slice(0, 2000);
   }
 
-  return Object.freeze({ parseCampaignBrief, buildTrackerNotes, formatAmount });
+  return Object.freeze({
+    parseCampaignBrief, buildTrackerNotes, formatAmount, parseAmount, parseBudget, parseRate, parseCount,
+    extractPlatforms, extractCap, extractMinimumViews, extractMaximumViews, extractFollowers, extractDuration
+  });
 });

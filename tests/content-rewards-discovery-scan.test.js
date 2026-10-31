@@ -40,7 +40,9 @@ test("scheduled scan writes a schema-versioned snapshot and deduplicates new cam
     assert.equal(result.snapshot.campaigns.length, 2);
     assert.equal(result.snapshot.lastScan.status, "success");
     assert.equal(result.snapshot.lastScan.newCount, 2);
-    assert.equal(JSON.parse(await fs.readFile(filePath, "utf8")).campaigns.length, 2);
+    assert.equal(result.snapshot.campaignDetails.length, 2);
+    assert.equal(result.snapshot.lastScan.detailPagesAvailable, 2);
+    assert.equal(JSON.parse(await fs.readFile(filePath, "utf8")).campaignDetails.length, 2);
   } finally {
     await fs.rm(directory, { recursive: true, force: true });
   }

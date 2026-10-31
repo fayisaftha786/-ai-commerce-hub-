@@ -151,6 +151,7 @@ test("campaign payout guidance reflects current creator-fee tiers without invent
   assert.equal(perPostPremium.percent, 0);
   assert.equal(perPostStandard.percent, 10);
   assert.equal(unknownBudget.percent, null);
+  assert.equal(Engine.creatorFee({ model: "Retainer" }, { total: { value: 6000, currency: "INR" } }).percent, null);
 });
 
 test("paused, ended and zero-budget campaigns are blocked before creator work begins", () => {

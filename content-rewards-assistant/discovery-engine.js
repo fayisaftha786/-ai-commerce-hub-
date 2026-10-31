@@ -44,6 +44,7 @@
     else if (age != null && age <= 7) score += 12;
     else if (age == null) score += 3;
     if (age != null && age > 14) score -= 15;
+    if (row.notSeenInLatestScan === true) score -= 15;
     if (expired) score -= 35;
     score = Math.max(0, Math.min(100, score));
     const missing = [];
@@ -53,11 +54,13 @@
     if (!hasDeadline) missing.push("Deadline");
     if (!hasSource) missing.push("Source link");
     if (age == null) missing.push("Snapshot date");
-    const status = expired ? "expired" : row.freshness === "stale" || (age != null && age > 7) ? "stale" : "needs-verification";
+    if (row.notSeenInLatestScan === true) missing.push("Not present in the latest public feed scan");
+    const status = expired ? "expired" : row.freshness === "stale" || (age != null && age > 7) ? "stale" : row.notSeenInLatestScan === true ? "not-seen-in-latest-scan" : "needs-verification";
     return {
       score, tier: score >= 75 ? "high" : score >= 50 ? "medium" : "low", status, expired, missing,
       confidence: missing.length <= 1 ? "strong field coverage" : missing.length <= 3 ? "partial field coverage" : "limited field coverage",
       explanation: expired ? "Deadline appears to have passed; verify the official page before spending time." :
+        row.notSeenInLatestScan === true ? "This lead was not present in the latest public feed scan. It may have ended or been removed; verify its official status before prioritising." :
         score >= 75 ? "Good information coverage and/or fresh snapshot. Official availability and eligibility still need confirmation." :
           score >= 50 ? "Some useful reward information is available, but important details remain unknown." :
             "Insufficient or stale information. Verify the source and fill missing details before prioritising."
@@ -202,17 +205,46 @@
     } catch (_) { return false; }
   }
   function mergeHistory(existing, incoming, now) {
+    const timestamp = now == null ? Date.now() : now;
     const oldRows = Array.isArray(existing) ? existing : [];
     const oldMap = new Map(oldRows.map((row) => [row.discoveryKey || keyFor(row), row]));
-    const current = deduplicate(incoming, now);
+    const current = deduplicate(incoming, timestamp);
+    const seenKeys = new Set();
     let newCount = 0;
     current.forEach((row) => {
       const previous = oldMap.get(row.discoveryKey);
-      if (!previous) { newCount += 1; row.firstSeenAt = row.lastSeenAt; }
-      else { row.firstSeenAt = previous.firstSeenAt || previous.lastSeenAt || row.lastSeenAt; row.lastSeenAt = new Date(now == null ? Date.now() : now).toISOString(); }
+      if (!previous) {
+        newCount += 1;
+        row.firstSeenAt = row.lastSeenAt;
+      } else {
+        row.firstSeenAt = previous.firstSeenAt || previous.lastSeenAt || row.lastSeenAt;
+        row.lastSeenAt = new Date(timestamp).toISOString();
+      }
+      row.notSeenInLatestScan = false;
       oldMap.set(row.discoveryKey, row);
+      seenKeys.add(row.discoveryKey);
     });
-    return { campaigns: [...oldMap.values()].sort((a, b) => b.opportunity.score - a.opportunity.score).slice(0, 500), newCount, checkedCount: current.length };
+
+    // Keep past discoveries for audit, but explicitly lower their priority when the
+    // current upstream snapshot no longer returns them. Never imply they are active.
+    for (const [key, previous] of oldMap.entries()) {
+      if (seenKeys.has(key)) continue;
+      const sourceTime = Date.parse(previous.snapshotDate || previous.updatedAt || previous.lastSeenAt || "");
+      const unseenAge = Number.isFinite(sourceTime) ? Math.max(0, Math.floor((timestamp - sourceTime) / 86400000)) : previous.ageDays;
+      const aged = Object.assign({}, previous, {
+        ageDays: Number.isFinite(unseenAge) ? unseenAge : null,
+        freshness: Number.isFinite(unseenAge) && unseenAge > 7 ? "stale" : previous.freshness || "unknown",
+        notSeenInLatestScan: true
+      });
+      oldMap.set(key, enrich(aged, timestamp));
+      oldMap.get(key).firstSeenAt = previous.firstSeenAt || previous.lastSeenAt || "";
+      oldMap.get(key).lastSeenAt = previous.lastSeenAt || "";
+    }
+    return {
+      campaigns: [...oldMap.values()].sort((a, b) => b.opportunity.score - a.opportunity.score).slice(0, 500),
+      newCount,
+      checkedCount: current.length
+    };
   }
   async function scan(options) {
     const opts = options || {};

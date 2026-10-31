@@ -63,7 +63,7 @@ npm test
 
 Open `index.html` in a modern browser to try the frontend. Clipboard access depends on browser security settings.
 
-The private Node.js API starter can be run with `npm start`; it is only a health/readiness service today, not an OAuth or social-publishing backend. See [docs/BACKEND.md](docs/BACKEND.md) before deploying it.
+The private Node.js API can be run with `npm start`. It includes an optional server-side Content Rewards public-snapshot discovery worker, persistent JSON store and read-only discovery endpoints when explicitly enabled; it is not an OAuth or social-publishing backend. See [docs/BACKEND.md](docs/BACKEND.md) before deploying it.
 
 ## CSV import validation
 

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-10-31T17:41:46.183Z",
+  "generatedAt": "2026-10-31T17:46:39.812Z",
   "source": {
     "id": "contentrewards-official-discover",
     "verification": "official-public-page",
@@ -38,7 +38,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -71,7 +71,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -104,7 +104,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -137,7 +137,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -170,7 +170,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -203,7 +203,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -236,7 +236,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -269,211 +269,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
-      "firstSeenAt": "2026-10-31T17:41:46.183Z",
-      "notSeenInLatestScan": false
-    },
-    {
-      "id": "analytics",
-      "title": "Last 3 months Last 30 days",
-      "brand": "",
-      "type": "",
-      "description": "Analytics\nContent Rewards\nAll campaigns\nLast 3 months Last 30 days\nAll campaigns\nLast 3 months Last 30 days\nViews Views Likes Likes Comments Comments Shares Shares\nCumulative Cumulative Daily Daily",
-      "payouts": [],
-      "ageDays": 0,
-      "freshness": "recent",
-      "officialUrl": "https://contentrewards.com/c/analytics",
-      "source": "Official Content Rewards public Discover page",
-      "sourceVerification": "official-public-page",
-      "discoveryKey": "id:analytics",
-      "platforms": [],
-      "opportunity": {
-        "score": 40,
-        "tier": "low",
-        "status": "needs-verification",
-        "expired": false,
-        "missing": [
-          "Reward rate",
-          "Minimum views",
-          "Maximum payout",
-          "Deadline"
-        ],
-        "confidence": "limited field coverage",
-        "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
-      },
-      "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
-      "firstSeenAt": "2026-10-31T17:41:46.183Z",
-      "notSeenInLatestScan": false,
-      "snapshotDate": "2026-10-31",
-      "campaignStatus": "Not stated",
-      "campaignAccessMode": "",
-      "deadline": "",
-      "minimumViews": null,
-      "maximumViews": null,
-      "minimumFollowers": null,
-      "hiddenRequirements": {
-        "locked": false,
-        "count": null,
-        "referenceFiles": null
-      },
-      "pageFetchStatus": "ok"
-    },
-    {
-      "id": "campaigns",
-      "title": "Campaigns",
-      "brand": "",
-      "type": "",
-      "description": "",
-      "payouts": [],
-      "ageDays": 0,
-      "freshness": "recent",
-      "officialUrl": "https://contentrewards.com/c/campaigns",
-      "source": "Official Content Rewards public Discover page",
-      "sourceVerification": "official-public-page",
-      "discoveryKey": "id:campaigns",
-      "platforms": [],
-      "opportunity": {
-        "score": 40,
-        "tier": "low",
-        "status": "needs-verification",
-        "expired": false,
-        "missing": [
-          "Reward rate",
-          "Minimum views",
-          "Maximum payout",
-          "Deadline"
-        ],
-        "confidence": "limited field coverage",
-        "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
-      },
-      "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
-      "firstSeenAt": "2026-10-31T17:41:46.183Z",
-      "notSeenInLatestScan": false
-    },
-    {
-      "id": "drafts",
-      "title": "Needs changes Needs changes",
-      "brand": "",
-      "type": "",
-      "description": "Your drafts\nContent Rewards\nNeeds changes Needs changes\nPending Pending\nApproved Approved\nPosted Posted\nRejected Rejected",
-      "payouts": [],
-      "ageDays": 0,
-      "freshness": "recent",
-      "officialUrl": "https://contentrewards.com/c/drafts",
-      "source": "Official Content Rewards public Discover page",
-      "sourceVerification": "official-public-page",
-      "discoveryKey": "id:drafts",
-      "platforms": [],
-      "opportunity": {
-        "score": 40,
-        "tier": "low",
-        "status": "needs-verification",
-        "expired": false,
-        "missing": [
-          "Reward rate",
-          "Minimum views",
-          "Maximum payout",
-          "Deadline"
-        ],
-        "confidence": "limited field coverage",
-        "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
-      },
-      "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
-      "firstSeenAt": "2026-10-31T17:41:46.183Z",
-      "notSeenInLatestScan": false,
-      "snapshotDate": "2026-10-31",
-      "campaignStatus": "Not stated",
-      "campaignAccessMode": "",
-      "deadline": "",
-      "minimumViews": null,
-      "maximumViews": null,
-      "minimumFollowers": null,
-      "hiddenRequirements": {
-        "locked": false,
-        "count": null,
-        "referenceFiles": null
-      },
-      "pageFetchStatus": "ok"
-    },
-    {
-      "id": "earnings",
-      "title": "Last 12 months All time",
-      "brand": "",
-      "type": "",
-      "description": "Earnings\nContent Rewards\nLifetime earned\nWithdraw\nToday\nThis week\nThis month\nBalance\nLast 12 months All time\nQueued\nStill accumulating:\nArriving\nTotal:\nReceived\nTotal:",
-      "payouts": [],
-      "ageDays": 0,
-      "freshness": "recent",
-      "officialUrl": "https://contentrewards.com/c/earnings",
-      "source": "Official Content Rewards public Discover page",
-      "sourceVerification": "official-public-page",
-      "discoveryKey": "id:earnings",
-      "platforms": [],
-      "opportunity": {
-        "score": 40,
-        "tier": "low",
-        "status": "needs-verification",
-        "expired": false,
-        "missing": [
-          "Reward rate",
-          "Minimum views",
-          "Maximum payout",
-          "Deadline"
-        ],
-        "confidence": "limited field coverage",
-        "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
-      },
-      "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
-      "firstSeenAt": "2026-10-31T17:41:46.183Z",
-      "notSeenInLatestScan": false,
-      "snapshotDate": "2026-10-31",
-      "campaignStatus": "Not stated",
-      "campaignAccessMode": "",
-      "deadline": "",
-      "minimumViews": null,
-      "maximumViews": null,
-      "minimumFollowers": null,
-      "hiddenRequirements": {
-        "locked": false,
-        "count": null,
-        "referenceFiles": null
-      },
-      "pageFetchStatus": "ok"
-    },
-    {
-      "id": "home",
-      "title": "Home",
-      "brand": "",
-      "type": "",
-      "description": "",
-      "payouts": [],
-      "ageDays": 0,
-      "freshness": "recent",
-      "officialUrl": "https://contentrewards.com/c/home",
-      "source": "Official Content Rewards public Discover page",
-      "sourceVerification": "official-public-page",
-      "discoveryKey": "id:home",
-      "platforms": [],
-      "opportunity": {
-        "score": 40,
-        "tier": "low",
-        "status": "needs-verification",
-        "expired": false,
-        "missing": [
-          "Reward rate",
-          "Minimum views",
-          "Maximum payout",
-          "Deadline"
-        ],
-        "confidence": "limited field coverage",
-        "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
-      },
-      "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -506,7 +302,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -515,7 +311,7 @@
       "title": "Preview $3,000 Rare Americans Apt 4 Sound Campaign",
       "brand": "",
       "type": "",
-      "description": "ClippedIn · 2d $3,000 Rare Americans Apt 4 Sound Campaign $387 / $3K 32 $1 /1K",
+      "description": "ClippedIn · 2d $3,000 Rare Americans Apt 4 Sound Campaign $387 / $3K 33 $1 /1K",
       "payouts": [],
       "ageDays": 0,
       "freshness": "recent",
@@ -539,7 +335,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -572,7 +368,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -605,7 +401,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -638,7 +434,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -671,7 +467,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -704,7 +500,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -737,7 +533,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -770,7 +566,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -803,7 +599,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -836,7 +632,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -869,7 +665,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -902,7 +698,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -935,7 +731,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -968,7 +764,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -1001,7 +797,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -1034,7 +830,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -1067,7 +863,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -1076,7 +872,7 @@
       "title": "Preview FR Yomi Denzel Campagne Principale",
       "brand": "",
       "type": "",
-      "description": "Yomi Denzel Clipping Verified · 11mo FR Yomi Denzel Campagne Principale $328.2K / $333.6K 346 $0.70 /1K",
+      "description": "Yomi Denzel Clipping Verified · 11mo FR Yomi Denzel Campagne Principale $328.3K / $333.6K 346 $0.70 /1K",
       "payouts": [],
       "ageDays": 0,
       "freshness": "recent",
@@ -1100,7 +896,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -1133,7 +929,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -1166,7 +962,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -1199,7 +995,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -1232,7 +1028,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -1265,7 +1061,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -1298,7 +1094,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -1331,7 +1127,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -1364,7 +1160,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -1397,7 +1193,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -1430,7 +1226,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -1463,7 +1259,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -1496,7 +1292,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -1529,7 +1325,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -1562,7 +1358,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -1595,7 +1391,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -1628,7 +1424,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -1661,7 +1457,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -1670,7 +1466,7 @@
       "title": "Preview She Listens Alone",
       "brand": "",
       "type": "",
-      "description": "Clouted · 5d She Listens Alone $707 / $1.5K 104 $1 /1K",
+      "description": "Clouted · 5d She Listens Alone $709 / $1.5K 105 $1 /1K",
       "payouts": [],
       "ageDays": 0,
       "freshness": "recent",
@@ -1694,7 +1490,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -1727,7 +1523,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -1760,7 +1556,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -1793,7 +1589,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -1826,55 +1622,9 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
-    },
-    {
-      "id": "settings",
-      "title": "Profile Profile Connected accounts Connected accounts",
-      "brand": "",
-      "type": "",
-      "description": "Settings\nProfile Profile Connected accounts Connected accounts\nUpload photo\nSave changes",
-      "payouts": [],
-      "ageDays": 0,
-      "freshness": "recent",
-      "officialUrl": "https://contentrewards.com/c/settings",
-      "source": "Official Content Rewards public Discover page",
-      "sourceVerification": "official-public-page",
-      "discoveryKey": "id:settings",
-      "platforms": [],
-      "opportunity": {
-        "score": 40,
-        "tier": "low",
-        "status": "needs-verification",
-        "expired": false,
-        "missing": [
-          "Reward rate",
-          "Minimum views",
-          "Maximum payout",
-          "Deadline"
-        ],
-        "confidence": "limited field coverage",
-        "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
-      },
-      "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
-      "firstSeenAt": "2026-10-31T17:41:46.183Z",
-      "notSeenInLatestScan": false,
-      "snapshotDate": "2026-10-31",
-      "campaignStatus": "Not stated",
-      "campaignAccessMode": "",
-      "deadline": "",
-      "minimumViews": null,
-      "maximumViews": null,
-      "minimumFollowers": null,
-      "hiddenRequirements": {
-        "locked": false,
-        "count": null,
-        "referenceFiles": null
-      },
-      "pageFetchStatus": "ok"
     },
     {
       "id": "4479e5e2-9a00-489e-8b0c-345834f37cc7",
@@ -1905,7 +1655,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -1938,55 +1688,9 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
-    },
-    {
-      "id": "submissions",
-      "title": "Your submissions",
-      "brand": "",
-      "type": "",
-      "description": "Your submissions\nContent Rewards\nClips Clips\nRetainer Retainer\nAll campaigns\nNewest first\nApproved Approved\nPending Pending\nRejected Rejected\nHistory History",
-      "payouts": [],
-      "ageDays": 0,
-      "freshness": "recent",
-      "officialUrl": "https://contentrewards.com/c/submissions",
-      "source": "Official Content Rewards public Discover page",
-      "sourceVerification": "official-public-page",
-      "discoveryKey": "id:submissions",
-      "platforms": [],
-      "opportunity": {
-        "score": 40,
-        "tier": "low",
-        "status": "needs-verification",
-        "expired": false,
-        "missing": [
-          "Reward rate",
-          "Minimum views",
-          "Maximum payout",
-          "Deadline"
-        ],
-        "confidence": "limited field coverage",
-        "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
-      },
-      "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
-      "firstSeenAt": "2026-10-31T17:41:46.183Z",
-      "notSeenInLatestScan": false,
-      "snapshotDate": "2026-10-31",
-      "campaignStatus": "Not stated",
-      "campaignAccessMode": "",
-      "deadline": "",
-      "minimumViews": null,
-      "maximumViews": null,
-      "minimumFollowers": null,
-      "hiddenRequirements": {
-        "locked": false,
-        "count": null,
-        "referenceFiles": null
-      },
-      "pageFetchStatus": "ok"
     },
     {
       "id": "828d6eaf-0938-45fb-b44a-b722b14a595a",
@@ -2017,7 +1721,7 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
       "notSeenInLatestScan": false
     },
@@ -2050,830 +1754,1078 @@
         "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
       },
       "verification": "official-public-page",
-      "lastSeenAt": "2026-10-31T17:41:46.183Z",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
       "firstSeenAt": "2026-10-31T17:41:46.183Z",
+      "notSeenInLatestScan": false
+    },
+    {
+      "id": "088c2279-ab1d-4434-9ba0-6637ab9311fa",
+      "title": "Preview BILF Podcast | Clip the Show",
+      "brand": "",
+      "type": "",
+      "description": "Runback.TV · 2w BILF Podcast | Clip the Show $3.8K / $5K 61 $2 /1K",
+      "payouts": [],
+      "ageDays": 0,
+      "freshness": "recent",
+      "officialUrl": "https://contentrewards.com/c/campaigns/088c2279-ab1d-4434-9ba0-6637ab9311fa",
+      "source": "Official Content Rewards public Discover page",
+      "sourceVerification": "official-public-page",
+      "discoveryKey": "id:088c2279-ab1d-4434-9ba0-6637ab9311fa",
+      "platforms": [],
+      "opportunity": {
+        "score": 40,
+        "tier": "low",
+        "status": "needs-verification",
+        "expired": false,
+        "missing": [
+          "Reward rate",
+          "Minimum views",
+          "Maximum payout",
+          "Deadline"
+        ],
+        "confidence": "limited field coverage",
+        "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
+      },
+      "verification": "official-public-page",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
+      "firstSeenAt": "2026-10-31T17:46:39.812Z",
+      "notSeenInLatestScan": false
+    },
+    {
+      "id": "7610267f-aa08-45b4-9975-6acf0faeca1a",
+      "title": "Preview Clips Hablando de VALOR - Tiktok/Youtube/Instagram",
+      "brand": "",
+      "type": "",
+      "description": "Carlotta Sabina Academy · 2mo Clips Hablando de VALOR - Tiktok/Youtube/Instagram $2K / $5K 34 $0.50 /1K",
+      "payouts": [],
+      "ageDays": 0,
+      "freshness": "recent",
+      "officialUrl": "https://contentrewards.com/c/campaigns/7610267f-aa08-45b4-9975-6acf0faeca1a",
+      "source": "Official Content Rewards public Discover page",
+      "sourceVerification": "official-public-page",
+      "discoveryKey": "id:7610267f-aa08-45b4-9975-6acf0faeca1a",
+      "platforms": [],
+      "opportunity": {
+        "score": 40,
+        "tier": "low",
+        "status": "needs-verification",
+        "expired": false,
+        "missing": [
+          "Reward rate",
+          "Minimum views",
+          "Maximum payout",
+          "Deadline"
+        ],
+        "confidence": "limited field coverage",
+        "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
+      },
+      "verification": "official-public-page",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
+      "firstSeenAt": "2026-10-31T17:46:39.812Z",
+      "notSeenInLatestScan": false
+    },
+    {
+      "id": "6fe4c1aa-c8ca-4836-836b-01ab2540b337",
+      "title": "Preview It's Personal Podcast Clipping Campaign",
+      "brand": "",
+      "type": "",
+      "description": "Tykoonclips · 3mo It's Personal Podcast Clipping Campaign $3.4K / $5K 57 $2 /1K",
+      "payouts": [],
+      "ageDays": 0,
+      "freshness": "recent",
+      "officialUrl": "https://contentrewards.com/c/campaigns/6fe4c1aa-c8ca-4836-836b-01ab2540b337",
+      "source": "Official Content Rewards public Discover page",
+      "sourceVerification": "official-public-page",
+      "discoveryKey": "id:6fe4c1aa-c8ca-4836-836b-01ab2540b337",
+      "platforms": [],
+      "opportunity": {
+        "score": 40,
+        "tier": "low",
+        "status": "needs-verification",
+        "expired": false,
+        "missing": [
+          "Reward rate",
+          "Minimum views",
+          "Maximum payout",
+          "Deadline"
+        ],
+        "confidence": "limited field coverage",
+        "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
+      },
+      "verification": "official-public-page",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
+      "firstSeenAt": "2026-10-31T17:46:39.812Z",
+      "notSeenInLatestScan": false
+    },
+    {
+      "id": "23022f84-5715-4ba5-a647-abc4baf4f0f8",
+      "title": "Preview Open Road Clipping | $5.25K Budget | $1.25 CPM",
+      "brand": "",
+      "type": "",
+      "description": "Clipix Verified · 1mo Open Road Clipping | $5.25K Budget | $1.25 CPM $1.6K / $5.3K 39 $1.25 /1K",
+      "payouts": [],
+      "ageDays": 0,
+      "freshness": "recent",
+      "officialUrl": "https://contentrewards.com/c/campaigns/23022f84-5715-4ba5-a647-abc4baf4f0f8",
+      "source": "Official Content Rewards public Discover page",
+      "sourceVerification": "official-public-page",
+      "discoveryKey": "id:23022f84-5715-4ba5-a647-abc4baf4f0f8",
+      "platforms": [],
+      "opportunity": {
+        "score": 40,
+        "tier": "low",
+        "status": "needs-verification",
+        "expired": false,
+        "missing": [
+          "Reward rate",
+          "Minimum views",
+          "Maximum payout",
+          "Deadline"
+        ],
+        "confidence": "limited field coverage",
+        "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
+      },
+      "verification": "official-public-page",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
+      "firstSeenAt": "2026-10-31T17:46:39.812Z",
+      "notSeenInLatestScan": false
+    },
+    {
+      "id": "b9f3aca2-7dbd-4309-ad07-6838ab7fef38",
+      "title": "Preview Pablo Pérez - Sobreviviendo en Bali con 100€",
+      "brand": "",
+      "type": "",
+      "description": "Pablo Perez Clipping · 1mo Pablo Pérez - Sobreviviendo en Bali con 100€ $3.7K / $5K 41 $1.50 /1K",
+      "payouts": [],
+      "ageDays": 0,
+      "freshness": "recent",
+      "officialUrl": "https://contentrewards.com/c/campaigns/b9f3aca2-7dbd-4309-ad07-6838ab7fef38",
+      "source": "Official Content Rewards public Discover page",
+      "sourceVerification": "official-public-page",
+      "discoveryKey": "id:b9f3aca2-7dbd-4309-ad07-6838ab7fef38",
+      "platforms": [],
+      "opportunity": {
+        "score": 40,
+        "tier": "low",
+        "status": "needs-verification",
+        "expired": false,
+        "missing": [
+          "Reward rate",
+          "Minimum views",
+          "Maximum payout",
+          "Deadline"
+        ],
+        "confidence": "limited field coverage",
+        "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
+      },
+      "verification": "official-public-page",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
+      "firstSeenAt": "2026-10-31T17:46:39.812Z",
+      "notSeenInLatestScan": false
+    },
+    {
+      "id": "414e37c7-4e33-49d1-a883-43ad6bb9b552",
+      "title": "Preview Reuben A Geimah | $5k budget - $2 CPM",
+      "brand": "",
+      "type": "",
+      "description": "Reuben A Geimah · 3mo Reuben A Geimah | $5k budget - $2 CPM $2K / $5K 26 $2 /1K",
+      "payouts": [],
+      "ageDays": 0,
+      "freshness": "recent",
+      "officialUrl": "https://contentrewards.com/c/campaigns/414e37c7-4e33-49d1-a883-43ad6bb9b552",
+      "source": "Official Content Rewards public Discover page",
+      "sourceVerification": "official-public-page",
+      "discoveryKey": "id:414e37c7-4e33-49d1-a883-43ad6bb9b552",
+      "platforms": [],
+      "opportunity": {
+        "score": 40,
+        "tier": "low",
+        "status": "needs-verification",
+        "expired": false,
+        "missing": [
+          "Reward rate",
+          "Minimum views",
+          "Maximum payout",
+          "Deadline"
+        ],
+        "confidence": "limited field coverage",
+        "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
+      },
+      "verification": "official-public-page",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
+      "firstSeenAt": "2026-10-31T17:46:39.812Z",
+      "notSeenInLatestScan": false
+    },
+    {
+      "id": "29c92590-738b-4421-a675-75e5ddfe4c32",
+      "title": "Preview Ruben Atienza Clipping",
+      "brand": "",
+      "type": "",
+      "description": "Ruben Atienza Clipping · 1mo Ruben Atienza Clipping $1.1K / $4.8K 49 $1 /1K",
+      "payouts": [],
+      "ageDays": 0,
+      "freshness": "recent",
+      "officialUrl": "https://contentrewards.com/c/campaigns/29c92590-738b-4421-a675-75e5ddfe4c32",
+      "source": "Official Content Rewards public Discover page",
+      "sourceVerification": "official-public-page",
+      "discoveryKey": "id:29c92590-738b-4421-a675-75e5ddfe4c32",
+      "platforms": [],
+      "opportunity": {
+        "score": 40,
+        "tier": "low",
+        "status": "needs-verification",
+        "expired": false,
+        "missing": [
+          "Reward rate",
+          "Minimum views",
+          "Maximum payout",
+          "Deadline"
+        ],
+        "confidence": "limited field coverage",
+        "explanation": "Insufficient or stale information. Verify the source and fill missing details before prioritising."
+      },
+      "verification": "official-public-page",
+      "lastSeenAt": "2026-10-31T17:46:39.812Z",
+      "firstSeenAt": "2026-10-31T17:46:39.812Z",
       "notSeenInLatestScan": false
     }
   ],
   "campaignDetails": [
     {
-      "url": "https://contentrewards.com/c/campaigns",
-      "status": "unavailable",
-      "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
-      "pageTitle": "",
-      "pageText": "",
-      "textLength": 0,
-      "detected": null
-    },
-    {
-      "url": "https://contentrewards.com/c/analytics",
-      "finalUrl": "https://contentrewards.com/c/analytics",
-      "status": "ok",
-      "fetchedAt": "2026-10-31T17:41:46.183Z",
-      "httpStatus": 200,
-      "requestAttempts": 1,
-      "pageTitle": "Last 3 months Last 30 days",
-      "pageText": "Analytics\nContent Rewards\nAll campaigns\nLast 3 months Last 30 days\nAll campaigns\nLast 3 months Last 30 days\nViews Views Likes Likes Comments Comments Shares Shares\nCumulative Cumulative Daily Daily",
-      "textLength": 197,
-      "detected": {
-        "campaignType": "",
-        "campaignStatus": "Not stated",
-        "entryMode": "",
-        "platformMatch": "not-selected",
-        "platforms": [],
-        "rate": null,
-        "platformRates": [],
-        "budget": null,
-        "deadline": "",
-        "minimumViews": null,
-        "maximumViews": null,
-        "minimumFollowers": null,
-        "duration": null,
-        "creativeFormat": "",
-        "hashtags": [],
-        "mentions": [],
-        "hiddenRequirements": {
-          "locked": false,
-          "count": null,
-          "referenceFiles": null
-        },
-        "coverageScore": 17,
-        "missing": [
-          "Payout model / rate not recognised",
-          "Remaining campaign budget not recognised — check the live campaign card",
-          "Accepted platform not recognised — verify the campaign configuration",
-          "Open / application / private access type not recognised",
-          "Campaign deadline not stated or not recognised"
-        ]
-      },
-      "notInLatestFeed": false
-    },
-    {
-      "url": "https://contentrewards.com/c/home",
-      "status": "unavailable",
-      "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
-      "pageTitle": "",
-      "pageText": "",
-      "textLength": 0,
-      "detected": null
-    },
-    {
-      "url": "https://contentrewards.com/c/submissions",
-      "finalUrl": "https://contentrewards.com/c/submissions",
-      "status": "ok",
-      "fetchedAt": "2026-10-31T17:41:46.183Z",
-      "httpStatus": 200,
-      "requestAttempts": 1,
-      "pageTitle": "Your submissions",
-      "pageText": "Your submissions\nContent Rewards\nClips Clips\nRetainer Retainer\nAll campaigns\nNewest first\nApproved Approved\nPending Pending\nRejected Rejected\nHistory History",
-      "textLength": 157,
-      "detected": {
-        "campaignType": "",
-        "campaignStatus": "Not stated",
-        "entryMode": "",
-        "platformMatch": "not-selected",
-        "platforms": [],
-        "rate": {
-          "model": "Retainer",
-          "amount": null,
-          "label": "Retainer (amount not parsed)"
-        },
-        "platformRates": [],
-        "budget": null,
-        "deadline": "",
-        "minimumViews": null,
-        "maximumViews": null,
-        "minimumFollowers": null,
-        "duration": null,
-        "creativeFormat": "",
-        "hashtags": [],
-        "mentions": [],
-        "hiddenRequirements": {
-          "locked": false,
-          "count": null,
-          "referenceFiles": null
-        },
-        "coverageScore": 33,
-        "missing": [
-          "Remaining campaign budget not recognised — check the live campaign card",
-          "Accepted platform not recognised — verify the campaign configuration",
-          "Open / application / private access type not recognised",
-          "Campaign deadline not stated or not recognised"
-        ]
-      },
-      "notInLatestFeed": false
-    },
-    {
-      "url": "https://contentrewards.com/c/earnings",
-      "finalUrl": "https://contentrewards.com/c/earnings",
-      "status": "ok",
-      "fetchedAt": "2026-10-31T17:41:46.183Z",
-      "httpStatus": 200,
-      "requestAttempts": 1,
-      "pageTitle": "Last 12 months All time",
-      "pageText": "Earnings\nContent Rewards\nLifetime earned\nWithdraw\nToday\nThis week\nThis month\nBalance\nLast 12 months All time\nQueued\nStill accumulating:\nArriving\nTotal:\nReceived\nTotal:",
-      "textLength": 167,
-      "detected": {
-        "campaignType": "",
-        "campaignStatus": "Not stated",
-        "entryMode": "",
-        "platformMatch": "not-selected",
-        "platforms": [],
-        "rate": null,
-        "platformRates": [],
-        "budget": null,
-        "deadline": "",
-        "minimumViews": null,
-        "maximumViews": null,
-        "minimumFollowers": null,
-        "duration": null,
-        "creativeFormat": "",
-        "hashtags": [],
-        "mentions": [],
-        "hiddenRequirements": {
-          "locked": false,
-          "count": null,
-          "referenceFiles": null
-        },
-        "coverageScore": 17,
-        "missing": [
-          "Payout model / rate not recognised",
-          "Remaining campaign budget not recognised — check the live campaign card",
-          "Accepted platform not recognised — verify the campaign configuration",
-          "Open / application / private access type not recognised",
-          "Campaign deadline not stated or not recognised"
-        ]
-      },
-      "notInLatestFeed": false
-    },
-    {
-      "url": "https://contentrewards.com/c/drafts",
-      "finalUrl": "https://contentrewards.com/c/drafts",
-      "status": "ok",
-      "fetchedAt": "2026-10-31T17:41:46.183Z",
-      "httpStatus": 200,
-      "requestAttempts": 1,
-      "pageTitle": "Needs changes Needs changes",
-      "pageText": "Your drafts\nContent Rewards\nNeeds changes Needs changes\nPending Pending\nApproved Approved\nPosted Posted\nRejected Rejected",
-      "textLength": 121,
-      "detected": {
-        "campaignType": "",
-        "campaignStatus": "Not stated",
-        "entryMode": "",
-        "platformMatch": "not-selected",
-        "platforms": [],
-        "rate": null,
-        "platformRates": [],
-        "budget": null,
-        "deadline": "",
-        "minimumViews": null,
-        "maximumViews": null,
-        "minimumFollowers": null,
-        "duration": null,
-        "creativeFormat": "",
-        "hashtags": [],
-        "mentions": [],
-        "hiddenRequirements": {
-          "locked": false,
-          "count": null,
-          "referenceFiles": null
-        },
-        "coverageScore": 17,
-        "missing": [
-          "Payout model / rate not recognised",
-          "Remaining campaign budget not recognised — check the live campaign card",
-          "Accepted platform not recognised — verify the campaign configuration",
-          "Open / application / private access type not recognised",
-          "Campaign deadline not stated or not recognised"
-        ]
-      },
-      "notInLatestFeed": false
-    },
-    {
-      "url": "https://contentrewards.com/c/settings",
-      "finalUrl": "https://contentrewards.com/c/settings",
-      "status": "ok",
-      "fetchedAt": "2026-10-31T17:41:46.183Z",
-      "httpStatus": 200,
-      "requestAttempts": 1,
-      "pageTitle": "Profile Profile Connected accounts Connected accounts",
-      "pageText": "Settings\nProfile Profile Connected accounts Connected accounts\nUpload photo\nSave changes",
-      "textLength": 88,
-      "detected": {
-        "campaignType": "",
-        "campaignStatus": "Not stated",
-        "entryMode": "",
-        "platformMatch": "not-selected",
-        "platforms": [],
-        "rate": null,
-        "platformRates": [],
-        "budget": null,
-        "deadline": "",
-        "minimumViews": null,
-        "maximumViews": null,
-        "minimumFollowers": null,
-        "duration": null,
-        "creativeFormat": "",
-        "hashtags": [],
-        "mentions": [],
-        "hiddenRequirements": {
-          "locked": false,
-          "count": null,
-          "referenceFiles": null
-        },
-        "coverageScore": 17,
-        "missing": [
-          "Payout model / rate not recognised",
-          "Remaining campaign budget not recognised — check the live campaign card",
-          "Accepted platform not recognised — verify the campaign configuration",
-          "Open / application / private access type not recognised",
-          "Campaign deadline not stated or not recognised"
-        ]
-      },
-      "notInLatestFeed": false
-    },
-    {
-      "url": "https://contentrewards.com/c/campaigns/4479e5e2-9a00-489e-8b0c-345834f37cc7",
-      "status": "unavailable",
-      "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
-      "pageTitle": "",
-      "pageText": "",
-      "textLength": 0,
-      "detected": null
-    },
-    {
       "url": "https://contentrewards.com/c/campaigns/828d6eaf-0938-45fb-b44a-b722b14a595a",
       "status": "unavailable",
       "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 298936 HTML bytes, title RAISING CANE'S - World Record Jack O' Lantern by ClipHaus | Content Rewards).",
       "pageTitle": "",
       "pageText": "",
       "textLength": 0,
-      "detected": null
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 298936
     },
     {
       "url": "https://contentrewards.com/c/campaigns/53eb4665-f8de-4cc4-ac72-e473dc8be919",
       "status": "unavailable",
       "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 281776 HTML bytes, title AbMaxxx [SLIDESHOW] by clipster | Content Rewards).",
       "pageTitle": "",
       "pageText": "",
       "textLength": 0,
-      "detected": null
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 281776
     },
     {
-      "url": "https://contentrewards.com/c/campaigns/1c491f8f-9c95-43e4-9cac-0a90ca1efea3",
+      "url": "https://contentrewards.com/c/campaigns/4479e5e2-9a00-489e-8b0c-345834f37cc7",
       "status": "unavailable",
       "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 284860 HTML bytes, title $25,000 Lacy 30 Day Campaign by Reach | Content Rewards).",
       "pageTitle": "",
       "pageText": "",
       "textLength": 0,
-      "detected": null
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 284860
     },
     {
       "url": "https://contentrewards.com/c/campaigns/9f0c4d01-3a67-4db3-8ec4-f8ee2fbe9498",
       "status": "unavailable",
       "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 303134 HTML bytes, title SoFi by Clip Farm | Content Rewards).",
       "pageTitle": "",
       "pageText": "",
       "textLength": 0,
-      "detected": null
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 303134
+    },
+    {
+      "url": "https://contentrewards.com/c/campaigns/1c491f8f-9c95-43e4-9cac-0a90ca1efea3",
+      "status": "unavailable",
+      "fetchedAt": "",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 294791 HTML bytes, title UGC X FUGGLER [INFINITE BUDGET] by Clip Influence | Content Rewards).",
+      "pageTitle": "",
+      "pageText": "",
+      "textLength": 0,
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 294791
     },
     {
       "url": "https://contentrewards.com/c/campaigns/816157c7-7b7f-4970-9f5c-ef83e469189c",
       "status": "unavailable",
       "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 293838 HTML bytes, title EDC DUSK TILL DAWN by Artist Influence | Content Rewards).",
       "pageTitle": "",
       "pageText": "",
       "textLength": 0,
-      "detected": null
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 293838
     },
     {
       "url": "https://contentrewards.com/c/campaigns/0c6959a1-99a5-4ee3-bd6d-1fba2ca92616",
       "status": "unavailable",
       "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 286437 HTML bytes, title Split-Screen UGC [Non-English] by Content Rewards UGC [International] | Content Rewards).",
       "pageTitle": "",
       "pageText": "",
       "textLength": 0,
-      "detected": null
-    },
-    {
-      "url": "https://contentrewards.com/c/campaigns/8ebe36fe-461f-4b1d-842e-a6e24ec5e014",
-      "status": "unavailable",
-      "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
-      "pageTitle": "",
-      "pageText": "",
-      "textLength": 0,
-      "detected": null
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 286437
     },
     {
       "url": "https://contentrewards.com/c/campaigns/8394d4b8-3c0d-4362-bfec-39ac48da131a",
       "status": "unavailable",
       "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 290413 HTML bytes, title Content Rewards UGC [Non-English] by Content Rewards UGC [International] | Content Rewards).",
       "pageTitle": "",
       "pageText": "",
       "textLength": 0,
-      "detected": null
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 290413
     },
     {
       "url": "https://contentrewards.com/c/campaigns/ec66cf77-2742-4306-9bd5-639be9cfd8e7",
       "status": "unavailable",
       "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 267903 HTML bytes, title Clippe Isïa by Isïa Clipping | Content Rewards).",
       "pageTitle": "",
       "pageText": "",
       "textLength": 0,
-      "detected": null
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 267903
     },
     {
       "url": "https://contentrewards.com/c/campaigns/c18192ea-dbc2-4ba0-8138-cd3667ea18d5",
       "status": "unavailable",
       "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 284329 HTML bytes, title Daimon X Syndicate [TESTING] by Distributed | Content Rewards).",
       "pageTitle": "",
       "pageText": "",
       "textLength": 0,
-      "detected": null
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 284329
     },
     {
       "url": "https://contentrewards.com/c/campaigns/7cc416b8-47bb-44d5-b117-227229b568ad",
       "status": "unavailable",
       "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 307796 HTML bytes, title Shuffle Logo - Brazil by Shuffle Clipping | Content Rewards).",
       "pageTitle": "",
       "pageText": "",
       "textLength": 0,
-      "detected": null
-    },
-    {
-      "url": "https://contentrewards.com/c/campaigns/fc194db2-7097-4dcf-812e-e3d325d51e6a",
-      "status": "unavailable",
-      "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
-      "pageTitle": "",
-      "pageText": "",
-      "textLength": 0,
-      "detected": null
-    },
-    {
-      "url": "https://contentrewards.com/c/campaigns/e96b3b3c-0e97-45fe-a245-55fd6e004acd",
-      "status": "unavailable",
-      "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
-      "pageTitle": "",
-      "pageText": "",
-      "textLength": 0,
-      "detected": null
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 307796
     },
     {
       "url": "https://contentrewards.com/c/campaigns/b6b39c05-b2c1-4701-9540-45d17e8b652c",
       "status": "unavailable",
       "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 270519 HTML bytes, title Taylor Swift x Lainey Wilson Clipping by The Clip Ship | Content Rewards).",
       "pageTitle": "",
       "pageText": "",
       "textLength": 0,
-      "detected": null
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 270519
+    },
+    {
+      "url": "https://contentrewards.com/c/campaigns/fc194db2-7097-4dcf-812e-e3d325d51e6a",
+      "status": "unavailable",
+      "fetchedAt": "",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 277104 HTML bytes, title Double Coverage Weekly Campaign (Cody Rhodes) by Reach | Content Rewards).",
+      "pageTitle": "",
+      "pageText": "",
+      "textLength": 0,
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 277104
+    },
+    {
+      "url": "https://contentrewards.com/c/campaigns/8ebe36fe-461f-4b1d-842e-a6e24ec5e014",
+      "status": "unavailable",
+      "fetchedAt": "",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 282377 HTML bytes, title 8lanco - Man Out Of Me by Artist Influence | Content Rewards).",
+      "pageTitle": "",
+      "pageText": "",
+      "textLength": 0,
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 282377
+    },
+    {
+      "url": "https://contentrewards.com/c/campaigns/e96b3b3c-0e97-45fe-a245-55fd6e004acd",
+      "status": "unavailable",
+      "fetchedAt": "",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 275142 HTML bytes, title Michael Jackson - Thriller | Halloween/MV/Open by Artist Influence | Content Rewards).",
+      "pageTitle": "",
+      "pageText": "",
+      "textLength": 0,
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 275142
     },
     {
       "url": "https://contentrewards.com/c/campaigns/5a1f7c72-f083-4f00-97db-fedd4c5dd8ad",
       "status": "unavailable",
       "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 265478 HTML bytes, title Tame Impala - Triple J: Like A Version [8442] by TikCut | Content Rewards).",
       "pageTitle": "",
       "pageText": "",
       "textLength": 0,
-      "detected": null
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 265478
     },
     {
       "url": "https://contentrewards.com/c/campaigns/1eb7b942-eeaf-4c83-b238-c9d6bd02829f",
       "status": "unavailable",
       "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 275608 HTML bytes, title Huss Valley [Fortnite Map] by BloxClips | Content Rewards).",
       "pageTitle": "",
       "pageText": "",
       "textLength": 0,
-      "detected": null
-    },
-    {
-      "url": "https://contentrewards.com/c/campaigns/44d6e9e6-42b6-4ff3-b646-4e5a1395b601",
-      "status": "unavailable",
-      "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
-      "pageTitle": "",
-      "pageText": "",
-      "textLength": 0,
-      "detected": null
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 275608
     },
     {
       "url": "https://contentrewards.com/c/campaigns/0fdbc44a-5c4e-485d-bd00-dc964f43b90c",
       "status": "unavailable",
       "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 278422 HTML bytes, title Levity, K.Flay - Slipping Away | Reposts + Memes by Artist Influence | Content Rewards).",
       "pageTitle": "",
       "pageText": "",
       "textLength": 0,
-      "detected": null
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 278422
     },
     {
-      "url": "https://contentrewards.com/c/campaigns/6f0d4fb3-4ed1-42be-8644-e2e569681a42",
+      "url": "https://contentrewards.com/c/campaigns/44d6e9e6-42b6-4ff3-b646-4e5a1395b601",
       "status": "unavailable",
       "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 270377 HTML bytes, title Parrot (shark tank episode) - $1.5/1k views by Parrot Finance | Content Rewards).",
       "pageTitle": "",
       "pageText": "",
       "textLength": 0,
-      "detected": null
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 270377
     },
     {
       "url": "https://contentrewards.com/c/campaigns/1ac16fd4-1149-4f53-8960-3c4d693e3221",
       "status": "unavailable",
       "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 291994 HTML bytes, title SAMSUNG - SEA (PH/TH/VN/ID/SG/MY) by Artist Influence | Content Rewards).",
       "pageTitle": "",
       "pageText": "",
       "textLength": 0,
-      "detected": null
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 291994
+    },
+    {
+      "url": "https://contentrewards.com/c/campaigns/6f0d4fb3-4ed1-42be-8644-e2e569681a42",
+      "status": "unavailable",
+      "fetchedAt": "",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 299442 HTML bytes, title Flip.gg Clipping by ClipLaunch | Content Rewards).",
+      "pageTitle": "",
+      "pageText": "",
+      "textLength": 0,
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 299442
     },
     {
       "url": "https://contentrewards.com/c/campaigns/737afda7-f1b5-4986-932a-fb681a603cea",
       "status": "unavailable",
       "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 290782 HTML bytes, title PREME TAKES OVER AREA 29 | CLUB LIVESTREAM by Preme Clipping Campaign | Content Rewards).",
       "pageTitle": "",
       "pageText": "",
       "textLength": 0,
-      "detected": null
-    },
-    {
-      "url": "https://contentrewards.com/c/campaigns/44a3ffcb-d4a1-492b-94a4-704919950246",
-      "status": "unavailable",
-      "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
-      "pageTitle": "",
-      "pageText": "",
-      "textLength": 0,
-      "detected": null
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 290782
     },
     {
       "url": "https://contentrewards.com/c/campaigns/6071d2fd-225d-46db-9a78-f7e683bd89e2",
       "status": "unavailable",
       "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 299370 HTML bytes, title BITCOIN REWARDS APP by ClipHaus | Content Rewards).",
       "pageTitle": "",
       "pageText": "",
       "textLength": 0,
-      "detected": null
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 299370
     },
     {
       "url": "https://contentrewards.com/c/campaigns/78b4e379-2aa0-4d20-9fd0-ed02a816e3b1",
       "status": "unavailable",
       "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 292570 HTML bytes, title Call of Duty - MW4 Season 01 Trailer Clipping by Clipping Culture | Content Rewards).",
       "pageTitle": "",
       "pageText": "",
       "textLength": 0,
-      "detected": null
-    },
-    {
-      "url": "https://contentrewards.com/c/campaigns/1db63081-715e-4e04-9b11-fbc1d4e8e700",
-      "status": "unavailable",
-      "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
-      "pageTitle": "",
-      "pageText": "",
-      "textLength": 0,
-      "detected": null
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 292570
     },
     {
       "url": "https://contentrewards.com/c/campaigns/14f743b2-c5ca-4f3e-8c0d-3010c485005d",
       "status": "unavailable",
       "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 307026 HTML bytes, title FR Yomi Denzel Campagne Principale by Yomi Denzel Clipping | Content Rewards).",
       "pageTitle": "",
       "pageText": "",
       "textLength": 0,
-      "detected": null
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 307026
     },
     {
-      "url": "https://contentrewards.com/c/campaigns/7a73a53b-2bba-4a5c-8187-05534dd6716d",
+      "url": "https://contentrewards.com/c/campaigns/1db63081-715e-4e04-9b11-fbc1d4e8e700",
       "status": "unavailable",
       "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 295621 HTML bytes, title Basic Clipping by BloxClips | Content Rewards).",
       "pageTitle": "",
       "pageText": "",
       "textLength": 0,
-      "detected": null
-    },
-    {
-      "url": "https://contentrewards.com/c/campaigns/da416664-ae72-4fc4-b0c0-78acc04affaf",
-      "status": "unavailable",
-      "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
-      "pageTitle": "",
-      "pageText": "",
-      "textLength": 0,
-      "detected": null
-    },
-    {
-      "url": "https://contentrewards.com/c/campaigns/10b9e68d-6004-4730-a741-4b5b37ae0a20",
-      "status": "unavailable",
-      "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
-      "pageTitle": "",
-      "pageText": "",
-      "textLength": 0,
-      "detected": null
-    },
-    {
-      "url": "https://contentrewards.com/c/campaigns/e509f6d0-13bf-42bc-8450-09e12c216c33",
-      "status": "unavailable",
-      "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
-      "pageTitle": "",
-      "pageText": "",
-      "textLength": 0,
-      "detected": null
-    },
-    {
-      "url": "https://contentrewards.com/c/campaigns/bb7a286d-c388-4550-b2c2-8beca19cd6d0",
-      "status": "unavailable",
-      "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
-      "pageTitle": "",
-      "pageText": "",
-      "textLength": 0,
-      "detected": null
-    },
-    {
-      "url": "https://contentrewards.com/c/campaigns/188c3e39-7850-4896-94df-e7a5be0cfec3",
-      "status": "unavailable",
-      "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
-      "pageTitle": "",
-      "pageText": "",
-      "textLength": 0,
-      "detected": null
-    },
-    {
-      "url": "https://contentrewards.com/c/campaigns/10764ec4-b429-44c4-88db-fc1aef8e24a3",
-      "status": "unavailable",
-      "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
-      "pageTitle": "",
-      "pageText": "",
-      "textLength": 0,
-      "detected": null
-    },
-    {
-      "url": "https://contentrewards.com/c/campaigns/b69f900e-9fb8-4cce-813e-89b63e10e0da",
-      "status": "unavailable",
-      "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
-      "pageTitle": "",
-      "pageText": "",
-      "textLength": 0,
-      "detected": null
-    },
-    {
-      "url": "https://contentrewards.com/c/campaigns/0afd04db-e183-4411-9957-0b890ef272b5",
-      "status": "unavailable",
-      "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
-      "pageTitle": "",
-      "pageText": "",
-      "textLength": 0,
-      "detected": null
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 295621
     },
     {
       "url": "https://contentrewards.com/c/campaigns/a6e3a983-c8c7-4c4f-ac48-22022b391562",
       "status": "unavailable",
       "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 288214 HTML bytes, title The Iced Coffee Hour Podcast x Greg Lav by Clip Strategy | Content Rewards).",
       "pageTitle": "",
       "pageText": "",
       "textLength": 0,
-      "detected": null
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 288214
     },
     {
-      "url": "https://contentrewards.com/c/campaigns/18496202-6029-4a29-a44c-9fc33678fcb9",
+      "url": "https://contentrewards.com/c/campaigns/7a73a53b-2bba-4a5c-8187-05534dd6716d",
       "status": "unavailable",
       "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 291925 HTML bytes, title Call of Duty - MW4 Multiplayer Launch Clipping by Clipping Culture | Content Rewards).",
       "pageTitle": "",
       "pageText": "",
       "textLength": 0,
-      "detected": null
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 291925
     },
     {
-      "url": "https://contentrewards.com/c/campaigns/6e8cb2c6-7724-44a4-83da-66697acb20af",
+      "url": "https://contentrewards.com/c/campaigns/44a3ffcb-d4a1-492b-94a4-704919950246",
       "status": "unavailable",
       "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 284637 HTML bytes, title $10,000 Kai Cenat Campaign by Reach | Content Rewards).",
       "pageTitle": "",
       "pageText": "",
       "textLength": 0,
-      "detected": null
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 284637
     },
     {
-      "url": "https://contentrewards.com/c/campaigns/86842687-ba2b-4638-a024-995dcf3d25a3",
+      "url": "https://contentrewards.com/c/campaigns/10b9e68d-6004-4730-a741-4b5b37ae0a20",
       "status": "unavailable",
       "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 294376 HTML bytes, title John Furrier + NYSE/theCUBE by ReelsBuilder | Content Rewards).",
       "pageTitle": "",
       "pageText": "",
       "textLength": 0,
-      "detected": null
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 294376
     },
     {
-      "url": "https://contentrewards.com/c/campaigns/ebc7847a-91ea-4545-aac7-9249b84df001",
+      "url": "https://contentrewards.com/c/campaigns/da416664-ae72-4fc4-b0c0-78acc04affaf",
       "status": "unavailable",
       "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 294023 HTML bytes, title Dillon Danis Clipping by ClipUp Official | Content Rewards).",
       "pageTitle": "",
       "pageText": "",
       "textLength": 0,
-      "detected": null
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 294023
     },
     {
-      "url": "https://contentrewards.com/c/campaigns/39884ff9-1adc-4cf3-9889-648858d4273a",
+      "url": "https://contentrewards.com/c/campaigns/e509f6d0-13bf-42bc-8450-09e12c216c33",
       "status": "unavailable",
       "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 296462 HTML bytes, title Backyard Breaks [Clipping Campaign] by ClipHouse | Content Rewards).",
       "pageTitle": "",
       "pageText": "",
       "textLength": 0,
-      "detected": null
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 296462
     },
     {
-      "url": "https://contentrewards.com/c/campaigns/b865e0da-2b57-463f-886a-c800abd14f60",
+      "url": "https://contentrewards.com/c/campaigns/188c3e39-7850-4896-94df-e7a5be0cfec3",
       "status": "unavailable",
       "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 303076 HTML bytes, title Boxabl Official Clipping by Clip Farm | Content Rewards).",
       "pageTitle": "",
       "pageText": "",
       "textLength": 0,
-      "detected": null
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 303076
     },
     {
-      "url": "https://contentrewards.com/c/campaigns/8553875d-dfb0-4a97-aea5-448008876e46",
+      "url": "https://contentrewards.com/c/campaigns/bb7a286d-c388-4550-b2c2-8beca19cd6d0",
       "status": "unavailable",
       "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 286102 HTML bytes, title Daimon X Syndicate by Distributed | Content Rewards).",
       "pageTitle": "",
       "pageText": "",
       "textLength": 0,
-      "detected": null
-    },
-    {
-      "url": "https://contentrewards.com/c/campaigns/7e5c4c7a-1d93-49bb-8214-ca3a4ba60c62",
-      "status": "unavailable",
-      "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
-      "pageTitle": "",
-      "pageText": "",
-      "textLength": 0,
-      "detected": null
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 286102
     },
     {
       "url": "https://contentrewards.com/c/campaigns/5ad30f7a-db22-48e5-9d9a-b7076f7fa55e",
       "status": "unavailable",
       "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 301626 HTML bytes, title $3,000 Rare Americans Apt 4 Sound Campaign by ClippedIn | Content Rewards).",
       "pageTitle": "",
       "pageText": "",
       "textLength": 0,
-      "detected": null
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 301626
+    },
+    {
+      "url": "https://contentrewards.com/c/campaigns/b69f900e-9fb8-4cce-813e-89b63e10e0da",
+      "status": "unavailable",
+      "fetchedAt": "",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 286290 HTML bytes, title DreamMe [HEALTH] by Reachify | Content Rewards).",
+      "pageTitle": "",
+      "pageText": "",
+      "textLength": 0,
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 286290
+    },
+    {
+      "url": "https://contentrewards.com/c/campaigns/10764ec4-b429-44c4-88db-fc1aef8e24a3",
+      "status": "unavailable",
+      "fetchedAt": "",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 282355 HTML bytes, title ROBTHEBANK CLIPS $10/10,000 by RobTheBank Clips 2.0 | Content Rewards).",
+      "pageTitle": "",
+      "pageText": "",
+      "textLength": 0,
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 282355
+    },
+    {
+      "url": "https://contentrewards.com/c/campaigns/0afd04db-e183-4411-9957-0b890ef272b5",
+      "status": "unavailable",
+      "fetchedAt": "",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 291030 HTML bytes, title Call of Duty MW4 عربي V2 by Arabic Clipping | Content Rewards).",
+      "pageTitle": "",
+      "pageText": "",
+      "textLength": 0,
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 291030
+    },
+    {
+      "url": "https://contentrewards.com/c/campaigns/18496202-6029-4a29-a44c-9fc33678fcb9",
+      "status": "unavailable",
+      "fetchedAt": "",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 301779 HTML bytes, title Call of Duty MW4 (en Français) by French Clipping | Content Rewards).",
+      "pageTitle": "",
+      "pageText": "",
+      "textLength": 0,
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 301779
+    },
+    {
+      "url": "https://contentrewards.com/c/campaigns/6e8cb2c6-7724-44a4-83da-66697acb20af",
+      "status": "unavailable",
+      "fetchedAt": "",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 290751 HTML bytes, title Split-Screen UGC [English] by Content Rewards | Content Rewards).",
+      "pageTitle": "",
+      "pageText": "",
+      "textLength": 0,
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 290751
+    },
+    {
+      "url": "https://contentrewards.com/c/campaigns/39884ff9-1adc-4cf3-9889-648858d4273a",
+      "status": "unavailable",
+      "fetchedAt": "",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 295498 HTML bytes, title She Listens Alone by Clouted | Content Rewards).",
+      "pageTitle": "",
+      "pageText": "",
+      "textLength": 0,
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 295498
+    },
+    {
+      "url": "https://contentrewards.com/c/campaigns/86842687-ba2b-4638-a024-995dcf3d25a3",
+      "status": "unavailable",
+      "fetchedAt": "",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 296530 HTML bytes, title Michael Sartain's Clipping Army by Michael Sartain's Clipper Army | Content Rewards).",
+      "pageTitle": "",
+      "pageText": "",
+      "textLength": 0,
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 296530
+    },
+    {
+      "url": "https://contentrewards.com/c/campaigns/ebc7847a-91ea-4545-aac7-9249b84df001",
+      "status": "unavailable",
+      "fetchedAt": "",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 291238 HTML bytes, title ARZ Urus Clipping Campaign by Arz Urus Clipping | Content Rewards).",
+      "pageTitle": "",
+      "pageText": "",
+      "textLength": 0,
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 291238
+    },
+    {
+      "url": "https://contentrewards.com/c/campaigns/b865e0da-2b57-463f-886a-c800abd14f60",
+      "status": "unavailable",
+      "fetchedAt": "",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 291524 HTML bytes, title Post Sports Edits using \"FTW\" by Spitty by Spitty | Content Rewards).",
+      "pageTitle": "",
+      "pageText": "",
+      "textLength": 0,
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 291524
+    },
+    {
+      "url": "https://contentrewards.com/c/campaigns/7e5c4c7a-1d93-49bb-8214-ca3a4ba60c62",
+      "status": "unavailable",
+      "fetchedAt": "",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 301758 HTML bytes, title Sabri Malle Clipping by Sabri Malle Clipping | Content Rewards).",
+      "pageTitle": "",
+      "pageText": "",
+      "textLength": 0,
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 301758
+    },
+    {
+      "url": "https://contentrewards.com/c/campaigns/8553875d-dfb0-4a97-aea5-448008876e46",
+      "status": "unavailable",
+      "fetchedAt": "",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 288920 HTML bytes, title Scape: clip the game for its Early Access launch by ScapeWorld Entertainment AB | Content Rewards).",
+      "pageTitle": "",
+      "pageText": "",
+      "textLength": 0,
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 288920
     },
     {
       "url": "https://contentrewards.com/c/campaigns/2e7ca35e-4cff-4755-bae8-8f9f5d727c0b",
       "status": "unavailable",
       "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 291339 HTML bytes, title Daise — Dollfaces + Charm Bracelets Clipping by Clip Influence | Content Rewards).",
       "pageTitle": "",
       "pageText": "",
       "textLength": 0,
-      "detected": null
-    },
-    {
-      "url": "https://contentrewards.com/c/campaigns/311c447c-b44b-483e-b172-f5fceabd20ce",
-      "status": "unavailable",
-      "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
-      "pageTitle": "",
-      "pageText": "",
-      "textLength": 0,
-      "detected": null
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 291339
     },
     {
       "url": "https://contentrewards.com/c/campaigns/6e1dce5e-7654-4ddb-84ff-063cd0a2fa80",
       "status": "unavailable",
       "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 294025 HTML bytes, title Parker Welling - Women's Writes Podcast [8267] by Sound Network | Content Rewards).",
       "pageTitle": "",
       "pageText": "",
       "textLength": 0,
-      "detected": null
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 294025
+    },
+    {
+      "url": "https://contentrewards.com/c/campaigns/311c447c-b44b-483e-b172-f5fceabd20ce",
+      "status": "unavailable",
+      "fetchedAt": "",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 303389 HTML bytes, title Clips Hablando - 1$ por cada 1000 visitas by Carlos Esparraga Clipping | Content Rewards).",
+      "pageTitle": "",
+      "pageText": "",
+      "textLength": 0,
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 303389
     },
     {
       "url": "https://contentrewards.com/c/campaigns/88890135-26f1-4c5e-8d7c-29b85340380c",
       "status": "unavailable",
       "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 298264 HTML bytes, title James O'Keefe Clipping | $7080 Budget | $1.50 CPM by Clipbait | Content Rewards).",
       "pageTitle": "",
       "pageText": "",
       "textLength": 0,
-      "detected": null
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 298264
     },
     {
       "url": "https://contentrewards.com/c/campaigns/a2726858-79e3-4d47-a681-f0fbba34d19e",
       "status": "unavailable",
       "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 290242 HTML bytes, title Harrison Webb $300 per 1M Views by Harrison Webb Clips | Content Rewards).",
       "pageTitle": "",
       "pageText": "",
       "textLength": 0,
-      "detected": null
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 290242
     },
     {
       "url": "https://contentrewards.com/c/campaigns/5e4fe241-c51e-488c-8ba7-3575be36bbfe",
       "status": "unavailable",
       "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 291865 HTML bytes, title Jacob Nach (Educational/Motivational/Lifestyle) by Clip Track | Content Rewards).",
+      "pageTitle": "",
+      "pageText": "",
+      "textLength": 0,
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 291865
+    },
+    {
+      "url": "https://contentrewards.com/c/campaigns/5991571d-8c83-41e8-941c-34d96476c06b",
+      "status": "unavailable",
+      "fetchedAt": "",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 289754 HTML bytes, title Jackelyne Campaign by Jackelyne Clips | Content Rewards).",
+      "pageTitle": "",
+      "pageText": "",
+      "textLength": 0,
+      "detected": null,
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 289754
+    },
+    {
+      "url": "https://contentrewards.com/c/campaigns/088c2279-ab1d-4434-9ba0-6637ab9311fa",
+      "status": "unavailable",
+      "fetchedAt": "",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 294995 HTML bytes, title BILF Podcast | Clip the Show by Runback.TV | Content Rewards).",
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 294995,
       "pageTitle": "",
       "pageText": "",
       "textLength": 0,
       "detected": null
     },
     {
-      "url": "https://contentrewards.com/c/campaigns/5991571d-8c83-41e8-941c-34d96476c06b",
+      "url": "https://contentrewards.com/c/campaigns/23022f84-5715-4ba5-a647-abc4baf4f0f8",
       "status": "unavailable",
       "fetchedAt": "",
-      "lastAttemptAt": "2026-10-31T17:41:46.183Z",
-      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 289209 HTML bytes, title Open Road Clipping | $5.25K Budget | $1.25 CPM by Clipix | Content Rewards).",
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 289209,
+      "pageTitle": "",
+      "pageText": "",
+      "textLength": 0,
+      "detected": null
+    },
+    {
+      "url": "https://contentrewards.com/c/campaigns/414e37c7-4e33-49d1-a883-43ad6bb9b552",
+      "status": "unavailable",
+      "fetchedAt": "",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 301454 HTML bytes, title Reuben A Geimah | $5k budget - $2 CPM by Reuben A Geimah | Content Rewards).",
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 301454,
+      "pageTitle": "",
+      "pageText": "",
+      "textLength": 0,
+      "detected": null
+    },
+    {
+      "url": "https://contentrewards.com/c/campaigns/b9f3aca2-7dbd-4309-ad07-6838ab7fef38",
+      "status": "unavailable",
+      "fetchedAt": "",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 300151 HTML bytes, title Pablo Pérez - Sobreviviendo en Bali con 100€ by Pablo Perez Clipping | Content Rewards).",
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 300151,
+      "pageTitle": "",
+      "pageText": "",
+      "textLength": 0,
+      "detected": null
+    },
+    {
+      "url": "https://contentrewards.com/c/campaigns/7610267f-aa08-45b4-9975-6acf0faeca1a",
+      "status": "unavailable",
+      "fetchedAt": "",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 286036 HTML bytes, title Clips Hablando de VALOR - Tiktok/Youtube/Instagram by Carlotta Sabina Academy | Content Rewards).",
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 286036,
+      "pageTitle": "",
+      "pageText": "",
+      "textLength": 0,
+      "detected": null
+    },
+    {
+      "url": "https://contentrewards.com/c/campaigns/29c92590-738b-4421-a675-75e5ddfe4c32",
+      "status": "unavailable",
+      "fetchedAt": "",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 301562 HTML bytes, title Ruben Atienza Clipping by Ruben Atienza Clipping | Content Rewards).",
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 301562,
+      "pageTitle": "",
+      "pageText": "",
+      "textLength": 0,
+      "detected": null
+    },
+    {
+      "url": "https://contentrewards.com/c/campaigns/6fe4c1aa-c8ca-4836-836b-01ab2540b337",
+      "status": "unavailable",
+      "fetchedAt": "",
+      "lastAttemptAt": "2026-10-31T17:46:39.812Z",
+      "lastError": "The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page). (HTTP 200, content-type text/html; charset=utf-8, 293076 HTML bytes, title It's Personal Podcast Clipping Campaign by Tykoonclips | Content Rewards).",
+      "httpStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "htmlBytes": 293076,
       "pageTitle": "",
       "pageText": "",
       "textLength": 0,
@@ -2881,17 +2833,17 @@
     }
   ],
   "lastScan": {
-    "at": "2026-10-31T17:41:46.183Z",
-    "completedAt": "2026-10-31T17:41:46.183Z",
+    "at": "2026-10-31T17:46:39.812Z",
+    "completedAt": "2026-10-31T17:46:39.812Z",
     "status": "success",
     "checkedCount": 60,
-    "newCount": 60,
+    "newCount": 7,
     "totalReceived": 60,
     "discoverRequestAttempts": 1,
     "feedRequestAttempts": 0,
     "detailPagesAttempted": 60,
-    "detailPagesAvailable": 5,
-    "detailPagesFailed": 55,
+    "detailPagesAvailable": 0,
+    "detailPagesFailed": 60,
     "detailRequestAttempts": 60,
     "source": "Official Content Rewards public Discover page",
     "sourceUrl": "https://contentrewards.com/c/discover",
@@ -2905,6 +2857,30 @@
     }
   },
   "scans": [
+    {
+      "at": "2026-10-31T17:46:39.812Z",
+      "completedAt": "2026-10-31T17:46:39.812Z",
+      "status": "success",
+      "checkedCount": 60,
+      "newCount": 7,
+      "totalReceived": 60,
+      "discoverRequestAttempts": 1,
+      "feedRequestAttempts": 0,
+      "detailPagesAttempted": 60,
+      "detailPagesAvailable": 0,
+      "detailPagesFailed": 60,
+      "detailRequestAttempts": 60,
+      "source": "Official Content Rewards public Discover page",
+      "sourceUrl": "https://contentrewards.com/c/discover",
+      "sourceVerification": "official-public-page",
+      "fallbackReason": "",
+      "summary": {
+        "saved": 60,
+        "high": 0,
+        "medium": 0,
+        "low": 60
+      }
+    },
     {
       "at": "2026-10-31T17:41:46.183Z",
       "completedAt": "2026-10-31T17:41:46.183Z",

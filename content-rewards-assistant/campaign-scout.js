@@ -34,7 +34,7 @@
   }
 
   function parseAmount(raw, fallbackCurrency = "") {
-    const match = /([$€£₹]|USD|EUR|GBP|INR)\s*([\d,]+(?:\.\d+)?)\s*([kKmM]?)(?=\s|$|[,.;:/])/i.exec(raw || "");
+    const match = /([$€£₹]|USD|EUR|GBP|INR)[ \t]*([\d,]+(?:\.\d+)?)[ \t]*([kKmM]?)(?=[ \t]|$|[,.;:/])/i.exec(raw || "");
     if (match) {
       let value = Number(match[2].replace(/,/g, ""));
       const suffix = match[3].toLowerCase();
@@ -44,14 +44,14 @@
       const currency = ({ "$": "USD", "€": "EUR", "£": "GBP", "₹": "INR", USD: "USD", EUR: "EUR", GBP: "GBP", INR: "INR" })[symbol];
       return Number.isFinite(value) ? { value, currency, raw: match[0].trim() } : null;
     }
-    const suffix = /\b([\d,]+(?:\.\d+)?)\s*([kKmM]?)(?=\s*(?:USD|EUR|GBP|INR)\b)\s*(USD|EUR|GBP|INR)\b/i.exec(raw || "");
+    const suffix = /\b([\d,]+(?:\.\d+)?)[ \t]*([kKmM]?)(?=[ \t]*(?:USD|EUR|GBP|INR)\b)[ \t]*(USD|EUR|GBP|INR)\b/i.exec(raw || "");
     if (suffix) {
       let value = Number(suffix[1].replace(/,/g, ""));
       if (suffix[2].toLowerCase() === "k") value *= 1000;
       if (suffix[2].toLowerCase() === "m") value *= 1000000;
       return Number.isFinite(value) ? { value, currency: suffix[3].toUpperCase(), raw: suffix[0].trim() } : null;
     }
-    const bare = /([\d,]+(?:\.\d+)?)\s*([kKmM]?)(?=\s|$|[,.;:/])/.exec(raw || "");
+    const bare = /([\d,]+(?:\.\d+)?)[ \t]*([kKmM]?)(?=[ \t]|$|[,.;:/])/.exec(raw || "");
     if (!bare || !fallbackCurrency) return null;
     let value = Number(bare[1].replace(/,/g, ""));
     if (bare[2].toLowerCase() === "k") value *= 1000;
@@ -67,7 +67,7 @@
 
   function parseBudget(text) {
     const raw = String(text || "");
-    const pair = /((?:[$€£₹]\s*)?[\d,]+(?:\.\d+)?\s*[kKmM]?)\s*\/\s*([$€£₹]\s*[\d,]+(?:\.\d+)?\s*[kKmM]?)/.exec(raw);
+    const pair = /((?:[$€£₹][ \t]*)?[\d,]+(?:\.\d+)?[ \t]*[kKmM]?)[ \t]*\/[ \t]*([$€£₹][ \t]*[\d,]+(?:\.\d+)?[ \t]*[kKmM]?)/.exec(raw);
     if (pair) {
       const total = parseAmount(pair[2]);
       const spent = parseAmount(pair[1], total && total.currency);

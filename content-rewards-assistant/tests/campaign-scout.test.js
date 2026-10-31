@@ -431,3 +431,48 @@ test("budget parsing never consumes the next line's initial M as a million suffi
   assert.equal(budget.remaining.value, 1750);
   assert.equal(Scout.parseAmount(["$2,000", "Minimum"].join("\n")).value, 2000);
 });
+
+test("official campaign detail does not mistake X in a campaign title for the X platform", () => {
+  const text = [
+    "UGC X FUGGLER [INFINITE BUDGET] by Clip Influence | Content Rewards",
+    "Create original Fuggler UGC and earn $3 per 1,000 qualified views, with a $3,000 maximum payout [INFINITE BUDGET].",
+    "Accepting clips",
+    "Launched 1 week ago",
+    "instagram tiktok Consumer Brand",
+    "CPM",
+    "Join Campaign",
+    "TikTok",
+    "Per 1K views",
+    "$3.00",
+    "Min payout",
+    "$3.00",
+    "Max payout",
+    "$3,000.00",
+    "Instagram",
+    "Per 1K views",
+    "$3.00",
+    "Min payout",
+    "$3.00",
+    "Max payout",
+    "$3,000.00",
+    "Budget",
+    "$12,553 / $20,000"
+  ].join("\n");
+  const result = Scout.parseCampaignBrief({ text });
+  assert.deepEqual(result.platforms, ["TikTok", "Instagram"]);
+  assert.deepEqual(result.platformRates.map((item) => [item.platform, item.amount.value]), [
+    ["TikTok", 3], ["Instagram", 3]
+  ]);
+  assert.deepEqual(result.platformCaps.map((item) => [item.platform, item.amount.value]), [
+    ["TikTok", 3000], ["Instagram", 3000]
+  ]);
+});
+
+test("platform X is still recognised when it appears as an explicit destination", () => {
+  const result = Scout.parseCampaignBrief({
+    text: ["Campaign: X creator campaign", "Platforms: X and Instagram", "X", "Per 1K views", "$2", "Max payout", "$100"].join("\n")
+  });
+  assert.deepEqual(result.platforms, ["Instagram", "X"]);
+  assert.ok(result.platformRates.some((item) => item.platform === "X"));
+  assert.ok(result.platformCaps.some((item) => item.platform === "X" && item.amount.value === 100));
+});

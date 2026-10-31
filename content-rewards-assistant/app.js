@@ -303,16 +303,23 @@
     $("campaign-url").value = result.sourceUrl || "";
     $("campaign-deadline").value = result.deadline || "";
     const target = $("scout-target-platform").value;
-    const platformRate = Array.isArray(result.platformRates)
-      ? result.platformRates.find((item) => item.platform === target)
-      : null;
-    const selectedRate = platformRate || result.rate;
+    const hasPlatformRates = Array.isArray(result.platformRates) && result.platformRates.length > 0;
+    const platformRate = hasPlatformRates ? result.platformRates.find((item) => item.platform === target) : null;
+    const selectedRate = platformRate || (hasPlatformRates ? null : result.rate);
+    const selectedCap = Array.isArray(result.platformCaps) ? result.platformCaps.find((item) => item.platform === target) : null;
+    const selectedMinimum = Array.isArray(result.platformMinimumViews) ? result.platformMinimumViews.find((item) => item.platform === target) : null;
+    const selectedMaximum = Array.isArray(result.platformMaximumViews) ? result.platformMaximumViews.find((item) => item.platform === target) : null;
+    const cap = (selectedCap && selectedCap.amount) || (Array.isArray(result.platformCaps) && result.platformCaps.length ? null : result.capPerClip);
+    const minimumViews = selectedMinimum ? selectedMinimum.value :
+      (Array.isArray(result.platformMinimumViews) && result.platformMinimumViews.length ? null : result.minimumViews);
+    const maximumViews = selectedMaximum ? selectedMaximum.value :
+      (Array.isArray(result.platformMaximumViews) && result.platformMaximumViews.length ? null : result.maximumViews);
     const payoutParts = [];
     if (selectedRate) payoutParts.push(selectedRate.label);
-    if (result.capPerClip) payoutParts.push("Max per clip: " + window.ClipRewardScout.formatAmount(result.capPerClip));
-    const selectedCap = Array.isArray(result.platformCaps) ? result.platformCaps.find((item) => item.platform === target) : null;
-    if (selectedCap && selectedCap.amount && !result.capPerClip) payoutParts.push("Max per " + target + " clip: " + window.ClipRewardScout.formatAmount(selectedCap.amount));
-    if (result.minimumViews != null) payoutParts.push("Min views: " + Number(result.minimumViews).toLocaleString("en"));
+    else if (hasPlatformRates) payoutParts.push(target + " payout rate not recognised in copied text");
+    if (cap) payoutParts.push("Max per clip: " + window.ClipRewardScout.formatAmount(cap));
+    if (minimumViews != null) payoutParts.push("Min views: " + Number(minimumViews).toLocaleString("en"));
+    if (maximumViews != null) payoutParts.push("Max views: " + Number(maximumViews).toLocaleString("en"));
     $("campaign-payout-terms").value = payoutParts.join(" · ").slice(0, 180);
     const budgetParts = [];
     if (result.budget && result.budget.spent) budgetParts.push(window.ClipRewardScout.formatAmount(result.budget.spent) + " used");

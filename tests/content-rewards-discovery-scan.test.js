@@ -4,7 +4,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs/promises");
 const os = require("node:os");
 const path = require("node:path");
-const { runScheduledScan, decodeHtmlEntities, extractVisibleText, canonicalDiscoverUrl, extractDiscoverCampaigns, fetchPublicDiscoverCampaigns, fetchPublicCampaignPage, fetchCampaignDetails, fetchFeedWithRetry } = require("../scripts/content-rewards-discovery-scan.js");
+const { runScheduledScan, decodeHtmlEntities, extractVisibleText, canonicalDiscoverUrl, canonicalPublicCampaignDetailUrl, extractDiscoverCampaigns, fetchPublicDiscoverCampaigns, fetchPublicCampaignPage, fetchCampaignDetails, fetchFeedWithRetry } = require("../scripts/content-rewards-discovery-scan.js");
 const Feed = require("../content-rewards-assistant/campaign-feed.js");
 
 function sample(id) {
@@ -224,6 +224,11 @@ const DISCOVER_HTML = `<!doctype html><html><body><main>
 <a href="/c/campaigns/official-one#top">Duplicate link</a>
 <a href="https://evil.example/c/campaigns/unsafe">Do not follow</a>
 <a href="/c/discover">Discover index</a>
+<a href="/c/campaigns">Campaigns navigation</a>
+<a href="/c/analytics">Analytics navigation</a>
+<a href="/c/home">Home navigation</a>
+<a href="/c/submissions">Submissions navigation</a>
+<a href="/c/settings">Settings navigation</a>
 </main></body></html>`;
 
 test("official Discover URL validator accepts only the public Discover index path", () => {
@@ -233,6 +238,10 @@ test("official Discover URL validator accepts only the public Discover index pat
   assert.equal(canonicalDiscoverUrl("https://evil.example/c/discover"), "");
   assert.equal(canonicalDiscoverUrl("https://user:pass@contentrewards.com/c/discover"), "");
   assert.equal(canonicalDiscoverUrl("http://contentrewards.com/c/discover"), "");
+  assert.equal(canonicalPublicCampaignDetailUrl("https://contentrewards.com/c/campaigns/abc"), "https://contentrewards.com/c/campaigns/abc");
+  for (const path of ["/c/campaigns", "/c/analytics", "/c/home", "/c/submissions", "/c/settings", "/c/discover", "/c/campaigns/abc/more"]) {
+    assert.equal(canonicalPublicCampaignDetailUrl("https://contentrewards.com" + path), "");
+  }
 });
 
 test("official Discover HTML extracts unique trusted campaign links and ignores external links", () => {
@@ -244,6 +253,15 @@ test("official Discover HTML extracts unique trusted campaign links and ignores 
   ]);
   assert.equal(rows[0].title, "Seasonal Creator Clips");
   assert.equal(rows[0].sourceVerification, "official-public-page");
+  assert.ok(rows.every((row) => /^https:\\/\\/contentrewards\\.com\\/c\\/campaigns\\/[^/]+$/.test(row.officialUrl)));
+});
+
+test("public campaign detail fetching rejects dashboard routes before any network request", async () => {
+  let calls = 0;
+  await assert.rejects(fetchPublicCampaignPage("https://contentrewards.com/c/analytics", {
+    fetchImpl: async () => { calls += 1; throw new Error("must not request a dashboard route"); }
+  }), /Only public HTTPS Content Rewards campaign URLs/);
+  assert.equal(calls, 0);
 });
 
 test("official Discover page fetch parses campaign URLs without using the third-party feed", async () => {
@@ -446,6 +464,7 @@ test("detail crawler caps concurrency, stores public page text and preserves old
   assert.equal(fetched.failed, 1);
   const prior = fetched.details.find((row) => row.url.endsWith("/two"));
   assert.equal(prior.status, "unavailable");
+  assert.ok(prior.lastError.includes("HTML bytes"), "failed page reads should retain safe response diagnostics");
 
   const refreshed = await fetchCampaignDetails(urls.slice(1, 2), {
     previous: [fetched.details.find((row) => row.url.endsWith("/two"))],

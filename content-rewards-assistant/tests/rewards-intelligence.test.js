@@ -42,7 +42,7 @@ test("unknown platform, payout, budget and deadline remain unknown", () => {
 
 test("CPM, per-post, retainer and pool payout explanations do not invent rates", () => {
   assert.match(Engine.payoutGuidance({ model: "CPM", amount: { value: 2 }, label: "$2 per 1,000 views" }).formula, /qualified views/i);
-  assert.match(Engine.payoutGuidance({ model: "Per post", amount: { value: 50 } }).formula, /approved post/i);
+  assert.match(Engine.payoutGuidance({ model: "Per post", amount: { value: 50 } }).formula, /post is approved/i);
   assert.equal(Engine.payoutGuidance({ model: "Retainer", amount: null }).amountKnown, false);
   assert.match(Engine.payoutGuidance({ model: "Pool", amount: null }).formula, /not a fixed CPM/i);
   assert.equal(Engine.payoutGuidance(null).amountKnown, false);

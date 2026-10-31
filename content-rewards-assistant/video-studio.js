@@ -44,6 +44,7 @@
     if (!Recorder) missing.push("MediaRecorder API");
     if (!canvasCapture) missing.push("Canvas captureStream");
     if (!mimeType) missing.push("MP4/WebM recording codec");
+    if (!env || typeof env.requestAnimationFrame !== "function") missing.push("requestAnimationFrame");
     return {
       supported: missing.length === 0,
       mimeType,
@@ -208,6 +209,24 @@
     }
   }
 
+  function createMediaRecorder(stream, videoBitsPerSecond) {
+    const Recorder = root.MediaRecorder;
+    let lastError = null;
+    for (const candidate of MIME_CANDIDATES) {
+      let supported = false;
+      try { supported = Recorder.isTypeSupported(candidate); } catch (_) {}
+      if (!supported) continue;
+      try {
+        return new Recorder(stream, { mimeType: candidate, videoBitsPerSecond });
+      } catch (error) { lastError = error; }
+    }
+    try { return new Recorder(stream, { videoBitsPerSecond }); }
+    catch (error) {
+      throw new Error("The browser reported a recording codec but could not start MediaRecorder. " +
+        ((error && error.message) || (lastError && lastError.message) || "Try Chrome or another supported browser."));
+    }
+  }
+
   async function render(options) {
     const opts = options || {};
     const files = Array.from(opts.files || []);
@@ -241,6 +260,14 @@
     }
 
     try {
+      let audioResume = null;
+      if (opts.audioFile) {
+        const AudioContextClass = root.AudioContext || root.webkitAudioContext;
+        if (!AudioContextClass) throw new Error("This browser cannot mix an uploaded voice-over or music track.");
+        audioContext = new AudioContextClass();
+        // Create and resume the audio context during the user's button gesture.
+        audioResume = audioContext.resume();
+      }
       const scenes = await loadMedia(files, urls);
       const captions = splitCaptions(opts.captions);
       const sceneDuration = duration / scenes.length;
@@ -249,10 +276,7 @@
       if (!tracks.some((track) => track.kind === "video")) throw new Error("The browser did not create a video capture track.");
 
       if (opts.audioFile) {
-        const AudioContextClass = root.AudioContext || root.webkitAudioContext;
-        if (!AudioContextClass) throw new Error("This browser cannot mix an uploaded voice-over or music track.");
-        audioContext = new AudioContextClass();
-        await audioContext.resume();
+        await audioResume;
         const decoded = await audioContext.decodeAudioData(await opts.audioFile.arrayBuffer());
         const destination = audioContext.createMediaStreamDestination();
         const source = audioContext.createBufferSource();
@@ -270,10 +294,7 @@
       }
 
       const chunks = [];
-      recorder = new root.MediaRecorder(stream, {
-        mimeType: capabilities.mimeType,
-        videoBitsPerSecond: 2500000
-      });
+      recorder = createMediaRecorder(stream, 2500000);
       const stopped = new Promise((resolve, reject) => {
         recorder.addEventListener("dataavailable", (event) => {
           if (event.data && event.data.size) chunks.push(event.data);
@@ -368,6 +389,6 @@
 
   return Object.freeze({
     MAX_MEDIA_FILES, MAX_MEDIA_BYTES, MAX_AUDIO_BYTES, WIDTH, HEIGHT, FPS, MIME_CANDIDATES,
-    chooseMimeType, getCapabilities, fileKind, validateFiles, splitCaptions, validateRenderedMetadata, verifyBlob, render
+    chooseMimeType, createMediaRecorder, getCapabilities, fileKind, validateFiles, splitCaptions, validateRenderedMetadata, verifyBlob, render
   });
 });

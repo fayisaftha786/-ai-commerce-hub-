@@ -12,6 +12,7 @@
     const durationInput = $("video-duration");
     const captionsInput = $("video-captions");
     const createButton = $("video-create-button");
+    const deviceTestButton = $("video-device-test-button");
     const cancelButton = $("video-cancel-button");
     const downloadLink = $("video-download-link");
     const preview = $("video-output-preview");
@@ -60,6 +61,7 @@
       createButton.disabled = value || !caps.supported;
       cancelButton.hidden = !value;
       cancelButton.disabled = !value;
+      deviceTestButton.disabled = value || !caps.supported;
       mediaInput.disabled = value;
       audioInput.disabled = value;
       durationInput.disabled = value;
@@ -127,6 +129,43 @@
       } catch (error) {
         if (error && error.name === "AbortError") setStatus("Export cancelled. No completed file was saved.", false);
         else setStatus((error && error.message) || "Video export failed. Try smaller files or another supported browser.", true);
+      } finally {
+        controller = null;
+        setBusy(false);
+      }
+    });
+
+    deviceTestButton.addEventListener("click", async () => {
+      if (busy || !caps.supported) return;
+      if (outputUrl) root.URL.revokeObjectURL(outputUrl);
+      outputUrl = "";
+      downloadLink.hidden = true;
+      preview.hidden = true;
+      preview.removeAttribute("src");
+      progress.value = 0;
+      controller = new root.AbortController();
+      setBusy(true);
+      setStatus("Running a four-second device export test…", false);
+      try {
+        const output = await Studio.renderDeviceTest({
+          signal: controller.signal,
+          onProgress: (value) => {
+            progress.value = value;
+            setStatus("Device video test… " + value + "%", false);
+          }
+        });
+        outputUrl = root.URL.createObjectURL(output.blob);
+        preview.src = outputUrl;
+        preview.hidden = false;
+        downloadLink.href = outputUrl;
+        downloadLink.download = "clipreward-device-test." + output.extension;
+        downloadLink.textContent = "Save test " + output.formatLabel;
+        downloadLink.hidden = false;
+        setStatus("Device test passed: " + output.width + " × " + output.height + " · " +
+          output.duration.toFixed(1) + " sec · " + output.formatLabel + ". This confirms this browser can render and read a video file.", false);
+      } catch (error) {
+        if (error && error.name === "AbortError") setStatus("Device test cancelled.", false);
+        else setStatus((error && error.message) || "Device test failed. This browser/device is not ready for video export.", true);
       } finally {
         controller = null;
         setBusy(false);

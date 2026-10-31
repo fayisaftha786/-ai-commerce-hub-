@@ -103,3 +103,7 @@
 .ri-native-card ul{padding-left:15px;margin:9px 0;color:#a6b3c9;font-size:9px;line-height:1.6}.ri-native-card li{margin:4px 0}.ri-native-card a{font-size:9px;font-weight:800;color:#b8adff;text-decoration:none}.ri-native-card a:hover{text-decoration:underline}
 .ri-boundary{font-size:9px;line-height:1.55;color:#7f8eaa;margin:12px 0 0}
 @media(max-width:760px){.ri-check-grid,.ri-native-grid{grid-template-columns:1fr}.ri-heading{align-items:flex-start;flex-direction:column}}
+
+.ri-payout{padding:12px;border:1px solid #47416f;background:#211f3e;border-radius:10px;margin:10px 0}
+.ri-payout strong{font-size:11px;color:#c8bfff}.ri-payout p{font-size:10px;line-height:1.6;color:#b4bdd2;margin:5px 0 0}
+.ri-summary ul{padding-left:18px;margin:8px 0;color:#f1c2c2;font-size:10px;line-height:1.55}.ri-summary li{margin:3px 0}

@@ -375,6 +375,7 @@ test("ClipReward service worker is registered, refreshes v6 assets and scopes of
     assert.ok(workerSource.includes('"' + asset + '"'), "missing ClipReward offline asset " + asset);
   }
   assert.match(workerSource, /url\.href\.startsWith\(self\.registration\.scope\)/);
+  assert.match(htmlSource, /discovery-engine\.js/);
   assert.match(htmlSource, /navigator\.serviceWorker\.register\("\.\/service-worker\.js"\)/);
   assert.match(htmlSource, /location\.protocol !== "file:"/);
   assert.match(htmlSource, /data-register-service-worker/);

@@ -91,7 +91,7 @@ test("legacy Content Rewards submission records remain importable but are labell
 
 test("campaign cards visibly flag legacy submissions whose submission time was not recorded", () => {
   const appSource = fs.readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
-  assert.match(appSource, /Core\\.hasLegacySubmissionTiming\\(campaign\\)/);
+  assert.ok(appSource.includes("Core.hasLegacySubmissionTiming(campaign)"));
   assert.match(appSource, /Legacy · submission time not recorded/);
 });
 

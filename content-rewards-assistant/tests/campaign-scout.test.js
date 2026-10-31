@@ -476,3 +476,49 @@ test("platform X is still recognised when it appears as an explicit destination"
   assert.ok(result.platformRates.some((item) => item.platform === "X"));
   assert.ok(result.platformCaps.some((item) => item.platform === "X" && item.amount.value === 100));
 });
+
+
+test("pool-based campaigns retain the shared pool amount without pretending it is a CPM rate", () => {
+  const text = [
+    "$10,000 Kai Cenat Campaign by Reach | Content Rewards",
+    "Reach $10,000 Kai Cenat Campaign",
+    "Clip content for Kai Cenat",
+    "READ THE RULES AND REQUIREMENTS HERE:",
+    "Accepting clips",
+    "Launched 1 week ago",
+    "instagram tiktok youtube Streamer",
+    "2240",
+    "$10K pool",
+    "Join Campaign",
+    "Pool",
+    "Pool",
+    "$10,000.00",
+    "Split by",
+    "Views",
+    "Paid",
+    "When the pool ends",
+    "Reference materials 4 files",
+    "Visible once you join",
+    "Creator requirements 1 requirement",
+    "Visible once you join",
+    "Join to unlock 1 requirement and 4 files"
+  ].join("\n");
+  const rate = Scout.parseRate(text);
+  assert.equal(rate.model, "Pool");
+  assert.equal(rate.amount, null);
+  assert.equal(rate.poolAmount.value, 10000);
+  assert.equal(rate.poolAmount.currency, "USD");
+  assert.match(rate.label, /Shared pool \\$10,000/);
+
+  const parsed = Scout.parseCampaignBrief({ text });
+  assert.equal(parsed.rate.model, "Pool");
+  assert.equal(parsed.rate.amount, null);
+  assert.equal(parsed.rate.poolAmount.value, 10000);
+  assert.deepEqual(parsed.platforms, ["TikTok", "Instagram", "YouTube"]);
+});
+
+test("pool campaign without a visible pool amount is still identified as pool-based", () => {
+  const rate = Scout.parseRate("Payout model: pool-based reward. Distribution is split by views and paid when the pool ends.");
+  assert.equal(rate.model, "Pool");
+  assert.equal(rate.poolAmount, null);
+});

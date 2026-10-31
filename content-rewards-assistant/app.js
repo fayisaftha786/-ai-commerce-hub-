@@ -246,27 +246,33 @@
   let discoveryTimer = null;
   let discoveryBusy = false;
   let discoveryBackendStatus = null;
+  let discoveryStaticStatus = null;
+  let discoveryStaticScans = [];
 
   function renderDiscovery() {
     const campaigns = discoveryState.campaigns || [];
     const scans = discoveryState.scans || [];
-    const latest = discoveryBackendStatus && discoveryBackendStatus.lastScan || scans[0];
+    const latest = discoveryBackendStatus && discoveryBackendStatus.lastScan ||
+      discoveryStaticStatus && discoveryStaticStatus.lastScan || scans[0];
+    const backendConfigured = Boolean(discoverySettings.backendUrl);
+    const scheduledSnapshot = Boolean(discoveryStaticStatus && discoveryStaticStatus.lastScan);
     $("discovery-total").textContent = campaigns.length;
     $("discovery-high").textContent = campaigns.filter((row) => row.opportunity && row.opportunity.tier === "high").length;
     $("discovery-new").textContent = latest ? latest.newCount : "—";
     $("discovery-last-scan").textContent = latest ? new Date(latest.completedAt || latest.at).toLocaleString() : "Not scanned yet";
-    const backendConfigured = Boolean(discoverySettings.backendUrl);
     $("discovery-mode").textContent = backendConfigured
       ? discoveryBackendStatus
         ? discoveryBackendStatus.enabled ? "Server-side scheduler active · " + discoveryBackendStatus.intervalMinutes + " minute interval" : "Backend reachable · server scheduler disabled"
         : "Backend URL saved · checking connection"
-      : discoverySettings.enabled ? "Browser auto-scan works only while this page is open" : "Browser auto-scan paused";
-    $("discovery-toggle").textContent = backendConfigured ? "Server controls auto-scan" : discoverySettings.enabled ? "Pause auto-scan" : "Resume auto-scan";
-    $("discovery-toggle").disabled = backendConfigured;
+      : scheduledSnapshot
+        ? "GitHub Actions snapshot scheduled · approximately every 6 hours (UTC)"
+        : discoverySettings.enabled ? "Browser fallback scan works only while this page is open" : "Browser fallback scan paused";
+    $("discovery-toggle").textContent = backendConfigured ? "Server controls auto-scan" : scheduledSnapshot ? "GitHub Actions controls schedule" : discoverySettings.enabled ? "Pause browser fallback" : "Resume browser fallback";
+    $("discovery-toggle").disabled = backendConfigured || scheduledSnapshot;
     $("discovery-interval").value = String(discoverySettings.intervalHours);
-    $("discovery-interval").disabled = backendConfigured;
+    $("discovery-interval").disabled = backendConfigured || scheduledSnapshot;
     $("discovery-backend-url").value = discoverySettings.backendUrl || "";
-    $("discovery-scan-now").textContent = backendConfigured ? "↻ Sync latest findings" : "↻ Scan now";
+    $("discovery-scan-now").textContent = backendConfigured ? "↻ Sync latest findings" : "↻ Scan public feed now";
     const rows = campaigns.slice(0, 8);
     $("discovery-list").innerHTML = rows.length ? rows.map((row, index) => {
       const payout = (row.payouts || []).find((item) => item.platform === $("scout-target-platform").value) || (row.payouts || [])[0];
@@ -274,16 +280,17 @@
       const tier = row.opportunity ? row.opportunity.tier.toUpperCase() : "UNRATED";
       const freshness = row.opportunity ? row.opportunity.status.replace(/-/g, " ") : "unknown";
       return '<article class="discovery-card"><div class="discovery-card-head"><strong>' + escapeHtml(row.title) + '</strong><span class="discovery-tier discovery-tier-' + escapeHtml(tier.toLowerCase()) + '">' + escapeHtml(tier) + ' · ' + escapeHtml(row.opportunity ? row.opportunity.score : 0) + '/100</span></div><p>' + escapeHtml(row.brand || "Brand not stated") + ' · ' + escapeHtml((row.platforms || []).join(", ") || "Platform unknown") + '</p><div class="feed-metrics"><span>' + escapeHtml(rate) + '</span><span>' + escapeHtml(freshness) + '</span></div><small>' + escapeHtml(row.opportunity ? row.opportunity.explanation : "Verify source details.") + '</small><div class="feed-card-actions"><button class="button button-secondary" type="button" data-discovery-import="' + index + '">Analyse campaign</button>' + (row.officialUrl ? '<a class="text-button" href="' + escapeHtml(row.officialUrl) + '" target="_blank" rel="noopener noreferrer">Verify official page ↗</a>' : '') + '</div></article>';
-    }).join("") : '<p class="muted small-text">No saved discoveries yet. Connect a backend for server-side scheduled discovery, or run a browser scan while this page is open.</p>';
+    }).join("") : '<p class="muted small-text">No saved discoveries yet. The scheduled public snapshot will populate this list after its first successful scan; use Scan public feed now for an immediate browser check.</p>';
     $("discovery-list").querySelectorAll("[data-discovery-import]").forEach((button) => button.addEventListener("click", () => {
       campaignFeedRows = rows;
       importFeedCampaign(Number(button.dataset.discoveryImport));
     }));
-    $("discovery-history").textContent = discoveryBackendStatus && discoveryBackendStatus.lastScan
-      ? "Server history · " + (discoveryBackendStatus.lastScan.status || "unknown") + " · " + (discoveryBackendStatus.lastScan.checkedCount || 0) + " checked · " + (discoveryBackendStatus.lastScan.newCount || 0) + " new"
-      : scans.length ? scans.slice(0, 5).map((scan) =>
-        new Date(scan.at).toLocaleString() + " · " + scan.checkedCount + " checked · " + scan.newCount + " new" + (scan.error || scan.status === "failed" ? " · failed" : "")
-      ).join(" | ") : "No scan history yet.";
+    const history = discoveryBackendStatus && discoveryBackendStatus.lastScan
+      ? [discoveryBackendStatus.lastScan]
+      : discoveryStaticScans.length ? discoveryStaticScans : scans;
+    $("discovery-history").textContent = history.length ? history.slice(0, 5).map((scan) =>
+      new Date(scan.completedAt || scan.at).toLocaleString() + " · " + (scan.checkedCount || 0) + " checked · " + (scan.newCount || 0) + " new" + (scan.error || scan.status === "failed" ? " · failed" : "")
+    ).join(" | ") : "No scan history yet.";
   }
 
   async function runDiscoveryScan(automatic) {
@@ -291,7 +298,7 @@
     if (discoveryBusy) return;
     discoveryBusy = true;
     $("discovery-scan-now").disabled = true;
-    $("discovery-status").textContent = automatic ? "Automatic browser scan running…" : "Scanning the public feed…";
+    $("discovery-status").textContent = automatic ? "Automatic browser fallback scan running…" : "Scanning the public feed…";
     try {
       const result = await window.ClipRewardDiscovery.scan({
         feed: window.ClipRewardFeed,
@@ -313,6 +320,46 @@
       window.ClipRewardDiscovery.writeState(discoveryState);
       $("discovery-status").textContent = message + " Use the official Discover page and paste its public brief if the feed is unavailable.";
       renderDiscovery();
+    } finally {
+      discoveryBusy = false;
+      $("discovery-scan-now").disabled = false;
+    }
+  }
+
+  async function syncScheduledSnapshot() {
+    if (discoverySettings.backendUrl || discoveryBusy) return null;
+    discoveryBusy = true;
+    $("discovery-scan-now").disabled = true;
+    $("discovery-status").textContent = "Loading the latest scheduled GitHub campaign snapshot…";
+    try {
+      const result = await window.ClipRewardDiscovery.fetchStaticSnapshot({ url: "./discovery-snapshot.json" });
+      const lastScan = result.status.lastScan;
+      if (!lastScan) {
+        discoveryStaticStatus = null;
+        discoveryStaticScans = [];
+        $("discovery-status").textContent = "The GitHub Actions scheduled workflow has not completed its first scan yet.";
+        renderDiscovery();
+        return null;
+      }
+      discoveryStaticStatus = result.status;
+      discoveryStaticScans = result.scans || [];
+      const merged = window.ClipRewardDiscovery.mergeHistory(discoveryState.campaigns, result.campaigns);
+      discoveryState = { campaigns: merged.campaigns, scans: discoveryState.scans || [] };
+      if (!window.ClipRewardDiscovery.writeState(discoveryState)) throw new Error("Snapshot loaded, but the browser could not save its local cache.");
+      const message = lastScan.status === "failed"
+        ? "Latest scheduled scan failed: " + (lastScan.error || "source unavailable") + ". Previous campaign rows were preserved."
+        : "GitHub Actions snapshot loaded · " + result.campaigns.length + " saved campaigns · last scan " + new Date(lastScan.completedAt || lastScan.at).toLocaleString() + ".";
+      $("discovery-status").textContent = message;
+      $("discovery-backend-status").textContent = "GitHub Actions scheduled snapshot is active. No separate backend URL is needed for this public feed.";
+      scheduleDiscovery();
+      renderDiscovery();
+      return result;
+    } catch (error) {
+      discoveryStaticStatus = null;
+      discoveryStaticScans = [];
+      $("discovery-status").textContent = (error && error.message ? error.message : "Scheduled snapshot could not be loaded.") + " Browser scan fallback is available while this page is open.";
+      renderDiscovery();
+      return null;
     } finally {
       discoveryBusy = false;
       $("discovery-scan-now").disabled = false;
@@ -358,7 +405,7 @@
   function scheduleDiscovery() {
     if (discoveryTimer) window.clearInterval(discoveryTimer);
     discoveryTimer = null;
-    if (!discoverySettings.enabled || discoverySettings.backendUrl) return;
+    if (!discoverySettings.enabled || discoverySettings.backendUrl || discoveryStaticStatus) return;
     discoveryTimer = window.setInterval(() => {
       if (document.visibilityState === "visible") runDiscoveryScan(true);
     }, discoverySettings.intervalHours * 60 * 60 * 1000);
@@ -376,7 +423,7 @@
       discoverySettings.intervalHours = Number($("discovery-interval").value);
       window.ClipRewardDiscovery.writeSettings(discoverySettings);
       scheduleDiscovery();
-      showToast("Browser scan interval saved. It runs only while this page is open.");
+      showToast("Browser fallback interval saved. It runs only while this page is open.");
     });
     $("discovery-save-backend").addEventListener("click", () => {
       const raw = $("discovery-backend-url").value.trim();
@@ -392,7 +439,7 @@
       renderDiscovery();
       if (normalized) syncDiscoveryBackend();
       else {
-        $("discovery-backend-status").textContent = "Backend disconnected. Browser scans are available only while this page is open.";
+        $("discovery-backend-status").textContent = "Backend disconnected. The GitHub Actions snapshot remains available.";
         showToast("Backend URL cleared.");
       }
     });
@@ -405,14 +452,18 @@
       showToast(discoverySettings.notify ? "New-discovery notifications enabled." : "Notification permission was not granted.");
     });
     renderDiscovery();
-    scheduleDiscovery();
     if (discoverySettings.backendUrl) {
       $("discovery-backend-status").textContent = "Backend URL saved. Connecting…";
+      scheduleDiscovery();
       syncDiscoveryBackend();
     } else {
-      $("discovery-backend-status").textContent = "No backend connected. Configure the separate backend to keep scanning while the app is closed.";
-      const latest = discoveryState.scans[0];
-      if (discoverySettings.enabled && (!latest || Date.now() - Date.parse(latest.at) > 30 * 60 * 1000)) runDiscoveryScan(true);
+      syncScheduledSnapshot().then((snapshot) => {
+        if (!snapshot && discoverySettings.enabled && !discoverySettings.backendUrl) {
+          scheduleDiscovery();
+          const latest = discoveryState.scans[0];
+          if (!latest || Date.now() - Date.parse(latest.at) > 30 * 60 * 1000) runDiscoveryScan(true);
+        }
+      });
     }
   }
 

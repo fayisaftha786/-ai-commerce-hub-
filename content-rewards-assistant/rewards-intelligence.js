@@ -135,18 +135,20 @@
   }
 
   function creatorFee(rate, budget) {
-    if (!rate) return { percent: null, label: "Unknown until the payout model and campaign terms are confirmed" };
+    const source = "https://contentrewards.com/terms";
+    if (!rate) return { percent: null, label: "Unknown until the payout model and campaign terms are confirmed", source };
     if (rate.model === "CPM" || rate.model === "Pool") {
-      return { percent: 10, label: "The current creator terms list a 10% creator fee for CPM and Pool payouts; check the individual campaign terms for any applicable variation." };
+      return { percent: 10, label: "The current creator terms list a 10% creator fee for CPM and Pool payouts; check the individual campaign terms for any applicable variation.", source };
     }
     if (rate.model === "Per post" || rate.model === "Retainer") {
-      if (!budget || !budget.total) return { percent: null, label: "Per-post / retainer fee depends on the total campaign budget; confirm the campaign terms." };
+      if (!budget || !budget.total) return { percent: null, label: "Per-post / retainer fee depends on the total campaign budget; confirm the campaign terms.", source };
+      if (budget.total.currency !== "USD") return { percent: null, label: "The fee threshold is stated in US dollars; this campaign budget uses another currency, so confirm the fee shown in its official terms.", source };
       if (budget.total.value >= 5000 && budget.total.currency === "USD") {
-        return { percent: 0, label: "Current terms list 0% creator fee for per-post / retainer campaigns with a total budget of at least US$5,000; verify the campaign's displayed terms." };
+        return { percent: 0, label: "Current terms list 0% creator fee for per-post / retainer campaigns with a total budget of at least US$5,000; verify the campaign's displayed terms.", source };
       }
-      return { percent: 10, label: "Current terms list 10% for per-post / retainer campaigns with a total budget below US$5,000; verify the campaign's displayed terms." };
+      return { percent: 10, label: "Current terms list 10% for per-post / retainer campaigns with a total budget below US$5,000; verify the campaign's displayed terms.", source };
     }
-    return { percent: null, label: "Creator fee is not recognised; confirm the official campaign terms." };
+    return { percent: null, label: "Creator fee is not recognised; confirm the official campaign terms.", source };
   }
 
   function payoutGuidance(rate, budget, capPerClip) {

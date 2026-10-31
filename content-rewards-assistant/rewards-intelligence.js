@@ -212,11 +212,18 @@
       reasons.push("The copied brief indicates campaign status: " + brief.campaignStatus + ".");
     }
 
-    const selectedRate = Array.isArray(brief.platformRates)
-      ? brief.platformRates.find((item) => item.platform === platform)
-      : null;
-    const rate = selectedRate || brief.rate || null;
-    const capPerClip = brief.capPerClip || null;
+    const platformRates = Array.isArray(brief.platformRates) ? brief.platformRates : [];
+    const selectedRate = platformRates.find((item) => item.platform === platform) || null;
+    const rate = selectedRate || (platformRates.length ? null : brief.rate || null);
+    const platformCaps = Array.isArray(brief.platformCaps) ? brief.platformCaps : [];
+    const platformMinimumViews = Array.isArray(brief.platformMinimumViews) ? brief.platformMinimumViews : [];
+    const platformMaximumViews = Array.isArray(brief.platformMaximumViews) ? brief.platformMaximumViews : [];
+    const selectedCap = platformCaps.find((item) => item.platform === platform) || null;
+    const selectedMinimum = platformMinimumViews.find((item) => item.platform === platform) || null;
+    const selectedMaximum = platformMaximumViews.find((item) => item.platform === platform) || null;
+    const capPerClip = (selectedCap && selectedCap.amount) || brief.capPerClip || null;
+    const minimumViews = selectedMinimum ? selectedMinimum.value : brief.minimumViews;
+    const maximumViews = selectedMaximum ? selectedMaximum.value : brief.maximumViews;
     const payout = payoutGuidance(rate, brief.budget, capPerClip);
     const requirements = inferBriefRequirements(brief);
 
@@ -227,12 +234,12 @@
       if (!brief.deadline) reasons.push("Campaign deadline is not recognised.");
       if (!brief.entryMode) reasons.push("Open / application / private access route is not known.");
       if (rate && rate.model === "CPM" && !capPerClip) reasons.push("CPM maximum per clip is not recognised.");
-      if (rate && rate.model === "CPM" && brief.minimumViews == null) reasons.push("CPM minimum views are not recognised.");
+      if (rate && rate.model === "CPM" && minimumViews == null) reasons.push("CPM minimum views are not recognised.");
       if (brief.minimumFollowers != null) reasons.push("Confirm that your selected posting account meets the stated follower threshold.");
       reasons.push("Creator-account eligibility and campaign approval must still be confirmed on Content Rewards.");
       const coreComplete = brief.platformMatch === "match" && Boolean(rate) &&
         Boolean(brief.budget && brief.budget.remaining) && Boolean(brief.deadline) && Boolean(brief.entryMode) &&
-        (rate.model !== "CPM" || (Boolean(capPerClip) && brief.minimumViews != null));
+        (rate.model !== "CPM" || (Boolean(capPerClip) && minimumViews != null));
       state = coreComplete ? "promising" : "verify";
     }
 
@@ -260,10 +267,15 @@
       },
       {
         label: "Minimum views",
-        status: brief.minimumViews != null ? "pass" : rate && rate.model === "CPM" ? "unknown" : "not-applicable",
-        detail: brief.minimumViews != null ? "Detected minimum: " + Number(brief.minimumViews).toLocaleString("en") + " views." :
+        status: minimumViews != null ? "pass" : rate && rate.model === "CPM" ? "unknown" : "not-applicable",
+        detail: minimumViews != null ? "Detected minimum: " + Number(minimumViews).toLocaleString("en") + " views." :
           rate && rate.model === "CPM" ? "Minimum views were not recognised. Confirm the threshold on the campaign page." :
             "No minimum-view threshold was recognised in the copied text."
+      },
+      {
+        label: "Maximum views",
+        status: maximumViews != null ? "pass" : "not-applicable",
+        detail: maximumViews != null ? "Detected maximum: " + Number(maximumViews).toLocaleString("en") + " views." : "No maximum-view threshold was recognised."
       },
       {
         label: "Budget remaining",
@@ -301,6 +313,7 @@
       stateLabel: state === "blocked" ? "Blocked / do not proceed yet" :
         state === "promising" ? "Promising copied brief · verify before joining" : "More evidence required",
       reasons, missing, platform, acceptedPlatforms: accepted, excludedPlatforms: excluded, rate, payout, requirements, checks,
+      capPerClip, minimumViews, maximumViews, creatorFee: payout.creatorFee,
       nextStep,
       earningsNote: "This is a rule and evidence assessment, not an earnings forecast. No views, campaign approval, actual payout or paid balance is assumed."
     };

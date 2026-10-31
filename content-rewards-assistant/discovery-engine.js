@@ -143,6 +143,44 @@
     }
   }
 
+  async function fetchStaticSnapshot(options) {
+    const opts = options || {};
+    const fetcher = opts.fetchImpl || (typeof fetch === "function" ? fetch : null);
+    if (!fetcher) throw new Error("This browser does not support loading the scheduled discovery snapshot.");
+    const url = opts.url || "./discovery-snapshot.json";
+    const response = await fetcher(url, {
+      method: "GET",
+      cache: "no-store",
+      credentials: "omit",
+      headers: { Accept: "application/json" }
+    });
+    if (!response || !response.ok) throw new Error("Scheduled discovery snapshot is not available yet.");
+    const snapshot = await response.json();
+    if (!snapshot || snapshot.schemaVersion !== 1 || !Array.isArray(snapshot.campaigns) || !Array.isArray(snapshot.scans)) {
+      throw new Error("Scheduled discovery snapshot has an unrecognised format.");
+    }
+    const rows = deduplicate(snapshot.campaigns);
+    const lastScan = snapshot.lastScan || null;
+    return {
+      status: {
+        enabled: Boolean(lastScan),
+        scheduler: "github-actions-scheduled",
+        intervalMinutes: 360,
+        running: false,
+        lastScan,
+        lastError: lastScan && lastScan.status === "failed" ? lastScan.error || "The latest scheduled scan failed." : "",
+        sourceRegistry: SOURCES,
+        campaignCount: rows.length,
+        updatedAt: snapshot.generatedAt || ""
+      },
+      campaigns: rows,
+      totalReceived: snapshot.totalReceived || rows.length,
+      fetchedAt: snapshot.generatedAt || "",
+      sourceLabel: snapshot.source && snapshot.source.label || "Third-party scheduled snapshot",
+      sourceUrl: snapshot.source && snapshot.source.url || ""
+    };
+  }
+
   function readSettings(storage) {
     const target = storage || (typeof localStorage !== "undefined" ? localStorage : null);
     const defaults = { enabled: true, intervalHours: DEFAULT_INTERVAL_HOURS, notify: false, backendUrl: "" };
@@ -192,5 +230,5 @@
       }
     };
   }
-  return { STORAGE_KEY, SETTINGS_KEY, DEFAULT_INTERVAL_HOURS, SOURCES, keyFor, assessOpportunity, enrich, deduplicate, readState, writeState, readSettings, writeSettings, normalizeBackendUrl, fetchBackendSnapshot, mergeHistory, scan };
+  return { STORAGE_KEY, SETTINGS_KEY, DEFAULT_INTERVAL_HOURS, SOURCES, keyFor, assessOpportunity, enrich, deduplicate, readState, writeState, readSettings, writeSettings, normalizeBackendUrl, fetchBackendSnapshot, fetchStaticSnapshot, mergeHistory, scan };
 });

@@ -282,17 +282,34 @@
     return "Not stated";
   }
 
-  function extractPlatformRates(lines) {
-    const rates = [];
+  function extractPlatformTerms(lines) {
+    const result = { rates: [], caps: [], minimumViews: [], maximumViews: [] };
+    let activePlatform = "";
     for (const line of lines) {
-      for (const [name, pattern] of PLATFORM_NAMES) {
-        if (pattern.test(line)) {
-          const rate = parseRate(line);
-          if (rate) rates.push({ platform: name, ...rate, evidence: clean(line, 300) });
-        }
+      const mentions = PLATFORM_NAMES.filter(([, pattern]) => pattern.test(line)).map(([name]) => name);
+      if (mentions.length > 1) {
+        activePlatform = "";
+        continue;
       }
+      if (mentions.length === 1) activePlatform = mentions[0];
+      if (!activePlatform) continue;
+      const rate = parseRate(line);
+      const cap = extractCap(line);
+      const minimumViews = extractMinimumViews(line);
+      const maximumViews = extractMaximumViews(line);
+      if (rate) result.rates.push({ platform: activePlatform, ...rate, evidence: clean(line, 300) });
+      if (cap) result.caps.push({ platform: activePlatform, amount: cap, evidence: clean(line, 300) });
+      if (minimumViews != null) result.minimumViews.push({ platform: activePlatform, value: minimumViews, evidence: clean(line, 300) });
+      if (maximumViews != null) result.maximumViews.push({ platform: activePlatform, value: maximumViews, evidence: clean(line, 300) });
     }
-    return rates.filter((rate, index) => rates.findIndex((other) => other.platform === rate.platform) === index);
+    for (const key of Object.keys(result)) {
+      result[key] = result[key].filter((item, index) => result[key].findIndex((other) => other.platform === item.platform) === index);
+    }
+    return result;
+  }
+
+  function extractPlatformRates(lines) {
+    return extractPlatformTerms(lines).rates;
   }
 
   function extractRules(lines) {
@@ -339,7 +356,11 @@
     const maximumViews = extractMaximumViews(rawText);
     const minimumFollowers = extractFollowers(rawText);
     const duration = extractDuration(rawText);
-    const platformRates = extractPlatformRates(lines);
+    const platformTerms = extractPlatformTerms(lines);
+    const platformRates = platformTerms.rates;
+    const platformCaps = platformTerms.caps;
+    const platformMinimumViews = platformTerms.minimumViews;
+    const platformMaximumViews = platformTerms.maximumViews;
     const campaignType = extractCampaignType(rawText);
     const campaignStatus = extractCampaignStatus(rawText);
     const hashtags = [...new Set((rawText.match(/#[a-z0-9_]+/gi) || []).map((tag) => tag.toLowerCase()))].slice(0, 30);
@@ -416,6 +437,7 @@
       platforms, excludedPlatforms, unsupportedPlatforms, category, requirementLines, findings, missing,
       confidence, coverageScore, campaignType, campaignStatus, capPerClip, minimumViews, maximumViews,
       minimumFollowers, duration, creativeFormat, languages, hashtags, mentions, platformRates,
+      platformCaps, platformMinimumViews, platformMaximumViews,
       ruleGroups: extractRuleGroups(lines),
       rawText,
       rawExcerpt: rawText.slice(0, 1400)
@@ -461,6 +483,7 @@
 
   return Object.freeze({
     parseCampaignBrief, buildTrackerNotes, formatAmount, parseAmount, parseBudget, parseRate, parseCount,
-    extractPlatforms, extractCap, extractMinimumViews, extractMaximumViews, extractFollowers, extractDuration
+    extractPlatforms, extractCap, extractMinimumViews, extractMaximumViews, extractFollowers, extractDuration,
+    extractPlatformTerms
   });
 });

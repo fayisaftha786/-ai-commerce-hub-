@@ -73,7 +73,7 @@ test("UI loads the engine, renders the three native checks and refreshes its off
   const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
   const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
   const worker = fs.readFileSync(path.join(root, "service-worker.js"), "utf8");
-  const packageJson = JSON.parse(fs.readFileSync(path.join(root, "..", "..", "package.json"), "utf8"));
+  const packageJson = JSON.parse(fs.readFileSync(path.join(root, "..", "package.json"), "utf8"));
   assert.match(html, /rewards-intelligence\.js/);
   assert.match(html, /id="reward-intelligence-results"/);
   assert.match(app, /ClipRewardIntelligence\.assessAll/);

@@ -107,3 +107,38 @@ test("backend client rejects malformed payloads and remote cleartext URLs", asyn
     fetchImpl: async () => ({ ok: true, json: async () => ({}) })
   }), /unrecognised response/);
 });
+
+test("loads the public GitHub Actions snapshot without credentials and keeps source provenance", async () => {
+  let request;
+  const result = await Discovery.fetchStaticSnapshot({
+    url: "./discovery-snapshot.json",
+    fetchImpl: async (url, options) => {
+      request = { url, options };
+      return { ok: true, json: async () => ({
+        schemaVersion: 1,
+        generatedAt: "2026-10-31T00:00:00Z",
+        source: { label: "Third-party snapshot", url: "https://contentrewards.xyz/api/cr/campaigns" },
+        totalReceived: 1,
+        campaigns: [sample("static")],
+        lastScan: { status: "success", at: "2026-10-31T00:00:00Z", newCount: 1 },
+        scans: [{ status: "success" }]
+      }) };
+    }
+  });
+  assert.equal(request.url, "./discovery-snapshot.json");
+  assert.equal(request.options.method, "GET");
+  assert.equal(request.options.cache, "no-store");
+  assert.equal(request.options.credentials, "omit");
+  assert.equal(result.status.scheduler, "github-actions-scheduled");
+  assert.equal(result.campaigns[0].id, "static");
+  assert.equal(result.sourceLabel, "Third-party snapshot");
+});
+
+test("rejects missing or malformed scheduled snapshot data", async () => {
+  await assert.rejects(Discovery.fetchStaticSnapshot({
+    fetchImpl: async () => ({ ok: false, status: 404 })
+  }), /not available yet/);
+  await assert.rejects(Discovery.fetchStaticSnapshot({
+    fetchImpl: async () => ({ ok: true, json: async () => ({ campaigns: [] }) })
+  }), /unrecognised format/);
+});

@@ -229,6 +229,39 @@
 <p class="muted small-text">Draft a short-form script from your own footage or media you are allowed to use. This version uses local templates; no external AI service is connected yet.</p>
 <form id="draft-form" class="form-stack"><label>Campaign<select id="draft-campaign"><option value="">Select a campaign (optional)</option></select></label><label>Video topic<input id="draft-topic" required maxlength="180" placeholder="e.g. Three useful editing tips"></label><label>Language<select id="draft-language"><option value="en">English</option><option value="ml">Malayalam</option><option value="both">Malayalam + English</option></select></label><label>Platform<select id="draft-platform"><option>Instagram Reels</option><option>YouTube Shorts</option><option>Facebook Reels</option><option>X</option><option>Other</option></select></label><label>Verified takeaway or benefit<textarea id="draft-benefit" rows="2" maxlength="500" placeholder="Only include claims you can substantiate"></textarea></label><button class="button button-primary full-width" type="submit">✦ Generate content draft</button></form>
 <div id="draft-result" class="draft-result" hidden><div class="result-head"><strong>Draft preview</strong><button type="button" class="text-button" id="copy-draft">Copy text</button></div><textarea id="draft-output" rows="8" aria-label="Generated content draft"></textarea><p class="tiny-note">Review facts, rights, disclosure, campaign rules and platform requirements before posting.</p></div>
+<section class="video-export-studio" id="real-video-export">
+  <div class="video-export-heading"><div><div class="section-kicker">REAL VIDEO RENDERER · ON THIS DEVICE</div><h3>Make an MP4 / Reels video</h3><p class="muted small-text">Combine your own photos or video clips into a vertical video. Add scene captions and an optional voice-over or music file. No video is marked complete until the exported file passes a metadata check.</p></div><span class="video-export-icon">▶</span></div>
+  <div class="video-capability" id="video-capability" role="status">Checking browser recording support…</div>
+  <div class="video-export-grid">
+    <label>Photos / video clips <span class="optional">(up to 8 files · 150 MB total)</span>
+      <input id="video-media-files" type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime,video/3gpp" multiple>
+    </label>
+    <label>Optional voice-over / background audio <span class="optional">(one file · up to 40 MB)</span>
+      <input id="video-audio-file" type="file" accept="audio/mpeg,audio/mp4,audio/aac,audio/wav,audio/ogg,audio/webm,.mp3,.m4a,.aac,.wav,.ogg">
+    </label>
+    <label>Video duration
+      <select id="video-duration"><option value="15">15 seconds</option><option value="30" selected>30 seconds</option><option value="60">60 seconds</option></select>
+    </label>
+    <label>Scene captions <span class="optional">(one line per uploaded scene)</span>
+      <textarea id="video-captions" rows="5" maxlength="1400" placeholder="Scene 1: Your opening hook&#10;Scene 2: The useful benefit&#10;Scene 3: Proof or demonstration&#10;Scene 4: Call to action"></textarea>
+    </label>
+  </div>
+  <button class="text-button" type="button" id="video-use-script">Use generated script as scene captions</button>
+  <div id="video-file-summary" class="video-file-summary">Select photos or video clips to begin.</div>
+  <div class="video-confirmations">
+    <label><input id="video-rights-confirm" type="checkbox"><span>I own or have permission for commercial use of every photo, video, logo and audio file I uploaded.</span></label>
+    <label><input id="video-rules-confirm" type="checkbox"><span>I checked the live campaign's accepted platform, duration, disclosure, tags, copyright and AI-media rules.</span></label>
+  </div>
+  <div class="video-export-actions">
+    <button class="button button-primary" id="video-create-button" type="button" disabled>Create video file</button>
+    <button class="button button-quiet" id="video-cancel-button" type="button" hidden disabled>Cancel export</button>
+    <a class="button button-secondary" id="video-download-link" href="#" hidden>Save video</a>
+  </div>
+  <progress id="video-export-progress" class="video-export-progress" max="100" value="0">0%</progress>
+  <p id="video-export-status" class="video-export-status" role="status" aria-live="polite">Checking device support…</p>
+  <video id="video-output-preview" class="video-output-preview" controls playsinline preload="metadata" hidden></video>
+  <p class="video-export-note"><strong>Format:</strong> MP4 is selected when this browser's recorder supports it; otherwise the app creates WebM. This renderer exports 720 × 1280 at 24 fps. It does not generate new AI scenes or automatically upload/publish the file. For a campaign, inspect the preview and compare it with the exact brief before posting.</p>
+</section>
 </section>
 <section class="panel timestamp-panel"><div class="panel-header"><div><div class="section-kicker">EDITING NOTES</div><h2>Clip timestamps</h2></div><span class="panel-symbol">◷</span></div><p class="muted small-text">Record useful moments from footage you can lawfully edit. Format: mm:ss or hh:mm:ss.</p>
 <form id="timestamp-form" class="timestamp-form"><input id="timestamp-input" required placeholder="00:42" aria-label="Timestamp"><input id="timestamp-note" required maxlength="140" placeholder="Why this moment works" aria-label="Timestamp note"><button class="button button-secondary" type="submit">Add</button></form><div id="timestamp-list" class="timestamp-list"></div>
@@ -248,7 +281,7 @@
 <p class="muted small-text deadline-help">To mark a Content Rewards record Submitted, select the platform, use its matching public post link, and record both times. The app checks that the link-submission time is not before the post and is strictly less than 30 minutes later. Enter the time you actually pressed Submit clip; this app still cannot submit or verify the receipt.</p><div class="modal-actions"><button class="button button-quiet" id="cancel-modal" type="button">Cancel</button><button class="button button-primary" type="submit">Save campaign</button></div></form>
 </section></div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
-<script src="./campaign-scout.js"></script><script src="./campaign-feed.js"></script><script src="./rewards-intelligence.js"></script><script src="./core.js"></script><script src="./app.js"></script>
+<script src="./campaign-scout.js"></script><script src="./campaign-feed.js"></script><script src="./rewards-intelligence.js"></script><script src="./core.js"></script><script src="./app.js"></script><script src="./video-studio.js"></script>
 <script data-register-service-worker>
   if ("serviceWorker" in navigator && location.protocol !== "file:") {
     window.addEventListener("load", () => {

@@ -110,3 +110,6 @@
 
 .ri-not-applicable{color:#a9b4ca;background:#273143}
 .ri-payout small{display:block;font-size:9px;line-height:1.5;color:#9eabc2;margin-top:7px}
+
+.ri-fee-link{display:inline-block;margin-top:7px;font-size:9px;font-weight:800;color:#b8adff;text-decoration:none}
+.ri-fee-link:hover{text-decoration:underline}

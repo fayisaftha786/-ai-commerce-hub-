@@ -207,3 +207,7 @@
 .scout-manual-fallback summary{cursor:pointer;color:#bdc8dc;font-size:12px;font-weight:700}
 .scout-manual-fallback label{display:grid;gap:6px;margin:12px 0;font-size:11px;color:#b9c5da}
 .scout-manual-fallback textarea{width:100%;padding:10px;border:1px solid #35435e;border-radius:8px;background:#0a1322;color:#edf1fb}
+
+
+.feed-heading-actions{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+@media(max-width:640px){.feed-heading-actions{width:100%;justify-content:flex-start}.feed-heading-actions .button{flex:1 1 auto}}

@@ -91,7 +91,10 @@ test("Clip Studio exposes media upload, audio, preflight, progress, preview and 
     "video-cancel-button", "video-export-progress", "video-output-preview", "video-download-link"
   ]) assert.ok(html.includes('id="' + id + '"'), "missing video studio UI control " + id);
   assert.match(html, /video-studio\.js/);
+  assert.match(html, /video-studio-ui\.js/);
   assert.match(worker, /clipreward-static-v12/);
   assert.match(worker, /video-studio\.js/);
+  assert.match(worker, /video-studio-ui\.js/);
   assert.match(packageJson.scripts.check, /content-rewards-assistant\/video-studio\.js/);
+  assert.match(packageJson.scripts.check, /content-rewards-assistant\/video-studio-ui\.js/);
 });

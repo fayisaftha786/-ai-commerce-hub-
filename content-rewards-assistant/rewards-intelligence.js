@@ -120,8 +120,13 @@
       add("private-access", "Private campaign access", "This appears to be an invitation-only campaign. Use the official invite route; it will not be discoverable through the public campaign list.");
     }
     const groups = source.ruleGroups && typeof source.ruleGroups === "object" ? source.ruleGroups : {};
-    const prohibited = Array.isArray(groups.prohibited) ? groups.prohibited : [];
+    const prohibited = Array.isArray(groups.prohibited) && groups.prohibited.length
+      ? groups.prohibited
+      : raw.split("\n").filter((line) => /\bno\b|don't|do not|must not|cannot|can't|prohibit|avoid|forbidden|watermark|repost|unlicensed/i.test(line));
     if (prohibited.length) add("prohibited-actions", "Do-not-do rules", unique(prohibited).slice(0, 12).join(" · "));
+    if (/AI[- ]generated|synthetic voice|AI voice|voice cloning|AI tools/i.test(raw)) {
+      add("ai-usage", "AI-generated media rules", "The brief mentions AI-generated media or voice. Confirm whether these tools are permitted and disclose them when required; do not assume permission.");
+    }
     const eligibility = Array.isArray(groups.eligibility) ? groups.eligibility : [];
     if (eligibility.length) add("eligibility-rules", "Creator eligibility rules", unique(eligibility).slice(0, 12).join(" · "));
     const submission = Array.isArray(groups.submission) ? groups.submission : [];

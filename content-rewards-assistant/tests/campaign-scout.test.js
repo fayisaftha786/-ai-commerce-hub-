@@ -158,6 +158,8 @@ test("campaign finder is wired to official Discover, local parser, and existing 
   assert.match(html, /<option value="X">X<\/option>/);
   assert.match(html, /data-scout-platform-link="X"/);
   assert.match(html, /id="scout-paste-button"/);
+  assert.match(html, /id="scout-url-analyse-button"/);
+  assert.match(html, /Analyse website automatically/i);
   assert.match(html, /campaign-scout\.js/);
   assert.match(app, /ClipRewardScout\.parseCampaignBrief/);
   assert.match(app, /ClipRewardScout\.buildTrackerNotes/);
@@ -166,7 +168,7 @@ test("campaign finder is wired to official Discover, local parser, and existing 
   assert.ok(app.includes("analyseCampaignBrief();"));
   assert.ok(app.includes('addEventListener("input"'));
   assert.match(app, /result\.platformMatch === "mismatch"/);
-  assert.match(worker, /clipreward-static-v17/);
+  assert.match(worker, /clipreward-static-v18/);
   assert.match(worker, /campaign-scout\.js/);
 });
 
@@ -224,7 +226,7 @@ test("unified Rewards Intelligence engine is loaded and displayed with the campa
   assert.match(html, /id="reward-intelligence-results"/);
   assert.match(app, /ClipRewardIntelligence\.assessAll/);
   assert.match(app, /renderRewardsIntelligence/);
-  assert.match(worker, /clipreward-static-v17/);
+  assert.match(worker, /clipreward-static-v18/);
   assert.match(worker, /rewards-intelligence\.js/);
 });
 

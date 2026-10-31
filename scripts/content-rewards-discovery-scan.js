@@ -12,6 +12,8 @@ const MAX_PAGE_TEXT = 20_000;
 const DETAIL_CONCURRENCY = 3;
 const MAX_REDIRECTS = 3;
 const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
+const TRANSIENT_FEED_STATUSES = new Set([408, 425, 429, 500, 502, 503, 504]);
+const DEFAULT_FEED_RETRY_DELAYS_MS = [350, 1000];
 
 const DEFAULT_FILE = path.join(__dirname, "..", "content-rewards-assistant", "discovery-snapshot.json");
 
@@ -218,12 +220,53 @@ async function fetchCampaignDetails(campaigns, options = {}) {
   };
 }
 
+async function fetchFeedWithRetry(feed, options = {}) {
+  if (!feed || typeof feed.fetchCampaigns !== "function") {
+    throw new Error("The campaign feed adapter is not configured.");
+  }
+  const fetcher = options.fetchImpl || globalThis.fetch;
+  if (typeof fetcher !== "function") {
+    return { result: await feed.fetchCampaigns(options), attempts: 0 };
+  }
+  const delays = Array.isArray(options.retryDelaysMs)
+    ? options.retryDelaysMs.map((value) => Math.max(0, Math.min(5000, Number(value) || 0))).slice(0, 5)
+    : DEFAULT_FEED_RETRY_DELAYS_MS;
+  const onAttempt = typeof options.onAttempt === "function" ? options.onAttempt : null;
+  const feedOptions = { ...options };
+  delete feedOptions.retryDelaysMs;
+  delete feedOptions.onAttempt;
+  let attempts = 0;
+  const retryingFetch = async (...args) => {
+    let lastError = null;
+    for (let attempt = 0; attempt <= delays.length; attempt += 1) {
+      attempts += 1;
+      if (onAttempt) onAttempt(attempts);
+      try {
+        const response = await fetcher(...args);
+        if (!response || !TRANSIENT_FEED_STATUSES.has(Number(response.status)) || attempt >= delays.length) {
+          return response;
+        }
+        await new Promise((resolve) => setTimeout(resolve, delays[attempt]));
+      } catch (error) {
+        if (error && error.name === "AbortError") throw error;
+        lastError = error;
+        if (attempt >= delays.length) throw error;
+        await new Promise((resolve) => setTimeout(resolve, delays[attempt]));
+      }
+    }
+    throw lastError || new Error("Campaign feed request failed after all retries.");
+  };
+  const result = await feed.fetchCampaigns({ ...feedOptions, fetchImpl: retryingFetch });
+  return { result, attempts };
+}
+
 async function runScheduledScan(options = {}) {
   const filePath = path.resolve(options.filePath || DEFAULT_FILE);
   const feed = options.feed || Feed;
   const now = typeof options.now === "function" ? options.now() : options.now == null ? Date.now() : options.now;
   const startedAt = new Date(now).toISOString();
   let previous;
+  let feedRequestAttempts = 0;
   try {
     previous = await readSnapshot(filePath);
   } catch (error) {
@@ -231,12 +274,16 @@ async function runScheduledScan(options = {}) {
   }
 
   try {
-    const result = await feed.fetchCampaigns({
+    const feedResponse = await fetchFeedWithRetry(feed, {
       platform: "",
       search: "",
       fetchImpl: options.fetchImpl,
-      now
+      now,
+      retryDelaysMs: options.feedRetryDelaysMs,
+      onAttempt: () => { feedRequestAttempts += 1; }
     });
+    feedRequestAttempts = Math.max(feedRequestAttempts, feedResponse.attempts);
+    const result = feedResponse.result;
     const merged = Discovery.mergeHistory(previous.campaigns, result.campaigns, now);
     const pageDetails = await fetchCampaignDetails(merged.campaigns, {
       previous: previous.campaignDetails || [],
@@ -253,6 +300,7 @@ async function runScheduledScan(options = {}) {
       checkedCount: merged.checkedCount,
       newCount: merged.newCount,
       totalReceived: result.totalReceived,
+      feedRequestAttempts,
       detailPagesAttempted: pageDetails.attempted,
       detailPagesAvailable: pageDetails.available,
       detailPagesFailed: pageDetails.failed,
@@ -283,6 +331,7 @@ async function runScheduledScan(options = {}) {
       at: startedAt,
       completedAt: new Date(now).toISOString(),
       status: "failed",
+      feedRequestAttempts,
       checkedCount: 0,
       newCount: 0,
       source: "Content Rewards third-party public snapshot",
@@ -310,7 +359,8 @@ async function runScheduledScan(options = {}) {
 if (require.main === module) {
   runScheduledScan().then((result) => {
     if (!result.ok) {
-      process.stderr.write("Scheduled discovery failed: " + result.error + "\n");
+      const attempts = result.snapshot && result.snapshot.lastScan ? result.snapshot.lastScan.feedRequestAttempts || 0 : 0;
+      process.stderr.write("Scheduled discovery failed after " + attempts + " feed request(s): " + result.error + "\n");
       process.exitCode = 1;
       return;
     }
@@ -322,4 +372,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { DEFAULT_FILE, MAX_DETAIL_PAGES, MAX_PAGE_BYTES, MAX_PAGE_TEXT, MAX_REDIRECTS, readSnapshot, writeSnapshot, decodeHtmlEntities, extractVisibleText, fetchPublicCampaignPage, fetchCampaignDetails, runScheduledScan };
+module.exports = { DEFAULT_FILE, MAX_DETAIL_PAGES, MAX_PAGE_BYTES, MAX_PAGE_TEXT, MAX_REDIRECTS, TRANSIENT_FEED_STATUSES, DEFAULT_FEED_RETRY_DELAYS_MS, readSnapshot, writeSnapshot, decodeHtmlEntities, extractVisibleText, fetchPublicCampaignPage, fetchCampaignDetails, fetchFeedWithRetry, runScheduledScan };

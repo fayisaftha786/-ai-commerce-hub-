@@ -242,7 +242,7 @@ test("official Discover HTML extracts unique trusted campaign links and ignores 
     "https://contentrewards.com/c/campaigns/official-one",
     "https://www.contentrewards.com/c/campaigns/official-two"
   ]);
-  assert.equal(rows[0].title, "Seasonal Creator Clips Sample Brand · Instagram · $2.50 / 1K views");
+  assert.equal(rows[0].title, "Seasonal Creator Clips");
   assert.equal(rows[0].sourceVerification, "official-public-page");
 });
 

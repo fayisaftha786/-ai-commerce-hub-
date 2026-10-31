@@ -34,6 +34,19 @@ The local parser can extract a campaign title, CPM/per-post/retainer/pool payout
 
 Extraction is only as accurate as the text copied from the official page. A value shown as missing was not recognised; it is not zero. The app does not estimate your eligibility, infer a missing payout, validate campaign availability, join/apply to campaigns, or access private invitations. Some campaigns are private and arrive only by invitation. Do not paste passwords, one-time codes, cookies or private account data. The official platform remains the source of truth for remaining budget, accepted accounts, eligibility and application status.
 
+## Unified Rewards Intelligence Engine
+
+After a campaign brief is analysed, the engine creates an action plan for the selected campaign platform and shows separate native monetization checklists for YouTube, Facebook and Instagram.
+
+- Campaign checks distinguish an accepted-platform match, an explicit mismatch, missing evidence, an expired copied deadline, payout model and remaining budget. A complete-looking brief is labelled **Promising — verify before applying**, never "eligible" or "approved".
+- The requirement scan highlights explicit originality, disclosure, minimum duration, hashtags, partner mentions, pre-approval, reuse / watermark restrictions and submission-window rules when present in the pasted text. These are prompts to verify, not proof that the final clip complies.
+- CPM, per-post, retainer and shared-pool payouts have different guidance. CPM uses a formula based on eligible qualified views and campaign caps; a shared pool is never converted into an invented CPM. No amount is forecast when required views, caps or allocation details are missing.
+- YouTube YPP, Facebook Content Monetization and Instagram creator / brand partnership routes are three separate official-dashboard checklists. Each stays **Live eligibility not connected** until the creator checks the actual account in the relevant app.
+- Platform rules change. The engine links to official platform sources and asks the creator to confirm current thresholds, region availability, invitations, policies and payout onboarding inside the platform. A help link is not account verification.
+- No Content Rewards or social-platform API, OAuth connection, private campaign feed, account insights, publisher, application/join automation or payout sync is integrated. It does not scrape signed-in pages or store passwords, OTPs, cookies or tokens.
+
+This is an evidence-first decision aid: it helps decide what to verify and prepare next; it cannot create eligibility, guarantee views or rewards, or mark estimated/pending money as paid.
+
 ## Content Rewards submission workflow
 
 The in-app submission guide now separates the two official routes: standard campaigns (publish a public clip, then submit its link while the post is less than 30 minutes old) and pre-approval campaigns (upload a draft first, wait for approval, publish from an approved connected account, then submit the live link while the post is less than 30 minutes old). The local reminder timer applies only to Content Rewards campaigns; it does not impose Content Rewards' 30-minute rule on other programmes.

@@ -4,7 +4,7 @@ A lightweight affiliate workspace prototype for evaluating offer details, shortl
 
 ## Current features
 
-- Standalone ClipReward Studio with a Content Rewards public Discover shortcut, clipboard-based campaign brief findings/autofill, submission preflight, content drafts, clip timestamps and local backup/restore: [open the assistant source](content-rewards-assistant/README.md)
+- Standalone ClipReward Studio with a Content Rewards public Discover shortcut, scheduled public campaign-page URL analysis (no copy/paste for scanned pages), clipboard fallback, submission preflight, content drafts, clip timestamps and local backup/restore: [open the assistant source](content-rewards-assistant/README.md)
 - Scheduled Content Rewards public snapshot discovery through GitHub Actions (about every six hours UTC), with campaign deduplication, evidence scoring, freshness/history and automatic GitHub Pages publication; the current source is a third-party public feed, not an official API.
 
 - Add product entries for Amazon, Flipkart and Meesho

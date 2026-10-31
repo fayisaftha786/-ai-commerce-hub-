@@ -81,7 +81,7 @@ test("UI loads the engine, renders the three native checks and refreshes its off
   assert.match(app, /ClipRewardIntelligence\.assessAll/);
   assert.match(app, /renderRewardsIntelligence/);
   assert.match(worker, /rewards-intelligence\.js/);
-  assert.match(worker, /clipreward-static-v9/);
+  assert.match(worker, /clipreward-static-v10/);
   assert.match(packageJson.scripts.check, /content-rewards-assistant\/rewards-intelligence\.js/);
   assert.match(packageJson.scripts.check, /content-rewards-assistant\/tests\/rewards-intelligence\.test\.js/);
 });
@@ -175,4 +175,35 @@ test("private invitation campaigns get an invitation-specific action plan", () =
     brief: brief({ entryMode: "Private / invitation-only" })
   });
   assert.match(result.nextStep, /invitation link/i);
+});
+
+
+test("locked public campaign requirements block a positive recommendation until reviewed", () => {
+  const result = Engine.assessCampaign({
+    platform: "Instagram",
+    today: "2026-10-31",
+    brief: brief({
+      minimumPayout: { value: 1, currency: "USD" },
+      hiddenRequirements: { locked: true, count: 1, referenceFiles: 3 },
+      entryMode: "Open campaign / direct join"
+    })
+  });
+  assert.equal(result.state, "verify");
+  assert.equal(result.minimumPayout.value, 1);
+  assert.ok(result.requirements.some((item) => item.key === "locked-requirements"));
+  assert.equal(result.checks.find((item) => item.label === "Full creator requirements").status, "unknown");
+});
+
+test("minimum payout threshold is separate from minimum views", () => {
+  const result = Engine.assessCampaign({
+    platform: "Instagram",
+    today: "2026-10-31",
+    brief: brief({
+      minimumPayout: { value: 2, currency: "USD" },
+      minimumViews: null
+    })
+  });
+  assert.equal(result.minimumPayout.value, 2);
+  assert.equal(result.minimumViews, null);
+  assert.equal(result.checks.find((item) => item.label === "Minimum payout threshold").status, "pass");
 });

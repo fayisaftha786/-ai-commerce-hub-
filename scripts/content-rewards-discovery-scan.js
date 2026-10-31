@@ -164,9 +164,11 @@ async function fetchCampaignDetails(campaigns, options = {}) {
       const url = targets[cursor++];
       try {
         const detail = await fetchPublicCampaignPage(url, { fetchImpl: options.fetchImpl, now: options.now, timeoutMs: options.timeoutMs });
+        records.delete(url);
         records.set(url, detail);
       } catch (error) {
         const previousDetail = oldByUrl.get(url);
+        records.delete(url);
         records.set(url, previousDetail
           ? { ...previousDetail, status: "stale", lastAttemptAt: new Date(options.now == null ? Date.now() : options.now).toISOString(), lastError: error.message }
           : { url, status: "unavailable", fetchedAt: "", lastAttemptAt: new Date(options.now == null ? Date.now() : options.now).toISOString(), lastError: error.message, pageTitle: "", pageText: "", textLength: 0, detected: null });

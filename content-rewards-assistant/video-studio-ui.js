@@ -24,6 +24,58 @@
     let controller = null;
     let busy = false;
     let outputUrl = "";
+    const campaignSelect = $("draft-campaign");
+    const targetPlatform = $("video-target-platform");
+    const postCaption = $("video-post-caption");
+    const preflightPanel = $("video-campaign-preflight");
+    const addTagsButton = $("video-add-campaign-tags");
+
+    function campaignAssessment() {
+      const option = campaignSelect && campaignSelect.selectedOptions && campaignSelect.selectedOptions[0];
+      const now = new Date();
+      const today = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, "0"), String(now.getDate()).padStart(2, "0")].join("-");
+      return Studio.inspectCampaignRules({
+        selectedCampaign: !!(campaignSelect && campaignSelect.value),
+        rules: option && option.dataset ? option.dataset.rules || "" : "",
+        deadline: option && option.dataset ? option.dataset.deadline || "" : "",
+        platform: targetPlatform.value,
+        durationSeconds: Number(durationInput.value),
+        today,
+        postCaption: postCaption.value
+      });
+    }
+
+    function renderCampaignPreflight() {
+      const assessment = campaignAssessment();
+      preflightPanel.replaceChildren();
+      preflightPanel.classList.toggle("video-preflight-blocked", assessment.status === "blocked");
+      preflightPanel.classList.toggle("video-preflight-review", assessment.status === "needs-review" || assessment.status === "no-campaign");
+      preflightPanel.classList.toggle("video-preflight-matched", assessment.status === "matched");
+
+      const heading = doc.createElement("strong");
+      heading.textContent = assessment.label;
+      preflightPanel.appendChild(heading);
+
+      assessment.blockingReasons.concat(assessment.reviewReasons).forEach((reason) => {
+        const note = doc.createElement("p");
+        note.className = "video-preflight-note";
+        note.textContent = reason;
+        preflightPanel.appendChild(note);
+      });
+
+      assessment.checks.forEach((check) => {
+        const row = doc.createElement("div");
+        row.className = "video-preflight-check video-preflight-" + check.status;
+        const label = doc.createElement("span");
+        label.textContent = check.key.replace(/-/g, " ");
+        const detail = doc.createElement("small");
+        detail.textContent = check.detail;
+        row.append(label, detail);
+        preflightPanel.appendChild(row);
+      });
+      return assessment;
+    }
+
     const caps = Studio.getCapabilities(root);
     $("video-capability").textContent = caps.supported
       ? "Ready · " + caps.formatLabel + " recording supported · " + caps.width + " × " + caps.height + " · " + caps.fps + " fps"
@@ -47,8 +99,9 @@
         }
       } catch (error) { summary = error.message; }
       $("video-file-summary").textContent = summary;
+      const campaignCheck = renderCampaignPreflight();
       deviceTestButton.disabled = !caps.supported || busy;
-      createButton.disabled = !caps.supported || !valid ||
+      createButton.disabled = !caps.supported || !valid || campaignCheck.status === "blocked" ||
         !$("video-rights-confirm").checked || !$("video-rules-confirm").checked || busy;
       if (busy) return;
       if (!valid) setStatus(summary, false);
@@ -69,11 +122,30 @@
       captionsInput.disabled = value;
       $("video-rights-confirm").disabled = value;
       $("video-rules-confirm").disabled = value;
+      campaignSelect.disabled = value;
+      targetPlatform.disabled = value;
+      postCaption.disabled = value;
+      addTagsButton.disabled = value;
       if (!value) refreshPreflight();
     }
 
-    [mediaInput, audioInput, durationInput, $("video-rights-confirm"), $("video-rules-confirm")]
+    [mediaInput, audioInput, durationInput, $("video-rights-confirm"), $("video-rules-confirm"),
+      campaignSelect, targetPlatform]
       .forEach((element) => element.addEventListener("change", refreshPreflight));
+    postCaption.addEventListener("input", refreshPreflight);
+
+    addTagsButton.addEventListener("click", () => {
+      const assessment = campaignAssessment();
+      const additions = assessment.missingHashtags.concat(assessment.missingMentions);
+      if (!additions.length) {
+        setStatus("No missing campaign hashtags or mentions were detected. Check the official brief for any unrecognised tag.", false);
+        return;
+      }
+      const current = postCaption.value.trim();
+      postCaption.value = (current ? current + "\n" : "") + additions.join(" ");
+      refreshPreflight();
+      setStatus("Detected campaign tags added to the post caption. Review them against the live campaign brief.", false);
+    });
 
     $("video-use-script").addEventListener("click", () => {
       const draftOutput = $("draft-output");
@@ -92,6 +164,11 @@
       if (busy) return;
       try { Studio.validateFiles(mediaInput.files, audioInput.files && audioInput.files[0]); }
       catch (error) { setStatus(error.message, true); return; }
+      const campaignCheck = renderCampaignPreflight();
+      if (campaignCheck.status === "blocked") {
+        setStatus(campaignCheck.blockingReasons.join(" "), true);
+        return;
+      }
       if (!$("video-rights-confirm").checked || !$("video-rules-confirm").checked) {
         setStatus("Confirm you have rights to every asset and have checked the campaign's live rules.", true);
         return;

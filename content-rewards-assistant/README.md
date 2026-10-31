@@ -61,6 +61,12 @@ The Studio includes a four-second **Test this phone** action that exercises the 
 
 **Device requirements and limitations:** this is deterministic editing of media the creator uploads, not a text-to-video AI generator. It does not invent new scenes, generate Malayalam speech, remove watermarks, or upload/publish. Audio must be supplied as a permitted file. Media decode support and MP4/WebM codecs differ by browser/device; the capability check and output verification are authoritative for each session. A successful Node regression suite does not substitute for a real-device export test. Test with a short original clip in the target phone browser before using large files or a campaign deadline. Use only media you own or have permission to use, and separately confirm that the campaign allows the source material, music, AI-generated elements and the final format.
 
+## Campaign-aware video export preflight
+
+The video studio reads the saved campaign selected in the Clip Studio campaign dropdown and compares its stored rule notes with the selected output platform, selected video duration, saved deadline, hashtags and @mentions typed into the social post caption. A platform mismatch, out-of-range duration or expired saved deadline blocks export. Missing/unknown rules, disclosure wording and requirements locked until Join are presented for manual review. The creator can append hashtags and mentions detected in the saved brief to the post caption.
+
+This is a local check of the campaign notes stored by the creator, not a live campaign API or final compliance approval. The official current campaign brief remains authoritative. Unknown fields stay visible and the separate live-rules confirmation is still required.
+
 ## Content Rewards submission workflow
 
 The in-app submission guide now separates the two official routes: standard campaigns (publish a public clip, then submit its link while the post is less than 30 minutes old) and pre-approval campaigns (upload a draft first, wait for approval, publish from an approved connected account, then submit the live link while the post is less than 30 minutes old). The local reminder timer applies only to Content Rewards campaigns; it does not impose Content Rewards' 30-minute rule on other programmes.

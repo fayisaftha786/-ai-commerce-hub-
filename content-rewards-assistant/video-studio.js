@@ -108,6 +108,158 @@
     return true;
   }
 
+  function normalizeTargetPlatform(value) {
+    const raw = String(value || "").toLowerCase();
+    if (/instagram|^ig\b/.test(raw)) return "Instagram";
+    if (/facebook|^fb\b/.test(raw)) return "Facebook";
+    if (/youtube|^yt\b/.test(raw)) return "YouTube";
+    if (/\bx\b|twitter/.test(raw)) return "X";
+    return "";
+  }
+
+  function lineValue(source, label) {
+    const match = new RegExp("^\\s*" + label + "\\s*:\\s*(.*)$", "im").exec(source);
+    return match ? match[1].trim() : "";
+  }
+
+  function listFromLine(value, pattern) {
+    const matches = String(value || "").match(pattern) || [];
+    return [...new Set(matches.map((item) => item.trim()))];
+  }
+
+  function extractDurationBounds(rules) {
+    const jsonLine = lineValue(rules, "Video duration");
+    if (jsonLine.startsWith("{")) {
+      try {
+        const parsed = JSON.parse(jsonLine);
+        const minSeconds = parsed.minSeconds == null ? null : Number(parsed.minSeconds);
+        const maxSeconds = parsed.maxSeconds == null ? null : Number(parsed.maxSeconds);
+        if ((minSeconds === null || Number.isFinite(minSeconds)) &&
+            (maxSeconds === null || Number.isFinite(maxSeconds)) &&
+            (minSeconds !== null || maxSeconds !== null)) return { minSeconds, maxSeconds };
+      } catch (_) {}
+    }
+    let minSeconds = null;
+    let maxSeconds = null;
+    const lines = String(rules || "").split(/\r?\n/).filter((line) => /duration|clip length|video length/i.test(line));
+    for (const line of lines) {
+      const min = /(?:minimum|min\.?|at least)\s*(\d{1,3})\s*(?:seconds?|secs?|s)\b/i.exec(line);
+      const max = /(?:maximum|max\.?|up to|no more than)\s*(\d{1,3})\s*(?:seconds?|secs?|s)\b/i.exec(line);
+      if (min) minSeconds = Number(min[1]);
+      if (max) maxSeconds = Number(max[1]);
+    }
+    return minSeconds === null && maxSeconds === null ? null : { minSeconds, maxSeconds };
+  }
+
+  function inspectCampaignRules(options) {
+    const source = options && typeof options === "object" ? options : {};
+    const selected = !!source.selectedCampaign;
+    const rules = String(source.rules || "").slice(0, 12000);
+    const durationSeconds = Number(source.durationSeconds);
+    const platform = normalizeTargetPlatform(source.platform);
+    const acceptedLine = lineValue(rules, "Accepted platforms");
+    const acceptedValues = acceptedLine && !/^(?:not recognised|not stated|none detected|unknown|n\/a)$/i.test(acceptedLine)
+      ? acceptedLine.split(/[,;|]/).map((item) => item.trim()).filter(Boolean)
+      : [];
+    const acceptedPlatforms = acceptedValues.map(normalizeTargetPlatform).filter(Boolean);
+    const bounds = extractDurationBounds(rules);
+    const deadline = /^\d{4}-\d{2}-\d{2}$/.test(String(source.deadline || "")) ? String(source.deadline) : "";
+    const today = /^\d{4}-\d{2}-\d{2}$/.test(String(source.today || "")) ? String(source.today) : "";
+    const hashtags = listFromLine(lineValue(rules, "Hashtags"), /#[\p{L}\p{N}_]+/gu);
+    const mentions = listFromLine(lineValue(rules, "Mentions"), /@[a-z0-9._]{2,}/gi);
+    const postCaption = String(source.postCaption || "").toLowerCase();
+    const missingHashtags = hashtags.filter((tag) => !postCaption.includes(tag.toLowerCase()));
+    const missingMentions = mentions.filter((tag) => !postCaption.includes(tag.toLowerCase()));
+    const blockingReasons = [];
+    const reviewReasons = [];
+    const checks = [];
+
+    if (!selected) {
+      return {
+        status: "no-campaign", label: "No campaign selected",
+        checks: [{ key: "campaign", status: "unknown", detail: "Select a saved campaign to compare its stored rules with this video." }],
+        blockingReasons: [], reviewReasons: ["Campaign-specific rules have not been checked."],
+        acceptedPlatforms, bounds, hashtags, mentions, missingHashtags, missingMentions
+      };
+    }
+
+    if (!platform) {
+      reviewReasons.push("Choose the actual publishing platform.");
+      checks.push({ key: "platform", status: "unknown", detail: "Target platform is not recognised." });
+    } else if (acceptedValues.length) {
+      if (!acceptedPlatforms.includes(platform)) {
+        blockingReasons.push(platform + " is not in the campaign's accepted-platform list (" + acceptedValues.join(", ") + ").");
+        checks.push({ key: "platform", status: "blocked", detail: blockingReasons[blockingReasons.length - 1] });
+      } else checks.push({ key: "platform", status: "matched", detail: platform + " is included in the accepted-platform list copied into the tracker." });
+    } else {
+      reviewReasons.push("Accepted platforms were not recognised in the saved campaign rules.");
+      checks.push({ key: "platform", status: "unknown", detail: "No explicit accepted-platform list was found. Check the official campaign page." });
+    }
+
+    if (bounds && Number.isFinite(durationSeconds)) {
+      let durationBlocked = false;
+      if (bounds.minSeconds !== null && durationSeconds < bounds.minSeconds) {
+        blockingReasons.push("Video is shorter than the campaign minimum of " + bounds.minSeconds + " seconds.");
+        durationBlocked = true;
+      }
+      if (bounds.maxSeconds !== null && durationSeconds > bounds.maxSeconds) {
+        blockingReasons.push("Video is longer than the campaign maximum of " + bounds.maxSeconds + " seconds.");
+        durationBlocked = true;
+      }
+      checks.push({
+        key: "duration", status: durationBlocked ? "blocked" : "matched",
+        detail: "Selected duration: " + durationSeconds + " sec" +
+          (bounds.minSeconds !== null ? " · minimum " + bounds.minSeconds + " sec" : "") +
+          (bounds.maxSeconds !== null ? " · maximum " + bounds.maxSeconds + " sec" : "")
+      });
+    } else {
+      reviewReasons.push("Campaign duration limits were not recognised in the saved rules.");
+      checks.push({ key: "duration", status: "unknown", detail: "No duration limit was recognised. Check the official brief." });
+    }
+
+    if (deadline && today) {
+      if (deadline < today) {
+        blockingReasons.push("Saved campaign deadline (" + deadline + ") has passed.");
+        checks.push({ key: "deadline", status: "blocked", detail: "Saved deadline has passed. Recheck the live campaign before doing any work." });
+      } else checks.push({ key: "deadline", status: "matched", detail: "Saved deadline is " + deadline + "; verify that the campaign is still open." });
+    } else {
+      reviewReasons.push("Campaign deadline is missing or unknown.");
+      checks.push({ key: "deadline", status: "unknown", detail: "No saved deadline was available." });
+    }
+
+    if (missingHashtags.length || missingMentions.length) {
+      reviewReasons.push("The post caption is missing hashtags or partner mentions detected in the brief.");
+      checks.push({
+        key: "post-tags", status: "review",
+        detail: "Add missing tags to the social post caption: " + missingHashtags.concat(missingMentions).join(" ")
+      });
+    } else if (hashtags.length || mentions.length) {
+      checks.push({ key: "post-tags", status: "matched", detail: "All detected hashtags and mentions appear in the post caption." });
+    } else {
+      checks.push({ key: "post-tags", status: "unknown", detail: "No hashtags or mentions were extracted. Check the official brief." });
+      reviewReasons.push("No campaign hashtags or mentions were recognised.");
+    }
+
+    if (/disclos|paid partnership|sponsored|#ad\b|affiliate/i.test(rules)) {
+      reviewReasons.push("A disclosure rule appears in the saved campaign notes. Confirm exact disclosure wording and placement in the video/post.");
+      checks.push({ key: "disclosure", status: "review", detail: "Disclosure detected; manual review of wording, placement and platform label is required." });
+    }
+    if (/requirements? locked|locked until join|reference files?[^.\n]*locked/i.test(rules)) {
+      reviewReasons.push("Some creator requirements or reference files may still be locked. Review the complete brief after joining.");
+      checks.push({ key: "hidden-requirements", status: "review", detail: "Stored notes indicate campaign requirements/reference files may be hidden." });
+    }
+    reviewReasons.push("Confirm current campaign status and all rules on the official campaign page; this local check cannot verify live eligibility or approval.");
+
+    const status = blockingReasons.length ? "blocked" : reviewReasons.length ? "needs-review" : "matched";
+    return {
+      status,
+      label: status === "blocked" ? "Export blocked by detected campaign rule" :
+        status === "needs-review" ? "Manual campaign checks required" : "Detected fields matched",
+      checks, blockingReasons, reviewReasons, acceptedPlatforms, bounds, hashtags, mentions,
+      missingHashtags, missingMentions
+    };
+  }
+
   function wrapText(context, text, maxWidth) {
     const words = String(text || "").split(/\s+/).filter(Boolean);
     const lines = [];
@@ -501,6 +653,6 @@
 
   return Object.freeze({
     MAX_MEDIA_FILES, MAX_MEDIA_BYTES, MAX_AUDIO_BYTES, WIDTH, HEIGHT, FPS, MIME_CANDIDATES,
-    chooseMimeType, createMediaRecorder, getCapabilities, fileKind, validateFiles, splitCaptions, validateRenderedMetadata, verifyBlob, render, renderDeviceTest
+    chooseMimeType, createMediaRecorder, getCapabilities, fileKind, validateFiles, splitCaptions, validateRenderedMetadata, verifyBlob, inspectCampaignRules, render, renderDeviceTest
   });
 });

@@ -232,6 +232,17 @@
 <section class="video-export-studio" id="real-video-export">
   <div class="video-export-heading"><div><div class="section-kicker">REAL VIDEO RENDERER · ON THIS DEVICE</div><h3>Make an MP4 / Reels video</h3><p class="muted small-text">Combine your own photos or video clips into a vertical video. Add scene captions and an optional voice-over or music file. No video is marked complete until the exported file passes a metadata check.</p></div><span class="video-export-icon">▶</span></div>
   <div class="video-capability" id="video-capability" role="status">Checking browser recording support…</div>
+  <div class="video-campaign-preflight-panel">
+    <div class="video-campaign-preflight-head"><strong>Campaign-aware preflight</strong><span class="tiny-note">Uses the saved campaign selected in the Campaign dropdown above</span></div>
+    <label>Publishing platform
+      <select id="video-target-platform"><option value="Instagram">Instagram Reels</option><option value="Facebook">Facebook Reels</option><option value="YouTube">YouTube Shorts</option><option value="X">X</option></select>
+    </label>
+    <label>Social post caption / description <span class="optional">(campaign tags and mentions are checked here)</span>
+      <textarea id="video-post-caption" rows="3" maxlength="2200" placeholder="Write the caption/description you plan to publish with the video…"></textarea>
+    </label>
+    <div class="video-campaign-tag-actions"><button class="text-button" id="video-add-campaign-tags" type="button">Add detected hashtags & mentions</button></div>
+    <div id="video-campaign-preflight" class="video-preflight-state" role="status" aria-live="polite">Select a saved campaign above to check detected platform, duration, deadline and post tags.</div>
+  </div>
   <div class="video-export-grid">
     <label>Photos / video clips <span class="optional">(up to 8 files · 150 MB total)</span>
       <input id="video-media-files" type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime,video/3gpp" multiple>
@@ -250,7 +261,7 @@
   <div id="video-file-summary" class="video-file-summary">Select photos or video clips to begin.</div>
   <div class="video-confirmations">
     <label><input id="video-rights-confirm" type="checkbox"><span>I own or have permission for commercial use of every photo, video, logo and audio file I uploaded.</span></label>
-    <label><input id="video-rules-confirm" type="checkbox"><span>I checked the live campaign's accepted platform, duration, disclosure, tags, copyright and AI-media rules.</span></label>
+    <label><input id="video-rules-confirm" type="checkbox"><span>I reviewed the live campaign's platform, duration, disclosure, tags, copyright and AI-media rules, including fields this app could not detect.</span></label>
   </div>
   <div class="video-export-actions">
     <button class="button button-quiet" id="video-device-test-button" type="button">Test this phone (4 sec)</button>

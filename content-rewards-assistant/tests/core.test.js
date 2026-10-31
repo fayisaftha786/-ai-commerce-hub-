@@ -254,6 +254,7 @@ test("ClipReward keeps saved UI state when campaign, timestamp, account and back
       resetCount: 0,
       classList: { add() {}, remove() {}, toggle() {} },
       addEventListener(type, callback) { this.listeners[type] = callback; },
+      querySelectorAll() { return []; },
       reset() { this.resetCount += 1; this.value = ""; },
       focus() {},
       select() {}

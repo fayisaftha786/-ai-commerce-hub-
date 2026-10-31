@@ -174,6 +174,7 @@
         updatedAt: snapshot.generatedAt || ""
       },
       campaigns: rows,
+      scans: Array.isArray(snapshot.scans) ? snapshot.scans.slice(0, 50) : [],
       totalReceived: snapshot.totalReceived || rows.length,
       fetchedAt: snapshot.generatedAt || "",
       sourceLabel: snapshot.source && snapshot.source.label || "Third-party scheduled snapshot",

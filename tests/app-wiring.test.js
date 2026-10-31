@@ -818,7 +818,7 @@ test("Content Rewards radar distinguishes browser feed tests from the GitHub pag
   assert.match(rewardsHtml, /actions\/workflows\/scheduled-content-rewards-discovery\.yml/);
   assert.match(rewardsHtml, /Run GitHub page scan/);
   assert.match(rewardsHtml, /Test feed in browser/);
-  assert.match(rewardsHtml, /GitHub Actions first scans up to 60 campaign URLs/i);
+  assert.match(rewardsHtml, /GitHub Actions reads public campaign links from the official Content Rewards Discover page/i);
   assert.match(rewardsHtml, /Private, join-only, sign-in-gated or unlisted campaigns/i);
   assert.match(rewardsApp, /First GitHub Actions scan pending/);
   assert.match(rewardsApp, /cannot start the background crawler/);

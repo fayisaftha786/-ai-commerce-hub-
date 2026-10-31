@@ -110,7 +110,7 @@
     if (/watermark|repost|re.?upload|cross.?post|duplicate|reused content/i.test(raw)) {
       add("reuse", "Reuse / watermark restrictions", "The brief mentions reposting, duplicate content, cross-posting or watermarks. Confirm precisely what is prohibited before editing.");
     }
-    if (/copyright|licensed music|music rights|commercial use|royalty[- ]free|permission/i.test(raw)) {
+    if (/copyright|licensed music|unlicensed\\s+(?:music|audio|footage|assets?)|music rights|commercial use|royalty[- ]free|permission/i.test(raw)) {
       add("rights", "Audio / footage rights", "The brief mentions copyright, licensing or permissions. Confirm commercial rights for every music, clip, image, logo and source asset.");
     }
     if (/30\s*(?:-|to)?\s*minute|within\s+30\s+minutes/i.test(raw)) {
@@ -228,9 +228,12 @@
     const selectedCap = platformCaps.find((item) => item.platform === platform) || null;
     const selectedMinimum = platformMinimumViews.find((item) => item.platform === platform) || null;
     const selectedMaximum = platformMaximumViews.find((item) => item.platform === platform) || null;
-    const capPerClip = (selectedCap && selectedCap.amount) || brief.capPerClip || null;
-    const minimumViews = selectedMinimum ? selectedMinimum.value : brief.minimumViews;
-    const maximumViews = selectedMaximum ? selectedMaximum.value : brief.maximumViews;
+    const capPerClip = (selectedCap && selectedCap.amount) ||
+      (platformCaps.length ? null : brief.capPerClip || null);
+    const minimumViews = selectedMinimum ? selectedMinimum.value :
+      (platformMinimumViews.length ? null : brief.minimumViews);
+    const maximumViews = selectedMaximum ? selectedMaximum.value :
+      (platformMaximumViews.length ? null : brief.maximumViews);
     const payout = payoutGuidance(rate, brief.budget, capPerClip);
     const requirements = inferBriefRequirements(brief);
 

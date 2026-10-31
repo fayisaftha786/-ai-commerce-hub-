@@ -625,7 +625,10 @@
         campaignScoutResult.pageFetchedAt = detail.fetchedAt || "";
         campaignScoutResult.pageFetchStatus = detail.status;
         if (detail.status === "stale") {
-          $("scout-source-note").textContent += " Last live fetch failed; showing the previously saved public page from " + (detail.fetchedAt || "an earlier scan") + ". " + (detail.lastError || "");
+          const staleReason = detail.notInLatestFeed
+            ? "This URL is no longer present in the latest public lead feed; showing previously saved page content."
+            : "The latest page fetch failed; showing previously saved public page content.";
+          $("scout-source-note").textContent += " " + staleReason + " Last saved: " + (detail.fetchedAt || "an earlier scan") + ". " + (detail.lastError || "");
         } else {
           $("scout-source-note").textContent += " Public page fetched: " + (detail.fetchedAt || "timestamp unavailable") + ".";
         }

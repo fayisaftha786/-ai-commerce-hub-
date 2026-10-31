@@ -134,7 +134,6 @@ test("loads the public GitHub Actions snapshot without credentials and keeps sou
   assert.equal(result.campaigns[0].id, "static");
   assert.equal(result.campaignDetails[0].pageText, "Campaign details");
   assert.equal(result.sourceLabel, "Third-party snapshot");
-  assert.deepEqual(result.campaignDetails, []);
 });
 
 test("rejects missing or malformed scheduled snapshot data", async () => {

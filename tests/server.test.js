@@ -4,11 +4,13 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const { createServer, getListenConfig } = require("../server.js");
 
-async function withServer(run) {
+async function withServer(run, options = {}) {
   const server = createServer({
+    ...options,
     env: {
       META_APP_SECRET: "sentinel-meta-secret-value",
-      GOOGLE_CLIENT_SECRET: "sentinel-google-secret-value"
+      GOOGLE_CLIENT_SECRET: "sentinel-google-secret-value",
+      ...(options.env || {})
     }
   });
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
@@ -92,4 +94,76 @@ test("returns JSON 404 for unknown routes", async () => {
     assert.equal(response.status, 404);
     assert.deepEqual(await response.json(), { error: "not_found" });
   });
+});
+
+function fakeDiscovery() {
+  return {
+    async getStatus() {
+      return { enabled: true, scheduler: "server-scheduled", intervalMinutes: 360, running: false,
+        campaignCount: 1, updatedAt: "2026-10-31T00:00:00.000Z", lastScan: { status: "success", checkedCount: 1, newCount: 1 },
+        sourceRegistry: [{ id: "public-feed", mode: "automatic" }] };
+    },
+    async getCampaigns(options) {
+      return { campaigns: [{ id: "one", title: "Campaign one" }], count: 1, totalSaved: 1, receivedFilter: options };
+    }
+  };
+}
+
+test("discovery API exposes scheduler status and source registry without secrets", async () => {
+  await withServer(async (base) => {
+    const response = await fetch(base + "/api/discovery/status");
+    const data = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(data.scheduler, "server-scheduled");
+    assert.equal(data.lastScan.newCount, 1);
+    assert.equal(JSON.stringify(data).includes("sentinel-meta-secret-value"), false);
+  }, { discoveryService: fakeDiscovery() });
+});
+
+test("discovery campaign endpoint returns bounded read-only campaign snapshots", async () => {
+  await withServer(async (base) => {
+    const response = await fetch(base + "/api/discovery/campaigns?platform=Instagram&search=gaming&limit=20");
+    const data = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(data.count, 1);
+    assert.deepEqual(data.receivedFilter, { platform: "Instagram", search: "gaming", limit: "20" });
+  }, { discoveryService: fakeDiscovery() });
+});
+
+test("discovery API allows only explicitly configured browser origins", async () => {
+  await withServer(async (base) => {
+    const allowed = await fetch(base + "/api/discovery/status", { headers: { Origin: "https://fayisaftha786.github.io" } });
+    assert.equal(allowed.status, 200);
+    assert.equal(allowed.headers.get("access-control-allow-origin"), "https://fayisaftha786.github.io");
+    const rejected = await fetch(base + "/api/discovery/status", { headers: { Origin: "https://evil.example" } });
+    assert.equal(rejected.status, 403);
+    assert.deepEqual(await rejected.json(), { error: "origin_not_allowed" });
+  }, {
+    env: { DISCOVERY_CORS_ORIGINS: "https://fayisaftha786.github.io" },
+    discoveryService: fakeDiscovery()
+  });
+});
+
+test("discovery API preflight is read-only and rejects write methods", async () => {
+  await withServer(async (base) => {
+    const preflight = await fetch(base + "/api/discovery/campaigns", {
+      method: "OPTIONS", headers: { Origin: "https://fayisaftha786.github.io", "Access-Control-Request-Method": "GET" }
+    });
+    assert.equal(preflight.status, 204);
+    assert.equal(preflight.headers.get("access-control-allow-origin"), "https://fayisaftha786.github.io");
+    const post = await fetch(base + "/api/discovery/status", { method: "POST" });
+    assert.equal(post.status, 405);
+    assert.equal(post.headers.get("allow"), "GET, OPTIONS");
+  }, {
+    env: { DISCOVERY_CORS_ORIGINS: "https://fayisaftha786.github.io" },
+    discoveryService: fakeDiscovery()
+  });
+});
+
+test("unknown discovery routes return JSON 404", async () => {
+  await withServer(async (base) => {
+    const response = await fetch(base + "/api/discovery/anything");
+    assert.equal(response.status, 404);
+    assert.deepEqual(await response.json(), { error: "not_found" });
+  }, { discoveryService: fakeDiscovery() });
 });

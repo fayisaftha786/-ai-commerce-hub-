@@ -296,9 +296,10 @@
       },
       {
         label: "Minimum payout threshold",
-        status: minimumPayout ? "pass" : "unknown",
+        status: minimumPayout ? "pass" : rate && rate.model === "CPM" ? "unknown" : "not-applicable",
         detail: minimumPayout ? "Detected minimum amount before payout: " + minimumPayout.currency + " " + minimumPayout.value :
-          "Minimum payout threshold was not visible in the copied page."
+          rate && rate.model === "CPM" ? "Minimum payout threshold was not visible in the copied page." :
+            "Minimum payout threshold was not recognised for this payout model."
       },
       {
         label: "Full creator requirements",
@@ -349,7 +350,9 @@
         ? "Use the official invitation link or account notification, confirm the exact account you will post from is connected, and read the full brief before creating the draft."
         : brief.entryMode === "Application / brand review"
           ? "Open the official campaign, select the account you will post from and confirm the exact account is connected, complete the application, and wait for brand approval before publishing."
-          : "Open the official campaign, confirm the exact account you will post from is connected, check the full requirements and remaining budget, then Join Campaign. Publish and submit only after joining.";
+          : brief.hiddenRequirements && brief.hiddenRequirements.locked
+            ? "Open the official campaign, confirm the exact account you will post from is connected, then Join Campaign. Re-open the campaign, unlock and review every creator requirement and reference file before producing or publishing content."
+            : "Open the official campaign, confirm the exact account you will post from is connected, check the full requirements and remaining budget, then Join Campaign. Publish and submit only after joining.";
     return {
       state,
       stateLabel: state === "blocked" ? "Blocked / do not proceed yet" :

@@ -162,6 +162,10 @@ test("campaign finder is wired to official Discover, local parser, and existing 
   assert.match(html, /Analyse website automatically/i);
   assert.match(html, /campaign-scout\.js/);
   assert.match(app, /ClipRewardScout\.parseCampaignBrief/);
+  assert.match(app, /function analysePublicCampaignUrl/);
+  assert.match(app, /fetchStaticSnapshot/);
+  assert.match(app, /canonicalCampaignUrl/);
+  assert.match(app, /analysisSource === "public-url"/);
   assert.match(app, /ClipRewardScout\.buildTrackerNotes/);
   assert.match(app, /autofillCampaignTracker/);
   assert.match(app, /pasteCampaignBriefFromClipboard/);

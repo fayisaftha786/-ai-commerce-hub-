@@ -423,3 +423,11 @@ test("public campaign detail accepts rate labels with amount on the next line", 
   assert.equal(result.minimumPayout.value, 2);
   assert.equal(result.maximumPayout.value, 100);
 });
+
+test("budget parsing never consumes the next line's initial M as a million suffix", () => {
+  const budget = Scout.parseBudget("Budget\\n$250 / $2,000\\nMinimum payout\\n$5.00");
+  assert.equal(budget.spent.value, 250);
+  assert.equal(budget.total.value, 2000);
+  assert.equal(budget.remaining.value, 1750);
+  assert.equal(Scout.parseAmount("$2,000\\nMinimum").value, 2000);
+});

@@ -103,5 +103,5 @@ jobs:
             "",
             "The workflow published the snapshot safely. A green deployment does not mean the upstream source is healthy; check the source status above and in the app."
           ];
-          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, lines.join("\\n") + "\\n");
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, lines.join("\n") + "\n");
           NODE

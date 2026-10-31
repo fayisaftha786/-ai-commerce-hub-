@@ -154,14 +154,17 @@
       const value = clean(explicit.replace(/^(?:campaign|title|name)\s*:/i, ""), 120);
       if (value && !GENERIC_TITLES.test(value)) return value;
     }
-    const candidate = lines.find((line) => {
+    const candidates = lines.filter((line) => {
       if (line.length < 4 || line.length > 120) return false;
       if (GENERIC_TITLES.test(line) || /^(discover|all campaigns|campaign details|brief|overview|requirements|platforms?|budget|rate|creator campaign|creator brief)\b/i.test(line)) return false;
       if (/^https?:\/\//i.test(line) || /^[$€£₹\d]/.test(line)) return false;
       if (/^(?:campaign|title|name)\s*:/i.test(line)) return false;
-      if (/^(?:join|apply|application|deadline|ends?|expires?|minimum|maximum|budget|rate|platforms?)\b/i.test(line)) return false;
+      if (/^(?:join|apply|application|deadline|ends?|expires?|minimum|maximum|budget|rate|platforms?|accepting|launched)\b/i.test(line)) return false;
+      if (/^(?:tiktok|instagram|facebook|youtube|twitter|x|music|clipping|logo|ugc|cpm|top clippers|views|budget|reference materials|creator requirements)$/i.test(line)) return false;
       return true;
     });
+    const candidate = candidates.find((line) => /[|–—]|\\s-\\s/.test(line) && line.length >= 16) ||
+      candidates.find((line) => line.length >= 18) || candidates[0];
     return clean(candidate || "", 120);
   }
 
@@ -245,8 +248,9 @@
     const label = kind === "minimum" ? "(?:minimum|min\\.?)\\s+payout\\b" : "(?:maximum|max\\.?)\\s+payout\\b";
     const lines = String(text || "").split("\n");
     let found = null;
-    for (const line of lines) {
-      const amount = findMoneyNear(line, [label]);
+    for (let index = 0; index < lines.length; index += 1) {
+      const sample = [lines[index], lines[index + 1] || ""].join(" ");
+      const amount = findMoneyNear(sample, [label]);
       if (amount) found = amount;
     }
     return found;
@@ -293,7 +297,9 @@
   function extractCampaignType(text) {
     const match = /(?:campaign\s+type|content\s+type|type)\s*[:=-]\s*(clipping|music|logo|ugc)\b|\b(clipping|music|logo|ugc)\s+campaign\b/i.exec(text);
     const value = match && (match[1] || match[2]);
-    return value ? value.charAt(0).toUpperCase() + value.slice(1).toUpperCase() : "";
+    if (value) return value.toUpperCase();
+    const standalone = String(text || "").split("\\n").find((line) => /^(clipping|music|logo|ugc)$/i.test(line.trim()));
+    return standalone ? standalone.trim().toUpperCase() : "";
   }
 
   function extractAccessMode(text) {
@@ -380,9 +386,9 @@
     const deadline = parseDeadline(rawText);
     const entryMode = extractAccessMode(rawText);
     const sourceUrl = findCampaignUrl(source.url, rawText);
-    const capPerClip = extractCap(rawText);
     const minimumPayout = extractPayoutBound(rawText, "minimum");
     const maximumPayout = extractPayoutBound(rawText, "maximum");
+    const capPerClip = maximumPayout || extractCap(rawText);
     const hiddenRequirements = detectLockedRequirements(rawText);
     const minimumViews = extractMinimumViews(rawText);
     const maximumViews = extractMaximumViews(rawText);

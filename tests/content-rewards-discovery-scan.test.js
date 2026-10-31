@@ -89,6 +89,9 @@ test("scheduled scan refuses to overwrite a malformed existing snapshot", async 
 test("GitHub scheduled workflow writes no credentials and redeploys the static snapshot", async () => {
   const fs = require("node:fs");
   const workflow = fs.readFileSync(path.join(__dirname, "..", ".github", "workflows", "scheduled-content-rewards-discovery.yml"), "utf8");
+  assert.match(workflow, /push:/);
+  assert.match(workflow, /branches:\s*\n\s*- main/);
+  assert.ok(workflow.includes('"content-rewards-assistant/discovery-snapshot.json"'));
   assert.match(workflow, /schedule:/);
   assert.ok(workflow.includes('cron: "17 */6 * * *"'));
   assert.match(workflow, /contents: write/);
@@ -310,3 +313,15 @@ test("detail crawler marks previously saved pages missing from the latest feed a
   assert.match(result.details[0].lastError, /not present in the latest public lead feed/i);
 });
 
+
+
+test("background page scan bootstraps on main changes but ignores snapshot-only writes", async () => {
+  const fs = require("node:fs");
+  const workflow = fs.readFileSync(path.join(__dirname, "..", ".github", "workflows", "scheduled-content-rewards-discovery.yml"), "utf8");
+  const pushBlock = workflow.split("  schedule:")[0];
+  assert.match(pushBlock, /push:/);
+  assert.match(pushBlock, /branches:\s*\n\s*- main/);
+  assert.match(pushBlock, /paths-ignore:\s*\n\s*- "content-rewards-assistant\/discovery-snapshot\.json"/);
+  assert.match(workflow, /workflow_dispatch:/);
+  assert.match(workflow, /cron: "17 \*\/6 \* \* \*"/);
+});

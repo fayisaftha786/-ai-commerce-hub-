@@ -153,6 +153,7 @@
       if (line.length < 4 || line.length > 120) return false;
       if (GENERIC_TITLES.test(line) || /^(discover|all campaigns|campaign details|brief|overview|requirements|platforms?|budget|rate|creator campaign|creator brief)\b/i.test(line)) return false;
       if (/^https?:\/\//i.test(line) || /^[$€£₹\d]/.test(line)) return false;
+      if (/^(?:campaign|title|name)\s*:/i.test(line)) return false;
       if (/^(?:join|apply|application|deadline|ends?|expires?|minimum|maximum|budget|rate|platforms?)\b/i.test(line)) return false;
       return true;
     });
@@ -269,7 +270,7 @@
 
   function extractAccessMode(text) {
     if (/\b(?:private|invitation[- ]only|invite[- ]only|invite only)\b/i.test(text)) return "Private / invitation-only";
-    if (/\bapplication(?:s)?\s+only\b|\bapply\s+to\s+join\b|\bapply\s+now\b|\bapplication\s+campaign\b/i.test(text)) return "Application / brand review";
+    if (/\bapplication(?:s)?[- ]only\b|\bapply\s+to\s+join\b|\bapply\s+now\b|\bapplication\s+campaign\b/i.test(text)) return "Application / brand review";
     if (/\bopen\s+campaign\b|\bopen\s+to\s+all\b|\bjoin\s+campaign\b|\bjoin\s+now\b/i.test(text)) return "Open campaign / direct join";
     return "";
   }
@@ -362,7 +363,9 @@
     const platformMinimumViews = platformTerms.minimumViews;
     const platformMaximumViews = platformTerms.maximumViews;
     const campaignType = extractCampaignType(rawText);
-    const campaignStatus = extractCampaignStatus(rawText);
+    const campaignStatus = extractCampaignStatus(rawText) === "Not stated" && budget && budget.remaining && budget.remaining.value === 0
+      ? "Out of budget"
+      : extractCampaignStatus(rawText);
     const hashtags = [...new Set((rawText.match(/#[a-z0-9_]+/gi) || []).map((tag) => tag.toLowerCase()))].slice(0, 30);
     const mentions = [...new Set((rawText.match(/@[a-z0-9._]{2,}/gi) || []).map((tag) => tag.toLowerCase()))].slice(0, 20);
     const languages = [];
@@ -381,6 +384,8 @@
     if (campaignType) addFinding("found", "Campaign type", campaignType);
     if (rate) addFinding("found", "Payout model", rate.label);
     if (platformRates.length) addFinding("found", "Platform-specific rates", platformRates.map((item) => item.platform + ": " + item.label).join(" · "));
+    if (platformCaps.length) addFinding("found", "Platform-specific maximums", platformCaps.map((item) => item.platform + ": " + formatAmount(item.amount)).join(" · "));
+    if (platformMinimumViews.length) addFinding("found", "Platform-specific minimum views", platformMinimumViews.map((item) => item.platform + ": " + new Intl.NumberFormat("en").format(item.value)).join(" · "));
     if (capPerClip) addFinding("found", "Maximum per clip", formatAmount(capPerClip));
     if (minimumViews != null) addFinding("found", "Minimum views", new Intl.NumberFormat("en").format(minimumViews));
     if (maximumViews != null) addFinding("found", "Maximum views", new Intl.NumberFormat("en").format(maximumViews));
@@ -455,6 +460,8 @@
       "Campaign type: " + (result.campaignType || "Not recognised"),
       "Payout: " + (result.rate ? result.rate.label : "Not recognised"),
       "Platform rates: " + (result.platformRates.length ? result.platformRates.map((item) => item.platform + " " + item.label).join("; ") : "Not separately recognised"),
+      "Platform-specific caps: " + (result.platformCaps.length ? result.platformCaps.map((item) => item.platform + " " + formatAmount(item.amount)).join("; ") : "Not separately recognised"),
+      "Platform-specific minimum views: " + (result.platformMinimumViews.length ? result.platformMinimumViews.map((item) => item.platform + " " + item.value).join("; ") : "Not separately recognised"),
       "Per-clip cap: " + formatAmount(result.capPerClip),
       "Minimum views: " + (result.minimumViews == null ? "Not recognised" : result.minimumViews),
       "Maximum views: " + (result.maximumViews == null ? "Not recognised" : result.maximumViews),

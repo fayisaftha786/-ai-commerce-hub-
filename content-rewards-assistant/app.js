@@ -827,6 +827,7 @@
   $("import-file").addEventListener("change", (event) => importBackup(event.target.files && event.target.files[0]));
   load();
   render();
+  configureDiscovery();
   window.setInterval(refreshDeadlineCountdowns, 1000);
   if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
     window.addEventListener("load", () => navigator.serviceWorker.register("./service-worker.js").catch(() => {

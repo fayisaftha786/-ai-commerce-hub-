@@ -214,15 +214,16 @@ test("campaign parser recognises shared pool payout models without inventing a p
   assert.equal(result.platformMatch, "match");
 });
 
-\ntest("unified Rewards Intelligence engine is loaded and displayed with the campaign findings", () => {
+
+test("unified Rewards Intelligence engine is loaded and displayed with the campaign findings", () => {
   const root = path.join(__dirname, "..");
   const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
   const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
   const worker = fs.readFileSync(path.join(root, "service-worker.js"), "utf8");
-  assert.match(html, /rewards-intelligence\\.js/);
+  assert.match(html, /rewards-intelligence\.js/);
   assert.match(html, /id="reward-intelligence-results"/);
-  assert.match(app, /ClipRewardIntelligence\\.assessAll/);
+  assert.match(app, /ClipRewardIntelligence\.assessAll/);
   assert.match(app, /renderRewardsIntelligence/);
   assert.match(worker, /clipreward-static-v8/);
-  assert.match(worker, /rewards-intelligence\\.js/);
+  assert.match(worker, /rewards-intelligence\.js/);
 });

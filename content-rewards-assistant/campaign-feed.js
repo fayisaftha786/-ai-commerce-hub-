@@ -29,7 +29,7 @@
   function safeOfficialUrl(value) {
     try {
       const url = new URL(String(value || ""));
-      if (url.protocol !== "https:" || (url.hostname !== "contentrewards.com" && !url.hostname.endsWith(".contentrewards.com"))) return "";
+      if (url.protocol !== "https:" || (url.hostname !== "contentrewards.com" && !url.hostname.endsWith(".contentrewards.com")) || (url.port && url.port !== "443")) return "";
       return url.href;
     } catch (_) { return ""; }
   }

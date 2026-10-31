@@ -330,6 +330,20 @@ test("scheduled scanner uses official Discover first and enriches campaigns from
   }
 });
 
+test("HTML extraction falls back to visible body when main contains only an empty app shell", () => {
+  const html = `<!doctype html><html><body>
+    <nav>Private workspace navigation Analytics Settings</nav>
+    <main><div id="app-root"><script>window.__APP_STATE__ = {};</script></div></main>
+    <section><h1>Visible Campaign Detail</h1><p>Accepting clips · Instagram</p>
+      <p>CPM $3.00 per 1,000 views</p><p>Budget $100 / $500</p></section>
+    <footer>Footer navigation</footer>
+  </body></html>`;
+  const visible = extractVisibleText(html);
+  assert.match(visible, /Visible Campaign Detail/);
+  assert.match(visible, /CPM \$3\.00 per 1,000 views/);
+  assert.doesNotMatch(visible, /Private workspace navigation|Footer navigation|__APP_STATE__/);
+});
+
 test("HTML extraction reads visible main content, decodes entities and excludes navigation/scripts", () => {
   assert.equal(decodeHtmlEntities("A &amp; B &#36; &#x20B9; &nbsp;"), "A & B $ ₹  ");
   const visible = extractVisibleText(PUBLIC_HTML);

@@ -415,3 +415,13 @@ test("background page scan bootstraps on main changes but ignores snapshot-only 
   assert.match(workflow, /workflow_dispatch:/);
   assert.match(workflow, /cron: "17 \*\/6 \* \* \*"/);
 });
+
+test("scheduled discovery workflow publishes retained data and reports source outages as warnings", () => {
+  const fs = require("node:fs");
+  const workflow = fs.readFileSync(path.join(__dirname, "..", ".github", "workflows", "scheduled-content-rewards-discovery.yml"), "utf8");
+  assert.match(workflow, /Warn when source scan fails; retained snapshot is still published/);
+  assert.match(workflow, /::warning::The third-party campaign feed is unavailable/);
+  assert.match(workflow, /Saved campaign leads retained/);
+  assert.match(workflow, /A green deployment does not mean the upstream source is healthy/);
+  assert.doesNotMatch(workflow, /echo "The public source scan failed[\s\S]*?exit 1/);
+});

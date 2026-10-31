@@ -359,6 +359,11 @@
       if (!window.ClipRewardDiscovery.writeState(discoveryState)) throw new Error("Snapshot loaded, but the browser could not save its local cache.");
       const pageDetails = result.campaignDetails || [];
       const fetchedPages = pageDetails.filter((item) => item.status === "ok").length;
+      const failedPages = pageDetails.filter((item) => item.status === "unavailable").length;
+      const samplePageError = pageDetails.find((item) => item.status === "unavailable" && item.lastError);
+      const pageDiagnostic = failedPages
+        ? " · " + failedPages + " page(s) unreadable" + (samplePageError ? ": " + samplePageError.lastError.slice(0, 180) : "")
+        : "";
       const message = lastScan.status === "failed"
         ? "Latest scheduled scan failed · " + (lastScan.discoverRequestAttempts || 0) + " official Discover request(s), " + (lastScan.feedRequestAttempts || 0) + " fallback feed request(s): " + (lastScan.error || "source unavailable") + ". Previous campaign rows were preserved."
         : "GitHub Actions snapshot loaded · " + result.campaigns.length + " campaigns · " + fetchedPages + "/" + pageDetails.length + " public campaign pages auto-read · source " + (lastScan.source || "not stated") + " · last scan " + new Date(lastScan.completedAt || lastScan.at).toLocaleString() + ".";

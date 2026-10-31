@@ -101,7 +101,7 @@ async function fetchPublicCampaignPage(value, options = {}) {
     });
     if (!response || !response.ok) throw new Error("Public campaign page returned HTTP " + (response ? response.status : "no response") + ".");
     const finalUrl = Feed.canonicalCampaignUrl(response.url || url);
-    if (!finalUrl || new URL(finalUrl).host !== new URL(url).host) {
+    if (!finalUrl) {
       throw new Error("The campaign URL redirected outside the public Content Rewards campaign page.");
     }
     const contentType = response.headers && response.headers.get ? response.headers.get("content-type") || "" : "";
@@ -156,7 +156,16 @@ async function fetchCampaignDetails(campaigns, options = {}) {
   const targets = [...new Set((Array.isArray(campaigns) ? campaigns : [])
     .map((row) => Feed.canonicalCampaignUrl(row && row.officialUrl))
     .filter(Boolean))].slice(0, Number.isInteger(options.limit) ? Math.max(0, Math.min(MAX_DETAIL_PAGES, options.limit)) : MAX_DETAIL_PAGES);
-  const records = new Map(oldByUrl);
+  const targetSet = new Set(targets);
+  const records = new Map();
+  for (const [url, row] of oldByUrl.entries()) {
+    records.set(url, targetSet.has(url) ? row : {
+      ...row,
+      status: "stale",
+      notInLatestFeed: true,
+      lastError: "This campaign URL was not present in the latest public lead feed snapshot; verify its current status on Content Rewards."
+    });
+  }
   let cursor = 0;
   const concurrency = Math.max(1, Math.min(6, Number(options.concurrency) || DETAIL_CONCURRENCY));
   const worker = async () => {
@@ -165,7 +174,7 @@ async function fetchCampaignDetails(campaigns, options = {}) {
       try {
         const detail = await fetchPublicCampaignPage(url, { fetchImpl: options.fetchImpl, now: options.now, timeoutMs: options.timeoutMs });
         records.delete(url);
-        records.set(url, detail);
+        records.set(url, { ...detail, notInLatestFeed: false });
       } catch (error) {
         const previousDetail = oldByUrl.get(url);
         records.delete(url);

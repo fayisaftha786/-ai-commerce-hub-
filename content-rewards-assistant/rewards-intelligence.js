@@ -285,6 +285,13 @@
         detail: maximumViews != null ? "Detected maximum: " + Number(maximumViews).toLocaleString("en") + " views." : "No maximum-view threshold was recognised."
       },
       {
+        label: "Minimum followers / subscribers",
+        status: brief.minimumFollowers != null ? "unknown" : "not-applicable",
+        detail: brief.minimumFollowers != null
+          ? "The copied brief requires " + Number(brief.minimumFollowers).toLocaleString("en") + " followers/subscribers. The app cannot verify your live account count."
+          : "No minimum follower threshold was recognised."
+      },
+      {
         label: "Budget remaining",
         status: brief.budget && brief.budget.remaining ? "pass" : "unknown",
         detail: brief.budget && brief.budget.remaining ?

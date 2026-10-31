@@ -1,0 +1,83 @@
+name: Scheduled Content Rewards discovery snapshot
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  scan-and-publish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout default branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Run public campaign discovery scan
+        id: scan
+        continue-on-error: true
+        run: node scripts/content-rewards-discovery-scan.js
+
+      - name: Commit latest scan snapshot
+        id: snapshot
+        if: ${{ always() && steps.scan.outcome != 'skipped' }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add content-rewards-assistant/discovery-snapshot.json
+          if git diff --cached --quiet; then
+            echo "Snapshot content is unchanged."
+          else
+            git commit -m "chore: refresh scheduled campaign discovery snapshot"
+            git fetch origin main
+            git rebase origin/main
+            git push origin HEAD:main
+          fi
+
+      - name: Configure GitHub Pages
+        id: pages
+        if: ${{ always() && steps.snapshot.outcome == 'success' }}
+        uses: actions/configure-pages@v6
+        with:
+          enablement: true
+
+      - name: Assemble and validate static site
+        if: ${{ always() && steps.snapshot.outcome == 'success' }}
+        run: node scripts/pages-build.js _site
+
+      - name: Upload Pages artifact
+        if: ${{ always() && steps.snapshot.outcome == 'success' }}
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+
+      - name: Deploy updated discovery snapshot
+        id: deployment
+        if: ${{ always() && steps.snapshot.outcome == 'success' }}
+        uses: actions/deploy-pages@v5
+
+      - name: Report source scan failure after publishing retained data
+        if: ${{ always() && steps.scan.outcome == 'failure' }}
+        run: |
+          echo "The public source scan failed. Previous campaign rows were retained and the failed scan was recorded in the published snapshot."
+          exit 1

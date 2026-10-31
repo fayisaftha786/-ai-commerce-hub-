@@ -138,7 +138,7 @@ function getListenConfig(env = process.env) {
 
   const configuredHost = typeof env.HOST === "string" ? env.HOST.trim() : "";
   const host = configuredHost || (env.NODE_ENV === "production" ? "0.0.0.0" : "127.0.0.1");
-  if (/\\s|[/?#]/.test(host)) {
+  if (/\s|[/?#]/.test(host)) {
     throw new Error("HOST must be a hostname or IP address without whitespace or URL path characters");
   }
 

@@ -212,10 +212,11 @@
   function renderCampaignScout(result) {
     campaignScoutResult = result;
     $("scout-result-title").textContent = result.title || "Campaign details found";
-    $("scout-confidence").textContent = "Extraction only · " + result.confidence;
+    $("scout-confidence").textContent = "Copied text only · " + (result.coverageScore == null ? result.confidence : result.coverageScore + "% core-field coverage");
     $("scout-confidence").classList.toggle("scout-match", result.platformMatch === "match");
     $("scout-confidence").classList.toggle("scout-mismatch", result.platformMatch === "mismatch");
     $("scout-confidence").classList.toggle("scout-unknown", result.platformMatch === "unknown");
+    $("scout-confidence").title = "Coverage is a count of six key fields detected in the copied text. It is not a confidence score for eligibility or approval. " + result.requirementLines.length + " rule lines were captured.";
     $("scout-source-note").textContent = result.platformMatch === "match"
       ? result.requestedPlatform + " appears in the accepted platform names copied from this brief. Verify it on the live campaign page."
       : result.platformMatch === "mismatch"
@@ -254,7 +255,9 @@
       '<div class="ri-summary ' + stateClass + '"><strong>' + escapeHtml(campaign.stateLabel) + '</strong>' +
       '<p>' + escapeHtml(campaign.nextStep) + '</p>' + reasons + '<small>' + escapeHtml(campaign.earningsNote) + '</small></div>' +
       '<div class="ri-payout"><strong>Reward calculation · ' + escapeHtml(campaign.payout.model) + '</strong><p>' +
-      escapeHtml(campaign.payout.formula) + '</p></div>';
+      escapeHtml(campaign.payout.formula) + '</p><small>' +
+      escapeHtml(campaign.payout.creatorFee && campaign.payout.creatorFee.label ? campaign.payout.creatorFee.label : "Creator fee: not recognised") +
+      '</small></div>';
     $("ri-rule-checks").innerHTML = campaign.checks.map((item) =>
       '<article class="ri-check"><span class="ri-status ri-' + escapeHtml(item.status) + '">' + escapeHtml(item.status.toUpperCase()) +
       '</span><strong>' + escapeHtml(item.label) + '</strong><p>' + escapeHtml(item.detail) + '</p></article>'
@@ -283,7 +286,7 @@
         text: $("scout-brief-text").value
       });
       renderCampaignScout(result);
-      showToast("Campaign details extracted from pasted text. Review the findings.");
+      showToast("Full copied brief analysed. Review every detected rule and missing field.");
     } catch (error) {
       campaignScoutResult = null;
       $("scout-results").hidden = true;
@@ -299,12 +302,23 @@
     $("campaign-platform").value = "Content Rewards";
     $("campaign-url").value = result.sourceUrl || "";
     $("campaign-deadline").value = result.deadline || "";
-    $("campaign-payout-terms").value = result.rate ? result.rate.label : "";
-    $("campaign-budget-terms").value = result.budget
-      ? (result.budget.spent ? window.ClipRewardScout.formatAmount(result.budget.spent) + " used / " : "") +
-        window.ClipRewardScout.formatAmount(result.budget.total) + " total" +
-        (result.budget.remaining ? " / " + window.ClipRewardScout.formatAmount(result.budget.remaining) + " remaining" : "")
-      : "";
+    const target = $("scout-target-platform").value;
+    const platformRate = Array.isArray(result.platformRates)
+      ? result.platformRates.find((item) => item.platform === target)
+      : null;
+    const selectedRate = platformRate || result.rate;
+    const payoutParts = [];
+    if (selectedRate) payoutParts.push(selectedRate.label);
+    if (result.capPerClip) payoutParts.push("Max per clip: " + window.ClipRewardScout.formatAmount(result.capPerClip));
+    const selectedCap = Array.isArray(result.platformCaps) ? result.platformCaps.find((item) => item.platform === target) : null;
+    if (selectedCap && selectedCap.amount && !result.capPerClip) payoutParts.push("Max per " + target + " clip: " + window.ClipRewardScout.formatAmount(selectedCap.amount));
+    if (result.minimumViews != null) payoutParts.push("Min views: " + Number(result.minimumViews).toLocaleString("en"));
+    $("campaign-payout-terms").value = payoutParts.join(" · ").slice(0, 180);
+    const budgetParts = [];
+    if (result.budget && result.budget.spent) budgetParts.push(window.ClipRewardScout.formatAmount(result.budget.spent) + " used");
+    if (result.budget && result.budget.total) budgetParts.push(window.ClipRewardScout.formatAmount(result.budget.total) + " total");
+    if (result.budget && result.budget.remaining) budgetParts.push(window.ClipRewardScout.formatAmount(result.budget.remaining) + " remaining");
+    $("campaign-budget-terms").value = budgetParts.join(" · ").slice(0, 180);
     $("campaign-rules").value = window.ClipRewardScout.buildTrackerNotes(result);
     $("campaign-status").value = "idea";
     $("campaign-post-url").value = "";

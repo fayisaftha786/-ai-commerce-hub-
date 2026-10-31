@@ -196,24 +196,39 @@ test("public campaign fetch follows only bounded, validated Content Rewards redi
   assert.equal(detail.status, "ok");
 });
 
-test("direct public page fetch accepts a redirect to the official Content Rewards www host", async () => {
+test("direct public page fetch accepts a validated redirect to the official Content Rewards www host", async () => {
   const url = "https://contentrewards.com/c/campaigns/safe";
+  const nextUrl = "https://www.contentrewards.com/c/campaigns/safe";
+  let calls = 0;
   const redirected = await fetchPublicCampaignPage(url, {
-    fetchImpl: async () => ({
-      ok: true, status: 200, url: "https://www.contentrewards.com/c/campaigns/safe",
-      headers: { get: () => "text/html" },
-      text: async () => PUBLIC_HTML
-    })
+    fetchImpl: async () => {
+      calls += 1;
+      if (calls === 1) return {
+        ok: false, status: 302, url,
+        headers: { get: (name) => name.toLowerCase() === "location" ? nextUrl : "" },
+        text: async () => ""
+      };
+      return {
+        ok: true, status: 200, url: nextUrl,
+        headers: { get: (name) => name.toLowerCase() === "content-type" ? "text/html" : "" },
+        text: async () => PUBLIC_HTML
+      };
+    }
   });
+  assert.equal(calls, 2);
   assert.equal(redirected.status, "ok");
   assert.equal(redirected.url, url);
 });
 
-test("direct public page fetch rejects redirects outside Content Rewards and non-HTML responses", async () => {
+test("direct public page fetch rejects external redirects and non-HTML responses", async () => {
   const url = "https://contentrewards.com/c/campaigns/safe";
   await assert.rejects(fetchPublicCampaignPage(url, {
-    fetchImpl: async () => ({ ok: true, status: 200, url: "https://evil.example/c/campaigns/safe", headers: { get: () => "text/html" }, text: async () => PUBLIC_HTML })
-  }), /redirected outside/);
+    fetchImpl: async () => ({
+      ok: false, status: 302, url,
+      headers: { get: (name) => name.toLowerCase() === "location" ? "https://evil.example/c/campaigns/safe" : "" },
+      text: async () => ""
+    })
+  }), /redirect outside the public Content Rewards campaign pages/i);
   await assert.rejects(fetchPublicCampaignPage(url, {
     fetchImpl: async () => ({ ok: true, status: 200, url, headers: { get: () => "application/json" }, text: async () => "{}" })
   }), /did not return an HTML/);

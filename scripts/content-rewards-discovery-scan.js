@@ -178,9 +178,9 @@ async function fetchCampaignDetails(campaigns, options = {}) {
       } catch (error) {
         const previousDetail = oldByUrl.get(url);
         records.delete(url);
-        records.set(url, previousDetail
+        records.set(url, previousDetail && previousDetail.pageText
           ? { ...previousDetail, status: "stale", lastAttemptAt: new Date(options.now == null ? Date.now() : options.now).toISOString(), lastError: error.message }
-          : { url, status: "unavailable", fetchedAt: "", lastAttemptAt: new Date(options.now == null ? Date.now() : options.now).toISOString(), lastError: error.message, pageTitle: "", pageText: "", textLength: 0, detected: null });
+          : { ...(previousDetail || {}), url, status: "unavailable", fetchedAt: previousDetail && previousDetail.fetchedAt || "", lastAttemptAt: new Date(options.now == null ? Date.now() : options.now).toISOString(), lastError: error.message, pageTitle: previousDetail && previousDetail.pageTitle || "", pageText: previousDetail && previousDetail.pageText || "", textLength: previousDetail && previousDetail.textLength || 0, detected: previousDetail && previousDetail.detected || null });
       }
     }
   };

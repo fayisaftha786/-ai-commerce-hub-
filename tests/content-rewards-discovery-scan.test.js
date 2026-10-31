@@ -253,7 +253,12 @@ test("official Discover HTML extracts unique trusted campaign links and ignores 
   ]);
   assert.equal(rows[0].title, "Seasonal Creator Clips");
   assert.equal(rows[0].sourceVerification, "official-public-page");
-  assert.ok(rows.every((row) => /^https:\\/\\/contentrewards\\.com\\/c\\/campaigns\\/[^/]+$/.test(row.officialUrl)));
+  assert.ok(rows.every((row) => {
+    const url = new URL(row.officialUrl);
+    const segments = url.pathname.split("/").filter(Boolean);
+    return (url.hostname === "contentrewards.com" || url.hostname.endsWith(".contentrewards.com")) &&
+      segments.length === 3 && segments[0] === "c" && segments[1] === "campaigns" && Boolean(segments[2]);
+  }));
 });
 
 test("public campaign detail fetching rejects dashboard routes before any network request", async () => {

@@ -142,8 +142,14 @@
     }
     if (/\bretainer\b/i.test(raw)) return { model: "Retainer", amount: null, label: "Retainer (amount not parsed)" };
 
-    if (/\b(?:payout|reward|payment)\s*(?:model|type)?\s*[:=-]?\s*pool\b|\bpool[- ]based\s+(?:payout|reward)\b|\bpool\s+campaign\b|\bprize\s+pool\b/i.test(raw)) {
-      return { model: "Pool", amount: null, label: "Pool — variable allocation depends on the campaign's pool rules and eligible views" };
+    const poolAllocation = /\bpool\b[\s\S]{0,180}\b(?:split\s+by\s+views?|paid\s+when\s+the\s+pool\s+ends?)\b/i.test(raw);
+    const explicitPoolModel = /\b(?:payout|reward|payment)\s*(?:model|type)?\s*[:=-]?\s*pool\b|\bpool[- ]based\s+(?:payout|reward)\b|\bpool\s+campaign\b|\bprize\s+pool\b/i.test(raw);
+    if (poolAllocation || explicitPoolModel) {
+      const poolAmount = findMoneyNear(raw, ["\\bpool\\b", "\\bprize\\s+pool\\b"]);
+      const label = poolAmount
+        ? "Shared pool " + formatAmount(poolAmount) + " · allocation depends on eligible views and the campaign pool rules"
+        : "Pool — variable allocation depends on the campaign's pool rules and eligible views";
+      return { model: "Pool", amount: null, poolAmount, label };
     }
     return null;
   }

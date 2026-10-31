@@ -34,6 +34,12 @@ The parser reads the full copied text (up to 20,000 characters), not only its fi
 
 Extraction is only as accurate as the text copied from the official page. A value shown as missing was not recognised; it is not zero. The app does not estimate your eligibility, infer a missing payout, validate campaign availability, join/apply to campaigns, or access private invitations. Some campaigns are private and arrive only by invitation. Do not paste passwords, one-time codes, cookies or private account data. The official platform remains the source of truth for remaining budget, accepted accounts, eligibility and application status.
 
+## Third-party campaign lead discovery
+
+The Finder now includes an optional public lead-feed adapter for `https://contentrewards.xyz/api/cr/campaigns`, documented by the independent SeamMoney/shelby-content-rewards project. It can search up to 100 records, filter the selected Instagram/Facebook/YouTube/X payout destination, rank by the listed rate, show the snapshot date/freshness, and import a selected lead into the existing full-brief analyser.
+
+**Trust and availability boundary:** this is an independent scraped snapshot, not a Content Rewards API, and browser cross-origin access may be unavailable. The feed may be stale, incomplete or offline. It does not confirm that a campaign is still accepting creators, has budget left, accepts your account, or has the same terms today. The app labels old/unknown snapshots, treats remaining budget as a snapshot-derived value, excludes TikTok-only leads from the India workflow, and links to official Discover for verification. If the feed cannot be reached, the app reports the error and falls back to the official copy/paste workflow; it does not invent results. No credentials are sent to the third-party feed.
+
 ## Unified Rewards Intelligence Engine
 
 After a campaign brief is analysed, the engine creates an action plan for the selected campaign platform and shows separate native monetization checklists for YouTube, Facebook and Instagram.

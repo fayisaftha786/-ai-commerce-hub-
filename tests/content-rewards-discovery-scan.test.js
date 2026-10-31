@@ -4,7 +4,8 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs/promises");
 const os = require("node:os");
 const path = require("node:path");
-const { runScheduledScan, decodeHtmlEntities, extractVisibleText, fetchPublicCampaignPage, fetchCampaignDetails } = require("../scripts/content-rewards-discovery-scan.js");
+const { runScheduledScan, decodeHtmlEntities, extractVisibleText, fetchPublicCampaignPage, fetchCampaignDetails, fetchFeedWithRetry } = require("../scripts/content-rewards-discovery-scan.js");
+const Feed = require("../content-rewards-assistant/campaign-feed.js");
 
 function sample(id) {
   return {
@@ -121,6 +122,70 @@ const PUBLIC_HTML = `<!doctype html><html><body>
 </main>
 <script>const privateToken = "must-not-be-indexed";</script>
 </body></html>`;
+
+test("campaign-feed retry recovers from temporary 5xx responses before declaring scan failure", async () => {
+  const statuses = [500, 503, 200];
+  let calls = 0;
+  const payload = {
+    success: true,
+    data: [{
+      externalId: "retry-campaign", title: "Recovered Campaign", brand: "Sample Brand",
+      url: "https://contentrewards.com/c/campaigns/retry-campaign",
+      payouts: [{ platform: "instagram", ratePerKViews: 2.5 }]
+    }]
+  };
+  const result = await fetchFeedWithRetry(Feed, {
+    now: Date.parse("2026-10-31T00:00:00Z"),
+    platform: "Instagram",
+    retryDelaysMs: [0, 0],
+    fetchImpl: async () => {
+      const status = statuses[calls++];
+      return { ok: status === 200, status, json: async () => payload };
+    }
+  });
+  assert.equal(result.attempts, 3);
+  assert.equal(calls, 3);
+  assert.equal(result.result.campaigns.length, 1);
+  assert.equal(result.result.campaigns[0].id, "retry-campaign");
+});
+
+test("campaign-feed retry does not retry permanent 4xx responses", async () => {
+  let calls = 0;
+  await assert.rejects(fetchFeedWithRetry(Feed, {
+    retryDelaysMs: [0, 0],
+    fetchImpl: async () => {
+      calls += 1;
+      return { ok: false, status: 404, json: async () => ({ success: false }) };
+    }
+  }), /HTTP 404/);
+  assert.equal(calls, 1);
+});
+
+test("campaign-feed retry retries network errors but never retries an aborted request", async () => {
+  let calls = 0;
+  const result = await fetchFeedWithRetry(Feed, {
+    now: Date.parse("2026-10-31T00:00:00Z"),
+    retryDelaysMs: [0],
+    fetchImpl: async () => {
+      calls += 1;
+      if (calls === 1) throw new Error("temporary socket error");
+      return { ok: true, status: 200, json: async () => ({ success: true, data: [] }) };
+    }
+  });
+  assert.equal(result.attempts, 2);
+  assert.equal(calls, 2);
+  let abortCalls = 0;
+  await assert.rejects(fetchFeedWithRetry(Feed, {
+    retryDelaysMs: [0, 0],
+    fetchImpl: async () => {
+      abortCalls += 1;
+      const error = new Error("aborted");
+      error.name = "AbortError";
+      throw error;
+    }
+  }), /could not be reached/);
+  assert.equal(abortCalls, 1);
+});
 
 test("HTML extraction reads visible main content, decodes entities and excludes navigation/scripts", () => {
   assert.equal(decodeHtmlEntities("A &amp; B &#36; &#x20B9; &nbsp;"), "A & B $ ₹  ");

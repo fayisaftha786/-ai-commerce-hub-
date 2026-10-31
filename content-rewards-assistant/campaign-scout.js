@@ -211,11 +211,11 @@
     return PLATFORM_NAMES.filter(([name, pattern]) => {
       if (!pattern.test(line)) return false;
       if (name !== "X") return true;
-      return /\\btwitter\\b/i.test(line) ||
-        /^\\s*(?:platform\\s*[:=-]?\\s*)?x\\s*$/i.test(line) ||
-        /\\b(?:platforms?|accepted|supported|available|eligible)\\b/i.test(line) ||
-        /\\b(?:post|publish|upload|share)\\b.{0,40}\\bx\\b/i.test(line) ||
-        /\\bon\\s+x\\b/i.test(line);
+      return /\btwitter\b/i.test(line) ||
+        /^\s*(?:platform\s*[:=-]?\s*)?x\s*$/i.test(line) ||
+        /\b(?:platforms?|accepted|supported|available|eligible)\b/i.test(line) ||
+        /\b(?:post|publish|upload|share)\b.{0,40}\bx\b/i.test(line) ||
+        /\bon\s+x\b/i.test(line);
     }).map(([name]) => name);
   }
 
@@ -223,16 +223,17 @@
     if (!mentions.length) return false;
     if (mentions.length > 1) return true;
     const name = mentions[0].toLowerCase();
-    if (line.trim().toLowerCase() === name || (/^platform\\s*[:=-]?\\s*/i.test(line) && line.replace(/^platform\\s*[:=-]?\\s*/i, "").trim().toLowerCase() === name)) return true;
-    if (/\\b(?:platforms?|accepted|supported|available|eligible)\\b/i.test(line)) return true;
-    if (/\\b(?:publish|post|upload|share)\\b.{0,40}\\b(?:on|to)\\b/i.test(line)) return true;
+    if (line.trim().toLowerCase() === name ||
+        (/^platform\s*[:=-]?\s*/i.test(line) && line.replace(/^platform\s*[:=-]?\s*/i, "").trim().toLowerCase() === name)) return true;
+    if (/\b(?:platforms?|accepted|supported|available|eligible)\b/i.test(line)) return true;
+    if (/\b(?:publish|post|upload|share)\b.{0,40}\b(?:on|to)\b/i.test(line)) return true;
     return false;
   }
 
   function extractPlatforms(lines) {
     const accepted = new Set();
     const excluded = new Set();
-    const negative = /\\b(?:not\\s+(?:accepted|supported|allowed|available|eligible)|no|exclude[sd]?|unsupported|unavailable|do\\s+not|don't|must\\s+not|cannot|can't|prohibited|except)\\b/i;
+    const negative = /\b(?:not\s+(?:accepted|supported|allowed|available|eligible)|no|exclude[sd]?|unsupported|unavailable|do\s+not|don't|must\s+not|cannot|can't|prohibited|except)\b/i;
     for (const line of lines) {
       const mentions = platformMentionsForLine(line);
       if (!isPlatformDeclarationLine(line, mentions)) continue;
@@ -248,7 +249,7 @@
     };
   }
 
-  function findMoneyNear(text, patterns) {
+    function findMoneyNear(text, patterns) {
     const money = "([$€£₹]\\s*[\\d,]+(?:\\.\\d+)?\\s*[kKmM]?(?=\\s|$|[,.;:/+])|(?:USD|EUR|GBP|INR)\\s*[\\d,]+(?:\\.\\d+)?\\s*[kKmM]?(?=\\s|$|[,.;:/+])|[\\d,]+(?:\\.\\d+)?\\s*[kKmM]?(?=\\s|$|[,.;:/+])\\s*(?:USD|EUR|GBP|INR))";
     for (const pattern of patterns) {
       const before = new RegExp(pattern + "\\s*[:=-]?\\s*" + money, "i").exec(text);
@@ -356,10 +357,10 @@
       if (mentions.length === 1 && isPlatformDeclarationLine(line, mentions)) activePlatform = mentions[0];
       if (!activePlatform) continue;
       const rate = parseRate(line) || parseRate(sample);
-      const hasMaximumPayoutLabel = /(?:maximum|max\\.?)\\s+payout\\b/i.test(line);
-      const hasExplicitClipCapLabel = /(?:maximum|max\\.?)\\s*(?:per\\s+(?:clip|video|post)|clip\\s+cap)|(?:per\\s+(?:clip|video|post)|clip\\s+cap)\\s*(?:maximum|max\\.?|cap)?/i.test(line);
+      const hasMaximumPayoutLabel = /(?:maximum|max\.?)\s+payout\b/i.test(line);
+      const hasExplicitClipCapLabel = /(?:maximum|max\.?)\s*(?:per\s+(?:clip|video|post)|clip\s+cap)|(?:per\s+(?:clip|video|post)|clip\s+cap)\s*(?:maximum|max\.?|cap)?/i.test(line);
       const cap = hasMaximumPayoutLabel
-        ? extractPayoutBound([line, lines[index + 1] || ""].join("\\n"), "maximum")
+        ? extractPayoutBound([line, lines[index + 1] || ""].join("\n"), "maximum")
         : hasExplicitClipCapLabel
           ? extractCap([line, lines[index + 1] || ""].join(" "))
           : null;

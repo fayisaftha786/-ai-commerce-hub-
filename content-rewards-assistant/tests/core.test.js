@@ -62,6 +62,40 @@ test("backup export/import round-trips and rejects unsupported or duplicate data
 });
 
 
+test("legacy Content Rewards submission records remain importable but are labelled without timing evidence", () => {
+  const legacy = Core.normalizeCampaign({
+    id: "legacy-submission",
+    name: "Older campaign",
+    platform: "Content Rewards",
+    status: "submitted"
+  });
+  assert.equal(Core.hasLegacySubmissionTiming(legacy), true);
+
+  const timed = Core.normalizeCampaign({
+    id: "timed-submission",
+    name: "Current campaign",
+    platform: "Content Rewards",
+    status: "submitted",
+    submittedAt: "2026-10-30T10:20:00.000Z"
+  });
+  assert.equal(Core.hasLegacySubmissionTiming(timed), false);
+
+  const unrelated = Core.normalizeCampaign({
+    id: "other-platform",
+    name: "Other platform campaign",
+    platform: "Whop",
+    status: "submitted"
+  });
+  assert.equal(Core.hasLegacySubmissionTiming(unrelated), false);
+});
+
+test("campaign cards visibly flag legacy submissions whose submission time was not recorded", () => {
+  const appSource = fs.readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
+  assert.ok(appSource.includes("Core.hasLegacySubmissionTiming(campaign)"));
+  assert.match(appSource, /Legacy · submission time not recorded/);
+});
+
+
 test("account center stores only local creator labels, social handles and explicit checklist confirmations", () => {
   const account = Core.normalizeAccount({
     displayName: "Creator workspace",

@@ -112,6 +112,13 @@
     return { valid: true, error: "" };
   }
 
+  function hasLegacySubmissionTiming(input) {
+    const source = input && typeof input === "object" && !Array.isArray(input) ? input : {};
+    return source.platform === "Content Rewards" &&
+      ["submitted", "approved", "rejected"].includes(source.status) &&
+      !text(source.submittedAt, 40);
+  }
+
   function normalizeCampaign(input, now) {
     const source = input && typeof input === "object" && !Array.isArray(input) ? input : {};
     const name = text(source.name, 120);
@@ -288,7 +295,7 @@
 
   return Object.freeze({
     VERSION, STATUSES, PLATFORMS, MAX_CAMPAIGNS, MAX_TIMESTAMPS, MAX_SOCIAL_ACCOUNTS, SOCIAL_PLATFORMS, ACCOUNT_CHECKS,
-    MAX_SUBMISSION_WINDOW_MS, validDate, safeUrl, postUrlMatchesPlatform, validateTimestamp, validateSubmissionRecord, normalizeCampaign, normalizeTimestamp, normalizeAccount,
+    MAX_SUBMISSION_WINDOW_MS, validDate, safeUrl, postUrlMatchesPlatform, validateTimestamp, validateSubmissionRecord, hasLegacySubmissionTiming, normalizeCampaign, normalizeTimestamp, normalizeAccount,
     stats, makeDraft, createBackup, parseBackup
   });
 });

@@ -223,7 +223,7 @@
     if (!mentions.length) return false;
     if (mentions.length > 1) return true;
     const name = mentions[0].toLowerCase();
-    if (line.trim().toLowerCase() === name || new RegExp("^\\\\s*platform\\\\s*[:=-]?\\\\s*" + name + "\\\\s*$", "i").test(line)) return true;
+    if (line.trim().toLowerCase() === name || (/^platform\\s*[:=-]?\\s*/i.test(line) && line.replace(/^platform\\s*[:=-]?\\s*/i, "").trim().toLowerCase() === name)) return true;
     if (/\\b(?:platforms?|accepted|supported|available|eligible)\\b/i.test(line)) return true;
     if (/\\b(?:publish|post|upload|share)\\b.{0,40}\\b(?:on|to)\\b/i.test(line)) return true;
     return false;

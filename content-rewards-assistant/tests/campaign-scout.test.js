@@ -165,7 +165,7 @@ test("campaign finder is wired to official Discover, local parser, and existing 
   assert.ok(app.includes("analyseCampaignBrief();"));
   assert.ok(app.includes('addEventListener("input"'));
   assert.match(app, /result\.platformMatch === "mismatch"/);
-  assert.match(worker, /clipreward-static-v7/);
+  assert.match(worker, /clipreward-static-v8/);
   assert.match(worker, /campaign-scout\.js/);
 });
 
@@ -212,4 +212,17 @@ test("campaign parser recognises shared pool payout models without inventing a p
   assert.equal(result.rate.amount, null);
   assert.match(result.rate.label, /variable allocation/i);
   assert.equal(result.platformMatch, "match");
+});
+
+\ntest("unified Rewards Intelligence engine is loaded and displayed with the campaign findings", () => {
+  const root = path.join(__dirname, "..");
+  const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  const worker = fs.readFileSync(path.join(root, "service-worker.js"), "utf8");
+  assert.match(html, /rewards-intelligence\\.js/);
+  assert.match(html, /id="reward-intelligence-results"/);
+  assert.match(app, /ClipRewardIntelligence\\.assessAll/);
+  assert.match(app, /renderRewardsIntelligence/);
+  assert.match(worker, /clipreward-static-v8/);
+  assert.match(worker, /rewards-intelligence\\.js/);
 });

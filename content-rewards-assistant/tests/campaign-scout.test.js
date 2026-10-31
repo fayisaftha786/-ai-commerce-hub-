@@ -214,7 +214,6 @@ test("campaign parser recognises shared pool payout models without inventing a p
   assert.equal(result.platformMatch, "match");
 });
 
-
 test("unified Rewards Intelligence engine is loaded and displayed with the campaign findings", () => {
   const root = path.join(__dirname, "..");
   const html = fs.readFileSync(path.join(root, "index.html"), "utf8");

@@ -174,6 +174,19 @@
     return scenes;
   }
 
+  async function assertVideoPlayback(scenes) {
+    for (const scene of scenes) {
+      if (scene.kind !== "video") continue;
+      try {
+        await scene.element.play();
+        scene.element.pause();
+        scene.element.currentTime = 0;
+      } catch (_) {
+        throw new Error("The browser could not play " + scene.name + ". Try converting it to MP4 or WebM before editing.");
+      }
+    }
+  }
+
   function drawCover(context, source, width, height) {
     const sourceWidth = source.videoWidth || source.naturalWidth || source.width;
     const sourceHeight = source.videoHeight || source.naturalHeight || source.height;
@@ -206,6 +219,24 @@
       return { duration: video.duration, width: video.videoWidth, height: video.videoHeight };
     } finally {
       root.URL.revokeObjectURL(url);
+    }
+  }
+
+  function createMediaRecorder(stream, videoBitsPerSecond) {
+    const Recorder = root.MediaRecorder;
+    let lastError = null;
+    for (const candidate of MIME_CANDIDATES) {
+      let supported = false;
+      try { supported = Recorder.isTypeSupported(candidate); } catch (_) {}
+      if (!supported) continue;
+      try {
+        return new Recorder(stream, { mimeType: candidate, videoBitsPerSecond });
+      } catch (error) { lastError = error; }
+    }
+    try { return new Recorder(stream, { videoBitsPerSecond }); }
+    catch (error) {
+      throw new Error("The browser reported a recording codec but could not start MediaRecorder. " +
+        ((error && error.message) || (lastError && lastError.message) || "Try Chrome or another supported browser."));
     }
   }
 
@@ -242,7 +273,16 @@
     }
 
     try {
+      let audioResume = null;
+      if (opts.audioFile) {
+        const AudioContextClass = root.AudioContext || root.webkitAudioContext;
+        if (!AudioContextClass) throw new Error("This browser cannot mix an uploaded voice-over or music track.");
+        audioContext = new AudioContextClass();
+        // Create and resume the audio context during the user's button gesture.
+        audioResume = audioContext.resume();
+      }
       const scenes = await loadMedia(files, urls);
+      await assertVideoPlayback(scenes);
       const captions = splitCaptions(opts.captions);
       const sceneDuration = duration / scenes.length;
       const stream = canvas.captureStream(FPS);
@@ -250,10 +290,7 @@
       if (!tracks.some((track) => track.kind === "video")) throw new Error("The browser did not create a video capture track.");
 
       if (opts.audioFile) {
-        const AudioContextClass = root.AudioContext || root.webkitAudioContext;
-        if (!AudioContextClass) throw new Error("This browser cannot mix an uploaded voice-over or music track.");
-        audioContext = new AudioContextClass();
-        await audioContext.resume();
+        await audioResume;
         const decoded = await audioContext.decodeAudioData(await opts.audioFile.arrayBuffer());
         const destination = audioContext.createMediaStreamDestination();
         const source = audioContext.createBufferSource();
@@ -271,10 +308,7 @@
       }
 
       const chunks = [];
-      recorder = new root.MediaRecorder(stream, {
-        mimeType: capabilities.mimeType,
-        videoBitsPerSecond: 2500000
-      });
+      recorder = createMediaRecorder(stream, 2500000);
       const stopped = new Promise((resolve, reject) => {
         recorder.addEventListener("dataavailable", (event) => {
           if (event.data && event.data.size) chunks.push(event.data);
@@ -283,13 +317,14 @@
         recorder.addEventListener("stop", resolve, { once: true });
       });
 
+      let playbackError = null;
       function paint(elapsed) {
         const sceneIndex = Math.min(scenes.length - 1, Math.floor(elapsed / sceneDuration));
         const scene = scenes[sceneIndex];
         scenes.forEach((item, index) => {
           if (item.kind !== "video") return;
           if (index === sceneIndex) {
-            if (item.element.paused) item.element.play().catch(() => {});
+            if (item.element.paused) item.element.play().catch(() => { playbackError = new Error("A source video stopped playing during export."); });
           } else if (!item.element.paused) item.element.pause();
         });
         context.fillStyle = "#080d1a";
@@ -326,6 +361,10 @@
           const now = root.performance && root.performance.now ? root.performance.now() : Date.now();
           const elapsed = Math.min(duration, (now - startedAt) / 1000);
           paint(elapsed);
+          if (playbackError) {
+            reject(playbackError);
+            return;
+          }
           if (typeof opts.onProgress === "function") opts.onProgress(Math.min(100, Math.round(elapsed / duration * 100)));
           if (elapsed >= duration) {
             resolve();
@@ -367,156 +406,101 @@
     }
   }
 
-  function bindInterface() {
-    const documentRef = root.document;
-    const byId = (id) => documentRef.getElementById(id);
-    const mediaInput = byId("video-media-files");
-    const audioInput = byId("video-audio-file");
-    const durationInput = byId("video-duration");
-    const captionsInput = byId("video-captions");
-    const createButton = byId("video-create-button");
-    const cancelButton = byId("video-cancel-button");
-    const downloadLink = byId("video-download-link");
-    const preview = byId("video-output-preview");
-    const status = byId("video-export-status");
-    const progress = byId("video-export-progress");
-    if (!mediaInput || !audioInput || !durationInput || !createButton || !status || createButton.dataset.bound === "true") return;
-    createButton.dataset.bound = "true";
-
-    let controller = null;
-    let busy = false;
-    let outputUrl = "";
-    let output = null;
-
-    const caps = getCapabilities(root);
-    byId("video-capability").textContent = caps.supported
-      ? "Ready · " + caps.formatLabel + " recording supported · " + WIDTH + " × " + HEIGHT + " · " + FPS + " fps"
-      : "Not supported in this browser: " + caps.missing.join(", ");
-    byId("video-capability").classList.toggle("video-capability-error", !caps.supported);
-
-    function setStatus(message, isError) {
-      status.textContent = message;
-      status.classList.toggle("video-status-error", !!isError);
+  async function renderDeviceTest(options) {
+    const opts = options || {};
+    const duration = 4;
+    const capabilities = getCapabilities(root);
+    if (!capabilities.supported) throw new Error("This browser cannot export video. Missing: " + capabilities.missing.join(", ") + ".");
+    const canvas = root.document.createElement("canvas");
+    canvas.width = WIDTH;
+    canvas.height = HEIGHT;
+    const context = canvas.getContext("2d", { alpha: false });
+    if (!context) throw new Error("Could not create the device-test drawing surface.");
+    const stream = canvas.captureStream(FPS);
+    const tracks = stream.getTracks();
+    let recorder = null;
+    let animationId = null;
+    let cancelled = false;
+    const signal = opts.signal;
+    const onAbort = () => { cancelled = true; };
+    const abortError = () => {
+      const error = new Error("Device export test was cancelled.");
+      error.name = "AbortError";
+      return error;
+    };
+    if (signal) {
+      if (signal.aborted) throw abortError();
+      signal.addEventListener("abort", onAbort, { once: true });
     }
-
-    function refreshPreflight() {
-      let valid = false;
-      let summary = "Select photos or video clips to begin.";
-      try {
-        if (mediaInput.files && mediaInput.files.length) {
-          const checked = validateFiles(mediaInput.files, audioInput.files && audioInput.files[0]);
-          valid = true;
-          summary = checked.count + " media file(s) · " + (checked.mediaBytes / (1024 * 1024)).toFixed(1) + " MB" +
-            (checked.audioBytes ? " · audio " + (checked.audioBytes / (1024 * 1024)).toFixed(1) + " MB" : "");
-        }
-      } catch (error) { summary = error.message; }
-      byId("video-file-summary").textContent = summary;
-      const ready = caps.supported && valid && byId("video-rights-confirm").checked &&
-        byId("video-rules-confirm").checked && !busy;
-      createButton.disabled = !ready;
-      if (!busy && !valid) setStatus(summary, false);
-      else if (!busy && valid && (!byId("video-rights-confirm").checked || !byId("video-rules-confirm").checked)) {
-        setStatus("Preflight: confirm media rights and check the live campaign requirements before export.", false);
-      } else if (!busy && valid) setStatus("Preflight passed. Ready to render locally on this device.", false);
-    }
-
-    function setBusy(value) {
-      busy = value;
-      createButton.disabled = value || !caps.supported;
-      cancelButton.hidden = !value;
-      cancelButton.disabled = !value;
-      mediaInput.disabled = value;
-      audioInput.disabled = value;
-      durationInput.disabled = value;
-      captionsInput.disabled = value;
-      byId("video-rights-confirm").disabled = value;
-      byId("video-rules-confirm").disabled = value;
-      if (!value) refreshPreflight();
-    }
-
-    [mediaInput, audioInput, durationInput, byId("video-rights-confirm"), byId("video-rules-confirm")]
-      .forEach((element) => element.addEventListener("change", refreshPreflight));
-
-    byId("video-use-script").addEventListener("click", () => {
-      const source = (byId("draft-output").value || "").split(/\r?\n/)
-        .map((line) => line.trim())
-        .filter((line) => line && !/^(PLATFORM:|HOOK|BODY|CTA|DISCLOSURE|CHECK BEFORE POSTING|ആരംഭം|വിശദീകരണം|പ്രതികരണം|വെളിപ്പെടുത്തൽ|പോസ്റ്റ് ചെയ്യുന്നതിന് മുമ്പ്)/i.test(line));
-      if (!source.length) {
-        setStatus("Generate a content draft first, then use it as scene captions.", true);
-        return;
-      }
-      captionsInput.value = source.slice(0, MAX_MEDIA_FILES).join("\n");
-      setStatus("Draft text copied into scene captions. Review and shorten each line for readability.", false);
-    });
-
-    createButton.addEventListener("click", async () => {
-      if (busy) return;
-      try {
-        validateFiles(mediaInput.files, audioInput.files && audioInput.files[0]);
-      } catch (error) { setStatus(error.message, true); return; }
-      if (!byId("video-rights-confirm").checked || !byId("video-rules-confirm").checked) {
-        setStatus("Confirm you have rights to every asset and have checked the campaign's live rules.", true);
-        return;
-      }
-      if (outputUrl) root.URL.revokeObjectURL(outputUrl);
-      outputUrl = "";
-      output = null;
-      downloadLink.hidden = true;
-      preview.hidden = true;
-      preview.removeAttribute("src");
-      progress.value = 0;
-      controller = new root.AbortController();
-      setBusy(true);
-      setStatus("Loading and checking media files…", false);
-      try {
-        output = await render({
-          files: mediaInput.files,
-          audioFile: audioInput.files && audioInput.files[0],
-          durationSeconds: Number(durationInput.value),
-          captions: captionsInput.value,
-          signal: controller.signal,
-          onProgress: (value) => {
-            progress.value = value;
-            setStatus("Rendering video on this device… " + value + "%", false);
-          }
+    try {
+      if (!tracks.some((track) => track.kind === "video")) throw new Error("The browser did not create a test video track.");
+      const chunks = [];
+      recorder = createMediaRecorder(stream, 1200000);
+      const stopped = new Promise((resolve, reject) => {
+        recorder.addEventListener("dataavailable", (event) => {
+          if (event.data && event.data.size) chunks.push(event.data);
         });
-        outputUrl = root.URL.createObjectURL(output.blob);
-        preview.src = outputUrl;
-        preview.hidden = false;
-        downloadLink.href = outputUrl;
-        downloadLink.download = "clipreward-video-" + new Date().toISOString().replace(/[:.]/g, "-") + "." + output.extension;
-        downloadLink.textContent = "Save " + output.formatLabel + " video";
-        downloadLink.hidden = false;
-        setStatus("Export verified: " + output.width + " × " + output.height + " · " +
-          output.duration.toFixed(1) + " sec · " + output.formatLabel + " · " +
-          (output.size / (1024 * 1024)).toFixed(2) + " MB. Preview it, then save the file.", false);
-      } catch (error) {
-        if (error && error.name === "AbortError") setStatus("Export cancelled. No completed file was saved.", false);
-        else setStatus((error && error.message) || "Video export failed. Try smaller files or another supported browser.", true);
-      } finally {
-        controller = null;
-        setBusy(false);
+        recorder.addEventListener("error", () => reject(new Error("The device test recorder stopped unexpectedly.")), { once: true });
+        recorder.addEventListener("stop", resolve, { once: true });
+      });
+      recorder.start(300);
+      const startedAt = root.performance.now();
+      await new Promise((resolve, reject) => {
+        const tick = () => {
+          if (cancelled || (signal && signal.aborted)) {
+            reject(abortError());
+            return;
+          }
+          const elapsed = Math.min(duration, (root.performance.now() - startedAt) / 1000);
+          context.fillStyle = "#080d1a";
+          context.fillRect(0, 0, WIDTH, HEIGHT);
+          context.fillStyle = "#8b7cff";
+          context.fillRect(48, 48, WIDTH - 96, 14);
+          context.fillStyle = "#ffffff";
+          context.textAlign = "center";
+          context.textBaseline = "middle";
+          context.font = "bold 48px Arial, sans-serif";
+          context.fillText("VIDEO EXPORT TEST", WIDTH / 2, HEIGHT / 2 - 80);
+          context.font = "32px Arial, sans-serif";
+          context.fillText("ClipReward Studio", WIDTH / 2, HEIGHT / 2 - 12);
+          context.fillText(elapsed.toFixed(1) + " / " + duration + " sec", WIDTH / 2, HEIGHT / 2 + 60);
+          context.fillStyle = "#8b7cff";
+          context.fillRect(48, HEIGHT - 72, (WIDTH - 96) * Math.min(1, elapsed / duration), 12);
+          if (typeof opts.onProgress === "function") opts.onProgress(Math.min(100, Math.round(elapsed / duration * 100)));
+          if (elapsed >= duration) resolve();
+          else animationId = root.requestAnimationFrame(tick);
+        };
+        animationId = root.requestAnimationFrame(tick);
+      });
+      if (recorder.state !== "inactive") recorder.stop();
+      await stopped;
+      if (cancelled || (signal && signal.aborted)) throw abortError();
+      const blob = new root.Blob(chunks, { type: recorder.mimeType || capabilities.mimeType });
+      const metadata = await verifyBlob(blob, duration);
+      return {
+        blob,
+        mimeType: blob.type,
+        extension: blob.type.indexOf("mp4") >= 0 ? "mp4" : "webm",
+        formatLabel: blob.type.indexOf("mp4") >= 0 ? "MP4" : "WebM",
+        duration: metadata.duration,
+        width: metadata.width,
+        height: metadata.height,
+        size: blob.size
+      };
+    } catch (error) {
+      if (recorder && recorder.state !== "inactive") {
+        try { recorder.stop(); } catch (_) {}
       }
-    });
-
-    cancelButton.addEventListener("click", () => {
-      if (controller) controller.abort();
-    });
-
-    root.addEventListener("pagehide", () => {
-      if (controller) controller.abort();
-      if (outputUrl) root.URL.revokeObjectURL(outputUrl);
-    });
-    refreshPreflight();
-  }
-
-  if (root && root.document) {
-    if (root.document.readyState === "loading") root.document.addEventListener("DOMContentLoaded", bindInterface, { once: true });
-    else bindInterface();
+      throw error;
+    } finally {
+      if (animationId != null && typeof root.cancelAnimationFrame === "function") root.cancelAnimationFrame(animationId);
+      tracks.forEach((track) => { try { track.stop(); } catch (_) {} });
+      if (signal) signal.removeEventListener("abort", onAbort);
+    }
   }
 
   return Object.freeze({
     MAX_MEDIA_FILES, MAX_MEDIA_BYTES, MAX_AUDIO_BYTES, WIDTH, HEIGHT, FPS, MIME_CANDIDATES,
-    chooseMimeType, getCapabilities, fileKind, validateFiles, splitCaptions, validateRenderedMetadata, verifyBlob, render
+    chooseMimeType, createMediaRecorder, getCapabilities, fileKind, validateFiles, splitCaptions, validateRenderedMetadata, verifyBlob, render, renderDeviceTest
   });
 });

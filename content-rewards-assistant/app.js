@@ -213,7 +213,8 @@
   function renderCampaignScout(result) {
     campaignScoutResult = result;
     $("scout-result-title").textContent = result.title || "Campaign details found";
-    const sourceLabel = result.analysisSource === "public-url" ? "Auto-fetched public page" : "Copied text";
+    const sourceLabel = result.analysisSource === "public-url" ? "Auto-fetched public page" :
+      result.analysisSource === "third-party-feed" ? "Third-party lead data" : "Copied text";
     $("scout-confidence").textContent = sourceLabel + " · " + (result.coverageScore == null ? result.confidence : result.coverageScore + "% core-field coverage");
     $("scout-confidence").classList.toggle("scout-match", result.platformMatch === "match");
     $("scout-confidence").classList.toggle("scout-mismatch", result.platformMatch === "mismatch");
@@ -221,7 +222,9 @@
     $("scout-confidence").title = "Coverage is a count of six key fields detected in the copied text. It is not a confidence score for eligibility or approval. " + result.requirementLines.length + " rule lines were captured.";
     const provenance = result.analysisSource === "public-url"
       ? "This report was extracted automatically from the public Content Rewards campaign page stored in the latest scheduled snapshot. It can be up to six hours old; verify current rules, availability and eligibility on the official page."
-      : "Findings come only from the text you pasted. Unknown values stay unknown; verify current rules, availability and eligibility on the official page.";
+      : result.analysisSource === "third-party-feed"
+        ? "This report uses third-party feed metadata only; it is not a full public campaign-page analysis. Open the URL analyzer when the latest scheduled scan has fetched that page."
+        : "Findings come only from the text you pasted. Unknown values stay unknown; verify current rules, availability and eligibility on the official page.";
     $("scout-source-note").textContent = (result.platformMatch === "match"
       ? result.requestedPlatform + " appears in the accepted platform names detected from the campaign page."
       : result.platformMatch === "mismatch"
@@ -350,9 +353,11 @@
       const merged = window.ClipRewardDiscovery.mergeHistory(discoveryState.campaigns, result.campaigns);
       discoveryState = { campaigns: merged.campaigns, scans: discoveryState.scans || [] };
       if (!window.ClipRewardDiscovery.writeState(discoveryState)) throw new Error("Snapshot loaded, but the browser could not save its local cache.");
+      const pageDetails = result.campaignDetails || [];
+      const fetchedPages = pageDetails.filter((item) => item.status === "ok").length;
       const message = lastScan.status === "failed"
         ? "Latest scheduled scan failed: " + (lastScan.error || "source unavailable") + ". Previous campaign rows were preserved."
-        : "GitHub Actions snapshot loaded · " + result.campaigns.length + " saved campaigns · last scan " + new Date(lastScan.completedAt || lastScan.at).toLocaleString() + ".";
+        : "GitHub Actions snapshot loaded · " + result.campaigns.length + " leads · " + fetchedPages + "/" + pageDetails.length + " public campaign pages auto-read · last scan " + new Date(lastScan.completedAt || lastScan.at).toLocaleString() + ".";
       $("discovery-status").textContent = message;
       $("discovery-backend-status").textContent = "GitHub Actions scheduled snapshot is active. No separate backend URL is needed for this public feed.";
       scheduleDiscovery();
@@ -518,13 +523,17 @@
     }
   }
 
-  function importFeedCampaign(index) {
+  async function importFeedCampaign(index) {
     const campaign = campaignFeedRows[index];
     if (!campaign) return;
+    $("scout-source-url").value = campaign.officialUrl || "";
+    if (campaign.officialUrl) {
+      const pageLoaded = await analysePublicCampaignUrl();
+      if (pageLoaded) return;
+    }
     const platform = $("scout-target-platform").value;
     $("scout-brief-text").value = window.ClipRewardFeed.campaignToBrief(campaign, platform);
-    $("scout-source-url").value = campaign.officialUrl || "";
-    analyseCampaignBrief();
+    analyseCampaignBrief(null, "third-party-feed");
     $("scout-results").scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
@@ -621,9 +630,12 @@
           $("scout-source-note").textContent += " Public page fetched: " + (detail.fetchedAt || "timestamp unavailable") + ".";
         }
         $("scout-results").scrollIntoView({ behavior: "smooth", block: "start" });
+        return true;
       }
+      return false;
     } catch (error) {
       showToast(error && error.message ? error.message : "Could not auto-analyse this public campaign URL.");
+      return false;
     } finally {
       button.disabled = false;
       button.textContent = "⌕ Analyse website automatically";

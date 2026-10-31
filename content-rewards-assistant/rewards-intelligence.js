@@ -160,7 +160,7 @@
     };
     if (rate.model === "CPM") return {
       model: "CPM",
-      formula: "Gross clip earnings = CPM rate × eligible counted views ÷ 1,000, limited by the per-platform maximum per clip and remaining campaign budget. The creator fee is then deducted; views and approval are determined by Content Rewards and the campaign team.",
+      formula: "Gross clip earnings = CPM rate × eligible qualified views counted by Content Rewards ÷ 1,000, limited by the per-platform maximum per clip and remaining campaign budget. The creator fee is then deducted; views and approval are determined by Content Rewards and the campaign team.",
       amountKnown: Boolean(rate.amount),
       capPerClip: capPerClip || null,
       creatorFee: fee

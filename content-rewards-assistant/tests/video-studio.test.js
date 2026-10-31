@@ -17,6 +17,26 @@ test("falls back to a supported WebM codec rather than pretending MP4 is availab
   assert.equal(Studio.chooseMimeType(recorder), "video/webm;codecs=vp8,opus");
 });
 
+
+test("retries another browser codec when a reported MP4 codec fails at recorder creation", () => {
+  const previous = global.MediaRecorder;
+  class FakeRecorder {
+    static isTypeSupported() { return true; }
+    constructor(stream, options) {
+      if (options.mimeType && options.mimeType.startsWith("video/mp4")) throw new Error("MP4 encoder unavailable");
+      this.mimeType = options.mimeType || "";
+    }
+  }
+  global.MediaRecorder = FakeRecorder;
+  try {
+    const recorder = Studio.createMediaRecorder({}, 1000000);
+    assert.match(recorder.mimeType, /^video\/webm/);
+  } finally {
+    if (previous === undefined) delete global.MediaRecorder;
+    else global.MediaRecorder = previous;
+  }
+});
+
 test("does not report browser rendering support when required APIs are missing", () => {
   const unsupported = Studio.getCapabilities({});
   assert.equal(unsupported.supported, false);

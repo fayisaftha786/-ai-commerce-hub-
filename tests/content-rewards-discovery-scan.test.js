@@ -4,13 +4,13 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs/promises");
 const os = require("node:os");
 const path = require("node:path");
-const { runScheduledScan } = require("../scripts/content-rewards-discovery-scan.js");
+const { runScheduledScan, decodeHtmlEntities, extractVisibleText, fetchPublicCampaignPage, fetchCampaignDetails } = require("../scripts/content-rewards-discovery-scan.js");
 
 function sample(id) {
   return {
     id, title: "Campaign " + id, brand: "Sample brand",
     payouts: [{ platform: "Instagram", ratePerKViews: 2.5, minViewsRequired: 1000, maxPayoutPerSubmission: 50 }],
-    ageDays: 1, freshness: "recent", officialUrl: "https://contentrewards.com/c/discover",
+    ageDays: 1, freshness: "recent", officialUrl: "https://contentrewards.com/c/campaigns/" + id,
     source: "Third-party scraped snapshot"
   };
 }
@@ -88,4 +88,137 @@ test("GitHub scheduled workflow writes no credentials and redeploys the static s
   assert.ok(workflow.includes("uses: actions/deploy-pages@v5"));
   assert.match(workflow, /git push origin HEAD:main/);
   assert.match(workflow, /continue-on-error: true/);
+});
+
+const PUBLIC_HTML = `<!doctype html><html><body>
+<nav>Discover My work Analytics Settings</nav>
+<main>
+  <h1>Public Campaign: Seasonal Creator Clips</h1>
+  <p>Get paid for original short videos and use only licensed audio.</p>
+  <div>Accepting clips</div>
+  <div>Instagram</div>
+  <div>CPM</div>
+  <div>Per 1K views</div>
+  <div>$2.50</div>
+  <div>Min payout</div><div>$5.00</div>
+  <div>Max payout</div><div>$125.00</div>
+  <div>Budget</div><div>$250 / $2,000</div>
+  <div>Minimum 5K views</div>
+  <div>Minimum 1K followers</div>
+  <div>Deadline: December 20, 2026</div>
+  <div>Join Campaign</div>
+  <div>Join to unlock 2 requirements and 1 file</div>
+</main>
+<script>const privateToken = "must-not-be-indexed";</script>
+</body></html>`;
+
+test("HTML extraction reads visible main content, decodes entities and excludes navigation/scripts", () => {
+  assert.equal(decodeHtmlEntities("A &amp; B &#36; &#x20B9; &nbsp;"), "A & B $ ₹  ");
+  const visible = extractVisibleText(PUBLIC_HTML);
+  assert.match(visible, /Seasonal Creator Clips/);
+  assert.match(visible, /Budget/);
+  assert.doesNotMatch(visible, /must-not-be-indexed|Discover My work Analytics/);
+});
+
+test("direct public page fetch is restricted to Content Rewards HTTPS campaign pages", async () => {
+  let requested;
+  const url = "https://contentrewards.com/c/campaigns/direct-test";
+  const detail = await fetchPublicCampaignPage(url, {
+    now: Date.parse("2026-10-31T00:00:00Z"),
+    fetchImpl: async (input, options) => {
+      requested = { input, options };
+      return {
+        ok: true, status: 200, url,
+        headers: { get: (name) => name.toLowerCase() === "content-type" ? "text/html; charset=utf-8" : "" },
+        text: async () => PUBLIC_HTML
+      };
+    }
+  });
+  assert.equal(requested.input, url);
+  assert.equal(requested.options.method, "GET");
+  assert.equal(requested.options.credentials, "omit");
+  assert.equal(requested.options.redirect, "follow");
+  assert.equal(detail.status, "ok");
+  assert.equal(detail.pageTitle, "Public Campaign: Seasonal Creator Clips");
+  assert.equal(detail.detected.rate.model, "CPM");
+  assert.equal(detail.detected.rate.amount.value, 2.5);
+  assert.equal(detail.detected.budget.remaining.value, 1750);
+  assert.equal(detail.detected.minimumViews, 5000);
+  assert.equal(detail.detected.minimumFollowers, 1000);
+  assert.equal(detail.detected.hiddenRequirements.locked, true);
+  assert.doesNotMatch(detail.pageText, /must-not-be-indexed/);
+  await assert.rejects(fetchPublicCampaignPage("https://evil.example/c/campaigns/x"), /Only public HTTPS Content Rewards/);
+});
+
+test("direct public page fetch rejects redirects outside Content Rewards and non-HTML responses", async () => {
+  const url = "https://contentrewards.com/c/campaigns/safe";
+  await assert.rejects(fetchPublicCampaignPage(url, {
+    fetchImpl: async () => ({ ok: true, status: 200, url: "https://evil.example/c/campaigns/safe", headers: { get: () => "text/html" }, text: async () => PUBLIC_HTML })
+  }), /redirected outside/);
+  await assert.rejects(fetchPublicCampaignPage(url, {
+    fetchImpl: async () => ({ ok: true, status: 200, url, headers: { get: () => "application/json" }, text: async () => "{}" })
+  }), /did not return an HTML/);
+});
+
+test("detail crawler caps concurrency, stores public page text and preserves old detail on fetch errors", async () => {
+  let running = 0;
+  let maxRunning = 0;
+  const urls = ["one", "two", "three", "four"].map((id) => ({
+    officialUrl: "https://contentrewards.com/c/campaigns/" + id
+  }));
+  const fetched = await fetchCampaignDetails(urls, {
+    concurrency: 2,
+    now: Date.parse("2026-10-31T00:00:00Z"),
+    fetchImpl: async (url) => {
+      running += 1;
+      maxRunning = Math.max(maxRunning, running);
+      await new Promise((resolve) => setImmediate(resolve));
+      running -= 1;
+      if (url.endsWith("/two")) throw new Error("temporary block");
+      return { ok: true, status: 200, url, headers: { get: () => "text/html" }, text: async () => PUBLIC_HTML };
+    }
+  });
+  assert.equal(maxRunning, 2);
+  assert.equal(fetched.attempted, 4);
+  assert.equal(fetched.available, 3);
+  assert.equal(fetched.failed, 1);
+  const prior = fetched.details.find((row) => row.url.endsWith("/two"));
+  assert.equal(prior.status, "unavailable");
+
+  const refreshed = await fetchCampaignDetails(urls.slice(1, 2), {
+    previous: [fetched.details.find((row) => row.url.endsWith("/two"))],
+    fetchImpl: async () => { throw new Error("still blocked"); }
+  });
+  assert.equal(refreshed.details[0].status, "unavailable");
+  assert.match(refreshed.details[0].lastError, /still blocked/);
+});
+
+test("scheduled scan publishes campaign detail pages beside lead metadata", async () => {
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), "clipreward-cron-details-"));
+  const filePath = path.join(directory, "snapshot.json");
+  try {
+    const result = await runScheduledScan({
+      filePath,
+      now: Date.parse("2026-10-31T00:00:00Z"),
+      detailLimit: 2,
+      feed: { fetchCampaigns: async () => ({
+        campaigns: [sample("one")], totalReceived: 1,
+        fetchedAt: "2026-10-31T00:00:00.000Z",
+        sourceLabel: "Third-party public snapshot", sourceUrl: "https://contentrewards.xyz/api/cr/campaigns"
+      }) },
+      fetchPageImpl: async (url) => ({
+        ok: true, status: 200, url,
+        headers: { get: () => "text/html" },
+        text: async () => PUBLIC_HTML
+      })
+    });
+    assert.equal(result.ok, true);
+    assert.equal(result.snapshot.campaignDetails.length, 1);
+    assert.equal(result.snapshot.campaignDetails[0].status, "ok");
+    assert.equal(result.snapshot.lastScan.detailPagesAvailable, 1);
+    assert.equal(result.snapshot.campaignDetails[0].detected.rate.amount.value, 2.5);
+    assert.equal(JSON.parse(await fs.readFile(filePath, "utf8")).campaignDetails.length, 1);
+  } finally {
+    await fs.rm(directory, { recursive: true, force: true });
+  }
 });

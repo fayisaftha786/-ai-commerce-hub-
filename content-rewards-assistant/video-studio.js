@@ -394,6 +394,13 @@
 
   async function render(options) {
     const opts = options || {};
+    const signal = opts.signal;
+    const abortError = () => {
+      const error = new Error("Video export was cancelled.");
+      error.name = "AbortError";
+      return error;
+    };
+    if (signal && signal.aborted) throw abortError();
     const files = Array.from(opts.files || []);
     const duration = Number(opts.durationSeconds || 30);
     if (![15, 30, 60].includes(duration)) throw new Error("Choose a 15, 30 or 60 second export.");
@@ -412,12 +419,6 @@
     let recorder = null;
     let animationId = null;
     let cancelled = false;
-    const signal = opts.signal;
-    const abortError = () => {
-      const error = new Error("Video export was cancelled.");
-      error.name = "AbortError";
-      return error;
-    };
     const onAbort = () => { cancelled = true; };
     if (signal) {
       if (signal.aborted) throw abortError();
@@ -561,6 +562,13 @@
   async function renderDeviceTest(options) {
     const opts = options || {};
     const duration = 4;
+    const signal = opts.signal;
+    const abortError = () => {
+      const error = new Error("Device export test was cancelled.");
+      error.name = "AbortError";
+      return error;
+    };
+    if (signal && signal.aborted) throw abortError();
     const capabilities = getCapabilities(root);
     if (!capabilities.supported) throw new Error("This browser cannot export video. Missing: " + capabilities.missing.join(", ") + ".");
     const canvas = root.document.createElement("canvas");
@@ -573,18 +581,12 @@
     let recorder = null;
     let animationId = null;
     let cancelled = false;
-    const signal = opts.signal;
     const onAbort = () => { cancelled = true; };
-    const abortError = () => {
-      const error = new Error("Device export test was cancelled.");
-      error.name = "AbortError";
-      return error;
-    };
-    if (signal) {
-      if (signal.aborted) throw abortError();
-      signal.addEventListener("abort", onAbort, { once: true });
-    }
     try {
+      if (signal) {
+        if (signal.aborted) throw abortError();
+        signal.addEventListener("abort", onAbort, { once: true });
+      }
       if (!tracks.some((track) => track.kind === "video")) throw new Error("The browser did not create a test video track.");
       const chunks = [];
       recorder = createMediaRecorder(stream, 1200000);

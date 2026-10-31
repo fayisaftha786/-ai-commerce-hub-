@@ -149,6 +149,31 @@ test("campaign-feed retry recovers from temporary 5xx responses before declaring
   assert.equal(result.result.campaigns[0].id, "retry-campaign");
 });
 
+test("failed scheduled scans persist the number of transient feed attempts", async () => {
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), "clipreward-feed-retries-"));
+  const filePath = path.join(directory, "snapshot.json");
+  let calls = 0;
+  try {
+    const result = await runScheduledScan({
+      filePath,
+      now: Date.parse("2026-10-31T00:00:00Z"),
+      feedRetryDelaysMs: [0, 0],
+      fetchImpl: async () => {
+        calls += 1;
+        return { ok: false, status: 500, json: async () => ({ success: false }) };
+      }
+    });
+    assert.equal(result.ok, false);
+    assert.equal(calls, 3);
+    assert.equal(result.snapshot.lastScan.feedRequestAttempts, 3);
+    assert.match(result.snapshot.lastScan.error, /HTTP 500/);
+    const saved = JSON.parse(await fs.readFile(filePath, "utf8"));
+    assert.equal(saved.lastScan.feedRequestAttempts, 3);
+  } finally {
+    await fs.rm(directory, { recursive: true, force: true });
+  }
+});
+
 test("campaign-feed retry does not retry permanent 4xx responses", async () => {
   let calls = 0;
   await assert.rejects(fetchFeedWithRetry(Feed, {

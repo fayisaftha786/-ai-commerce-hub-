@@ -81,6 +81,90 @@ test("verifies exported duration and 9:16 dimensions instead of trusting the rec
   assert.throws(() => Studio.validateRenderedMetadata({ duration: 0, width: 720, height: 1280 }, 30, 720, 1280), /no readable duration/i);
 });
 
+
+test("campaign preflight matches selected platform, duration, deadline, hashtags and mentions", () => {
+  const result = Studio.inspectCampaignRules({
+    selectedCampaign: true,
+    rules: "Accepted platforms: Instagram, YouTube\nVideo duration: {\"minSeconds\":15,\"maxSeconds\":30}\nHashtags: #Creator #Rewards\nMentions: @brand",
+    platform: "Instagram Reels",
+    durationSeconds: 30,
+    deadline: "2026-11-30",
+    today: "2026-10-31",
+    postCaption: "A useful clip #Creator #Rewards @brand"
+  });
+  assert.equal(result.status, "needs-review");
+  assert.deepEqual(result.acceptedPlatforms, ["Instagram", "YouTube"]);
+  assert.deepEqual(result.bounds, { minSeconds: 15, maxSeconds: 30 });
+  assert.deepEqual(result.missingHashtags, []);
+  assert.deepEqual(result.missingMentions, []);
+  assert.equal(result.checks.find((item) => item.key === "platform").status, "matched");
+  assert.equal(result.checks.find((item) => item.key === "duration").status, "matched");
+  assert.equal(result.checks.find((item) => item.key === "post-tags").status, "matched");
+});
+
+test("campaign preflight blocks a platform excluded by the saved brief", () => {
+  const result = Studio.inspectCampaignRules({
+    selectedCampaign: true,
+    rules: "Accepted platforms: Instagram, YouTube\nVideo duration: {\"minSeconds\":15,\"maxSeconds\":60}",
+    platform: "Facebook Reels",
+    durationSeconds: 30,
+    deadline: "2026-11-30",
+    today: "2026-10-31"
+  });
+  assert.equal(result.status, "blocked");
+  assert.match(result.blockingReasons.join(" "), /Facebook is not in the campaign's accepted-platform list/);
+});
+
+test("campaign preflight blocks short/long videos and expired deadlines", () => {
+  const rules = "Accepted platforms: Instagram\nVideo duration: {\"minSeconds\":15,\"maxSeconds\":30}";
+  const short = Studio.inspectCampaignRules({
+    selectedCampaign: true, rules, platform: "Instagram", durationSeconds: 10,
+    deadline: "2026-11-30", today: "2026-10-31"
+  });
+  assert.equal(short.status, "blocked");
+  assert.match(short.blockingReasons.join(" "), /shorter than the campaign minimum/);
+  const long = Studio.inspectCampaignRules({
+    selectedCampaign: true, rules, platform: "Instagram", durationSeconds: 60,
+    deadline: "2026-11-30", today: "2026-10-31"
+  });
+  assert.match(long.blockingReasons.join(" "), /longer than the campaign maximum/);
+  const expired = Studio.inspectCampaignRules({
+    selectedCampaign: true, rules, platform: "Instagram", durationSeconds: 30,
+    deadline: "2026-10-30", today: "2026-10-31"
+  });
+  assert.match(expired.blockingReasons.join(" "), /deadline.*has passed/i);
+});
+
+test("campaign preflight shows missing tags, disclosure and locked requirements for manual review", () => {
+  const result = Studio.inspectCampaignRules({
+    selectedCampaign: true,
+    rules: "Accepted platforms: Instagram\nVideo duration: minimum 15 seconds maximum 30 seconds\nHashtags: #BrandTag\nMentions: @brand\nDisclosure: add #ad\nCreator requirements locked until Join Campaign",
+    platform: "Instagram",
+    durationSeconds: 20,
+    deadline: "2026-11-30",
+    today: "2026-10-31",
+    postCaption: "New video"
+  });
+  assert.equal(result.status, "needs-review");
+  assert.deepEqual(result.missingHashtags, ["#BrandTag"]);
+  assert.deepEqual(result.missingMentions, ["@brand"]);
+  assert.ok(result.reviewReasons.some((item) => /hashtags or partner mentions/i.test(item)));
+  assert.ok(result.checks.some((item) => item.key === "disclosure" && item.status === "review"));
+  assert.ok(result.checks.some((item) => item.key === "hidden-requirements" && item.status === "review"));
+});
+
+test("campaign preflight keeps absent campaign and unknown rules explicit", () => {
+  const empty = Studio.inspectCampaignRules({ selectedCampaign: false, platform: "Instagram", durationSeconds: 30 });
+  assert.equal(empty.status, "no-campaign");
+  const unknown = Studio.inspectCampaignRules({
+    selectedCampaign: true, rules: "No platform requirements in my notes", platform: "Instagram",
+    durationSeconds: 30, today: "2026-10-31"
+  });
+  assert.equal(unknown.status, "needs-review");
+  assert.equal(unknown.checks.find((item) => item.key === "platform").status, "unknown");
+  assert.equal(unknown.checks.find((item) => item.key === "duration").status, "unknown");
+});
+
 test("Clip Studio exposes media upload, audio, preflight, progress, preview and save controls", () => {
   const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
   const worker = fs.readFileSync(path.join(__dirname, "..", "service-worker.js"), "utf8");

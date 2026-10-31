@@ -83,3 +83,27 @@
 @media(max-width:560px){.scout-platform-tiles{grid-template-columns:1fr}.scout-platform-actions{display:grid;grid-template-columns:1fr 1fr}.scout-platform-actions .button{width:100%}}
 
 .status-applied{background:#3a2c4e;color:#dfc3ff}.status-joined{background:#213b50;color:#a8ddff}
+
+
+/* Unified Rewards Intelligence */
+.reward-intelligence{margin:18px 0 14px;padding:16px;border:1px solid #3a4064;border-radius:14px;background:linear-gradient(145deg,#181d38,#10192b)}
+.reward-intelligence h3{font-size:16px;margin:4px 0 0}
+.ri-heading,.ri-native-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.ri-badge{border:1px solid #494477;background:#262449;color:#c9c1ff;border-radius:8px;padding:5px 8px;font-size:9px;font-weight:800}
+.ri-summary{margin:13px 0;padding:13px;border:1px solid #61512d;background:#302817;border-radius:10px}
+.ri-summary strong{font-size:12px;color:#ffe2a0}.ri-summary p{font-size:11px;line-height:1.6;color:#e5d8b8;margin:5px 0}.ri-summary small{font-size:9px;line-height:1.5;color:#bba982}
+.ri-blocked{border-color:#814b4b;background:#351f27}.ri-blocked strong{color:#ffb6b6}.ri-promising{border-color:#315f50;background:#142d2a}.ri-promising strong{color:#a8e7cf}
+.ri-check-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.ri-check{padding:11px;border:1px solid #2b3851;background:#0e1728;border-radius:9px;min-width:0}
+.ri-check strong{display:block;font-size:10px;margin:6px 0 4px;color:#e8edfb}.ri-check p,.ri-native-card p{font-size:10px;line-height:1.55;color:#9fadc5;margin:0;overflow-wrap:anywhere}
+.ri-status{display:inline-block;padding:3px 6px;border-radius:6px;font-size:8px;font-weight:900;letter-spacing:.4px}.ri-pass{color:#9ce7c7;background:#16372f}.ri-fail{color:#ffb5b5;background:#48272d}.ri-unknown,.ri-must-check{color:#f0d18d;background:#3b301f}
+.ri-requirements{margin:12px 0;padding:12px;border:1px solid #34415d;border-radius:10px;background:#111a2c}.ri-requirements>strong{font-size:11px}.ri-requirements ul{padding-left:18px;margin:8px 0 0;color:#aebbd1;font-size:10px;line-height:1.65}.ri-requirements li{margin:4px 0}
+.ri-native-heading{margin:18px 0 10px}.ri-native-heading p{font-size:10px;color:#9ba9c1;margin:4px 0}.ri-native-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.ri-native-card{padding:12px;border:1px solid #2b3851;background:#0d1728;border-radius:10px;min-width:0}.ri-native-top>span{font-size:9px;font-weight:900;letter-spacing:1px;color:#b8adff}
+.ri-native-card h4{font-size:12px;margin:9px 0 4px}.ri-native-card .ri-route{font-size:9px;color:#bdb3ff;margin-bottom:7px}
+.ri-native-card ul{padding-left:15px;margin:9px 0;color:#a6b3c9;font-size:9px;line-height:1.6}.ri-native-card li{margin:4px 0}.ri-native-card a{font-size:9px;font-weight:800;color:#b8adff;text-decoration:none}.ri-native-card a:hover{text-decoration:underline}
+.ri-boundary{font-size:9px;line-height:1.55;color:#7f8eaa;margin:12px 0 0}
+@media(max-width:760px){.ri-check-grid,.ri-native-grid{grid-template-columns:1fr}.ri-heading{align-items:flex-start;flex-direction:column}}
+
+.ri-payout{padding:12px;border:1px solid #47416f;background:#211f3e;border-radius:10px;margin:10px 0}
+.ri-payout strong{font-size:11px;color:#c8bfff}.ri-payout p{font-size:10px;line-height:1.6;color:#b4bdd2;margin:5px 0 0}
+.ri-summary ul{padding-left:18px;margin:8px 0;color:#f1c2c2;font-size:10px;line-height:1.55}.ri-summary li{margin:3px 0}

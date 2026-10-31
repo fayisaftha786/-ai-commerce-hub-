@@ -156,6 +156,16 @@
       <div><strong>Still missing / verify</strong><ul id="scout-missing" class="scout-list scout-missing"></ul></div>
     </div>
     <p class="tiny-note" id="scout-source-note">Findings come only from the text you pasted. Unknown values stay unknown; verify rate, budget left, accepted platform, eligibility and deadline on the official campaign page.</p>
+    <section id="reward-intelligence-results" class="reward-intelligence" aria-live="polite">
+      <div class="ri-heading"><div><div class="section-kicker">UNIFIED REWARDS INTELLIGENCE</div><h3>Campaign action plan & native earning checks</h3></div><span class="ri-badge">Rules analysis</span></div>
+      <div id="ri-campaign-summary"></div>
+      <div id="ri-rule-checks" class="ri-check-grid"></div>
+      <div id="ri-requirements"></div>
+      <div class="ri-native-heading"><div class="section-kicker">SEPARATE NATIVE PLATFORM EARNINGS</div><p>These are independent from Content Rewards campaign payouts.</p></div>
+      <div id="ri-native-programs" class="ri-native-grid"></div>
+      <p class="ri-boundary">No social or Content Rewards API is connected. These checks use the copied brief and current official help links only; account eligibility, invitations, approvals, views and paid earnings remain unverified until confirmed in each official dashboard.</p>
+    </section>
+
     <button class="button button-primary full-width" id="scout-autofill-button" type="button" disabled>Autofill campaign tracker</button>
   </section>
 </section>
@@ -230,7 +240,7 @@
 <p class="muted small-text deadline-help">To mark a Content Rewards record Submitted, select the platform, use its matching public post link, and record both times. The app checks that the link-submission time is not before the post and is strictly less than 30 minutes later. Enter the time you actually pressed Submit clip; this app still cannot submit or verify the receipt.</p><div class="modal-actions"><button class="button button-quiet" id="cancel-modal" type="button">Cancel</button><button class="button button-primary" type="submit">Save campaign</button></div></form>
 </section></div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
-<script src="./campaign-scout.js"></script><script src="./core.js"></script><script src="./app.js"></script>
+<script src="./campaign-scout.js"></script><script src="./rewards-intelligence.js"></script><script src="./core.js"></script><script src="./app.js"></script>
 <script data-register-service-worker>
   if ("serviceWorker" in navigator && location.protocol !== "file:") {
     window.addEventListener("load", () => {

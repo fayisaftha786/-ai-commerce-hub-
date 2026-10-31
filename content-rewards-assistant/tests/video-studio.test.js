@@ -246,7 +246,7 @@ test("Clip Studio exposes media upload, audio, preflight, progress, preview and 
   assert.match(html, /video-studio-ui\.js/);
   assert.ok(html.includes('id="video-device-test-button"'));
   assert.equal(typeof Studio.renderDeviceTest, "function");
-  assert.match(worker, /clipreward-static-v14/);
+  assert.match(worker, /clipreward-static-v15/);
   assert.match(worker, /video-studio\.js/);
   assert.match(worker, /video-studio-ui\.js/);
   assert.match(packageJson.scripts.check, /content-rewards-assistant\/video-studio\.js/);

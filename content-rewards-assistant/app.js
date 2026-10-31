@@ -317,9 +317,13 @@
     const payoutParts = [];
     if (selectedRate) payoutParts.push(selectedRate.label);
     else if (hasPlatformRates) payoutParts.push(target + " payout rate not recognised in copied text");
-    if (cap) payoutParts.push("Max per clip: " + window.ClipRewardScout.formatAmount(cap));
+    if (cap) payoutParts.push("Max payout / clip cap: " + window.ClipRewardScout.formatAmount(cap));
+    if (result.minimumPayout) payoutParts.push("Minimum payout: " + window.ClipRewardScout.formatAmount(result.minimumPayout));
     if (minimumViews != null) payoutParts.push("Min views: " + Number(minimumViews).toLocaleString("en"));
     if (maximumViews != null) payoutParts.push("Max views: " + Number(maximumViews).toLocaleString("en"));
+    if (result.hiddenRequirements && result.hiddenRequirements.locked) {
+      payoutParts.push("Creator requirements locked until join" + (result.hiddenRequirements.count == null ? "" : " (" + result.hiddenRequirements.count + ")"));
+    }
     $("campaign-payout-terms").value = payoutParts.join(" · ").slice(0, 180);
     const budgetParts = [];
     if (result.budget && result.budget.spent) budgetParts.push(window.ClipRewardScout.formatAmount(result.budget.spent) + " used");

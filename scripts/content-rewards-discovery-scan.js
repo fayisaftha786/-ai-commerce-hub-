@@ -45,7 +45,7 @@ async function writeSnapshot(filePath, snapshot) {
 
 function decodeHtmlEntities(value) {
   const named = { amp: "&", quot: '"', apos: "'", nbsp: " ", lt: "<", gt: ">", ndash: "–", mdash: "—", rsquo: "’", lsquo: "‘", rdquo: "”", ldquo: "“", hellip: "…" };
-  return String(value || "").replace(/&(#x[0-9a-f]+|#\\d+|[a-z]+);/gi, (match, entity) => {
+  return String(value || "").replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (match, entity) => {
     if (entity[0] === "#") {
       const hex = entity[1] && entity[1].toLowerCase() === "x";
       const number = Number.parseInt(entity.slice(hex ? 2 : 1), hex ? 16 : 10);
@@ -56,26 +56,26 @@ function decodeHtmlEntities(value) {
 }
 
 function extractVisibleText(html) {
-  let source = String(html || "").replace(/<!--[\\s\\S]*?-->/g, " ");
-  const main = /<main\\b[^>]*>([\\s\\S]*?)<\\/main>/i.exec(source);
+  let source = String(html || "").replace(/<!--[\s\S]*?-->/g, " ");
+  const main = /<main\b[^>]*>([\s\S]*?)<\/main>/i.exec(source);
   if (main && main[1].length > 100) source = main[1];
   else {
-    const body = /<body\\b[^>]*>([\\s\\S]*?)<\\/body>/i.exec(source);
+    const body = /<body\b[^>]*>([\s\S]*?)<\/body>/i.exec(source);
     if (body) source = body[1];
   }
   source = source
-    .replace(/<(script|style|noscript|svg|iframe|template)\\b[^>]*>[\\s\\S]*?<\\/\\1\\s*>/gi, " ")
-    .replace(/<(nav|footer|aside)\\b[^>]*>[\\s\\S]*?<\\/\\1\\s*>/gi, " ")
-    .replace(/<img\\b[^>]*alt=["']([^"']+)["'][^>]*>/gi, " $1 ")
-    .replace(/<\\/(?:h[1-6]|p|li|div|section|article|tr|td|th|header|main|ul|ol)>/gi, "\\n")
-    .replace(/<(?:br|hr)\\b[^>]*>/gi, "\\n")
+    .replace(/<(script|style|noscript|svg|iframe|template)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, " ")
+    .replace(/<(nav|footer|aside)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, " ")
+    .replace(/<img\b[^>]*alt=["']([^"']+)["'][^>]*>/gi, " $1 ")
+    .replace(/<\/(?:h[1-6]|p|li|div|section|article|tr|td|th|header|main|ul|ol)>/gi, "\n")
+    .replace(/<(?:br|hr)\b[^>]*>/gi, "\n")
     .replace(/<[^>]+>/g, " ");
   const lines = decodeHtmlEntities(source)
-    .replace(/\\u00a0/g, " ")
-    .split(/\\n+/)
-    .map((line) => line.replace(/\\s+/g, " ").trim())
+    .replace(/\u00a0/g, " ")
+    .split(/\n+/)
+    .map((line) => line.replace(/\s+/g, " ").trim())
     .filter(Boolean);
-  const text = lines.join("\\n");
+  const text = lines.join("\n");
   if (text.length < 40) throw new Error("The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).");
   return text.slice(0, MAX_PAGE_TEXT);
 }
@@ -104,7 +104,7 @@ async function fetchPublicCampaignPage(value, options = {}) {
       throw new Error("The campaign URL redirected outside the public Content Rewards campaign page.");
     }
     const contentType = response.headers && response.headers.get ? response.headers.get("content-type") || "" : "";
-    if (contentType && !/(?:text\\/html|application\\/xhtml\\+xml)/i.test(contentType)) {
+    if (contentType && !/(?:text\/html|application\/xhtml\+xml)/i.test(contentType)) {
       throw new Error("The campaign URL did not return an HTML page.");
     }
     const raw = await response.text();

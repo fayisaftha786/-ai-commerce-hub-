@@ -207,20 +207,45 @@
     return "";
   }
 
+  function platformMentionsForLine(line) {
+    return PLATFORM_NAMES.filter(([name, pattern]) => {
+      if (!pattern.test(line)) return false;
+      if (name !== "X") return true;
+      return /\\btwitter\\b/i.test(line) ||
+        /^\\s*(?:platform\\s*[:=-]?\\s*)?x\\s*$/i.test(line) ||
+        /\\b(?:platforms?|accepted|supported|available|eligible)\\b/i.test(line) ||
+        /\\b(?:post|publish|upload|share)\\b.{0,40}\\bx\\b/i.test(line) ||
+        /\\bon\\s+x\\b/i.test(line);
+    }).map(([name]) => name);
+  }
+
+  function isPlatformDeclarationLine(line, mentions) {
+    if (!mentions.length) return false;
+    if (mentions.length > 1) return true;
+    const name = mentions[0].toLowerCase();
+    if (line.trim().toLowerCase() === name || new RegExp("^\\\\s*platform\\\\s*[:=-]?\\\\s*" + name + "\\\\s*$", "i").test(line)) return true;
+    if (/\\b(?:platforms?|accepted|supported|available|eligible)\\b/i.test(line)) return true;
+    if (/\\b(?:publish|post|upload|share)\\b.{0,40}\\b(?:on|to)\\b/i.test(line)) return true;
+    return false;
+  }
+
   function extractPlatforms(lines) {
     const accepted = new Set();
     const excluded = new Set();
-    const negative = /\b(?:not\s+(?:accepted|supported|allowed|available|eligible)|no|exclude[sd]?|unsupported|unavailable|do\s+not|don't|must\s+not|cannot|can't|prohibited|except)\b/i;
+    const negative = /\\b(?:not\\s+(?:accepted|supported|allowed|available|eligible)|no|exclude[sd]?|unsupported|unavailable|do\\s+not|don't|must\\s+not|cannot|can't|prohibited|except)\\b/i;
     for (const line of lines) {
-      for (const [name, pattern] of PLATFORM_NAMES) {
-        if (!pattern.test(line)) continue;
+      const mentions = platformMentionsForLine(line);
+      if (!isPlatformDeclarationLine(line, mentions)) continue;
+      for (const name of mentions) {
         if (negative.test(line)) excluded.add(name);
         else accepted.add(name);
       }
     }
     for (const name of excluded) accepted.delete(name);
-    return { accepted: PLATFORM_NAMES.filter(([name]) => accepted.has(name)).map(([name]) => name),
-      excluded: PLATFORM_NAMES.filter(([name]) => excluded.has(name)).map(([name]) => name) };
+    return {
+      accepted: PLATFORM_NAMES.filter(([name]) => accepted.has(name)).map(([name]) => name),
+      excluded: PLATFORM_NAMES.filter(([name]) => excluded.has(name)).map(([name]) => name)
+    };
   }
 
   function findMoneyNear(text, patterns) {
@@ -323,19 +348,25 @@
     for (let index = 0; index < lines.length; index += 1) {
       const line = lines[index];
       const sample = [line, lines[index + 1] || "", lines[index + 2] || ""].join(" ");
-      const mentions = PLATFORM_NAMES.filter(([, pattern]) => pattern.test(line)).map(([name]) => name);
-      if (mentions.length > 1) {
+      const mentions = platformMentionsForLine(line);
+      if (mentions.length > 1 && isPlatformDeclarationLine(line, mentions)) {
         activePlatform = "";
         continue;
       }
-      if (mentions.length === 1) activePlatform = mentions[0];
+      if (mentions.length === 1 && isPlatformDeclarationLine(line, mentions)) activePlatform = mentions[0];
       if (!activePlatform) continue;
       const rate = parseRate(line) || parseRate(sample);
-      const cap = extractCap(line) || extractCap(sample);
+      const hasMaximumPayoutLabel = /(?:maximum|max\\.?)\\s+payout\\b/i.test(line);
+      const hasExplicitClipCapLabel = /(?:maximum|max\\.?)\\s*(?:per\\s+(?:clip|video|post)|clip\\s+cap)|(?:per\\s+(?:clip|video|post)|clip\\s+cap)\\s*(?:maximum|max\\.?|cap)?/i.test(line);
+      const cap = hasMaximumPayoutLabel
+        ? extractPayoutBound([line, lines[index + 1] || ""].join("\\n"), "maximum")
+        : hasExplicitClipCapLabel
+          ? extractCap([line, lines[index + 1] || ""].join(" "))
+          : null;
       const minimumViews = extractMinimumViews(line) ?? extractMinimumViews(sample);
       const maximumViews = extractMaximumViews(line) ?? extractMaximumViews(sample);
       if (rate) result.rates.push({ platform: activePlatform, ...rate, evidence: clean(sample, 300) });
-      if (cap) result.caps.push({ platform: activePlatform, amount: cap, evidence: clean(sample, 300) });
+      if (cap) result.caps.push({ platform: activePlatform, amount: cap, evidence: clean([line, lines[index + 1] || ""].join(" "), 300) });
       if (minimumViews != null) result.minimumViews.push({ platform: activePlatform, value: minimumViews, evidence: clean(sample, 300) });
       if (maximumViews != null) result.maximumViews.push({ platform: activePlatform, value: maximumViews, evidence: clean(sample, 300) });
     }
@@ -344,7 +375,6 @@
     }
     return result;
   }
-
   function extractPlatformRates(lines) {
     return extractPlatformTerms(lines).rates;
   }

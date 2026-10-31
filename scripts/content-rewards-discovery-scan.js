@@ -92,7 +92,7 @@ function canonicalDiscoverUrl(value) {
     if (url.protocol !== "https:" ||
         (url.hostname !== "contentrewards.com" && !url.hostname.endsWith(".contentrewards.com")) ||
         (url.port && url.port !== "443") || url.username || url.password ||
-        url.pathname.replace(/\\/+$/, "").toLowerCase() !== "/c/discover") return "";
+        url.pathname.replace(/\/+$/, "").toLowerCase() !== "/c/discover") return "";
     url.pathname = "/c/discover";
     url.search = "";
     url.hash = "";
@@ -122,20 +122,25 @@ function extractDiscoverCampaigns(html) {
     if (!officialUrl || seen.has(officialUrl)) continue;
     seen.add(officialUrl);
     const titleAttribute = /\\b(?:aria-label|title)\\s*=\\s*(["'])(.*?)\\1/i.exec(attributes);
-    const anchorText = decodeHtmlEntities((match[2] || "")
+    const anchorBody = match[2] || "";
+    const heading = /<h[1-6]\\b[^>]*>([\\s\\S]*?)<\\/h[1-6]\\s*>/i.exec(anchorBody);
+    const headingText = heading
+      ? decodeHtmlEntities(heading[1].replace(/<[^>]+>/g, " ")).replace(/\\s+/g, " ").trim()
+      : "";
+    const anchorText = decodeHtmlEntities(anchorBody
       .replace(/<(script|style|noscript)\\b[^>]*>[\\s\\S]*?<\\/\\1\\s*>/gi, " ")
       .replace(/<img\\b[^>]*alt=["']([^"']+)["'][^>]*>/gi, " $1 ")
       .replace(/<[^>]+>/g, " "))
       .replace(/\\s+/g, " ").trim();
     const url = new URL(officialUrl);
     const id = url.pathname.split("/").filter(Boolean).pop() || officialUrl;
-    const title = (anchorText || (titleAttribute && decodeHtmlEntities(titleAttribute[2])) || id).slice(0, 180);
+    const title = (headingText || (titleAttribute && decodeHtmlEntities(titleAttribute[2])) || anchorText || id).slice(0, 180);
     campaigns.push({
       id,
       title,
       brand: "",
       type: "",
-      description: "",
+      description: anchorText.slice(0, 1200),
       payouts: [],
       ageDays: 0,
       freshness: "recent",
@@ -221,7 +226,7 @@ async function fetchApprovedHtmlPage(value, canonicalize, options = {}) {
       throw new Error("The public Content Rewards page response URL did not match the validated destination.");
     }
     const contentType = response.headers && response.headers.get ? response.headers.get("content-type") || "" : "";
-    if (contentType && !/(?:text\\/html|application\\/xhtml\\+xml)/i.test(contentType)) {
+    if (contentType && !/(?:text\/html|application\/xhtml\+xml)/i.test(contentType)) {
       throw new Error("The public Content Rewards URL did not return an HTML page.");
     }
     const raw = await response.text();

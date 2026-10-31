@@ -103,7 +103,7 @@
 
   function parseRate(text) {
     const raw = String(text || "");
-    const money = "([$€£₹]\\s*[\\d,]+(?:\\.\\d+)?\\s*[kKmM]?|(?:USD|EUR|GBP|INR)\\s*[\\d,]+(?:\\.\\d+)?\\s*[kKmM]?|[\\d,]+(?:\\.\\d+)?\\s*[kKmM]?\\s*(?:USD|EUR|GBP|INR))";
+    const money = "([$€£₹]\\s*[\\d,]+(?:\\.\\d+)?\\s*[kKmM]?(?=\\s|$|[,.;:/])|(?:USD|EUR|GBP|INR)\\s*[\\d,]+(?:\\.\\d+)?\\s*[kKmM]?(?=\\s|$|[,.;:/])|[\\d,]+(?:\\.\\d+)?\\s*[kKmM]?(?=\\s|$|[,.;:/])\\s*(?:USD|EUR|GBP|INR))";
     let match = new RegExp(money + "\\s*(?:\\/\\s*(?:1\\s*,?\\s*000|1k)|per\\s*1\\s*,?\\s*000(?:\\s+views?)?|\\bCPM\\b)", "i").exec(raw);
     if (!match) {
       match = new RegExp("\\bCPM\\b\\s*[:=-]?\\s*" + money, "i").exec(raw);
@@ -138,7 +138,7 @@
     if (/\bretainer\b/i.test(raw)) return { model: "Retainer", amount: null, label: "Retainer (amount not parsed)" };
 
     if (/\b(?:payout|reward|payment)\s*(?:model|type)?\s*[:=-]?\s*pool\b|\bpool[- ]based\s+(?:payout|reward)\b|\bpool\s+campaign\b|\bprize\s+pool\b/i.test(raw)) {
-      return { model: "Pool", amount: null, label: "Pool — allocation depends on the campaign's pool rules and eligible views" };
+      return { model: "Pool", amount: null, label: "Pool — variable allocation depends on the campaign's pool rules and eligible views" };
     }
     return null;
   }
@@ -216,7 +216,7 @@
   }
 
   function findMoneyNear(text, patterns) {
-    const money = "([$€£₹]\\s*[\\d,]+(?:\\.\\d+)?\\s*[kKmM]?|(?:USD|EUR|GBP|INR)\\s*[\\d,]+(?:\\.\\d+)?\\s*[kKmM]?|[\\d,]+(?:\\.\\d+)?\\s*[kKmM]?\\s*(?:USD|EUR|GBP|INR))";
+    const money = "([$€£₹]\\s*[\\d,]+(?:\\.\\d+)?\\s*[kKmM]?(?=\\s|$|[,.;:/])|(?:USD|EUR|GBP|INR)\\s*[\\d,]+(?:\\.\\d+)?\\s*[kKmM]?(?=\\s|$|[,.;:/])|[\\d,]+(?:\\.\\d+)?\\s*[kKmM]?(?=\\s|$|[,.;:/])\\s*(?:USD|EUR|GBP|INR))";
     for (const pattern of patterns) {
       const before = new RegExp(pattern + "\\s*[:=-]?\\s*" + money, "i").exec(text);
       if (before) return parseAmount(before[1]);
@@ -428,7 +428,7 @@
     if (!deadline) missing.push("Campaign deadline not stated or not recognised");
     if (rate && rate.model === "CPM" && !capPerClip) missing.push("CPM maximum per clip not recognised — check the selected platform's campaign page");
     if (rate && rate.model === "CPM" && minimumViews == null) missing.push("CPM minimum views not recognised — check the campaign page");
-    if (unsupportedPlatforms.length) missing.push(unsupportedPlatforms.join(", ") + " is not available as an India posting destination");
+    if (unsupportedPlatforms.length) missing.push(unsupportedPlatforms.join(", ") + " is not available in the India workflow; do not select it as a posting destination");
     if (campaignStatus === "Paused" || campaignStatus === "Ended / closed" || campaignStatus === "Out of budget") {
       missing.push("Campaign status appears to be " + campaignStatus + " — do not assume new clips are being accepted");
     }
@@ -456,7 +456,7 @@
     if (budget && budget.total) budgetParts.push(formatAmount(budget.total) + " total");
     if (budget && budget.remaining) budgetParts.push(formatAmount(budget.remaining) + " remaining");
     const lines = [
-      "Imported from copied Content Rewards campaign text — verify against the live campaign page.",
+      "Imported from copied Content Rewards campaign text — verify against the official campaign page; compare with the live campaign page.",
       "Campaign type: " + (result.campaignType || "Not recognised"),
       "Payout: " + (result.rate ? result.rate.label : "Not recognised"),
       "Platform rates: " + (result.platformRates.length ? result.platformRates.map((item) => item.platform + " " + item.label).join("; ") : "Not separately recognised"),

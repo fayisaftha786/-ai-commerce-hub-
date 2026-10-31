@@ -24,6 +24,16 @@ Or run the existing root project as usual and open \`content-rewards-assistant/i
 - On HTTPS/localhost, the page registers its own scoped service worker and refreshes a versioned v10 asset cache using network-first requests with an offline fallback. Open the page online at least once after an update before relying on the new files offline; `file://` usage does not install the worker.
 - Node.js regression tests for the core data validation and backup format.
 
+## Direct public campaign-page analysis (no copy/paste required)
+
+The primary Site Analyze flow now accepts a public Content Rewards campaign URL. A GitHub Actions job attempts to fetch up to 60 campaign detail pages from the current public third-party lead feed every six hours, extracts visible HTML text from the public Content Rewards page, and stores the text plus extracted fields in the Pages snapshot. In ClipReward Studio, enter the public URL and press **Analyse website automatically**; the app loads the saved page text and runs the same campaign parser, Rewards Intelligence checks and Tracker autofill. Campaigns selected from the lead feed also prefer their saved full-page details automatically.
+
+This is a scheduled cache, not a live per-click browser crawler: a newly pasted URL must be present in the latest public lead feed and included in the last successful scan. The cache may be up to six hours old, and GitHub scheduled workflows are best-effort. If a URL is not in the latest snapshot, the app says so rather than pretending it read the site. You can manually run **Scheduled Content Rewards discovery snapshot** under GitHub → Actions to refresh it.
+
+The fetcher allows only HTTPS pages hosted on `contentrewards.com` or its subdomains, on the normal HTTPS port, with a public `/c/...` campaign path. It follows redirects only while the final URL remains on the same allowed host, sends no cookies or account credentials, accepts HTML only, caps each page at 1.5 MB and extracts at most 20,000 characters. Script/style/navigation content is excluded. Pages blocked by the site, requiring sign-in, not rendered into public HTML, or hidden after Join are not read; their status is recorded. Hidden creator requirements remain explicitly locked/unknown. The analyzer does not join campaigns, access private pages, automate sign-in, or bypass CAPTCHA/access controls.
+
+The extracted visible page is evidence, not a guarantee of eligibility or approval. Verify the live page before joining, creating or submitting content. Manual clipboard analysis remains available only as a fallback.
+
 ## Campaign finder and autofill
 
 The Finder opens the official [Content Rewards Discover page](https://contentrewards.com/c/discover) for Instagram, Facebook, YouTube and X campaigns. TikTok may appear in international briefs but is not offered as an India posting destination. Choose the platform, open Discover, check the campaign’s accepted platforms and eligibility, then copy its public card/brief text. Return to ClipReward Studio and press **Paste & analyse brief**; clipboard text is extracted immediately and manually pasted text is analysed as you type. Press **Autofill campaign tracker**, review the extracted fields, then save. The native creator dashboards do not expose one public cross-platform campaign feed to this app.
@@ -36,7 +46,7 @@ Extraction is only as accurate as the text copied from the official page. A valu
 
 ## Third-party campaign lead discovery
 
-The Finder now includes an optional public lead-feed adapter for `https://contentrewards.xyz/api/cr/campaigns`, documented by the independent SeamMoney/shelby-content-rewards project. It can search up to 100 records, filter the selected Instagram/Facebook/YouTube/X payout destination, rank by the listed rate, show the snapshot date/freshness, and import a selected lead into the existing full-brief analyser.
+The Finder includes an optional public lead-feed adapter for `https://contentrewards.xyz/api/cr/campaigns`, documented by the independent SeamMoney/shelby-content-rewards project. It can search up to 100 records, filter the selected Instagram/Facebook/YouTube/X payout destination, rank by the listed rate, show the snapshot date/freshness, and import a selected lead into the existing full-brief analyser.
 
 **Trust and availability boundary:** this is an independent scraped snapshot, not a Content Rewards API, and browser cross-origin access may be unavailable. The feed may be stale, incomplete or offline. It does not confirm that a campaign is still accepting creators, has budget left, accepts your account, or has the same terms today. The app labels old/unknown snapshots, treats remaining budget as a snapshot-derived value, excludes TikTok-only leads from the India workflow, and links to official Discover for verification. If the feed cannot be reached, the app reports the error and falls back to the official copy/paste workflow; it does not invent results. No credentials are sent to the third-party feed.
 

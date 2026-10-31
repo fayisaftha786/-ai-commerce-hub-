@@ -53,6 +53,11 @@ test("rejects untrusted campaign links and never invents official campaign URLs"
   assert.equal(Feed.campaignToBrief(normalized, "YouTube").includes("Third-party scraped snapshot"), true);
 });
 
+test("rejects Content Rewards campaign URLs containing embedded credentials", () => {
+  assert.equal(Feed.safeOfficialUrl("https://user:password@contentrewards.com/c/campaigns/abc"), "");
+  assert.equal(Feed.canonicalCampaignUrl("https://user:password@www.contentrewards.com/c/campaigns/abc"), "");
+});
+
 test("builds a platform-specific import brief with visible third-party warning", () => {
   const campaign = Feed.normalizeCampaign(sample.data[0], NOW);
   const brief = Feed.campaignToBrief(campaign, "Instagram");

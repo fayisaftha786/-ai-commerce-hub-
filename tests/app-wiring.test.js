@@ -810,3 +810,18 @@ test("marketplace integration panel links only to official programme and API doc
   assert.match(html, /cannot safely hold marketplace API secrets/);
   assert.match(html, /do not use private endpoints or scrape logged-in pages/);
 });
+
+test("Content Rewards radar distinguishes browser feed tests from the GitHub page crawler", () => {
+  const rewardsHtml = fs.readFileSync(path.join(root, "content-rewards-assistant", "index.html"), "utf8");
+  const rewardsApp = fs.readFileSync(path.join(root, "content-rewards-assistant", "app.js"), "utf8");
+  assert.match(rewardsHtml, /id="discovery-run-github-scan"/);
+  assert.match(rewardsHtml, /actions\/workflows\/scheduled-content-rewards-discovery\.yml/);
+  assert.match(rewardsHtml, /Run GitHub page scan/);
+  assert.match(rewardsHtml, /Test feed in browser/);
+  assert.match(rewardsHtml, /GitHub Actions first scans up to 60 campaign URLs/i);
+  assert.match(rewardsHtml, /Private, join-only, sign-in-gated or unlisted campaigns/i);
+  assert.match(rewardsApp, /First GitHub Actions scan pending/);
+  assert.match(rewardsApp, /cannot start the background crawler/);
+  assert.match(rewardsApp, /Test feed in browser/);
+  assert.doesNotMatch(rewardsHtml, /copy its visible detail text[^<]*then paste here/i);
+});

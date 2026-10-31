@@ -83,9 +83,9 @@ test("GitHub scheduled workflow writes no credentials and redeploys the static s
   const fs = require("node:fs");
   const workflow = fs.readFileSync(path.join(__dirname, "..", ".github", "workflows", "scheduled-content-rewards-discovery.yml"), "utf8");
   assert.match(workflow, /schedule:/);
-  assert.match(workflow, /17 \\*\\/6 \\* \\* \\*/);
+  assert.ok(workflow.includes('cron: "17 */6 * * *"'));
   assert.match(workflow, /contents: write/);
-  assert.match(workflow, /actions\\/deploy-pages@v5/);
+  assert.ok(workflow.includes("uses: actions/deploy-pages@v5"));
   assert.match(workflow, /git push origin HEAD:main/);
   assert.match(workflow, /continue-on-error: true/);
 });

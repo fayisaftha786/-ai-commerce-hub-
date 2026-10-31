@@ -1,5 +1,5 @@
 "use strict";
-const CACHE = "clipreward-static-v8";
+const CACHE = "clipreward-static-v9";
 const ASSETS = ["./", "./index.html", "./style.css", "./campaign-scout.js", "./rewards-intelligence.js", "./core.js", "./app.js", "./manifest.webmanifest", "./icon.svg"];
 
 self.addEventListener("install", (event) => {

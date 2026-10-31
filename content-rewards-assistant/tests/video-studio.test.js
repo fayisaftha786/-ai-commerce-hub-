@@ -37,6 +37,52 @@ test("retries another browser codec when a reported MP4 codec fails at recorder 
   }
 });
 
+test("rejects an already-aborted device test before allocating a canvas capture stream", async () => {
+  const previousDocument = global.document;
+  const previousRecorder = global.MediaRecorder;
+  let canvasCreations = 0;
+  global.document = {
+    createElement() {
+      canvasCreations += 1;
+      return { captureStream: () => ({ getTracks: () => [{ kind: "video", stop() {} }] }) };
+    }
+  };
+  global.MediaRecorder = { isTypeSupported: () => true };
+  const controller = new AbortController();
+  controller.abort();
+  try {
+    await assert.rejects(Studio.renderDeviceTest({ signal: controller.signal }), { name: "AbortError" });
+    assert.equal(canvasCreations, 0, "an aborted request must not create canvases or capture tracks");
+  } finally {
+    if (previousDocument === undefined) delete global.document;
+    else global.document = previousDocument;
+    if (previousRecorder === undefined) delete global.MediaRecorder;
+    else global.MediaRecorder = previousRecorder;
+  }
+});
+
+test("rejects an already-aborted export before loading or capturing source media", async () => {
+  const previousDocument = global.document;
+  const previousRecorder = global.MediaRecorder;
+  let canvasCreations = 0;
+  global.document = { createElement() { canvasCreations += 1; return {}; } };
+  global.MediaRecorder = { isTypeSupported: () => true };
+  const controller = new AbortController();
+  controller.abort();
+  try {
+    await assert.rejects(Studio.render({
+      files: [video("photo.jpg", 100, "image/jpeg")],
+      signal: controller.signal
+    }), { name: "AbortError" });
+    assert.equal(canvasCreations, 0, "an aborted request must not allocate a rendering canvas");
+  } finally {
+    if (previousDocument === undefined) delete global.document;
+    else global.document = previousDocument;
+    if (previousRecorder === undefined) delete global.MediaRecorder;
+    else global.MediaRecorder = previousRecorder;
+  }
+});
+
 test("does not report browser rendering support when required APIs are missing", () => {
   const unsupported = Studio.getCapabilities({});
   assert.equal(unsupported.supported, false);
@@ -200,7 +246,7 @@ test("Clip Studio exposes media upload, audio, preflight, progress, preview and 
   assert.match(html, /video-studio-ui\.js/);
   assert.ok(html.includes('id="video-device-test-button"'));
   assert.equal(typeof Studio.renderDeviceTest, "function");
-  assert.match(worker, /clipreward-static-v13/);
+  assert.match(worker, /clipreward-static-v14/);
   assert.match(worker, /video-studio\.js/);
   assert.match(worker, /video-studio-ui\.js/);
   assert.match(packageJson.scripts.check, /content-rewards-assistant\/video-studio\.js/);

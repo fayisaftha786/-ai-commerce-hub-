@@ -87,6 +87,26 @@
       status.classList.toggle("video-status-error", !!isError);
     }
 
+    function invalidateOutput() {
+      const hadOutput = !!outputUrl || !downloadLink.hidden || !preview.hidden;
+      if (outputUrl) root.URL.revokeObjectURL(outputUrl);
+      outputUrl = "";
+      downloadLink.hidden = true;
+      downloadLink.removeAttribute("href");
+      downloadLink.removeAttribute("download");
+      preview.pause();
+      preview.hidden = true;
+      preview.removeAttribute("src");
+      progress.value = 0;
+      return hadOutput;
+    }
+
+    function handleRenderInputChange() {
+      const hadOutput = invalidateOutput();
+      refreshPreflight();
+      if (hadOutput) setStatus("Media or scene settings changed. Create a new video before saving.", false);
+    }
+
     function refreshPreflight() {
       let valid = false;
       let summary = "Select photos or video clips to begin.";
@@ -129,9 +149,11 @@
       if (!value) refreshPreflight();
     }
 
-    [mediaInput, audioInput, durationInput, $("video-rights-confirm"), $("video-rules-confirm"),
-      campaignSelect, targetPlatform]
+    [mediaInput, audioInput, durationInput]
+      .forEach((element) => element.addEventListener("change", handleRenderInputChange));
+    [ $("video-rights-confirm"), $("video-rules-confirm"), campaignSelect, targetPlatform ]
       .forEach((element) => element.addEventListener("change", refreshPreflight));
+    captionsInput.addEventListener("input", handleRenderInputChange);
     postCaption.addEventListener("input", refreshPreflight);
 
     addTagsButton.addEventListener("click", () => {
@@ -157,6 +179,7 @@
         return;
       }
       captionsInput.value = source.slice(0, Studio.MAX_MEDIA_FILES).join("\n");
+      handleRenderInputChange();
       setStatus("Draft text copied into scene captions. Review and shorten each line for readability.", false);
     });
 

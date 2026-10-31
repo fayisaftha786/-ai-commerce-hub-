@@ -65,6 +65,8 @@ test("concurrent manual and scheduled triggers share one in-flight scan", async 
   });
   const first = service.runScan();
   const second = service.runScan();
+  assert.equal(service.running, true);
+  await new Promise((resolve) => setImmediate(resolve));
   assert.equal(calls, 1);
   release();
   const [a, b] = await Promise.all([first, second]);

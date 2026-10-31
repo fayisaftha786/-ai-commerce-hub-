@@ -10,6 +10,8 @@ const MAX_DETAIL_PAGES = 60;
 const MAX_PAGE_BYTES = 1_500_000;
 const MAX_PAGE_TEXT = 20_000;
 const DETAIL_CONCURRENCY = 3;
+const MAX_REDIRECTS = 3;
+const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
 
 const DEFAULT_FILE = path.join(__dirname, "..", "content-rewards-assistant", "discovery-snapshot.json");
 
@@ -89,20 +91,43 @@ async function fetchPublicCampaignPage(value, options = {}) {
   const controller = typeof AbortController === "function" ? new AbortController() : null;
   const timeout = controller ? setTimeout(() => controller.abort(), options.timeoutMs || 12000) : null;
   try {
-    const response = await fetcher(url, {
-      method: "GET",
-      redirect: "follow",
-      credentials: "omit",
-      headers: {
-        Accept: "text/html,application/xhtml+xml",
-        "User-Agent": "ClipReward-PublicPageAnalyzer/1.0"
-      },
-      signal: controller ? controller.signal : undefined
-    });
+    let currentUrl = url;
+    let response = null;
+    const visitedUrls = new Set();
+    for (let redirectCount = 0; redirectCount <= MAX_REDIRECTS; redirectCount += 1) {
+      if (visitedUrls.has(currentUrl)) throw new Error("The campaign page returned a redirect loop.");
+      visitedUrls.add(currentUrl);
+      response = await fetcher(currentUrl, {
+        method: "GET",
+        redirect: "manual",
+        credentials: "omit",
+        headers: {
+          Accept: "text/html,application/xhtml+xml",
+          "User-Agent": "ClipReward-PublicPageAnalyzer/1.0"
+        },
+        signal: controller ? controller.signal : undefined
+      });
+      if (!response) throw new Error("Public campaign page returned no response.");
+      if (!REDIRECT_STATUSES.has(response.status)) break;
+      const location = response.headers && response.headers.get ? response.headers.get("location") : "";
+      if (!location) throw new Error("The campaign page returned a redirect without a Location header.");
+      if (redirectCount >= MAX_REDIRECTS) throw new Error("The campaign page exceeded the safe redirect limit.");
+      let redirectUrl;
+      try {
+        redirectUrl = new URL(location, currentUrl).href;
+      } catch (_) {
+        throw new Error("The campaign page returned an invalid redirect URL.");
+      }
+      const safeRedirect = Feed.canonicalCampaignUrl(redirectUrl);
+      if (!safeRedirect) {
+        throw new Error("The campaign URL attempted to redirect outside the public Content Rewards campaign pages.");
+      }
+      currentUrl = safeRedirect;
+    }
     if (!response || !response.ok) throw new Error("Public campaign page returned HTTP " + (response ? response.status : "no response") + ".");
-    const finalUrl = Feed.canonicalCampaignUrl(response.url || url);
-    if (!finalUrl) {
-      throw new Error("The campaign URL redirected outside the public Content Rewards campaign page.");
+    const finalUrl = Feed.canonicalCampaignUrl(response.url || currentUrl);
+    if (!finalUrl || finalUrl !== currentUrl) {
+      throw new Error("The campaign page response URL did not match the validated public Content Rewards destination.");
     }
     const contentType = response.headers && response.headers.get ? response.headers.get("content-type") || "" : "";
     if (contentType && !/(?:text\/html|application\/xhtml\+xml)/i.test(contentType)) {
@@ -290,11 +315,11 @@ if (require.main === module) {
       return;
     }
     const scan = result.snapshot.lastScan;
-    process.stdout.write("Scheduled discovery complete: " + scan.checkedCount + " checked, " + scan.newCount + " new, " + result.snapshot.campaigns.length + " saved.\n");
+    process.stdout.write("Scheduled discovery complete: " + scan.checkedCount + " checked, " + scan.newCount + " new, " + result.snapshot.campaigns.length + " saved; " + scan.detailPagesAttempted + " campaign pages attempted, " + scan.detailPagesAvailable + " read, " + scan.detailPagesFailed + " failed.\n");
   }).catch((error) => {
     process.stderr.write((error instanceof Error ? error.message : String(error)) + "\n");
     process.exitCode = 1;
   });
 }
 
-module.exports = { DEFAULT_FILE, MAX_DETAIL_PAGES, MAX_PAGE_BYTES, MAX_PAGE_TEXT, readSnapshot, writeSnapshot, decodeHtmlEntities, extractVisibleText, fetchPublicCampaignPage, fetchCampaignDetails, runScheduledScan };
+module.exports = { DEFAULT_FILE, MAX_DETAIL_PAGES, MAX_PAGE_BYTES, MAX_PAGE_TEXT, MAX_REDIRECTS, readSnapshot, writeSnapshot, decodeHtmlEntities, extractVisibleText, fetchPublicCampaignPage, fetchCampaignDetails, runScheduledScan };

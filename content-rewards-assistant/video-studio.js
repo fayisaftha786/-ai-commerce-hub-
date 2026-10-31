@@ -158,9 +158,10 @@
     const durationSeconds = Number(source.durationSeconds);
     const platform = normalizeTargetPlatform(source.platform);
     const acceptedLine = lineValue(rules, "Accepted platforms");
-    const acceptedPlatforms = acceptedLine
-      ? acceptedLine.split(/[,;|]/).map(normalizeTargetPlatform).filter(Boolean)
+    const acceptedValues = acceptedLine && !/^(?:not recognised|not stated|none detected|unknown|n\/a)$/i.test(acceptedLine)
+      ? acceptedLine.split(/[,;|]/).map((item) => item.trim()).filter(Boolean)
       : [];
+    const acceptedPlatforms = acceptedValues.map(normalizeTargetPlatform).filter(Boolean);
     const bounds = extractDurationBounds(rules);
     const deadline = /^\d{4}-\d{2}-\d{2}$/.test(String(source.deadline || "")) ? String(source.deadline) : "";
     const today = /^\d{4}-\d{2}-\d{2}$/.test(String(source.today || "")) ? String(source.today) : "";
@@ -185,9 +186,9 @@
     if (!platform) {
       reviewReasons.push("Choose the actual publishing platform.");
       checks.push({ key: "platform", status: "unknown", detail: "Target platform is not recognised." });
-    } else if (acceptedPlatforms.length) {
+    } else if (acceptedValues.length) {
       if (!acceptedPlatforms.includes(platform)) {
-        blockingReasons.push(platform + " is not in the campaign's accepted-platform list (" + acceptedPlatforms.join(", ") + ").");
+        blockingReasons.push(platform + " is not in the campaign's accepted-platform list (" + acceptedValues.join(", ") + ").");
         checks.push({ key: "platform", status: "blocked", detail: blockingReasons[blockingReasons.length - 1] });
       } else checks.push({ key: "platform", status: "matched", detail: platform + " is included in the accepted-platform list copied into the tracker." });
     } else {

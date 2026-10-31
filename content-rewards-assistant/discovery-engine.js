@@ -102,14 +102,55 @@
       return true;
     } catch (_) { return false; }
   }
+  function normalizeBackendUrl(value) {
+    const raw = clean(value, 500);
+    if (!raw) return "";
+    try {
+      const url = new URL(raw);
+      const localHttp = url.protocol === "http:" && ["localhost", "127.0.0.1", "::1"].includes(url.hostname);
+      if ((url.protocol !== "https:" && !localHttp) || !url.hostname || url.username || url.password || url.search || url.hash || (url.pathname !== "/" && url.pathname !== "")) return "";
+      return url.origin;
+    } catch (_) { return ""; }
+  }
+
+  async function fetchBackendSnapshot(options) {
+    const opts = options || {};
+    const baseUrl = normalizeBackendUrl(opts.backendUrl);
+    if (!baseUrl) throw new Error("Enter a valid HTTPS backend origin (localhost is allowed for development).");
+    const fetcher = opts.fetchImpl || (typeof fetch === "function" ? fetch : null);
+    if (!fetcher) throw new Error("This browser does not support secure backend requests.");
+    const params = new URLSearchParams();
+    if (opts.platform) params.set("platform", clean(opts.platform, 30));
+    if (opts.search) params.set("search", clean(opts.search, 100));
+    params.set("limit", "100");
+    const controller = typeof AbortController === "function" ? new AbortController() : null;
+    const timeout = controller ? setTimeout(() => controller.abort(), 12000) : null;
+    try {
+      const request = { method: "GET", mode: "cors", credentials: "omit", headers: { Accept: "application/json" }, signal: controller ? controller.signal : undefined };
+      const responses = await Promise.all([
+        fetcher(baseUrl + "/api/discovery/status", request),
+        fetcher(baseUrl + "/api/discovery/campaigns?" + params.toString(), request)
+      ]);
+      if (responses.some((response) => !response || !response.ok)) throw new Error("Discovery backend returned an HTTP error.");
+      const [status, data] = await Promise.all(responses.map((response) => response.json()));
+      if (!status || !Array.isArray(status.sourceRegistry) || !data || !Array.isArray(data.campaigns)) throw new Error("Discovery backend returned an unrecognised response.");
+      return { status, campaigns: deduplicate(data.campaigns), totalReceived: data.totalSaved || data.count, fetchedAt: data.updatedAt || status.updatedAt || "", sourceLabel: "Server-side scheduled discovery", sourceUrl: baseUrl };
+    } catch (error) {
+      if (error && error.name === "AbortError") throw new Error("Discovery backend request timed out.");
+      throw error;
+    } finally {
+      if (timeout) clearTimeout(timeout);
+    }
+  }
+
   function readSettings(storage) {
     const target = storage || (typeof localStorage !== "undefined" ? localStorage : null);
-    const defaults = { enabled: true, intervalHours: DEFAULT_INTERVAL_HOURS, notify: false };
+    const defaults = { enabled: true, intervalHours: DEFAULT_INTERVAL_HOURS, notify: false, backendUrl: "" };
     if (!target) return defaults;
     try {
       const value = JSON.parse(target.getItem(SETTINGS_KEY) || "{}");
       const interval = Number(value.intervalHours);
-      return { enabled: value.enabled !== false, intervalHours: [1, 3, 6, 12, 24].includes(interval) ? interval : DEFAULT_INTERVAL_HOURS, notify: value.notify === true };
+      return { enabled: value.enabled !== false, intervalHours: [1, 3, 6, 12, 24].includes(interval) ? interval : DEFAULT_INTERVAL_HOURS, notify: value.notify === true, backendUrl: normalizeBackendUrl(value.backendUrl) };
     } catch (_) { return defaults; }
   }
   function writeSettings(settings, storage) {
@@ -117,7 +158,7 @@
     if (!target) return false;
     try {
       const interval = Number(settings && settings.intervalHours);
-      target.setItem(SETTINGS_KEY, JSON.stringify({ enabled: settings && settings.enabled !== false, intervalHours: [1, 3, 6, 12, 24].includes(interval) ? interval : DEFAULT_INTERVAL_HOURS, notify: Boolean(settings && settings.notify) }));
+      target.setItem(SETTINGS_KEY, JSON.stringify({ enabled: settings && settings.enabled !== false, intervalHours: [1, 3, 6, 12, 24].includes(interval) ? interval : DEFAULT_INTERVAL_HOURS, notify: Boolean(settings && settings.notify), backendUrl: normalizeBackendUrl(settings && settings.backendUrl) }));
       return true;
     } catch (_) { return false; }
   }
@@ -151,5 +192,5 @@
       }
     };
   }
-  return { STORAGE_KEY, SETTINGS_KEY, DEFAULT_INTERVAL_HOURS, SOURCES, keyFor, assessOpportunity, enrich, deduplicate, readState, writeState, readSettings, writeSettings, mergeHistory, scan };
+  return { STORAGE_KEY, SETTINGS_KEY, DEFAULT_INTERVAL_HOURS, SOURCES, keyFor, assessOpportunity, enrich, deduplicate, readState, writeState, readSettings, writeSettings, normalizeBackendUrl, fetchBackendSnapshot, mergeHistory, scan };
 });

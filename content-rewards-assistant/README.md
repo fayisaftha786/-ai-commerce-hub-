@@ -120,3 +120,14 @@ npm test
 The current Content Rewards account-connection guide specifies a professional **Business** account for Instagram. Connect it in Content Rewards under Settings → Connected accounts → Connect account → Instagram, follow the live provider screen, and continue only after the exact account you post from shows Connected. Do not confuse this with Meta's separate Instagram API for third-party publishing: ClipReward Studio does not use that API, does not log in, and cannot verify the linked state. See the [official Content Rewards connection guide](https://help.contentrewards.com/en/articles/16746780-connect-your-social-accounts).
 
 AI Commerce Hub has a separate server-side Instagram configuration-readiness route, but it is not a Content Rewards connection and does not implement OAuth, token exchange, encrypted token storage, publishing or disconnect. GitHub Pages must never contain Meta App Secrets or access tokens.
+
+
+## Discovery Engine V2 — server-side scheduler
+
+The Finder includes a discovery radar with evidence-coverage scoring, freshness labels, deduplication and a bounded local history. Without a backend, browser scans only run while the page is open and visible.
+
+The repository now includes a separate Node.js discovery worker, atomic file-backed snapshot storage, a configurable server-side scan interval, scan success/failure history and read-only backend endpoints. This worker can continue while the browser is closed **only after the private backend is deployed on a host that stays awake and has persistent storage**. GitHub Pages does not run Node.js server code.
+
+The current automatic source remains the single third-party public snapshot feed at `https://contentrewards.xyz/api/cr/campaigns`. The official Discover route is guided/manual verification, not an official API connector. No additional reward marketplace has been silently represented as integrated. Read [the backend deployment and connection guide](../docs/BACKEND.md) before configuring the optional backend URL in the Rewards Intelligence Radar. Until a separate backend is deployed and configured, local browser scanning remains the active mode.
+
+Backend endpoints are read-only and serve public lead snapshots only. No campaign join/apply, private-page crawling, account login, posting, submission, creator analytics or payout sync is performed. The backend CORS allowlist must contain the exact HTTPS GitHub Pages origin; it is not a substitute for authentication for future private user data.

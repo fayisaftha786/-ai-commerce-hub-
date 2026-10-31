@@ -1,6 +1,13 @@
 name: Scheduled Content Rewards discovery snapshot
 
 on:
+  # Bootstrap after code/config changes on main. Snapshot-only commits are
+  # excluded so the crawler cannot trigger itself in an endless loop.
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "content-rewards-assistant/discovery-snapshot.json"
   schedule:
     - cron: "17 */6 * * *"
   workflow_dispatch:

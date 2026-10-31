@@ -32,6 +32,7 @@ test("assembled Pages bundle contains every referenced root asset and nested ass
     assert.ok(result.assets.includes("earning-hub.js"));
     for (const name of result.assets) assert.ok(fs.statSync(path.join(output, name)).isFile(), name);
     assert.ok(fs.statSync(path.join(output, "content-rewards-assistant", "index.html")).isFile());
+    assert.ok(fs.statSync(path.join(output, "content-rewards-assistant", "discovery-snapshot.json")).isFile());
     assert.ok(fs.existsSync(path.join(output, ".nojekyll")));
   } finally {
     fs.rmSync(temp, { recursive: true, force: true });

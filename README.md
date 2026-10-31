@@ -5,6 +5,7 @@ A lightweight affiliate workspace prototype for evaluating offer details, shortl
 ## Current features
 
 - Standalone ClipReward Studio with a Content Rewards public Discover shortcut, clipboard-based campaign brief findings/autofill, submission preflight, content drafts, clip timestamps and local backup/restore: [open the assistant source](content-rewards-assistant/README.md)
+- Scheduled Content Rewards public snapshot discovery through GitHub Actions (about every six hours UTC), with campaign deduplication, evidence scoring, freshness/history and automatic GitHub Pages publication; the current source is a third-party public feed, not an official API.
 
 - Add product entries for Amazon, Flipkart and Meesho
 - HTTPS product URL validation and local-only product storage
@@ -63,7 +64,7 @@ npm test
 
 Open `index.html` in a modern browser to try the frontend. Clipboard access depends on browser security settings.
 
-The private Node.js API can be run with `npm start`. It includes an optional server-side Content Rewards public-snapshot discovery worker, persistent JSON store and read-only discovery endpoints when explicitly enabled; it is not an OAuth or social-publishing backend. See [docs/BACKEND.md](docs/BACKEND.md) before deploying it.
+The public Content Rewards snapshot is refreshed by the scheduled GitHub Actions workflow without a separate server host. An optional private Node.js API can also be run with `npm start`; it includes a server-side discovery worker, persistent JSON store and read-only discovery endpoints when explicitly enabled. It is not an OAuth or social-publishing backend. See [docs/BACKEND.md](docs/BACKEND.md) before deploying it.
 
 ## CSV import validation
 

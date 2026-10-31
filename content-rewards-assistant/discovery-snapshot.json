@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "",
+  "source": {
+    "id": "contentrewards-snapshot",
+    "verification": "third-party",
+    "url": "https://contentrewards.xyz/api/cr/campaigns",
+    "label": "Third-party public snapshot"
+  },
+  "totalReceived": 0,
+  "campaigns": [],
+  "lastScan": null,
+  "scans": []
+}

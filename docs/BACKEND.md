@@ -1,6 +1,18 @@
-# Private backend and server-side campaign discovery
+# Scheduled discovery and optional private backend
 
-The Node.js backend is separate from GitHub Pages. GitHub Pages only serves the static workspace; it cannot run the scheduled worker. Run this server on a host that supports a continuously running Node.js process and persistent disk.
+## Default scheduled discovery — no separate host required
+
+The repository includes a GitHub Actions workflow, `.github/workflows/scheduled-content-rewards-discovery.yml`, that attempts a public campaign snapshot scan at minute 17 every six hours (UTC). It runs on the default branch, writes a versioned snapshot to `content-rewards-assistant/discovery-snapshot.json`, and publishes that snapshot through GitHub Pages. The Content Rewards radar loads the published snapshot automatically; no backend URL or user credential is needed for this public feed.
+
+For a manual refresh, open the repository's **Actions** tab → **Scheduled Content Rewards discovery snapshot** → **Run workflow**. The workflow records the scan time, checked/new counts and source outcome. If the public feed fails, the previous campaign rows are retained and the failed scan is recorded; the workflow reports failure rather than disguising the source outage as a successful scan.
+
+This workflow uses GitHub-hosted standard runners in a public repository, for which GitHub documents free/unlimited standard runner usage. Scheduled execution is best-effort, not a real-time SLA: GitHub can delay scheduled events or drop some during high load. Scheduled workflows run from the default branch and can be automatically disabled in public repositories after 60 days without repository activity. Check Actions history and run it manually when a fresh scan is needed. [GitHub Actions billing](https://docs.github.com/en/actions/concepts/billing-and-usage) · [Scheduled workflow behaviour](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows).
+
+Only the currently integrated third-party Content Rewards snapshot feed is scanned. It is not an official Content Rewards API. Private, invitation-only, and joined-only campaigns are not exposed by public Discover and are not crawled. The score is an evidence-coverage/freshness prioritisation aid, not proof of active status, eligibility, approval or earnings.
+
+## Optional private Node.js backend
+
+GitHub Pages only serves the static workspace; it cannot run Node.js server code. The optional backend described below is for a continuously running worker or future approved integrations that need a persistent server process and disk.
 
 ## Run locally
 
@@ -58,7 +70,7 @@ The worker deduplicates public rows, calculates field-coverage/freshness scores,
 4. Open ClipReward Studio → Rewards Intelligence Radar. Enter the backend's HTTPS origin in **Optional server backend HTTPS origin**, then tap **Connect / Save backend**.
 5. The browser makes credential-free read-only GET requests and imports the saved findings. It does not send Content Rewards login details or any API secret.
 
-The current environment has not deployed this backend to a hosting provider. Until a server is deployed and configured, the app remains in local browser-scan mode, which only runs while the page is open and visible. Browser timers are not a substitute for an always-on worker.
+The default GitHub Actions scheduled snapshot does not require this optional backend. The current environment has not deployed the Node.js backend to a hosting provider. Until a separate server is deployed and configured, advanced server-only integrations remain unavailable; the public snapshot schedule continues through GitHub Actions.
 
 ## Hosting and operational notes
 

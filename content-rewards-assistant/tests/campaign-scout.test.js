@@ -165,7 +165,7 @@ test("campaign finder is wired to official Discover, local parser, and existing 
   assert.ok(app.includes("analyseCampaignBrief();"));
   assert.ok(app.includes('addEventListener("input"'));
   assert.match(app, /result\.platformMatch === "mismatch"/);
-  assert.match(worker, /clipreward-static-v6/);
+  assert.match(worker, /clipreward-static-v7/);
   assert.match(worker, /campaign-scout\.js/);
 });
 

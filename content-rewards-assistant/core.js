@@ -15,7 +15,7 @@
   const SOCIAL_PLATFORMS = Object.freeze(["TikTok", "Instagram", "YouTube", "Facebook", "X", "Other"]);
   const MAX_SUBMISSION_WINDOW_MS = 30 * 60 * 1000;
   const FUTURE_CLOCK_TOLERANCE_MS = 5 * 60 * 1000;
-  const ACCOUNT_CHECKS = Object.freeze(["loggedIn", "socialVerified", "campaignReady", "postPublished", "submissionSent"]);
+  const ACCOUNT_CHECKS = Object.freeze(["ageEligible", "loggedIn", "socialVerified", "campaignReady", "postPublished", "submissionSent"]);
 
   function text(value, maxLength) {
     return String(value == null ? "" : value).trim().slice(0, maxLength || MAX_TEXT);

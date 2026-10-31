@@ -13,7 +13,7 @@ Or run the existing root project as usual and open \`content-rewards-assistant/i
 ## What works in this version
 
 - Create, edit, search, filter, and delete campaign records for Content Rewards, Whop and other creator programs.
-- Account Center with official Content Rewards/Whop/help links, a local creator label, saved social handles and a manual workflow-readiness checklist.
+- Account Center with official Content Rewards/Whop/help links, a local creator label, saved social handles and a six-step manual workflow-readiness checklist, including an 18+ self-confirmation (no date of birth collected and no age verification).
 - A 30-minute Content Rewards submission countdown, plus a preflight check that the selected posting platform matches the HTTPS post-link host and that the recorded link-submission time is within 30 minutes of posting.
 - A legacy-safe submission log with the actual link-submission time stored separately from the post-publication time.
 - Record deadlines, campaign rules, public post links, and manual review status.
@@ -21,7 +21,7 @@ Or run the existing root project as usual and open \`content-rewards-assistant/i
 - Save and sort mm:ss or hh:mm:ss editing notes.
 - Export and validate a versioned JSON backup, with duplicate-ID, date, timestamp, URL-scheme, size and record-count checks; account-center records are included, and older backups without them still import.
 - Responsive dark dashboard, mobile navigation and local-first browser storage.
-- On HTTPS/localhost, the page registers its own scoped service worker and refreshes a versioned v6 asset cache using network-first requests with an offline fallback. Open the page online at least once after an update before relying on the new files offline; `file://` usage does not install the worker.
+- On HTTPS/localhost, the page registers its own scoped service worker and refreshes a versioned v7 asset cache using network-first requests with an offline fallback. Open the page online at least once after an update before relying on the new files offline; `file://` usage does not install the worker.
 - Node.js regression tests for the core data validation and backup format.
 
 ## Campaign finder and autofill

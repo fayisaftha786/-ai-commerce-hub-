@@ -91,16 +91,18 @@ test("backup preserves account-center data and imports legacy backups without ac
     account: {
       displayName: "My creator setup",
       socialAccounts: [{ id: "social1", platform: "Instagram", handle: "@studio", confirmedConnected: true }],
-      checklist: { loggedIn: true, socialVerified: true, campaignReady: true, postPublished: false, submissionSent: false }
+      checklist: { ageEligible: true, loggedIn: true, socialVerified: true, campaignReady: true, postPublished: false, submissionSent: false }
     }
   }, "2026-10-29T12:00:00.000Z");
   const imported = Core.parseBackup(backup);
   assert.equal(imported.account.displayName, "My creator setup");
   assert.equal(imported.account.socialAccounts[0].handle, "@studio");
   assert.equal(imported.account.checklist.campaignReady, true);
+  assert.equal(imported.account.checklist.ageEligible, true);
   const legacy = Core.parseBackup({ app: "ClipReward Studio", version: 1, campaigns: [], timestamps: [] });
   assert.equal(legacy.account.displayName, "");
   assert.equal(legacy.account.socialAccounts.length, 0);
+  assert.equal(legacy.account.checklist.ageEligible, false);
 });
 
 
@@ -328,7 +330,7 @@ test("ClipReward keeps saved UI state when campaign, timestamp, account and back
 test("ClipReward service worker is registered, refreshes v6 assets and scopes offline caching", () => {
   const workerSource = fs.readFileSync(path.join(__dirname, "..", "service-worker.js"), "utf8");
   const htmlSource = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
-  assert.match(workerSource, /const CACHE = "clipreward-static-v6"/);
+  assert.match(workerSource, /const CACHE = "clipreward-static-v7"/);
   for (const asset of ["./index.html", "./style.css", "./campaign-scout.js", "./core.js", "./app.js", "./manifest.webmanifest", "./icon.svg"]) {
     assert.ok(workerSource.includes('"' + asset + '"'), "missing ClipReward offline asset " + asset);
   }
@@ -425,6 +427,8 @@ test("submission UI wires exact posting platform and submission time, and labels
   assert.match(htmlSource, /less than 30 minutes old/);
   assert.match(htmlSource, /does not submit clips or verify approvals/);
   assert.match(htmlSource, /18\+ only/);
+  assert.match(htmlSource, /data-account-check="ageEligible"/);
+  assert.match(htmlSource, /0 \/ 6 confirmed/);
   assert.match(htmlSource, /contentrewards\.com\/login/);
   assert.doesNotMatch(htmlSource, /CR-XXXXXX|code expires after 24 hours/);
   assert.match(htmlSource, /Instagram professional Business account/);

@@ -34,7 +34,7 @@
   }
 
   function parseAmount(raw, fallbackCurrency = "") {
-    const match = /([$€£₹]|USD|EUR|GBP|INR)[ \t]*([\d,]+(?:\.\d+)?)[ \t]*([kKmM]?)(?=[ \t]|$|[,.;:/])/i.exec(raw || "");
+    const match = /([$€£₹]|USD|EUR|GBP|INR)[ \t]*([\d,]+(?:\.\d+)?)[ \t]*([kKmM]?)(?=[ \t]|$|[,.;:/]|\r?\n)/i.exec(raw || "");
     if (match) {
       let value = Number(match[2].replace(/,/g, ""));
       const suffix = match[3].toLowerCase();
@@ -51,7 +51,7 @@
       if (suffix[2].toLowerCase() === "m") value *= 1000000;
       return Number.isFinite(value) ? { value, currency: suffix[3].toUpperCase(), raw: suffix[0].trim() } : null;
     }
-    const bare = /([\d,]+(?:\.\d+)?)[ \t]*([kKmM]?)(?=[ \t]|$|[,.;:/])/.exec(raw || "");
+    const bare = /([\d,]+(?:\.\d+)?)[ \t]*([kKmM]?)(?=[ \t]|$|[,.;:/]|\r?\n)/.exec(raw || "");
     if (!bare || !fallbackCurrency) return null;
     let value = Number(bare[1].replace(/,/g, ""));
     if (bare[2].toLowerCase() === "k") value *= 1000;

@@ -360,7 +360,7 @@
       const pageDetails = result.campaignDetails || [];
       const fetchedPages = pageDetails.filter((item) => item.status === "ok").length;
       const message = lastScan.status === "failed"
-        ? "Latest scheduled scan failed: " + (lastScan.error || "source unavailable") + ". Previous campaign rows were preserved."
+        ? "Latest scheduled scan failed after " + (lastScan.feedRequestAttempts || 0) + " feed request(s): " + (lastScan.error || "source unavailable") + ". Previous campaign rows were preserved."
         : "GitHub Actions snapshot loaded · " + result.campaigns.length + " public-feed leads · " + fetchedPages + "/" + pageDetails.length + " campaign pages auto-read · last scan " + new Date(lastScan.completedAt || lastScan.at).toLocaleString() + ".";
       $("discovery-status").textContent = message;
       $("discovery-backend-status").textContent = "GitHub Actions scheduled snapshot is active. No separate backend URL is needed for this public feed.";

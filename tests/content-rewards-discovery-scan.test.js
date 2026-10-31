@@ -208,7 +208,7 @@ test("campaign-feed retry retries network errors but never retries an aborted re
       error.name = "AbortError";
       throw error;
     }
-  }), /could not be reached/);
+  }), /timed out/);
   assert.equal(abortCalls, 1);
 });
 

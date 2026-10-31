@@ -335,15 +335,19 @@
       discoveryState = { campaigns: merged.campaigns, scans: discoveryState.scans || [] };
       if (!window.ClipRewardDiscovery.writeState(discoveryState)) throw new Error("Backend connected, but the browser could not save its local discovery cache.");
       const lastScan = result.status.lastScan;
-      $("discovery-status").textContent = result.status.lastError
+      const backendMessage = result.status.lastError
         ? "Backend reachable; last scan reported an error: " + result.status.lastError
         : result.status.enabled
           ? "Server worker connected · " + result.campaigns.length + " matching saved leads · last server scan " + (lastScan ? new Date(lastScan.completedAt || lastScan.at).toLocaleString() : "not yet run")
           : "Backend reachable, but server scheduling is disabled. Configure DISCOVERY_SCHEDULER_ENABLED=true on the backend host.";
+      $("discovery-status").textContent = backendMessage;
+      $("discovery-backend-status").textContent = backendMessage;
       renderDiscovery();
     } catch (error) {
       discoveryBackendStatus = null;
-      $("discovery-status").textContent = (error && error.message ? error.message : "Backend connection failed.") + " Check the backend HTTPS URL and its CORS allowlist.";
+      const backendError = (error && error.message ? error.message : "Backend connection failed.") + " Check the backend HTTPS URL and its CORS allowlist.";
+      $("discovery-status").textContent = backendError;
+      $("discovery-backend-status").textContent = backendError;
       renderDiscovery();
     } finally {
       discoveryBusy = false;

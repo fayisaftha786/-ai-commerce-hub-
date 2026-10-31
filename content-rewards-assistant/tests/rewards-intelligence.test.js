@@ -81,7 +81,7 @@ test("UI loads the engine, renders the three native checks and refreshes its off
   assert.match(app, /ClipRewardIntelligence\.assessAll/);
   assert.match(app, /renderRewardsIntelligence/);
   assert.match(worker, /rewards-intelligence\.js/);
-  assert.match(worker, /clipreward-static-v15/);
+  assert.match(worker, /clipreward-static-v16/);
   assert.match(packageJson.scripts.check, /content-rewards-assistant\/rewards-intelligence\.js/);
   assert.match(packageJson.scripts.check, /content-rewards-assistant\/tests\/rewards-intelligence\.test\.js/);
 });

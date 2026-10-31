@@ -90,7 +90,7 @@
     };
     if (rate.model === "Per post") return {
       model: "Per post",
-      formula: "Use the stated fixed amount only after the clip is approved and any minimum-view / campaign conditions are met.",
+      formula: "Use the stated fixed amount only after the post is approved and any minimum-view / campaign conditions are met.",
       amountKnown: Boolean(rate.amount)
     };
     if (rate.model === "Retainer") return {

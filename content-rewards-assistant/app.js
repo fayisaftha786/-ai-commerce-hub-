@@ -233,8 +233,40 @@
     $("scout-missing").innerHTML = result.missing.length
       ? result.missing.map((line) => "<li>" + escapeHtml(line) + "</li>").join("")
       : "<li>No missing fields detected by this parser. Still verify the official campaign page.</li>";
+    renderRewardsIntelligence(result);
     $("scout-autofill-button").disabled = (!result.title && !result.sourceUrl) || result.platformMatch === "mismatch";
     $("scout-results").hidden = false;
+  }
+
+  function renderRewardsIntelligence(result) {
+    const assessment = window.ClipRewardIntelligence.assessAll({
+      brief: result,
+      platform: $("scout-target-platform").value,
+      today: new Date().toISOString().slice(0, 10),
+      account: state.account
+    });
+    const campaign = assessment.campaign;
+    const stateClass = campaign.state === "blocked" ? "ri-blocked" : campaign.state === "promising" ? "ri-promising" : "ri-verify";
+    $("ri-campaign-summary").innerHTML =
+      '<div class="ri-summary ' + stateClass + '"><strong>' + escapeHtml(campaign.stateLabel) + '</strong>' +
+      '<p>' + escapeHtml(campaign.nextStep) + '</p><small>' + escapeHtml(campaign.earningsNote) + '</small></div>';
+    $("ri-rule-checks").innerHTML = campaign.checks.map((item) =>
+      '<article class="ri-check"><span class="ri-status ri-' + escapeHtml(item.status) + '">' + escapeHtml(item.status.toUpperCase()) +
+      '</span><strong>' + escapeHtml(item.label) + '</strong><p>' + escapeHtml(item.detail) + '</p></article>'
+    ).join("");
+    const requirements = campaign.requirements.length
+      ? campaign.requirements.map((item) => '<li><strong>' + escapeHtml(item.label) + ':</strong> ' + escapeHtml(item.detail) + '</li>').join("")
+      : '<li>No additional explicit requirements were recognised. Read the full official brief; this does not mean there are no requirements.</li>';
+    $("ri-requirements").innerHTML =
+      '<div class="ri-requirements"><strong>What the brief says you must prepare</strong><ul>' + requirements + '</ul></div>';
+    $("ri-native-programs").innerHTML = assessment.nativePrograms.map((item) =>
+      '<article class="ri-native-card"><div class="ri-native-top"><span>' + escapeHtml(item.platform.toUpperCase()) +
+      '</span><small class="ri-status ri-unknown">LIVE CHECK REQUIRED</small></div><h4>' + escapeHtml(item.title) +
+      '</h4><p class="ri-route">' + escapeHtml(item.route) + '</p><p>' + escapeHtml(item.summary) + '</p><ul>' +
+      item.checks.map((check) => '<li>' + escapeHtml(check) + '</li>').join("") +
+      '</ul><a href="' + escapeHtml(item.source) + '" target="_blank" rel="noopener noreferrer">' +
+      escapeHtml(item.sourceLabel) + ' ↗</a></article>'
+    ).join("");
   }
 
   function analyseCampaignBrief(event) {
@@ -302,6 +334,10 @@
     $("campaign-scout-form").reset();
     $("scout-results").hidden = true;
     $("scout-found-grid").innerHTML = "";
+    $("ri-campaign-summary").innerHTML = "";
+    $("ri-rule-checks").innerHTML = "";
+    $("ri-requirements").innerHTML = "";
+    $("ri-native-programs").innerHTML = "";
     campaignScoutResult = null;
   }
 

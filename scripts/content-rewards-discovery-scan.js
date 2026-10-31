@@ -62,28 +62,36 @@ function decodeHtmlEntities(value) {
 }
 
 function extractVisibleText(html) {
-  let source = String(html || "").replace(/<!--[\s\S]*?-->/g, " ");
-  const main = /<main\b[^>]*>([\s\S]*?)<\/main>/i.exec(source);
-  if (main && main[1].length > 100) source = main[1];
-  else {
-    const body = /<body\b[^>]*>([\s\S]*?)<\/body>/i.exec(source);
-    if (body) source = body[1];
+  const raw = String(html || "").replace(/<!--[\s\S]*?-->/g, " ");
+
+  const toVisibleText = (fragment) => {
+    const source = String(fragment || "")
+      .replace(/<(script|style|noscript|svg|iframe|template)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, " ")
+      .replace(/<(nav|footer|aside|header)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, " ")
+      .replace(/<img\b[^>]*alt=["']([^"']+)["'][^>]*>/gi, " $1 ")
+      .replace(/<\/(?:h[1-6]|p|li|div|section|article|tr|td|th|main|ul|ol)>/gi, "\n")
+      .replace(/<(?:br|hr)\b[^>]*>/gi, "\n")
+      .replace(/<[^>]+>/g, " ");
+    return decodeHtmlEntities(source)
+      .replace(/\u00a0/g, " ")
+      .split(/\n+/)
+      .map((line) => line.replace(/\s+/g, " ").trim())
+      .filter(Boolean)
+      .join("\n");
+  };
+
+  const main = /<main\b[^>]*>([\s\S]*?)<\/main\s*>/i.exec(raw);
+  const body = /<body\b[^>]*>([\s\S]*?)<\/body\s*>/i.exec(raw);
+  const candidates = [
+    main && main[1],
+    body && body[1],
+    raw
+  ].filter((value) => typeof value === "string");
+  for (const candidate of candidates) {
+    const visible = toVisibleText(candidate);
+    if (visible.length >= 40) return visible.slice(0, MAX_PAGE_TEXT);
   }
-  source = source
-    .replace(/<(script|style|noscript|svg|iframe|template)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, " ")
-    .replace(/<(nav|footer|aside)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, " ")
-    .replace(/<img\b[^>]*alt=["']([^"']+)["'][^>]*>/gi, " $1 ")
-    .replace(/<\/(?:h[1-6]|p|li|div|section|article|tr|td|th|header|main|ul|ol)>/gi, "\n")
-    .replace(/<(?:br|hr)\b[^>]*>/gi, "\n")
-    .replace(/<[^>]+>/g, " ");
-  const lines = decodeHtmlEntities(source)
-    .replace(/\u00a0/g, " ")
-    .split(/\n+/)
-    .map((line) => line.replace(/\s+/g, " ").trim())
-    .filter(Boolean);
-  const text = lines.join("\n");
-  if (text.length < 40) throw new Error("The public page returned too little readable campaign content (possibly a JavaScript-only or blocked page).");
-  return text.slice(0, MAX_PAGE_TEXT);
+  throw new Error("The public page returned too little readable campaign content after checking its main content and full body. It may be a JavaScript-only shell or blocked public view.");
 }
 
 function canonicalDiscoverUrl(value) {
@@ -341,6 +349,7 @@ function enrichOfficialCampaignRows(campaigns, details, now) {
     }, now);
   });
 }
+
 
 async function fetchPublicCampaignPage(value, options = {}) {
   const url = canonicalPublicCampaignDetailUrl(value);

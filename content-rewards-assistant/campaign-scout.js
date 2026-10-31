@@ -103,9 +103,14 @@
 
   function parseRate(text) {
     const raw = String(text || "");
-    const money = "([$€£₹]\\s*[\\d,]+(?:\\.\\d+)?\\s*[kKmM]?(?=\\s|$|[,.;:/])|(?:USD|EUR|GBP|INR)\\s*[\\d,]+(?:\\.\\d+)?\\s*[kKmM]?(?=\\s|$|[,.;:/])|[\\d,]+(?:\\.\\d+)?\\s*[kKmM]?(?=\\s|$|[,.;:/])\\s*(?:USD|EUR|GBP|INR))";
+    const money = "([$€£₹]\\s*[\\d,]+(?:\\.\\d+)?\\s*[kKmM]?(?=\\s|$|[,.;:/+])|(?:USD|EUR|GBP|INR)\\s*[\\d,]+(?:\\.\\d+)?\\s*[kKmM]?(?=\\s|$|[,.;:/+])|[\\d,]+(?:\\.\\d+)?\\s*[kKmM]?(?=\\s|$|[,.;:/+])\\s*(?:USD|EUR|GBP|INR))";
     let match = new RegExp(money + "\\s*(?:\\/\\s*(?:1\\s*,?\\s*000|1k)|per\\s*1\\s*,?\\s*000(?:\\s+views?)?|\\bCPM\\b)", "i").exec(raw);
     if (!match) {
+      match = new RegExp("\\b(?:per\\s*1\\s*,?\\s*000|per\\s*1k)\\s+views?\\s*[:=-]?\\s*" + money, "i").exec(raw);
+      if (match) {
+        const amount = parseAmount(match[1]);
+        if (amount) return { model: "CPM", amount, label: formatAmount(amount) + " per 1,000 views" };
+      }
       match = new RegExp("\\bCPM\\b\\s*[:=-]?\\s*" + money, "i").exec(raw);
       if (match) {
         const amount = parseAmount(match[0].replace(/^\s*CPM\s*[:=-]?\s*/i, ""));
@@ -216,7 +221,7 @@
   }
 
   function findMoneyNear(text, patterns) {
-    const money = "([$€£₹]\\s*[\\d,]+(?:\\.\\d+)?\\s*[kKmM]?(?=\\s|$|[,.;:/])|(?:USD|EUR|GBP|INR)\\s*[\\d,]+(?:\\.\\d+)?\\s*[kKmM]?(?=\\s|$|[,.;:/])|[\\d,]+(?:\\.\\d+)?\\s*[kKmM]?(?=\\s|$|[,.;:/])\\s*(?:USD|EUR|GBP|INR))";
+    const money = "([$€£₹]\\s*[\\d,]+(?:\\.\\d+)?\\s*[kKmM]?(?=\\s|$|[,.;:/+])|(?:USD|EUR|GBP|INR)\\s*[\\d,]+(?:\\.\\d+)?\\s*[kKmM]?(?=\\s|$|[,.;:/+])|[\\d,]+(?:\\.\\d+)?\\s*[kKmM]?(?=\\s|$|[,.;:/+])\\s*(?:USD|EUR|GBP|INR))";
     for (const pattern of patterns) {
       const before = new RegExp(pattern + "\\s*[:=-]?\\s*" + money, "i").exec(text);
       if (before) return parseAmount(before[1]);
@@ -230,9 +235,32 @@
     const amount = findMoneyNear(text, [
       "(?:maximum|max)\\s*(?:payout\\s*)?(?:per\\s+(?:clip|video|post)|per\\s+creator|cap)",
       "(?:per\\s+(?:clip|video|post)|clip\\s+cap)\\s*(?:maximum|max|cap)?",
-      "(?:maximum|max)\\s+per\\s+clip"
+      "(?:maximum|max)\\s+per\\s+clip",
+      "(?:maximum|max)\\s+payout\\b"
     ]);
     return amount;
+  }
+
+  function extractPayoutBound(text, kind) {
+    const label = kind === "minimum" ? "(?:minimum|min\\.?)\\s+payout\\b" : "(?:maximum|max\\.?)\\s+payout\\b";
+    const lines = String(text || "").split("\n");
+    let found = null;
+    for (const line of lines) {
+      const amount = findMoneyNear(line, [label]);
+      if (amount) found = amount;
+    }
+    return found;
+  }
+
+  function detectLockedRequirements(text) {
+    const raw = String(text || "");
+    const match = /join\\s+to\\s+unlock\\s+(\\d+)\\s+requirements?/i.exec(raw);
+    const fileMatch = /reference\\s+materials\\s+(\\d+)\\s+files?/i.exec(raw);
+    return {
+      locked: /visible once you join|join to unlock/i.test(raw),
+      count: match ? Number(match[1]) : null,
+      referenceFiles: fileMatch ? Number(fileMatch[1]) : null
+    };
   }
 
   function extractMinimumViews(text) {
@@ -353,6 +381,9 @@
     const entryMode = extractAccessMode(rawText);
     const sourceUrl = findCampaignUrl(source.url, rawText);
     const capPerClip = extractCap(rawText);
+    const minimumPayout = extractPayoutBound(rawText, "minimum");
+    const maximumPayout = extractPayoutBound(rawText, "maximum");
+    const hiddenRequirements = detectLockedRequirements(rawText);
     const minimumViews = extractMinimumViews(rawText);
     const maximumViews = extractMaximumViews(rawText);
     const minimumFollowers = extractFollowers(rawText);
@@ -386,7 +417,16 @@
     if (platformRates.length) addFinding("found", "Platform-specific rates", platformRates.map((item) => item.platform + ": " + item.label).join(" · "));
     if (platformCaps.length) addFinding("found", "Platform-specific maximums", platformCaps.map((item) => item.platform + ": " + formatAmount(item.amount)).join(" · "));
     if (platformMinimumViews.length) addFinding("found", "Platform-specific minimum views", platformMinimumViews.map((item) => item.platform + ": " + new Intl.NumberFormat("en").format(item.value)).join(" · "));
-    if (capPerClip) addFinding("found", "Maximum per clip", formatAmount(capPerClip));
+    if (capPerClip) addFinding("found", "Maximum payout / per-clip cap", formatAmount(capPerClip));
+    if (minimumPayout) addFinding("found", "Minimum payout before settlement", formatAmount(minimumPayout));
+    if (maximumPayout && (!capPerClip || maximumPayout.value !== capPerClip.value || maximumPayout.currency !== capPerClip.currency)) {
+      addFinding("found", "Maximum payout shown on campaign page", formatAmount(maximumPayout));
+    }
+    if (hiddenRequirements.locked) {
+      addFinding("warning", "Creator requirements locked", hiddenRequirements.count == null
+        ? "The page says requirements are visible only after joining. This analysis cannot inspect the locked rules."
+        : hiddenRequirements.count + " requirement(s) are locked until you join. Do not assume the visible description is the full brief.");
+    }
     if (minimumViews != null) addFinding("found", "Minimum views", new Intl.NumberFormat("en").format(minimumViews));
     if (maximumViews != null) addFinding("found", "Maximum views", new Intl.NumberFormat("en").format(maximumViews));
     if (minimumFollowers != null) addFinding("found", "Minimum followers / subscribers", new Intl.NumberFormat("en").format(minimumFollowers));
@@ -426,7 +466,8 @@
     if (platformMatch === "unknown") missing.push(requestedPlatform + " acceptance is not stated in the copied text");
     if (!entryMode) missing.push("Open / application / private access type not recognised");
     if (!deadline) missing.push("Campaign deadline not stated or not recognised");
-    if (rate && rate.model === "CPM" && !capPerClip) missing.push("CPM maximum per clip not recognised — check the selected platform's campaign page");
+    if (rate && rate.model === "CPM" && !capPerClip) missing.push("CPM maximum payout per clip not recognised — check the selected platform's campaign page");
+    if (hiddenRequirements.locked) missing.push("Creator requirements are locked until Join Campaign; review them after joining before creating or publishing content.");
     if (rate && rate.model === "CPM" && minimumViews == null) missing.push("CPM minimum views not recognised — check the campaign page");
     if (unsupportedPlatforms.length) missing.push(unsupportedPlatforms.join(", ") + " is not available in the India workflow; do not select it as a posting destination");
     if (campaignStatus === "Paused" || campaignStatus === "Ended / closed" || campaignStatus === "Out of budget") {
@@ -442,7 +483,7 @@
       platforms, excludedPlatforms, unsupportedPlatforms, category, requirementLines, findings, missing,
       confidence, coverageScore, campaignType, campaignStatus, capPerClip, minimumViews, maximumViews,
       minimumFollowers, duration, creativeFormat, languages, hashtags, mentions, platformRates,
-      platformCaps, platformMinimumViews, platformMaximumViews,
+      platformCaps, platformMinimumViews, platformMaximumViews, minimumPayout, maximumPayout, hiddenRequirements,
       ruleGroups: extractRuleGroups(lines),
       rawText,
       rawExcerpt: rawText.slice(0, 1400)
@@ -462,6 +503,10 @@
       "Platform rates: " + (result.platformRates.length ? result.platformRates.map((item) => item.platform + " " + item.label).join("; ") : "Not separately recognised"),
       "Platform-specific caps: " + (result.platformCaps.length ? result.platformCaps.map((item) => item.platform + " " + formatAmount(item.amount)).join("; ") : "Not separately recognised"),
       "Platform-specific minimum views: " + (result.platformMinimumViews.length ? result.platformMinimumViews.map((item) => item.platform + " " + item.value).join("; ") : "Not separately recognised"),
+      "Minimum payout before settlement: " + formatAmount(result.minimumPayout),
+      "Maximum payout shown: " + formatAmount(result.maximumPayout),
+      "Locked creator requirements: " + (result.hiddenRequirements.locked ? "Yes" + (result.hiddenRequirements.count == null ? "" : " · " + result.hiddenRequirements.count + " requirement(s)") : "None detected"),
+      "Reference files: " + (result.hiddenRequirements.referenceFiles == null ? "Not recognised" : result.hiddenRequirements.referenceFiles),
       "Per-clip cap: " + formatAmount(result.capPerClip),
       "Minimum views: " + (result.minimumViews == null ? "Not recognised" : result.minimumViews),
       "Maximum views: " + (result.maximumViews == null ? "Not recognised" : result.maximumViews),
@@ -492,6 +537,6 @@
   return Object.freeze({
     parseCampaignBrief, buildTrackerNotes, formatAmount, parseAmount, parseBudget, parseRate, parseCount,
     extractPlatforms, extractCap, extractMinimumViews, extractMaximumViews, extractFollowers, extractDuration,
-    extractPlatformTerms
+    extractPlatformTerms, extractPayoutBound, detectLockedRequirements
   });
 });

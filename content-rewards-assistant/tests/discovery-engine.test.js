@@ -120,6 +120,7 @@ test("loads the public GitHub Actions snapshot without credentials and keeps sou
         source: { label: "Third-party snapshot", url: "https://contentrewards.xyz/api/cr/campaigns" },
         totalReceived: 1,
         campaigns: [sample("static")],
+        campaignDetails: [{ url: "https://contentrewards.com/c/campaigns/static", status: "ok", pageText: "Campaign details" }],
         lastScan: { status: "success", at: "2026-10-31T00:00:00Z", newCount: 1 },
         scans: [{ status: "success" }]
       }) };
@@ -131,7 +132,9 @@ test("loads the public GitHub Actions snapshot without credentials and keeps sou
   assert.equal(request.options.credentials, "omit");
   assert.equal(result.status.scheduler, "github-actions-scheduled");
   assert.equal(result.campaigns[0].id, "static");
+  assert.equal(result.campaignDetails[0].pageText, "Campaign details");
   assert.equal(result.sourceLabel, "Third-party snapshot");
+  assert.deepEqual(result.campaignDetails, []);
 });
 
 test("rejects missing or malformed scheduled snapshot data", async () => {

@@ -404,7 +404,7 @@ test("public Content Rewards campaign detail extracts CPM, minimum and maximum p
   assert.deepEqual(result.unsupportedPlatforms, ["TikTok"]);
   assert.equal(result.platformMatch, "mismatch");
   assert.deepEqual(result.hiddenRequirements, { locked: true, count: 1, referenceFiles: 3 });
-  assert.match(result.sourceUrl, /contentrewards\\.com\\/c\\/campaigns\\//);
+  assert.match(result.sourceUrl, /contentrewards\.com\/c\/campaigns\//);
   assert.ok(result.missing.some((item) => /requirements are locked until Join Campaign/i.test(item)));
 });
 

@@ -457,7 +457,7 @@ test("official campaign detail does not mistake X in a campaign title for the X 
     "$3,000.00",
     "Budget",
     "$12,553 / $20,000"
-  ].join("\\n");
+  ].join("\n");
   const result = Scout.parseCampaignBrief({ text });
   assert.deepEqual(result.platforms, ["TikTok", "Instagram"]);
   assert.deepEqual(result.platformRates.map((item) => [item.platform, item.amount.value]), [
@@ -470,7 +470,7 @@ test("official campaign detail does not mistake X in a campaign title for the X 
 
 test("platform X is still recognised when it appears as an explicit destination", () => {
   const result = Scout.parseCampaignBrief({
-    text: ["Campaign: X creator campaign", "Platforms: X and Instagram", "X", "Per 1K views", "$2", "Max payout", "$100"].join("\\n")
+    text: ["Campaign: X creator campaign", "Platforms: X and Instagram", "X", "Per 1K views", "$2", "Max payout", "$100"].join("\n")
   });
   assert.deepEqual(result.platforms, ["Instagram", "X"]);
   assert.ok(result.platformRates.some((item) => item.platform === "X"));

@@ -352,3 +352,68 @@ test("CPM, per-post and retainer rates accept common reversed label formats", ()
   assert.equal(Scout.parseRate("Per post: $125").amount.value, 125);
   assert.equal(Scout.parseRate("Retainer: $500 monthly").amount.value, 500);
 });
+
+
+test("public Content Rewards campaign detail extracts CPM, minimum and maximum payout, budget and locked rules", () => {
+  const text = [
+    "Discover",
+    "Campaigns",
+    "Artist Influence",
+    "Levity, K.Flay - Slipping Away | Reposts + Memes",
+    "Get paid per view to clip the official music video. Max Payout $200+",
+    "Accepting clips",
+    "Launched 6 days ago",
+    "TikTok",
+    "Music",
+    "1",
+    "CPM",
+    "TikTok",
+    "Per 1K views",
+    "$1.00",
+    "Min payout",
+    "$1.00",
+    "Max payout",
+    "$150.00",
+    "Budget",
+    "$6 / $1,750",
+    "Reference materials 3 files",
+    "Visible once you join",
+    "Creator requirements 1 requirement",
+    "Visible once you join",
+    "Join to unlock 1 requirement and 3 files",
+    "Join Campaign"
+  ].join("\n");
+  const result = Scout.parseCampaignBrief({
+    url: "https://contentrewards.com/c/campaigns/0fdbc44a-5c4e-485d-bd00-dc964f43b90c",
+    requestedPlatform: "Instagram",
+    text
+  });
+  assert.equal(result.title, "Levity, K.Flay - Slipping Away | Reposts + Memes");
+  assert.equal(result.rate.model, "CPM");
+  assert.equal(result.rate.amount.value, 1);
+  assert.equal(result.minimumPayout.value, 1);
+  assert.equal(result.maximumPayout.value, 150);
+  assert.equal(result.capPerClip.value, 150);
+  assert.equal(result.budget.spent.value, 6);
+  assert.equal(result.budget.total.value, 1750);
+  assert.equal(result.budget.remaining.value, 1744);
+  assert.equal(result.entryMode, "Open campaign / direct join");
+  assert.equal(result.campaignStatus, "Appears live in copied text");
+  assert.equal(result.campaignType, "MUSIC");
+  assert.deepEqual(result.platforms, ["TikTok"]);
+  assert.deepEqual(result.unsupportedPlatforms, ["TikTok"]);
+  assert.equal(result.platformMatch, "mismatch");
+  assert.deepEqual(result.hiddenRequirements, { locked: true, count: 1, referenceFiles: 3 });
+  assert.match(result.sourceUrl, /contentrewards\\.com\\/c\\/campaigns\\//);
+  assert.ok(result.missing.some((item) => /requirements are locked until Join Campaign/i.test(item)));
+});
+
+test("public campaign detail accepts rate labels with amount on the next line", () => {
+  const result = Scout.parseCampaignBrief({
+    text: "Campaign: Split line CPM\nInstagram\nPer 1K views\n$1.25\nMin payout\n$2\nMax payout\n$100"
+  });
+  assert.equal(result.rate.model, "CPM");
+  assert.equal(result.rate.amount.value, 1.25);
+  assert.equal(result.minimumPayout.value, 2);
+  assert.equal(result.maximumPayout.value, 100);
+});

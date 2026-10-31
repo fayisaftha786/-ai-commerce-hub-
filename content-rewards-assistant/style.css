@@ -168,3 +168,25 @@
 .video-preflight-blocked{border-color:#854e58;background:#2a1c27}.video-preflight-blocked>strong{color:#ffc1c1}.video-preflight-blocked .video-preflight-blocked>span{color:#ffc1c1}
 .video-preflight-review{border-color:#75613b}.video-preflight-matched{border-color:#386e5b}
 @media(max-width:520px){.video-campaign-preflight-head{align-items:flex-start}.video-preflight-check{grid-template-columns:1fr;gap:3px}}
+
+
+/* Discovery Engine V2 */
+.discovery-v2-panel{border-color:#514b82;background:linear-gradient(145deg,#171d35,#0d1728)}
+.discovery-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:13px 0}
+.discovery-metrics article{padding:12px;border:1px solid #33415e;border-radius:10px;background:#101a2c}
+.discovery-metrics small,.discovery-metrics strong{display:block}
+.discovery-metrics small{font-size:9px;color:#9eacc4}
+.discovery-metrics strong{font-size:22px;color:#f2f0ff;margin-top:4px;font-variant-numeric:tabular-nums}
+.discovery-controls{display:flex;align-items:flex-end;flex-wrap:wrap;gap:9px;margin:12px 0}
+.discovery-controls label{display:grid;gap:5px;min-width:150px;font-size:10px;color:#b7c3d8}
+.discovery-controls select{padding:9px;border:1px solid #35435e;border-radius:8px;background:#101a2c;color:#edf1fb}
+.discovery-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:12px}
+.discovery-card{min-width:0;padding:12px;border:1px solid #35425f;border-radius:11px;background:#111d32}
+.discovery-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.discovery-card-head strong{font-size:12px;color:#f2f4ff;overflow-wrap:anywhere}
+.discovery-tier{flex:0 0 auto;padding:4px 6px;border-radius:6px;font-size:8px;font-weight:900}
+.discovery-tier-high{background:#17372f;color:#a9e8ca}.discovery-tier-medium{background:#3b301f;color:#f0d18d}.discovery-tier-low{background:#30384a;color:#c0cbe0}
+.discovery-card p{font-size:10px;color:#a9b7cf;margin:7px 0}
+.discovery-card>small{display:block;font-size:9px;line-height:1.55;color:#aab6cc;margin-top:8px}
+.discovery-card .feed-card-actions{margin-top:10px}
+@media(max-width:650px){.discovery-list{grid-template-columns:1fr}.discovery-controls{align-items:stretch;flex-direction:column}.discovery-controls label,.discovery-controls .button{width:100%}.discovery-metrics strong{font-size:19px}}

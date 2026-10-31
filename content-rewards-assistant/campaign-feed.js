@@ -34,6 +34,22 @@
     } catch (_) { return ""; }
   }
 
+  function canonicalCampaignUrl(value) {
+    const safe = safeOfficialUrl(value);
+    if (!safe) return "";
+    try {
+      const url = new URL(safe);
+      if (!/^\\/c\\//i.test(url.pathname) || /^\\/c\\/discover(?:\\/|$)/i.test(url.pathname)) return "";
+      if (url.pathname.split("/").filter(Boolean).length < 2) return "";
+      url.search = "";
+      url.hash = "";
+      url.pathname = url.pathname.replace(/\\/+$/, "");
+      return url.href;
+    } catch (_) {
+      return "";
+    }
+  }
+
   function normalizeCampaign(item, now) {
     if (!item || typeof item !== "object") return null;
     const payouts = (Array.isArray(item.payouts) ? item.payouts : []).map((entry) => ({
@@ -145,6 +161,6 @@
     };
   }
 
-  return { API_URL, OFFICIAL_DISCOVER, INDIA_PLATFORMS, normalizeCampaign, normalizeResponse,
+  return { API_URL, OFFICIAL_DISCOVER, INDIA_PLATFORMS, safeOfficialUrl, canonicalCampaignUrl, normalizeCampaign, normalizeResponse,
     filterCampaigns, campaignToBrief, fetchCampaigns };
 });

@@ -199,3 +199,11 @@
 .discovery-backend-config p{grid-column:1/-1;margin:0}
 .discovery-backend-config .button{white-space:nowrap}
 @media(max-width:600px){.discovery-backend-config{grid-template-columns:1fr}.discovery-backend-config .button{width:100%}}
+
+
+/* Direct public campaign URL analyzer */
+#scout-url-analyse-button{width:100%;min-height:46px;font-weight:800}
+.scout-manual-fallback{margin-top:12px;padding:12px;border:1px solid #33415e;border-radius:10px;background:#101a2c}
+.scout-manual-fallback summary{cursor:pointer;color:#bdc8dc;font-size:12px;font-weight:700}
+.scout-manual-fallback label{display:grid;gap:6px;margin:12px 0;font-size:11px;color:#b9c5da}
+.scout-manual-fallback textarea{width:100%;padding:10px;border:1px solid #35435e;border-radius:8px;background:#0a1322;color:#edf1fb}

@@ -102,6 +102,17 @@ function canonicalDiscoverUrl(value) {
   }
 }
 
+function canonicalPublicCampaignDetailUrl(value) {
+  const canonical = Feed.canonicalCampaignUrl(value);
+  if (!canonical) return "";
+  try {
+    const url = new URL(canonical);
+    return /^\\/c\\/campaigns\\/[^/]+$/i.test(url.pathname) ? canonical : "";
+  } catch (_) {
+    return "";
+  }
+}
+
 function extractDiscoverCampaigns(html) {
   const source = String(html || "").replace(/<!--[\s\S]*?-->/g, " ");
   const seen = new Set();
@@ -118,7 +129,7 @@ function extractDiscoverCampaigns(html) {
     } catch (_) {
       continue;
     }
-    const officialUrl = Feed.canonicalCampaignUrl(resolved);
+    const officialUrl = canonicalPublicCampaignDetailUrl(resolved);
     if (!officialUrl || seen.has(officialUrl)) continue;
     seen.add(officialUrl);
     const titleAttribute = /\b(?:aria-label|title)\s*=\s*(["'])(.*?)\1/i.exec(attributes);
@@ -231,7 +242,15 @@ async function fetchApprovedHtmlPage(value, canonicalize, options = {}) {
     }
     const raw = await response.text();
     if (Buffer.byteLength(raw, "utf8") > MAX_PAGE_BYTES) throw new Error("The public Content Rewards page is larger than the 1.5 MB safety limit.");
-    return { url, finalUrl, html: raw, status: response.status || 200, requestAttempts: retry.getAttempts() };
+    return {
+      url,
+      finalUrl,
+      html: raw,
+      htmlBytes: Buffer.byteLength(raw, "utf8"),
+      contentType,
+      status: response.status || 200,
+      requestAttempts: retry.getAttempts()
+    };
   } catch (error) {
     if (error && error.name === "AbortError") throw new Error("Public Content Rewards page request timed out.");
     throw error;
@@ -258,7 +277,7 @@ async function fetchPublicDiscoverCampaigns(options = {}) {
 
 function enrichOfficialCampaignRows(campaigns, details, now) {
   const byUrl = new Map((Array.isArray(details) ? details : [])
-    .map((detail) => [Feed.canonicalCampaignUrl(detail && detail.url), detail])
+    .map((detail) => [canonicalPublicCampaignDetailUrl(detail && detail.url), detail])
     .filter(([url]) => Boolean(url)));
   return (Array.isArray(campaigns) ? campaigns : []).map((row) => {
     const detail = byUrl.get(Feed.canonicalCampaignUrl(row && row.officialUrl));
@@ -323,8 +342,25 @@ function enrichOfficialCampaignRows(campaigns, details, now) {
 async function fetchPublicCampaignPage(value, options = {}) {
   const url = Feed.canonicalCampaignUrl(value);
   if (!url) throw new Error("Only public HTTPS Content Rewards campaign URLs are supported.");
-  const page = await fetchApprovedHtmlPage(url, Feed.canonicalCampaignUrl, options);
-  const pageText = extractVisibleText(page.html);
+  const page = await fetchApprovedHtmlPage(url, canonicalPublicCampaignDetailUrl, options);
+  let pageText;
+  try {
+    pageText = extractVisibleText(page.html);
+  } catch (error) {
+    const titleMatch = /<title\\b[^>]*>([\\s\\S]*?)<\\/title\\s*>/i.exec(page.html);
+    const responseTitle = titleMatch ? decodeHtmlEntities(titleMatch[1].replace(/<[^>]+>/g, " ")).replace(/\\s+/g, " ").trim().slice(0, 120) : "";
+    const detail = [
+      "HTTP " + page.status,
+      "content-type " + (page.contentType || "unknown"),
+      (page.htmlBytes || 0) + " HTML bytes",
+      responseTitle ? "title " + responseTitle : "no HTML title"
+    ].join(", ");
+    const diagnosticError = new Error((error && error.message ? error.message : "The public page returned no readable text.") + " (" + detail + ").");
+    diagnosticError.httpStatus = page.status;
+    diagnosticError.contentType = page.contentType;
+    diagnosticError.htmlBytes = page.htmlBytes;
+    throw diagnosticError;
+  }
   const parsed = Scout.parseCampaignBrief({ url, requestedPlatform: "", text: pageText });
   return {
     url,
@@ -332,6 +368,8 @@ async function fetchPublicCampaignPage(value, options = {}) {
     status: "ok",
     fetchedAt: new Date(options.now == null ? Date.now() : options.now).toISOString(),
     httpStatus: page.status,
+    contentType: page.contentType,
+    htmlBytes: page.htmlBytes,
     requestAttempts: page.requestAttempts,
     pageTitle: parsed.title || "",
     pageText,
@@ -362,9 +400,9 @@ async function fetchPublicCampaignPage(value, options = {}) {
 
 async function fetchCampaignDetails(campaigns, options = {}) {
   const previous = Array.isArray(options.previous) ? options.previous : [];
-  const oldByUrl = new Map(previous.map((row) => [Feed.canonicalCampaignUrl(row.url), row]).filter(([url]) => Boolean(url)));
+  const oldByUrl = new Map(previous.map((row) => [canonicalPublicCampaignDetailUrl(row.url), row]).filter(([url]) => Boolean(url)));
   const targets = [...new Set((Array.isArray(campaigns) ? campaigns : [])
-    .map((row) => Feed.canonicalCampaignUrl(row && row.officialUrl))
+    .map((row) => canonicalPublicCampaignDetailUrl(row && row.officialUrl))
     .filter(Boolean))].slice(0, Number.isInteger(options.limit) ? Math.max(0, Math.min(MAX_DETAIL_PAGES, options.limit)) : MAX_DETAIL_PAGES);
   const targetSet = new Set(targets);
   const records = new Map();
@@ -396,7 +434,7 @@ async function fetchCampaignDetails(campaigns, options = {}) {
         records.delete(url);
         records.set(url, previousDetail && previousDetail.pageText
           ? { ...previousDetail, status: "stale", lastAttemptAt: new Date(options.now == null ? Date.now() : options.now).toISOString(), lastError: error.message }
-          : { ...(previousDetail || {}), url, status: "unavailable", fetchedAt: previousDetail && previousDetail.fetchedAt || "", lastAttemptAt: new Date(options.now == null ? Date.now() : options.now).toISOString(), lastError: error.message, pageTitle: previousDetail && previousDetail.pageTitle || "", pageText: previousDetail && previousDetail.pageText || "", textLength: previousDetail && previousDetail.textLength || 0, detected: previousDetail && previousDetail.detected || null });
+          : { ...(previousDetail || {}), url, status: "unavailable", fetchedAt: previousDetail && previousDetail.fetchedAt || "", lastAttemptAt: new Date(options.now == null ? Date.now() : options.now).toISOString(), lastError: error.message, httpStatus: error.httpStatus || 0, contentType: error.contentType || "", htmlBytes: error.htmlBytes || 0, pageTitle: previousDetail && previousDetail.pageTitle || "", pageText: previousDetail && previousDetail.pageText || "", textLength: previousDetail && previousDetail.textLength || 0, detected: previousDetail && previousDetail.detected || null });
       }
     }
   };
@@ -502,7 +540,11 @@ async function runScheduledScan(options = {}) {
       sourceVerification = "third-party";
     }
 
-    const merged = Discovery.mergeHistory(previous.campaigns, result.campaigns, now);
+    const priorCampaigns = (previous.campaigns || []).filter((row) => {
+      const cameFromOfficialDiscover = row && (row.sourceVerification === "official-public-page" || row.source === "Official Content Rewards public Discover page");
+      return !cameFromOfficialDiscover || Boolean(canonicalPublicCampaignDetailUrl(row.officialUrl));
+    });
+    const merged = Discovery.mergeHistory(priorCampaigns, result.campaigns, now);
     const pageDetails = await fetchCampaignDetails(result.campaigns, {
       previous: previous.campaignDetails || [],
       fetchImpl: options.fetchPageImpl || globalThis.fetch,
@@ -604,4 +646,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { DEFAULT_FILE, OFFICIAL_DISCOVER_URL, MAX_DETAIL_PAGES, MAX_PAGE_BYTES, MAX_PAGE_TEXT, MAX_REDIRECTS, TRANSIENT_FEED_STATUSES, DEFAULT_FEED_RETRY_DELAYS_MS, readSnapshot, writeSnapshot, decodeHtmlEntities, extractVisibleText, canonicalDiscoverUrl, extractDiscoverCampaigns, createRetryingFetcher, fetchApprovedHtmlPage, fetchPublicDiscoverCampaigns, enrichOfficialCampaignRows, fetchPublicCampaignPage, fetchCampaignDetails, fetchFeedWithRetry, runScheduledScan };
+module.exports = { DEFAULT_FILE, OFFICIAL_DISCOVER_URL, MAX_DETAIL_PAGES, MAX_PAGE_BYTES, MAX_PAGE_TEXT, MAX_REDIRECTS, TRANSIENT_FEED_STATUSES, DEFAULT_FEED_RETRY_DELAYS_MS, readSnapshot, writeSnapshot, decodeHtmlEntities, extractVisibleText, canonicalDiscoverUrl, canonicalPublicCampaignDetailUrl, extractDiscoverCampaigns, createRetryingFetcher, fetchApprovedHtmlPage, fetchPublicDiscoverCampaigns, enrichOfficialCampaignRows, fetchPublicCampaignPage, fetchCampaignDetails, fetchFeedWithRetry, runScheduledScan };

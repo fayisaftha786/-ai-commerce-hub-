@@ -42,6 +42,7 @@ test("persists bounded history and validates scan settings", () => {
   assert.equal(Discovery.writeSettings({ enabled: true, intervalHours: 2, notify: true }, storage), true);
   assert.equal(Discovery.readSettings(storage).intervalHours, 6);
   assert.equal(Discovery.readSettings(storage).notify, true);
+  assert.equal(Discovery.readSettings(storage).backendUrl, "");
 });
 test("merges history and counts only newly discovered campaigns", () => {
   const now = Date.parse("2026-10-31T00:00:00Z");
@@ -59,4 +60,50 @@ test("scan delegates to feed and reports source provenance", async () => {
   assert.equal(options.search, "gaming");
   assert.equal(result.summary.found, 1);
   assert.equal(result.sources[0].verification, "third-party");
+});
+
+test("normalizes backend origins and rejects credentials, cleartext remote URLs and URL paths", () => {
+  assert.equal(Discovery.normalizeBackendUrl("https://api.example.com/"), "https://api.example.com");
+  assert.equal(Discovery.normalizeBackendUrl("http://127.0.0.1:3000"), "http://127.0.0.1:3000");
+  assert.equal(Discovery.normalizeBackendUrl("http://api.example.com"), "");
+  assert.equal(Discovery.normalizeBackendUrl("https://user:pass@example.com"), "");
+  assert.equal(Discovery.normalizeBackendUrl("https://api.example.com/v1"), "");
+});
+
+test("backend URL preference is stored without API credentials", () => {
+  const memory = new Map();
+  const storage = { getItem: (key) => memory.get(key) || null, setItem: (key, value) => memory.set(key, value) };
+  assert.equal(Discovery.writeSettings({ enabled: true, backendUrl: "https://api.example.com" }, storage), true);
+  assert.equal(Discovery.readSettings(storage).backendUrl, "https://api.example.com");
+  assert.equal(memory.get(Discovery.SETTINGS_KEY).includes("token"), false);
+});
+
+test("fetches only read-only discovery endpoints using credential-free CORS requests", async () => {
+  const calls = [];
+  const json = (value) => ({ ok: true, json: async () => value });
+  const result = await Discovery.fetchBackendSnapshot({
+    backendUrl: "https://api.example.com",
+    platform: "Instagram",
+    search: "gaming",
+    fetchImpl: async (url, options) => {
+      calls.push({ url, options });
+      return url.endsWith("/api/discovery/status")
+        ? json({ enabled: true, scheduler: "server-scheduled", intervalMinutes: 360, sourceRegistry: [] })
+        : json({ campaigns: [sample("one")], count: 1, totalSaved: 1, updatedAt: "2026-10-31T00:00:00Z" });
+    }
+  });
+  assert.equal(calls.length, 2);
+  assert.ok(calls.every((call) => call.options.method === "GET" && call.options.credentials === "omit" && call.options.mode === "cors"));
+  assert.match(calls[1].url, /platform=Instagram/);
+  assert.match(calls[1].url, /search=gaming/);
+  assert.equal(result.campaigns.length, 1);
+  assert.equal(result.status.scheduler, "server-scheduled");
+});
+
+test("backend client rejects malformed payloads and remote cleartext URLs", async () => {
+  await assert.rejects(Discovery.fetchBackendSnapshot({ backendUrl: "http://public.example" }), /valid HTTPS backend origin/);
+  await assert.rejects(Discovery.fetchBackendSnapshot({
+    backendUrl: "https://api.example.com",
+    fetchImpl: async () => ({ ok: true, json: async () => ({}) })
+  }), /unrecognised response/);
 });

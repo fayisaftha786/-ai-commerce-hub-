@@ -10,5 +10,6 @@
   "totalReceived": 0,
   "campaigns": [],
   "lastScan": null,
-  "scans": []
+  "scans": [],
+  "campaignDetails": []
 }

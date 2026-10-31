@@ -29,9 +29,25 @@
   function safeOfficialUrl(value) {
     try {
       const url = new URL(String(value || ""));
-      if (url.protocol !== "https:" || (url.hostname !== "contentrewards.com" && !url.hostname.endsWith(".contentrewards.com"))) return "";
+      if (url.protocol !== "https:" || (url.hostname !== "contentrewards.com" && !url.hostname.endsWith(".contentrewards.com")) || (url.port && url.port !== "443")) return "";
       return url.href;
     } catch (_) { return ""; }
+  }
+
+  function canonicalCampaignUrl(value) {
+    const safe = safeOfficialUrl(value);
+    if (!safe) return "";
+    try {
+      const url = new URL(safe);
+      if (!/^\/c\//i.test(url.pathname) || /^\/c\/discover(?:\/|$)/i.test(url.pathname)) return "";
+      if (url.pathname.split("/").filter(Boolean).length < 2) return "";
+      url.search = "";
+      url.hash = "";
+      url.pathname = url.pathname.replace(/\/+$/, "");
+      return url.href;
+    } catch (_) {
+      return "";
+    }
   }
 
   function normalizeCampaign(item, now) {
@@ -145,6 +161,6 @@
     };
   }
 
-  return { API_URL, OFFICIAL_DISCOVER, INDIA_PLATFORMS, normalizeCampaign, normalizeResponse,
+  return { API_URL, OFFICIAL_DISCOVER, INDIA_PLATFORMS, safeOfficialUrl, canonicalCampaignUrl, normalizeCampaign, normalizeResponse,
     filterCampaigns, campaignToBrief, fetchCampaigns };
 });

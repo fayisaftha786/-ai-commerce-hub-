@@ -85,3 +85,14 @@ test("reports source/network failures instead of returning fabricated empty resu
   );
   assert.throws(() => Feed.normalizeResponse({ success: true, data: "not-an-array" }, NOW), /format was not recognised/);
 });
+
+test("canonical campaign URLs accept only public Content Rewards campaign pages", () => {
+  assert.equal(Feed.canonicalCampaignUrl("https://contentrewards.com/c/campaigns/abc?ref=discover#top"), "https://contentrewards.com/c/campaigns/abc");
+  assert.equal(Feed.canonicalCampaignUrl("https://www.contentrewards.com/c/my-campaign/"), "https://www.contentrewards.com/c/my-campaign");
+  assert.equal(Feed.canonicalCampaignUrl("https://contentrewards.com/c/discover"), "");
+  assert.equal(Feed.canonicalCampaignUrl("https://contentrewards.com/c/"), "");
+  assert.equal(Feed.canonicalCampaignUrl("https://evil.example/c/campaigns/abc"), "");
+  assert.equal(Feed.canonicalCampaignUrl("http://contentrewards.com/c/campaigns/abc"), "");
+  assert.equal(Feed.canonicalCampaignUrl("https://contentrewards.com:8443/c/campaigns/abc"), "");
+  assert.equal(Feed.canonicalCampaignUrl("javascript:alert(1)"), "");
+});

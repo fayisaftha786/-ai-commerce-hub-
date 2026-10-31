@@ -52,58 +52,142 @@
     return String(value == null ? "" : value).replace(/\r/g, "").trim().slice(0, max || 2000);
   }
 
+  function unique(values) {
+    return [...new Set(values.filter(Boolean))];
+  }
+
   function inferBriefRequirements(brief) {
-    const raw = clean(brief && brief.rawExcerpt, 1400) + "\n" +
-      (Array.isArray(brief && brief.requirementLines) ? brief.requirementLines.map((item) => clean(item, 500)).join("\n") : "");
+    const source = brief && typeof brief === "object" ? brief : {};
+    const raw = clean(source.rawText || source.rawExcerpt, 20000) + "\n" +
+      (Array.isArray(source.requirementLines) ? source.requirementLines.map((item) => clean(item, 700)).join("\n") : "");
     const checks = [];
-    const add = (key, label, detail) => checks.push({ key, label, detail, status: "must-check" });
-    if (/\boriginal\b|\bown footage\b|\bcreated by you\b/i.test(raw)) {
-      add("originality", "Originality", "The brief mentions original content. Use footage and creative work you own or are licensed to use; do not rely on minor edits to another creator's work.");
+    const add = (key, label, detail) => {
+      if (!checks.some((item) => item.key === key)) checks.push({ key, label, detail, status: "must-check" });
+    };
+
+    if (/\boriginal\b|\bown footage\b|\bcreated by you\b|\bunique content\b/i.test(raw)) {
+      add("originality", "Originality", "The brief mentions original content. Use footage and creative work you own or are licensed to use; a minor edit to somebody else's clip may not satisfy the rule.");
     }
-    if (/\bdisclos|#ad\b|#sponsored\b|paid partnership/i.test(raw)) {
-      add("disclosure", "Disclosure", "A sponsorship or paid-partnership disclosure is mentioned. Follow the exact placement, wording and platform label in the official brief.");
+    if (/\bdisclos|#ad\b|#sponsored\b|paid partnership|branded content label/i.test(raw)) {
+      add("disclosure", "Disclosure", "A sponsorship or paid-partnership disclosure is mentioned. Follow the exact wording, placement and platform label in the official brief.");
     }
-    const duration = /\b(?:minimum|min\.?|at least)\s*(\d{1,3})\s*(?:seconds?|secs?|s)\b/i.exec(raw);
-    if (duration) add("duration", "Minimum duration", "The copied text states at least " + duration[1] + " seconds. Verify the final edited clip duration against the live brief.");
-    const tags = [...new Set((raw.match(/#[a-z0-9_]+/gi) || []).map((tag) => tag.toLowerCase()))].slice(0, 12);
+    const duration = source.duration && (source.duration.minSeconds != null || source.duration.maxSeconds != null)
+      ? source.duration
+      : null;
+    if (duration) {
+      const detail = (duration.minSeconds != null ? "At least " + duration.minSeconds + " seconds" : "") +
+        (duration.minSeconds != null && duration.maxSeconds != null ? "; " : "") +
+        (duration.maxSeconds != null ? "no more than " + duration.maxSeconds + " seconds" : "");
+      add("duration", "Video duration", detail + ". Check the exported clip's actual duration.");
+    } else if (/\b(?:minimum|min\.?|at least)\s*\d{1,3}\s*(?:seconds?|secs?|s)\b/i.test(raw)) {
+      const match = /\b(?:minimum|min\.?|at least)\s*(\d{1,3})\s*(?:seconds?|secs?|s)\b/i.exec(raw);
+      add("duration", "Minimum duration", "The brief states at least " + match[1] + " seconds. Verify the final edited clip duration.");
+    }
+    if (source.minimumViews != null) add("minimum-views", "Minimum views", "The campaign text states at least " + Number(source.minimumViews).toLocaleString("en") + " views. Check whether this threshold is per clip and whether views are qualified.");
+    if (source.maximumViews != null) add("maximum-views", "Maximum views", "The copied brief mentions a maximum of " + Number(source.maximumViews).toLocaleString("en") + " views. Confirm how the campaign counts and caps them.");
+    if (source.minimumFollowers != null) add("minimum-followers", "Audience threshold", "The brief mentions at least " + Number(source.minimumFollowers).toLocaleString("en") + " followers/subscribers. Verify the required platform and account.");
+    const format = clean(source.creativeFormat, 120);
+    if (format || /\b9\s*:\s*16\b|\bvertical\b|1080\s*[x×]\s*1920/i.test(raw)) {
+      add("format", "Video format", format ? "Detected format: " + format + ". Match the required aspect ratio, orientation and resolution." : "The brief mentions a vertical or aspect-ratio requirement. Verify the exact export dimensions.");
+    }
+    const languages = Array.isArray(source.languages) ? source.languages : [];
+    if (languages.length || /\blanguage(?:s)?\s*[:=-]/i.test(raw)) {
+      add("language", "Language", "Language requirement detected: " + (languages.join(", ") || "review the language line in the full copied brief") + ".");
+    }
+    const tags = unique([
+      ...(Array.isArray(source.hashtags) ? source.hashtags : []),
+      ...((raw.match(/#[a-z0-9_]+/gi) || []).map((tag) => tag.toLowerCase()))
+    ]).slice(0, 30);
     if (tags.length) add("hashtags", "Required / mentioned hashtags", tags.join(" "));
-    const mentions = [...new Set((raw.match(/@[a-z0-9._]{2,}/gi) || []).map((tag) => tag.toLowerCase()))].slice(0, 8);
+    const mentions = unique([
+      ...(Array.isArray(source.mentions) ? source.mentions : []),
+      ...((raw.match(/@[a-z0-9._]{2,}/gi) || []).map((tag) => tag.toLowerCase()))
+    ]).slice(0, 20);
     if (mentions.length) add("mentions", "Partner / account mentions", mentions.join(", "));
-    if (/pre.?approval|approve.*draft|draft.*approval/i.test(raw)) {
-      add("preapproval", "Pre-approval", "The brief appears to require draft approval before publication. Do not publish until the campaign team approves the draft.");
+    if (/pre.?approval|approve.*draft|draft.*approval|review.*before\s+(?:posting|publishing)/i.test(raw)) {
+      add("preapproval", "Pre-approval", "The brief appears to require draft approval before publication. Upload the draft and wait for the campaign team before posting.");
     }
-    if (/watermark|repost|re.?upload|cross.?post|duplicate/i.test(raw)) {
-      add("reuse", "Reuse / watermark restrictions", "The brief mentions reposting, duplicate content, cross-posting or watermarks. Confirm exactly what is prohibited before editing.");
+    if (/watermark|repost|re.?upload|cross.?post|duplicate|reused content/i.test(raw)) {
+      add("reuse", "Reuse / watermark restrictions", "The brief mentions reposting, duplicate content, cross-posting or watermarks. Confirm precisely what is prohibited before editing.");
+    }
+    if (/copyright|licensed music|unlicensed\\s+(?:music|audio|footage|assets?)|music rights|commercial use|royalty[- ]free|permission/i.test(raw)) {
+      add("rights", "Audio / footage rights", "The brief mentions copyright, licensing or permissions. Confirm commercial rights for every music, clip, image, logo and source asset.");
     }
     if (/30\s*(?:-|to)?\s*minute|within\s+30\s+minutes/i.test(raw)) {
-      add("submission-window", "Submission window", "A 30-minute submission window appears in the copied text. Verify the official post and link-submission timestamps.");
+      add("submission-window", "Submission window", "A 30-minute submission window appears in the copied text. Record the actual public-post and Content Rewards submission times.");
     }
+    if (source.entryMode === "Private / invitation-only" || /\bprivate campaign\b|\binvitation[- ]only\b|\binvite[- ]only\b/i.test(raw)) {
+      add("private-access", "Private campaign access", "This appears to be an invitation-only campaign. Use the official invite route; it will not be discoverable through the public campaign list.");
+    }
+    const groups = source.ruleGroups && typeof source.ruleGroups === "object" ? source.ruleGroups : {};
+    const prohibited = Array.isArray(groups.prohibited) && groups.prohibited.length
+      ? groups.prohibited
+      : raw.split("\n").filter((line) => /\bno\b|don't|do not|must not|cannot|can't|prohibit|avoid|forbidden|watermark|repost|unlicensed/i.test(line));
+    if (prohibited.length) add("prohibited-actions", "Do-not-do rules", unique(prohibited).slice(0, 12).join(" · "));
+    if (/AI[- ]generated|synthetic voice|AI voice|voice cloning|AI tools/i.test(raw)) {
+      add("ai-usage", "AI-generated media rules", "The brief mentions AI-generated media or voice. Confirm whether these tools are permitted and disclose them when required; do not assume permission.");
+    }
+    const eligibility = Array.isArray(groups.eligibility) ? groups.eligibility : [];
+    if (eligibility.length) add("eligibility-rules", "Creator eligibility rules", unique(eligibility).slice(0, 12).join(" · "));
+    const submission = Array.isArray(groups.submission) ? groups.submission : [];
+    if (submission.length) add("submission-rules", "Posting / submission rules", unique(submission).slice(0, 12).join(" · "));
     return checks;
   }
 
-  function payoutGuidance(rate) {
-    if (!rate) return { model: "Not stated", formula: "No payout estimate. The brief does not contain a recognised payout model or rate.", amountKnown: false };
+  function creatorFee(rate, budget) {
+    const source = "https://contentrewards.com/terms";
+    if (!rate) return { percent: null, label: "Unknown until the payout model and campaign terms are confirmed", source };
+    if (rate.model === "CPM" || rate.model === "Pool") {
+      return { percent: 10, label: "The current creator terms list a 10% creator fee for CPM and Pool payouts; check the individual campaign terms for any applicable variation.", source };
+    }
+    if (rate.model === "Per post" || rate.model === "Retainer") {
+      if (!budget || !budget.total) return { percent: null, label: "Per-post / retainer fee depends on the total campaign budget; confirm the campaign terms.", source };
+      if (budget.total.currency !== "USD") return { percent: null, label: "The fee threshold is stated in US dollars; this campaign budget uses another currency, so confirm the fee shown in its official terms.", source };
+      if (budget.total.value >= 5000 && budget.total.currency === "USD") {
+        return { percent: 0, label: "Current terms list 0% creator fee for per-post / retainer campaigns with a total budget of at least US$5,000; verify the campaign's displayed terms.", source };
+      }
+      return { percent: 10, label: "Current terms list 10% for per-post / retainer campaigns with a total budget below US$5,000; verify the campaign's displayed terms.", source };
+    }
+    return { percent: null, label: "Creator fee is not recognised; confirm the official campaign terms.", source };
+  }
+
+  function payoutGuidance(rate, budget, capPerClip) {
+    const fee = creatorFee(rate, budget);
+    if (!rate) return {
+      model: "Not stated",
+      formula: "No payout estimate. The copied brief does not contain a recognised payout model or rate.",
+      amountKnown: false, creatorFee: fee
+    };
     if (rate.model === "CPM") return {
       model: "CPM",
-      formula: "Campaign gross = stated CPM × eligible qualified views ÷ 1,000. Apply the campaign's per-clip cap and remaining budget; approval and any fees still affect settlement.",
-      amountKnown: Boolean(rate.amount)
+      formula: "Gross clip earnings = CPM rate × eligible qualified views counted by Content Rewards ÷ 1,000, limited by the per-platform maximum per clip and remaining campaign budget. The creator fee is then deducted; views and approval are determined by Content Rewards and the campaign team.",
+      amountKnown: Boolean(rate.amount),
+      capPerClip: capPerClip || null,
+      creatorFee: fee
     };
     if (rate.model === "Per post") return {
       model: "Per post",
-      formula: "Use the stated fixed amount only after the post is approved and any minimum-view / campaign conditions are met.",
-      amountKnown: Boolean(rate.amount)
+      formula: "The stated fixed amount is payable only after the clip is approved and its minimum-view / deliverable conditions are met. Apply the creator fee stated by the campaign terms.",
+      amountKnown: Boolean(rate.amount),
+      creatorFee: fee
     };
     if (rate.model === "Retainer") return {
       model: "Retainer",
-      formula: "Payment depends on agreed deliverables and the cycle. Confirm the amount and acceptance terms in the official agreement.",
-      amountKnown: false
+      formula: "Payment depends on agreed deliverables and the cycle. Confirm the amount, cycle and acceptance terms in the official agreement; the creator fee depends on campaign budget and terms.",
+      amountKnown: Boolean(rate.amount),
+      creatorFee: fee
     };
     if (rate.model === "Pool") return {
-      model: "Shared pool",
-      formula: "A shared pool is not a fixed CPM or guaranteed per-creator amount. Confirm the allocation formula, eligible views and remaining budget on the official campaign page.",
-      amountKnown: false
+      model: "Pool",
+      formula: "A Pool campaign allocates a funded amount among eligible creators using the campaign's stated rules (including counted views where specified). It is not a fixed CPM or guaranteed per-creator amount; the creator fee applies.",
+      amountKnown: false,
+      creatorFee: fee
     };
-    return { model: clean(rate.model, 40), formula: "Confirm the official payout formula, caps, fees, approval conditions and settlement schedule.", amountKnown: false };
+    return {
+      model: clean(rate.model, 40),
+      formula: "Confirm the official payout formula, caps, fees, approval conditions and settlement schedule.",
+      amountKnown: false, creatorFee: fee
+    };
   }
 
   function assessCampaign(input) {
@@ -112,47 +196,110 @@
     const platform = INDIA_POSTING_PLATFORMS.includes(source.platform) ? source.platform : "";
     const today = clean(source.today, 10) || new Date().toISOString().slice(0, 10);
     const accepted = Array.isArray(brief.platforms) ? brief.platforms : [];
+    const excluded = Array.isArray(brief.excludedPlatforms) ? brief.excludedPlatforms : [];
     const unsupported = Array.isArray(brief.unsupportedPlatforms) ? brief.unsupportedPlatforms : [];
     const reasons = [];
+    const missing = Array.isArray(brief.missing) ? brief.missing.slice() : [];
     let state = "verify";
+
     if (!platform) {
       state = "blocked";
       reasons.push("Select Instagram, Facebook, YouTube or X before assessing platform fit.");
     } else if (unsupported.includes(platform) || platform === "TikTok") {
       state = "blocked";
       reasons.push(platform + " is not an India posting destination in this workspace.");
-    } else if (brief.platformMatch === "mismatch") {
+    } else if (excluded.includes(platform) || brief.platformMatch === "mismatch") {
       state = "blocked";
-      reasons.push(platform + " is not listed as accepted in the copied campaign brief.");
+      reasons.push(platform + " is not listed as accepted or is explicitly excluded in the copied brief.");
     } else if (brief.deadline && brief.deadline < today) {
       state = "blocked";
       reasons.push("The copied campaign deadline is in the past. Confirm whether the campaign is still open before spending time on it.");
-    } else {
+    } else if (["Paused", "Ended / closed", "Out of budget"].includes(brief.campaignStatus)) {
+      state = "blocked";
+      reasons.push("The copied brief indicates campaign status: " + brief.campaignStatus + ".");
+    }
+
+    const platformRates = Array.isArray(brief.platformRates) ? brief.platformRates : [];
+    const selectedRate = platformRates.find((item) => item.platform === platform) || null;
+    const rate = selectedRate || (platformRates.length ? null : brief.rate || null);
+    const platformCaps = Array.isArray(brief.platformCaps) ? brief.platformCaps : [];
+    const platformMinimumViews = Array.isArray(brief.platformMinimumViews) ? brief.platformMinimumViews : [];
+    const platformMaximumViews = Array.isArray(brief.platformMaximumViews) ? brief.platformMaximumViews : [];
+    const selectedCap = platformCaps.find((item) => item.platform === platform) || null;
+    const selectedMinimum = platformMinimumViews.find((item) => item.platform === platform) || null;
+    const selectedMaximum = platformMaximumViews.find((item) => item.platform === platform) || null;
+    const capPerClip = (selectedCap && selectedCap.amount) ||
+      (platformCaps.length ? null : brief.capPerClip || null);
+    const minimumViews = selectedMinimum ? selectedMinimum.value :
+      (platformMinimumViews.length ? null : brief.minimumViews);
+    const maximumViews = selectedMaximum ? selectedMaximum.value :
+      (platformMaximumViews.length ? null : brief.maximumViews);
+    const payout = payoutGuidance(rate, brief.budget, capPerClip);
+    const requirements = inferBriefRequirements(brief);
+
+    if (state !== "blocked") {
       if (brief.platformMatch !== "match") reasons.push("Platform acceptance is not confirmed from the copied text.");
-      if (!brief.rate) reasons.push("Payout model or rate is missing.");
+      if (!rate) reasons.push("Payout model or platform rate is missing.");
       if (!brief.budget || !brief.budget.remaining) reasons.push("Remaining campaign budget is not known.");
       if (!brief.deadline) reasons.push("Campaign deadline is not recognised.");
-      if (!brief.entryMode) reasons.push("Open-join versus application / invitation route is not known.");
-      reasons.push("Account eligibility, campaign approval and live campaign availability must be checked on Content Rewards.");
+      if (!brief.entryMode) reasons.push("Open / application / private access route is not known.");
+      if (rate && rate.model === "CPM" && !capPerClip) reasons.push("CPM maximum per clip is not recognised.");
+      if (rate && rate.model === "CPM" && minimumViews == null) reasons.push("CPM minimum views are not recognised.");
+      if (brief.minimumFollowers != null) reasons.push("Confirm that your selected posting account meets the stated follower threshold.");
+      reasons.push("Creator-account eligibility and campaign approval must still be confirmed on Content Rewards.");
+      const coreComplete = brief.platformMatch === "match" && Boolean(rate) &&
+        Boolean(brief.budget && brief.budget.remaining) && Boolean(brief.deadline) && Boolean(brief.entryMode) &&
+        (rate.model !== "CPM" || (Boolean(capPerClip) && minimumViews != null));
+      state = coreComplete ? "promising" : "verify";
     }
-    if (state !== "blocked") {
-      state = brief.platformMatch === "match" && brief.rate && brief.deadline && brief.entryMode ? "promising" : "verify";
-    }
-    const payout = payoutGuidance(brief.rate);
-    const requirements = inferBriefRequirements(brief);
+
     const checks = [
       {
         label: "Selected platform",
-        status: brief.platformMatch === "match" && platform ? "pass" : brief.platformMatch === "mismatch" ? "fail" : "unknown",
+        status: brief.platformMatch === "match" && platform ? "pass" : excluded.includes(platform) || brief.platformMatch === "mismatch" ? "fail" : "unknown",
         detail: brief.platformMatch === "match" ? platform + " appears in the accepted platforms copied from the brief." :
-          brief.platformMatch === "mismatch" ? platform + " is not listed in the copied brief." :
-            "The pasted text does not prove that " + (platform || "your selected platform") + " is accepted."
+          excluded.includes(platform) ? platform + " is explicitly excluded in the copied text." :
+            brief.platformMatch === "mismatch" ? platform + " is not listed among accepted platforms." :
+              "The copied text does not prove that " + (platform || "your selected platform") + " is accepted."
       },
-      { label: "Payout model", status: brief.rate ? "pass" : "unknown", detail: payout.model + (brief.rate && brief.rate.label ? " · " + brief.rate.label : " · not detected") },
+      {
+        label: "Platform payout rate",
+        status: rate ? "pass" : "unknown",
+        detail: rate ? platform + (selectedRate ? " rate: " : " rate not separately listed; general rate: ") + (rate.label || rate.model) :
+          "No recognised rate for " + platform + "."
+      },
+      {
+        label: "Per-clip maximum",
+        status: capPerClip ? "pass" : rate && rate.model === "CPM" ? "unknown" : "not-applicable",
+        detail: capPerClip ? "Detected maximum: " + capPerClip.currency + " " + capPerClip.value :
+          rate && rate.model === "CPM" ? "CPM campaigns have a maximum per clip; it was not recognised in the copied brief." :
+            "A CPM-style clip cap was not detected for this payout model."
+      },
+      {
+        label: "Minimum views",
+        status: minimumViews != null ? "pass" : rate && rate.model === "CPM" ? "unknown" : "not-applicable",
+        detail: minimumViews != null ? "Detected minimum: " + Number(minimumViews).toLocaleString("en") + " views." :
+          rate && rate.model === "CPM" ? "Minimum views were not recognised. Confirm the threshold on the campaign page." :
+            "No minimum-view threshold was recognised in the copied text."
+      },
+      {
+        label: "Maximum views",
+        status: maximumViews != null ? "pass" : "not-applicable",
+        detail: maximumViews != null ? "Detected maximum: " + Number(maximumViews).toLocaleString("en") + " views." : "No maximum-view threshold was recognised."
+      },
+      {
+        label: "Minimum followers / subscribers",
+        status: brief.minimumFollowers != null ? "unknown" : "not-applicable",
+        detail: brief.minimumFollowers != null
+          ? "The copied brief requires " + Number(brief.minimumFollowers).toLocaleString("en") + " followers/subscribers. The app cannot verify your live account count."
+          : "No minimum follower threshold was recognised."
+      },
       {
         label: "Budget remaining",
         status: brief.budget && brief.budget.remaining ? "pass" : "unknown",
-        detail: brief.budget && brief.budget.remaining ? "Detected remaining budget: " + brief.budget.remaining.currency + " " + brief.budget.remaining.value : "Remaining budget was not confirmed by the copied text."
+        detail: brief.budget && brief.budget.remaining ?
+          "Detected remaining budget: " + brief.budget.remaining.currency + " " + brief.budget.remaining.value :
+          "Remaining campaign budget was not confirmed by the copied text."
       },
       {
         label: "Deadline",
@@ -160,19 +307,32 @@
         detail: brief.deadline ? "Detected deadline: " + brief.deadline : "No recognised deadline; check the live campaign."
       },
       {
+        label: "Access type",
+        status: brief.entryMode ? "pass" : "unknown",
+        detail: brief.entryMode || "Open, application-only or private access was not recognised."
+      },
+      {
         label: "Creator account / campaign approval",
         status: "unknown",
-        detail: "No Content Rewards account API is connected. Confirm the exact social account, eligibility and Join / Applied / Invited state in Content Rewards."
+        detail: "No Content Rewards account API is connected. Confirm the exact social account is verified and that you have joined, been invited or received application approval."
       }
     ];
+
+    const nextStep = state === "blocked"
+      ? "Do not spend time producing this clip yet. Resolve the blocker or choose another campaign."
+      : brief.entryMode === "Private / invitation-only"
+        ? "Use the official invitation link or account notification, confirm the exact account you will post from is connected, and read the full brief before creating the draft."
+        : brief.entryMode === "Application / brand review"
+          ? "Open the official campaign, select the account you will post from and confirm the exact account is connected, complete the application, and wait for brand approval before publishing."
+          : "Open the official campaign, confirm the exact account you will post from is connected, check the full requirements and remaining budget, then Join Campaign. Publish and submit only after joining.";
     return {
       state,
-      stateLabel: state === "blocked" ? "Blocked / do not proceed yet" : state === "promising" ? "Promising brief · verify before applying" : "More evidence required",
-      reasons, platform, acceptedPlatforms: accepted, payout, requirements, checks,
-      nextStep: state === "blocked"
-        ? "Resolve the listed blocker or skip this campaign. Do not publish against an unconfirmed brief."
-        : "Open the official campaign, confirm the exact account is connected, check every requirement and remaining budget, then apply / join in Content Rewards. Publish and submit there only after approval or joining.",
-      earningsNote: "This is a campaign-rule analysis, not an earnings forecast. No qualified views, per-clip cap, payout approval, fee or received amount is assumed."
+      stateLabel: state === "blocked" ? "Blocked / do not proceed yet" :
+        state === "promising" ? "Promising copied brief · verify before joining" : "More evidence required",
+      reasons, missing, platform, acceptedPlatforms: accepted, excludedPlatforms: excluded, rate, payout, requirements, checks,
+      capPerClip, minimumViews, maximumViews, creatorFee: payout.creatorFee,
+      nextStep,
+      earningsNote: "This is a rule and evidence assessment, not an earnings forecast. No views, campaign approval, actual payout or paid balance is assumed."
     };
   }
 
@@ -180,11 +340,16 @@
     const source = input && typeof input === "object" ? input : {};
     return {
       campaign: assessCampaign(source),
-      nativePrograms: NATIVE_PROGRAMS.map((item) => ({ ...item, status: "unknown", statusLabel: "Live eligibility not connected", checks: item.checks.slice() })),
+      nativePrograms: NATIVE_PROGRAMS.map((item) => ({
+        ...item, status: "unknown", statusLabel: "Live eligibility not connected", checks: item.checks.slice()
+      })),
       apiStatus: "not-connected",
       platformSet: INDIA_POSTING_PLATFORMS.slice()
     };
   }
 
-  return Object.freeze({ INDIA_POSTING_PLATFORMS, NATIVE_PROGRAMS, inferBriefRequirements, payoutGuidance, assessCampaign, assessAll });
+  return Object.freeze({
+    INDIA_POSTING_PLATFORMS, NATIVE_PROGRAMS, inferBriefRequirements, creatorFee,
+    payoutGuidance, assessCampaign, assessAll
+  });
 });

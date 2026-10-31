@@ -24,7 +24,7 @@
   }
 
   function parseCount(raw) {
-    const match = /([\d,]+(?:\.\d+)?)\s*([kKmM]?)/.exec(String(raw || ""));
+    const match = /([\d,]+(?:\.\d+)?)\s*([kKmM]?)(?=\s|$|[,.;:/])/.exec(String(raw || ""));
     if (!match) return null;
     let value = Number(match[1].replace(/,/g, ""));
     const suffix = match[2].toLowerCase();
@@ -34,7 +34,7 @@
   }
 
   function parseAmount(raw, fallbackCurrency = "") {
-    const match = /([$€£₹]|USD|EUR|GBP|INR)\s*([\d,]+(?:\.\d+)?)\s*([kKmM]?)/i.exec(raw || "");
+    const match = /([$€£₹]|USD|EUR|GBP|INR)\s*([\d,]+(?:\.\d+)?)\s*([kKmM]?)(?=\s|$|[,.;:/])/i.exec(raw || "");
     if (match) {
       let value = Number(match[2].replace(/,/g, ""));
       const suffix = match[3].toLowerCase();
@@ -44,14 +44,14 @@
       const currency = ({ "$": "USD", "€": "EUR", "£": "GBP", "₹": "INR", USD: "USD", EUR: "EUR", GBP: "GBP", INR: "INR" })[symbol];
       return Number.isFinite(value) ? { value, currency, raw: match[0].trim() } : null;
     }
-    const suffix = /\b([\d,]+(?:\.\d+)?)\s*([kKmM]?)\s*(USD|EUR|GBP|INR)\b/i.exec(raw || "");
+    const suffix = /\b([\d,]+(?:\.\d+)?)\s*([kKmM]?)(?=\s*(?:USD|EUR|GBP|INR)\b)\s*(USD|EUR|GBP|INR)\b/i.exec(raw || "");
     if (suffix) {
       let value = Number(suffix[1].replace(/,/g, ""));
       if (suffix[2].toLowerCase() === "k") value *= 1000;
       if (suffix[2].toLowerCase() === "m") value *= 1000000;
       return Number.isFinite(value) ? { value, currency: suffix[3].toUpperCase(), raw: suffix[0].trim() } : null;
     }
-    const bare = /([\d,]+(?:\.\d+)?)\s*([kKmM]?)/.exec(raw || "");
+    const bare = /([\d,]+(?:\.\d+)?)\s*([kKmM]?)(?=\s|$|[,.;:/])/.exec(raw || "");
     if (!bare || !fallbackCurrency) return null;
     let value = Number(bare[1].replace(/,/g, ""));
     if (bare[2].toLowerCase() === "k") value *= 1000;
@@ -314,7 +314,7 @@
   }
 
   function extractRules(lines) {
-    const rulePattern = /require|must\b|minimum|min\.?\b|maximum|max\.?\b|eligible|eligib|original|disclos|language|country|region|follower|views?|tag|hashtag|watermark|repost|collab|deadline|apply|approval|duration|seconds?|format|vertical|ratio|caption|mention|music|audio|logo|asset|footage|source material|copyright|license|licensed|no\s+|don't|do\s+not|prohibit|avoid|forbidden|only\b|public\b|private\b/i;
+    const rulePattern = /require|must\b|minimum|min\.?\b|maximum|max\.?\b|eligible|eligib|original|disclos|language|country|region|follower|\bviews?\b|\btag\b|hashtags?|watermark|repost|collab|deadline|apply|approval|duration|seconds?|format|vertical|ratio|caption|mention|music|audio|logo|asset|footage|source material|copyright|license|licensed|no\s+|don't|do\s+not|prohibit|avoid|forbidden|only\b|public\b|private\b/i;
     return lines.filter((line) => rulePattern.test(line)).slice(0, 60);
   }
 

@@ -213,18 +213,22 @@
   function renderCampaignScout(result) {
     campaignScoutResult = result;
     $("scout-result-title").textContent = result.title || "Campaign details found";
-    $("scout-confidence").textContent = "Copied text only · " + (result.coverageScore == null ? result.confidence : result.coverageScore + "% core-field coverage");
+    const sourceLabel = result.analysisSource === "public-url" ? "Auto-fetched public page" : "Copied text";
+    $("scout-confidence").textContent = sourceLabel + " · " + (result.coverageScore == null ? result.confidence : result.coverageScore + "% core-field coverage");
     $("scout-confidence").classList.toggle("scout-match", result.platformMatch === "match");
     $("scout-confidence").classList.toggle("scout-mismatch", result.platformMatch === "mismatch");
     $("scout-confidence").classList.toggle("scout-unknown", result.platformMatch === "unknown");
     $("scout-confidence").title = "Coverage is a count of six key fields detected in the copied text. It is not a confidence score for eligibility or approval. " + result.requirementLines.length + " rule lines were captured.";
-    $("scout-source-note").textContent = result.platformMatch === "match"
-      ? result.requestedPlatform + " appears in the accepted platform names copied from this brief. Verify it on the live campaign page."
+    const provenance = result.analysisSource === "public-url"
+      ? "This report was extracted automatically from the public Content Rewards campaign page stored in the latest scheduled snapshot. It can be up to six hours old; verify current rules, availability and eligibility on the official page."
+      : "Findings come only from the text you pasted. Unknown values stay unknown; verify current rules, availability and eligibility on the official page.";
+    $("scout-source-note").textContent = (result.platformMatch === "match"
+      ? result.requestedPlatform + " appears in the accepted platform names detected from the campaign page."
       : result.platformMatch === "mismatch"
-        ? result.requestedPlatform + " is not listed in the copied brief. Autofill is blocked to avoid saving a wrong-platform campaign."
+        ? result.requestedPlatform + " is not listed as accepted or is explicitly excluded. Autofill is blocked for this platform."
         : result.platformMatch === "unknown"
-          ? result.requestedPlatform + " is not stated in the copied text. You may autofill the draft, but must verify platform eligibility on the official brief."
-          : "Extraction quality only — not a campaign verification, eligibility check or payout guarantee. Findings come only from the text you pasted.";
+          ? result.requestedPlatform + " is not stated in the analysed content; verify platform eligibility."
+          : "Extraction quality only — not an eligibility, approval or payout guarantee.") + " " + provenance;
     const found = result.findings.map((item) =>
       '<article class="scout-found-card"><small>' + escapeHtml(item.label) + '</small><strong>' + escapeHtml(item.value) + '</strong></article>'
     ).join("");
@@ -562,7 +566,7 @@
     ).join("");
   }
 
-  function analyseCampaignBrief(event) {
+  function analyseCampaignBrief(event, analysisSource) {
     if (event && typeof event.preventDefault === "function") event.preventDefault();
     try {
       const result = window.ClipRewardScout.parseCampaignBrief({
@@ -570,12 +574,59 @@
         requestedPlatform: $("scout-target-platform").value,
         text: $("scout-brief-text").value
       });
+      result.analysisSource = analysisSource || "copied-text";
       renderCampaignScout(result);
-      showToast("Full copied brief analysed. Review every detected rule and missing field.");
+      showToast(analysisSource === "public-url"
+        ? "Public campaign page analysed automatically. Review findings and missing fields."
+        : "Campaign brief analysed. Review every detected rule and missing field.");
     } catch (error) {
       campaignScoutResult = null;
       $("scout-results").hidden = true;
       showToast(error.message || "Could not analyse this campaign brief.");
+    }
+  }
+
+  async function analysePublicCampaignUrl() {
+    const button = $("scout-url-analyse-button");
+    const canonicalUrl = window.ClipRewardFeed.canonicalCampaignUrl($("scout-source-url").value);
+    if (!canonicalUrl) {
+      showToast("Enter a public HTTPS Content Rewards campaign URL, not the Discover index or another website.");
+      return;
+    }
+    button.disabled = true;
+    button.textContent = "Reading public page…";
+    $("scout-source-url").value = canonicalUrl;
+    try {
+      const snapshot = await window.ClipRewardDiscovery.fetchStaticSnapshot({ url: "./discovery-snapshot.json" });
+      const detail = (snapshot.campaignDetails || []).find((item) =>
+        window.ClipRewardFeed.canonicalCampaignUrl(item.url) === canonicalUrl
+      );
+      if (!detail) {
+        const detailCount = (snapshot.campaignDetails || []).length;
+        throw new Error(detailCount
+          ? "This URL is not in the latest public-page scan. Wait for the next scheduled scan, or open a campaign found in Discover."
+          : "No public campaign detail pages have been scanned yet. Run the GitHub Actions workflow “Scheduled Content Rewards discovery snapshot” once, then retry this URL.");
+      }
+      if (!detail.pageText || !["ok", "stale"].includes(detail.status)) {
+        throw new Error(detail.lastError || "The public campaign page could not be fetched. It may be blocked or require sign-in.");
+      }
+      $("scout-brief-text").value = detail.pageText;
+      analyseCampaignBrief(null, "public-url");
+      if (campaignScoutResult) {
+        campaignScoutResult.pageFetchedAt = detail.fetchedAt || "";
+        campaignScoutResult.pageFetchStatus = detail.status;
+        if (detail.status === "stale") {
+          $("scout-source-note").textContent += " Last live fetch failed; showing the previously saved public page from " + (detail.fetchedAt || "an earlier scan") + ". " + (detail.lastError || "");
+        } else {
+          $("scout-source-note").textContent += " Public page fetched: " + (detail.fetchedAt || "timestamp unavailable") + ".";
+        }
+        $("scout-results").scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    } catch (error) {
+      showToast(error && error.message ? error.message : "Could not auto-analyse this public campaign URL.");
+    } finally {
+      button.disabled = false;
+      button.textContent = "⌕ Analyse website automatically";
     }
   }
 
@@ -921,6 +972,7 @@
   });
   $("campaign-feed-load").addEventListener("click", loadCampaignFeed);
   $("campaign-scout-form").addEventListener("submit", analyseCampaignBrief);
+  $("scout-url-analyse-button").addEventListener("click", analysePublicCampaignUrl);
   $("scout-brief-text").addEventListener("input", () => {
     if ($("scout-brief-text").value.trim().length < 12) {
       campaignScoutResult = null;

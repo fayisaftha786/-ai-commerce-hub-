@@ -469,7 +469,7 @@ test("detail crawler caps concurrency, stores public page text and preserves old
   assert.equal(fetched.failed, 1);
   const prior = fetched.details.find((row) => row.url.endsWith("/two"));
   assert.equal(prior.status, "unavailable");
-  assert.ok(prior.lastError.includes("HTML bytes"), "failed page reads should retain safe response diagnostics");
+
 
   const refreshed = await fetchCampaignDetails(urls.slice(1, 2), {
     previous: [fetched.details.find((row) => row.url.endsWith("/two"))],
@@ -477,6 +477,26 @@ test("detail crawler caps concurrency, stores public page text and preserves old
   });
   assert.equal(refreshed.details[0].status, "unavailable");
   assert.match(refreshed.details[0].lastError, /still blocked/);
+});
+
+test("unreadable public campaign pages retain safe HTTP and HTML diagnostics", async () => {
+  const url = "https://contentrewards.com/c/campaigns/js-shell";
+  const result = await fetchCampaignDetails([{ officialUrl: url }], {
+    fetchImpl: async () => ({
+      ok: true,
+      status: 200,
+      url,
+      headers: { get: (name) => name.toLowerCase() === "content-type" ? "text/html; charset=utf-8" : "" },
+      text: async () => "<!doctype html><html><head><title>Campaign app shell</title></head><body><div id='root'></div></body></html>"
+    })
+  });
+  assert.equal(result.details.length, 1);
+  assert.equal(result.details[0].status, "unavailable");
+  assert.match(result.details[0].lastError, /HTTP 200/);
+  assert.match(result.details[0].lastError, /text\/html/);
+  assert.match(result.details[0].lastError, /HTML bytes/);
+  assert.match(result.details[0].lastError, /Campaign app shell/);
+  assert.ok(result.details[0].htmlBytes > 0);
 });
 
 test("scheduled scan publishes campaign detail pages beside lead metadata", async () => {

@@ -285,7 +285,8 @@ test("CPM net scenario applies the per-clip cap, remaining budget and 10% creato
   assert.equal(result.projectedGross, 80);
   assert.equal(result.creatorFeePercent, 10);
   assert.equal(result.projectedNet, 72);
-  assert.equal(result.payableNow, 72);
+  assert.equal(result.estimatedNetAfterApproval, 72);
+  assert.equal(result.confirmedPayable, 0);
   assert.equal(result.confidence, "scenario-only");
 });
 
@@ -299,7 +300,7 @@ test("CPM scenario does not pay before the minimum views threshold", () => {
     approved: true
   });
   assert.equal(result.projectedGross, 0);
-  assert.equal(result.payableNow, 0);
+  assert.equal(result.estimatedNetAfterApproval, 0);
   assert.ok(result.warnings.some((warning) => /minimum-view threshold/i.test(warning)));
 });
 
@@ -314,7 +315,7 @@ test("unknown CPM threshold permits a labelled scenario but never a payable amou
   });
   assert.equal(result.projectedGross, 20);
   assert.equal(result.projectedNet, 18);
-  assert.equal(result.payableNow, 0);
+  assert.equal(result.estimatedNetAfterApproval, 0);
   assert.equal(result.confidence, "incomplete");
 });
 

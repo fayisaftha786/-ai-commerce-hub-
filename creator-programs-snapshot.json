@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "country": "IN",
+  "scope": "official-public-source-reachability-only",
+  "generatedAt": "",
+  "status": "pending",
+  "summary": {
+    "sourcesAttempted": 3,
+    "sourcesAvailable": 0,
+    "sourcesUnavailable": 0,
+    "accountEligibilityChecksRequired": 3
+  },
+  "limitations": [
+    "This scan checks only whether allowlisted official public documentation pages can be fetched and reads their page title/description.",
+    "It does not sign in, read private creator dashboards, discover private invitations, verify account eligibility, determine live campaign availability, or verify payouts.",
+    "A reachable source page is not evidence that an account is eligible or that earnings are available."
+  ],
+  "sources": [
+    {
+      "id": "youtube-ypp",
+      "platform": "YouTube",
+      "program": "YouTube Partner Program (YPP)",
+      "programType": "native-monetization",
+      "sourceUrl": "https://support.google.com/youtube/answer/72851?hl=en-IN",
+      "sourceLabel": "YouTube official YPP eligibility guide",
+      "accountCheck": "YouTube Studio → Earn",
+      "indiaNote": "Use the India-specific help page, then confirm country, channel and feature eligibility in the channel's own Earn tab.",
+      "limitation": "A public help page cannot inspect this channel's eligibility, policy status, thresholds or payout setup.",
+      "status": "not_checked",
+      "checkedAt": "",
+      "httpStatus": null,
+      "pageTitle": "",
+      "pageDescription": "",
+      "error": ""
+    },
+    {
+      "id": "facebook-content-monetization",
+      "platform": "Facebook",
+      "program": "Facebook Content Monetization",
+      "programType": "native-monetization",
+      "sourceUrl": "https://about.fb.com/news/2026/03/creator-fast-track-grow-your-audience-earn-money-on-facebook/",
+      "sourceLabel": "Meta official 2026 creator monetization update",
+      "accountCheck": "Facebook Professional dashboard → Monetization",
+      "indiaNote": "Check the exact account and country in Professional dashboard. Meta describes access as invite-based; public announcements do not establish this account's availability.",
+      "limitation": "A reachable announcement does not mean this profile or Page has an invitation, is eligible in India, or has an approved payout account.",
+      "status": "not_checked",
+      "checkedAt": "",
+      "httpStatus": null,
+      "pageTitle": "",
+      "pageDescription": "",
+      "error": ""
+    },
+    {
+      "id": "instagram-creator-marketplace",
+      "platform": "Instagram",
+      "program": "Instagram Creator Marketplace",
+      "programType": "brand-partnerships",
+      "sourceUrl": "https://about.fb.com/news/2024/02/creator-marketplace-for-brands-and-creators-to-collaborate-on-instagram/",
+      "sourceLabel": "Meta official Creator Marketplace expansion announcement",
+      "accountCheck": "Instagram Professional dashboard → Creator Marketplace",
+      "indiaNote": "Meta's announcement included India in the planned creator-marketplace rollout. Confirm present access and eligibility in this professional account.",
+      "limitation": "Public documentation does not reveal account invitations, available projects, negotiated rates or creator eligibility.",
+      "status": "not_checked",
+      "checkedAt": "",
+      "httpStatus": null,
+      "pageTitle": "",
+      "pageDescription": "",
+      "error": ""
+    }
+  ]
+}

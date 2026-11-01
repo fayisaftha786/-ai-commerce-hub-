@@ -180,7 +180,7 @@
     const unavailable = (reason) => ({
       available: false, model: model || "Unknown", currency: currency || null,
       projectedGross: null, creatorFeePercent: null, projectedNet: null,
-      payableNow: 0, approved, confidence: "unavailable", warnings: [reason]
+      estimatedNetAfterApproval: 0, confirmedPayable: 0, approved, confidence: "unavailable", warnings: [reason]
     });
     if (!rate || !["CPM", "Per post", "Retainer", "Pool"].includes(model)) {
       return unavailable("A recognised campaign payout model and rate are required.");
@@ -237,7 +237,7 @@
     if (fee.percent === null) {
       return {
         available: true, model, currency, projectedGross: Math.round(gross * 100) / 100,
-        creatorFeePercent: null, projectedNet: null, payableNow: 0, approved,
+        creatorFeePercent: null, projectedNet: null, estimatedNetAfterApproval: 0, confirmedPayable: 0, approved,
         confidence: "incomplete", thresholdMet, warnings: warnings.concat(fee.label)
       };
     }
@@ -249,7 +249,8 @@
       projectedGross: Math.round(gross * 100) / 100,
       creatorFeePercent: fee.percent,
       projectedNet: Math.round(net * 100) / 100,
-      payableNow: approved && thresholdMet && (model !== "CPM" || minimumViews !== null) ? Math.round(net * 100) / 100 : 0,
+      estimatedNetAfterApproval: thresholdMet && (model !== "CPM" || minimumViews !== null) ? Math.round(net * 100) / 100 : 0,
+      confirmedPayable: 0,
       approved, thresholdMet,
       confidence: warnings.length ? "incomplete" : "scenario-only",
       warnings

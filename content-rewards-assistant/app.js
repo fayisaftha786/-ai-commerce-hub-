@@ -846,7 +846,38 @@
       '<div class="ri-payout"><strong>Reward calculation · ' + escapeHtml(campaign.payout.model) + '</strong><p>' +
       escapeHtml(campaign.payout.formula) + '</p><small>' +
       escapeHtml(campaign.payout.creatorFee && campaign.payout.creatorFee.label ? campaign.payout.creatorFee.label : "Creator fee: not recognised") +
-      '</small><a class="ri-fee-link" href="' + escapeHtml(campaign.payout.creatorFee && campaign.payout.creatorFee.source ? campaign.payout.creatorFee.source : "https://contentrewards.com/terms") + '" target="_blank" rel="noopener noreferrer">Official creator fee terms ↗</a></div>';
+      '</small><a class="ri-fee-link" href="' + escapeHtml(campaign.payout.creatorFee && campaign.payout.creatorFee.source ? campaign.payout.creatorFee.source : "https://contentrewards.com/terms") + '" target="_blank" rel="noopener noreferrer">Official creator fee terms ↗</a>' +
+      '<div class="ri-estimator"><strong>Hypothetical creator payout calculator</strong><p>Enter a view scenario for CPM. This is not live analytics or confirmed earnings.</p>' +
+      '<label for="ri-estimate-views">Scenario views</label><input id="ri-estimate-views" type="number" min="0" max="1000000000" step="1" placeholder="e.g. 10000">' +
+      '<button id="ri-estimate-button" type="button" class="button button-secondary">Calculate estimated net</button>' +
+      '<div id="ri-estimate-output" aria-live="polite">No estimate calculated. Unknown campaign terms remain unknown.</div></div></div>';
+    $("ri-estimate-button").addEventListener("click", () => {
+      const rawViews = $("ri-estimate-views").value.trim();
+      const estimate = window.ClipRewardIntelligence.estimateCreatorNetPayout({
+        rate: campaign.rate,
+        views: rawViews === "" ? null : Number(rawViews),
+        minimumViews: campaign.minimumViews,
+        capPerClip: campaign.capPerClip,
+        budgetRemaining: result.budget && result.budget.remaining,
+        budget: result.budget,
+        minimumPayout: campaign.minimumPayout,
+        approved: false
+      });
+      const output = $("ri-estimate-output");
+      if (!estimate.available) {
+        output.textContent = "Estimate unavailable: " + estimate.warnings.join(" ");
+        return;
+      }
+      const formatMoney = (value) => new Intl.NumberFormat("en-US", {
+        style: "currency", currency: estimate.currency || "USD", maximumFractionDigits: 2
+      }).format(value);
+      output.textContent = "Scenario gross: " + formatMoney(estimate.projectedGross) +
+        " · After creator fee: " + (estimate.projectedNet == null ? "Unknown" : formatMoney(estimate.projectedNet)) +
+        " · Estimated after approval: " + formatMoney(estimate.estimatedNetAfterApproval) +
+        " · Confirmed payable: " + formatMoney(estimate.confirmedPayable) +
+        (estimate.warnings.length ? " · " + estimate.warnings.join(" ") : "") +
+        " This remains a scenario, not a payout promise.";
+    });
     $("ri-rule-checks").innerHTML = campaign.checks.map((item) =>
       '<article class="ri-check"><span class="ri-status ri-' + escapeHtml(item.status) + '">' + escapeHtml(item.status.toUpperCase()) +
       '</span><strong>' + escapeHtml(item.label) + '</strong><p>' + escapeHtml(item.detail) + '</p></article>'

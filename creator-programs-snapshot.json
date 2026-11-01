@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "country": "IN",
-  "scope": "official-public-source-reachability-only",
+  "scope": "official-public-source-reachability-and-limited-rule-extraction",
   "generatedAt": "",
   "status": "pending",
   "summary": {

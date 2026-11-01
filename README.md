@@ -64,7 +64,7 @@ npm test
 
 Open `index.html` in a modern browser to try the frontend. Clipboard access depends on browser security settings.
 
-The public Content Rewards snapshot is refreshed by the scheduled GitHub Actions workflow without a separate server host. An optional private Node.js API can also be run with `npm start`; it includes a server-side discovery worker, persistent JSON store and read-only discovery endpoints when explicitly enabled. It is not an OAuth or social-publishing backend. See [docs/BACKEND.md](docs/BACKEND.md) before deploying it.
+The public Content Rewards snapshot is refreshed by the scheduled GitHub Actions workflow without a separate server host. The optional private Node.js backend includes secure YouTube OAuth routes and can serve the same static app on the same HTTPS origin (`SERVE_STATIC_APP=true`) so browser session cookies remain first-party. A root `Dockerfile` is provided for a single-origin deployment; attach persistent storage before connecting accounts. GitHub Pages remains available as the public static version. See [docs/BACKEND.md](docs/BACKEND.md) for deployment and Google Cloud setup.
 
 ## CSV import validation
 

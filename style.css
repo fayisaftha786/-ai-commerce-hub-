@@ -328,3 +328,7 @@ details > summary::marker { color: var(--gold); }
 .creator-program-directory .candidate-card p{margin:0;font-size:12px;line-height:1.55;color:#c8d5e8}
 .creator-program-directory .candidate-card a{margin-top:auto;color:var(--blue);font-size:13px;font-weight:700;overflow-wrap:anywhere}
 @media(max-width:760px){.creator-program-directory{grid-template-columns:1fr}}
+
+.creator-rule-evidence{display:grid;gap:6px;padding:10px;border:1px solid var(--line);border-radius:10px;background:rgba(8,14,25,.28)}
+.creator-rule-evidence p{margin:0!important;font-size:12px;line-height:1.55;color:#c8d5e8;overflow-wrap:anywhere}
+.creator-program-directory .candidate-card>.creator-rule-evidence+p{margin-top:0}

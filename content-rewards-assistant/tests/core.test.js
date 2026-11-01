@@ -624,6 +624,7 @@ test("Content Rewards credit, Whop transfer and final Whop payout are distinct v
     payoutCurrency: "USD",
     payoutStatus: "paid",
     paidAmount: "35.00",
+    paidAmountStage: "content-rewards-balance",
     paidAt: "2026-11-01T08:00:00.000Z",
     expectedPayoutAt: "2026-11-02T12:00:00.000Z",
     withdrawnToWhopAmount: "30.00",
@@ -648,12 +649,14 @@ test("Content Rewards credit, Whop transfer and final Whop payout are distinct v
   assert.throws(() => Core.normalizeCampaign({
     name: "Transfer missing time",
     paidAmount: 10,
+    paidAmountStage: "content-rewards-balance",
     paidAt: "2026-11-01T08:00:00.000Z",
     withdrawnToWhopAmount: 5
   }), /Record when the funds were transferred/i);
   assert.throws(() => Core.normalizeCampaign({
     name: "Transfer too large",
     paidAmount: 10,
+    paidAmountStage: "content-rewards-balance",
     paidAt: "2026-11-01T08:00:00.000Z",
     withdrawnToWhopAmount: 11,
     withdrawnToWhopAt: "2026-11-03T08:00:00.000Z"
@@ -666,6 +669,7 @@ test("Content Rewards credit, Whop transfer and final Whop payout are distinct v
   assert.throws(() => Core.normalizeCampaign({
     name: "Whop payout missing time",
     paidAmount: 10,
+    paidAmountStage: "content-rewards-balance",
     paidAt: "2026-11-01T08:00:00.000Z",
     withdrawnToWhopAmount: 5,
     withdrawnToWhopAt: "2026-11-03T08:00:00.000Z",
@@ -674,6 +678,7 @@ test("Content Rewards credit, Whop transfer and final Whop payout are distinct v
   assert.throws(() => Core.normalizeCampaign({
     name: "Whop payout exceeds transfer",
     paidAmount: 10,
+    paidAmountStage: "content-rewards-balance",
     paidAt: "2026-11-01T08:00:00.000Z",
     withdrawnToWhopAmount: 5,
     withdrawnToWhopAt: "2026-11-03T08:00:00.000Z",
@@ -702,6 +707,7 @@ test("version 2 backups preserve the three distinct settlement stages", () => {
   const restored = Core.parseBackup(backup);
   const record = restored.campaigns[0];
   assert.equal(record.paidAmount, 25);
+  assert.equal(record.paidAmountStage, "unknown");
   assert.equal(record.withdrawnToWhopAmount, 20);
   assert.equal(record.whopPayoutAmount, 20);
   assert.equal(record.expectedPayoutAt, "2026-11-02T08:00:00.000Z");
@@ -716,6 +722,7 @@ test("Creator Operations UI distinguishes CR balance credit, Whop transfer and f
   const worker = fs.readFileSync(path.join(root, "service-worker.js"), "utf8");
   for (const id of [
     "ops-metric-withdrawn",
+    "ops-paid-stage",
     "ops-expected-payout-at",
     "ops-withdrawn-amount",
     "ops-withdrawn-at",
@@ -730,4 +737,27 @@ test("Creator Operations UI distinguishes CR balance credit, Whop transfer and f
   assert.match(appSource, /Credited to CR balance/);
   assert.match(appSource, /function renderOperations\(\)/);
   assert.match(worker, /clipreward-static-v26/);
+});
+
+
+test("legacy receipt amounts keep unknown destination until user confirms the CR balance", () => {
+  const legacy = Core.normalizeCampaign({
+    id: "legacy-receipt",
+    name: "Old received record",
+    paidAmount: 10,
+    paidAt: "2026-10-20T12:00:00.000Z"
+  });
+  assert.equal(legacy.paidAmountStage, "unknown");
+  assert.throws(() => Core.normalizeCampaign({
+    ...legacy,
+    withdrawnToWhopAmount: 5,
+    withdrawnToWhopAt: "2026-10-21T12:00:00.000Z"
+  }), /Confirm the previous amount was credited to Content Rewards Balance/i);
+  const confirmed = Core.normalizeCampaign({
+    ...legacy,
+    paidAmountStage: "content-rewards-balance",
+    withdrawnToWhopAmount: 5,
+    withdrawnToWhopAt: "2026-10-21T12:00:00.000Z"
+  });
+  assert.equal(confirmed.paidAmountStage, "content-rewards-balance");
 });

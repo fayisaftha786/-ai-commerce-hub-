@@ -184,7 +184,7 @@
     const lines = String(captions || "").replace(/\r/g, "").split("\n").map((line) => line.trim()).filter(Boolean);
     if (!scenes.length) throw new Error("Analyse the video and detect its scene map before creating subtitles.");
     if (lines.length !== scenes.length) {
-      throw new Error("Enter exactly " + scenes.length + " non-empty subtitle line(s), one for each detected scene.");
+      throw new Error("Enter exactly " + scenes.length + " non-empty subtitle lines, one for each detected scene.");
     }
     return scenes.map((scene, index) => {
       if (!(Number.isFinite(scene.startSeconds) && Number.isFinite(scene.endSeconds) && scene.endSeconds > scene.startSeconds)) {

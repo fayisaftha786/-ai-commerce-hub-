@@ -37,6 +37,7 @@ test("service worker precaches the local app shell and uses offline fallback", (
     "./creator-programs-snapshot.json",
     "./earning-hub.js",
     "./video-maker.js",
+    "./social-account-connect.js",
     "./workflow-guide.js",
     "./discovery-engine.js",
     "./catalog-import.js",

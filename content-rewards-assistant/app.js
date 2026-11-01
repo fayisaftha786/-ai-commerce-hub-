@@ -5,6 +5,7 @@
   const $ = (id) => document.getElementById(id);
   let state = { campaigns: [], timestamps: [], account: Core.normalizeAccount({}) };
   let toastTimer;
+  const deadlineWarnings = new Set();
   const statusNames = { idea: "Found / idea", applied: "Applied · waiting", joined: "Joined", editing: "Editing", ready: "Ready to post", submitted: "Awaiting review", approved: "Approved", rejected: "Rejected" };
 
   function escapeHtml(value) {
@@ -114,6 +115,19 @@
         if (timer) timer.textContent = minutes + ":" + String(seconds).padStart(2, "0");
       }
     });
+    state.campaigns.forEach((campaign) => {
+      if (campaign.platform !== "Content Rewards" || !campaign.postedAt ||
+          ["submitted", "approved", "rejected"].includes(campaign.status)) return;
+      const remaining = new Date(campaign.postedAt).getTime() + Core.MAX_SUBMISSION_WINDOW_MS - Date.now();
+      const warningKey = campaign.id + "|" + campaign.postedAt;
+      if (remaining > 0 && remaining <= 60000 && !deadlineWarnings.has(warningKey + "|1m")) {
+        deadlineWarnings.add(warningKey + "|1m");
+        showToast("URGENT: " + campaign.name + " — less than 1 minute remains to submit the link on Content Rewards.");
+      } else if (remaining > 60000 && remaining <= 5 * 60000 && !deadlineWarnings.has(warningKey + "|5m")) {
+        deadlineWarnings.add(warningKey + "|5m");
+        showToast("Reminder: " + campaign.name + " — submit its link on Content Rewards within 5 minutes.");
+      }
+    });
   }
   function statusBadge(status) {
     return '<span class="status-pill status-' + escapeHtml(status) + '">' + escapeHtml(statusNames[status] || "Idea") + "</span>";
@@ -183,6 +197,100 @@
     }).join("");
     $("submission-empty").hidden = entries.length > 0;
   }
+  function moneyLabel(amount, currency) {
+    return amount == null ? "Not recorded" : (currency || "USD") + " " + Number(amount).toFixed(2);
+  }
+  function payoutStatusLabel(status) {
+    return ({
+      unconfirmed: "Not confirmed",
+      pending: "Pending",
+      available: "Available",
+      "partially-paid": "Partially paid",
+      paid: "Paid",
+      "not-eligible": "Not eligible"
+    })[status] || "Not confirmed";
+  }
+  function populateOperationsForm() {
+    const campaign = campaignById($("ops-campaign").value);
+    if (!campaign) {
+      ["ops-views", "ops-views-checked", "ops-reward-approved", "ops-paid-amount", "ops-paid-at", "ops-payout-reference", "ops-reviewed-at", "ops-review-notes"].forEach((id) => { $(id).value = ""; });
+      $("ops-view-source").value = "Content Rewards";
+      $("ops-currency").value = "USD";
+      $("ops-payout-status").value = "unconfirmed";
+      return;
+    }
+    $("ops-views").value = campaign.viewsCount == null ? "" : String(campaign.viewsCount);
+    $("ops-view-source").value = campaign.viewsSource || "Content Rewards";
+    $("ops-views-checked").value = localDateTimeValue(campaign.viewsCheckedAt);
+    $("ops-reward-approved").value = campaign.rewardApprovedAmount == null ? "" : String(campaign.rewardApprovedAmount);
+    $("ops-currency").value = campaign.payoutCurrency || "USD";
+    $("ops-payout-status").value = campaign.payoutStatus || "unconfirmed";
+    $("ops-paid-amount").value = campaign.paidAmount == null ? "" : String(campaign.paidAmount);
+    $("ops-paid-at").value = localDateTimeValue(campaign.paidAt);
+    $("ops-payout-reference").value = campaign.payoutReference || "";
+    $("ops-reviewed-at").value = localDateTimeValue(campaign.reviewedAt);
+    $("ops-review-notes").value = campaign.reviewNotes || "";
+  }
+  function renderOperations() {
+    const select = $("ops-campaign");
+    const selected = select.value;
+    select.innerHTML = '<option value="">Choose a tracked campaign</option>' + state.campaigns
+      .slice().sort((a, b) => a.name.localeCompare(b.name))
+      .map((c) => '<option value="' + escapeHtml(c.id) + '">' + escapeHtml(c.name) + " · " + escapeHtml(statusNames[c.status] || c.status) + '</option>').join("");
+    select.value = state.campaigns.some((c) => c.id === selected) ? selected : (state.campaigns[0] ? state.campaigns[0].id : "");
+    populateOperationsForm();
+
+    const measuredViews = state.campaigns.reduce((sum, c) => sum + (c.viewsCount == null ? 0 : c.viewsCount), 0);
+    const rewardsLogged = state.campaigns.filter((c) => c.rewardApprovedAmount != null).length;
+    const awaitingPayout = state.campaigns.filter((c) => ["pending", "available", "partially-paid"].includes(c.payoutStatus)).length;
+    const paidRecords = state.campaigns.filter((c) => c.paidAmount != null && c.paidAmount > 0).length;
+    $("ops-metric-views").textContent = measuredViews.toLocaleString("en");
+    $("ops-metric-rewards").textContent = String(rewardsLogged);
+    $("ops-metric-pending").textContent = String(awaitingPayout);
+    $("ops-metric-paid").textContent = String(paidRecords);
+
+    const rows = state.campaigns.slice().sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
+    $("ops-table").innerHTML = rows.map((c) => {
+      const paid = c.paidAmount == null ? "—" : moneyLabel(c.paidAmount, c.payoutCurrency);
+      const source = c.viewsSource ? '<small class="ops-source">' + escapeHtml(c.viewsSource) + '</small>' : "";
+      return '<tr><td><strong>' + escapeHtml(c.name) + '</strong><small class="ops-source">' + escapeHtml(statusNames[c.status] || c.status) + '</small></td>' +
+        '<td>' + (c.viewsCount == null ? "Not recorded" : c.viewsCount.toLocaleString("en")) + source + '</td>' +
+        '<td>' + escapeHtml(moneyLabel(c.rewardApprovedAmount, c.payoutCurrency)) + '</td>' +
+        '<td><span class="ops-payout-status ops-payout-' + escapeHtml(c.payoutStatus || "unconfirmed") + '">' + escapeHtml(payoutStatusLabel(c.payoutStatus)) + '</span></td>' +
+        '<td>' + escapeHtml(paid) + (c.paidAt ? '<small class="ops-source">' + escapeHtml(new Date(c.paidAt).toLocaleDateString()) + '</small>' : "") + '</td>' +
+        '<td><button type="button" class="text-button" data-ops-edit="' + escapeHtml(c.id) + '">Update</button></td></tr>';
+    }).join("");
+    $("ops-empty").hidden = rows.length > 0;
+  }
+  function saveOperations(event) {
+    event.preventDefault();
+    const campaign = campaignById($("ops-campaign").value);
+    if (!campaign) { showToast("Add a campaign before saving creator operations."); return; }
+    try {
+      const updated = Core.normalizeCampaign({
+        ...campaign,
+        viewsCount: $("ops-views").value,
+        viewsSource: $("ops-view-source").value,
+        viewsCheckedAt: $("ops-views-checked").value ? new Date($("ops-views-checked").value).toISOString() : "",
+        rewardApprovedAmount: $("ops-reward-approved").value,
+        payoutCurrency: $("ops-currency").value,
+        payoutStatus: $("ops-payout-status").value,
+        paidAmount: $("ops-paid-amount").value,
+        paidAt: $("ops-paid-at").value ? new Date($("ops-paid-at").value).toISOString() : "",
+        payoutReference: $("ops-payout-reference").value,
+        reviewedAt: $("ops-reviewed-at").value ? new Date($("ops-reviewed-at").value).toISOString() : "",
+        reviewNotes: $("ops-review-notes").value,
+        updatedAt: new Date().toISOString()
+      });
+      const previous = snapshotState();
+      state.campaigns = state.campaigns.map((item) => item.id === campaign.id ? updated : item);
+      if (!saveOrRestore(previous)) return;
+      renderOperations();
+      showToast("Creator operations saved locally. Live views, approval and payout were not queried.");
+    } catch (error) {
+      showToast(error.message || "Could not save creator operations.");
+    }
+  }
   function renderAccount() {
     const account = Core.normalizeAccount(state.account || {});
     state.account = account;
@@ -207,6 +315,7 @@
     renderDraftCampaignOptions();
     renderTimestamps();
     renderSubmissions();
+    renderOperations();
   }
   let campaignScoutResult = null;
 
@@ -927,6 +1036,7 @@
     $("campaign-post-platform").value = editing ? campaign.postPlatform : "";
     $("campaign-posted-at").value = editing ? localDateTimeValue(campaign.postedAt) : "";
     $("campaign-submitted-at").value = editing ? localDateTimeValue(campaign.submittedAt) : "";
+    $("campaign-submission-reference").value = editing ? campaign.submissionReference : "";
     $("campaign-modal").hidden = false;
     document.body.style.overflow = "hidden";
     $("campaign-name").focus();
@@ -960,7 +1070,19 @@
         postPlatform: $("campaign-post-platform").value || (old ? old.postPlatform : ""),
         postedAt: $("campaign-posted-at").value ? new Date($("campaign-posted-at").value).toISOString() : "",
         submittedAt: $("campaign-submitted-at").value ? new Date($("campaign-submitted-at").value).toISOString() : "",
-        createdAt: old ? old.createdAt : ""
+        submissionReference: $("campaign-submission-reference").value,
+        createdAt: old ? old.createdAt : "",
+        viewsCount: old ? old.viewsCount : null,
+        viewsSource: old ? old.viewsSource : "",
+        viewsCheckedAt: old ? old.viewsCheckedAt : "",
+        rewardApprovedAmount: old ? old.rewardApprovedAmount : null,
+        payoutCurrency: old ? old.payoutCurrency : "USD",
+        payoutStatus: old ? old.payoutStatus : "unconfirmed",
+        paidAmount: old ? old.paidAmount : null,
+        paidAt: old ? old.paidAt : "",
+        payoutReference: old ? old.payoutReference : "",
+        reviewedAt: old ? old.reviewedAt : "",
+        reviewNotes: old ? old.reviewNotes : ""
       });
       const submissionValidation = Core.validateSubmissionRecord(record);
       if (!submissionValidation.valid) throw new Error(submissionValidation.error);
@@ -1073,6 +1195,15 @@
   $("campaign-modal").addEventListener("click", (event) => { if (event.target === $("campaign-modal")) closeModal(); });
   document.addEventListener("keydown", (event) => { if (event.key === "Escape" && !$("campaign-modal").hidden) closeModal(); });
   $("campaign-form").addEventListener("submit", onCampaignSubmit);
+  $("ops-form").addEventListener("submit", saveOperations);
+  $("ops-campaign").addEventListener("change", populateOperationsForm);
+  $("ops-table").addEventListener("click", (event) => {
+    const button = event.target.closest("[data-ops-edit]");
+    if (!button) return;
+    $("ops-campaign").value = button.dataset.opsEdit;
+    populateOperationsForm();
+    $("ops-form").scrollIntoView({ behavior: "smooth", block: "center" });
+  });
   $("campaign-search").addEventListener("input", renderCampaigns);
   $("status-filter").addEventListener("change", renderCampaigns);
   $("campaign-list").addEventListener("click", (event) => {
@@ -1228,6 +1359,7 @@
   load();
   render();
   configureDiscovery();
+  refreshDeadlineCountdowns();
   window.setInterval(refreshDeadlineCountdowns, 1000);
   if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
     window.addEventListener("load", () => navigator.serviceWorker.register("./service-worker.js").catch(() => {

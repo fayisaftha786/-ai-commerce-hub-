@@ -250,7 +250,14 @@
       oldMap.get(key).lastSeenAt = previous.lastSeenAt || "";
     }
     return {
-      campaigns: [...oldMap.values()].sort((a, b) => b.opportunity.score - a.opportunity.score).slice(0, 500),
+      // Current official Discover results always outrank historical leads. A
+      // high evidence score must never let a campaign absent from the latest
+      // source scan crowd active candidates out of the first screen.
+      campaigns: [...oldMap.values()].sort((a, b) =>
+        Number(a.notSeenInLatestScan === true) - Number(b.notSeenInLatestScan === true) ||
+        b.opportunity.score - a.opportunity.score ||
+        a.title.localeCompare(b.title)
+      ).slice(0, 500),
       newCount,
       checkedCount: current.length
     };
@@ -317,14 +324,18 @@
           account: opts.account || null
         });
         const campaignAssessment = Object.assign({}, assessment.campaign);
-        if (detail.status === "stale" && campaignAssessment.state === "promising") {
+        const notSeenInLatestScan = row.notSeenInLatestScan === true ||
+          (row.opportunity && row.opportunity.status === "not-seen-in-latest-scan");
+        if (campaignAssessment.state === "promising" && (detail.status === "stale" || notSeenInLatestScan)) {
           campaignAssessment.state = "verify";
           campaignAssessment.stateLabel = "More evidence required";
           campaignAssessment.reasons = [
             ...campaignAssessment.reasons,
-            "The saved campaign detail is stale; re-fetch the current public page before joining."
+            detail.status === "stale"
+              ? "The saved campaign detail is stale; re-fetch the current public page before joining."
+              : "This historical lead is absent from the latest official Discover listing. It may have ended, paused or become unlisted; verify its current status before applying."
           ];
-          campaignAssessment.nextStep = "Re-check the live campaign page and rules before taking action.";
+          campaignAssessment.nextStep = "Re-check the current official campaign page and confirm it is still accepting creators before taking action.";
         }
         const coverage = Number.isFinite(brief.coverageScore) ? brief.coverageScore : 0;
         const discovery = row.opportunity && Number.isFinite(row.opportunity.score)
@@ -341,6 +352,8 @@
           coverageScore: coverage,
           discoveryScore: discovery,
           pageStatus: detail.status,
+          notSeenInLatestScan,
+          lastSeenAt: clean(row.lastSeenAt || "", 40),
           pageFetchedAt: clean(detail.fetchedAt || "", 40),
           rate: brief.rate,
           platformRates: brief.platformRates,
@@ -376,6 +389,8 @@
       missingDetailCount,
       unreadableDetailCount,
       parserFailureCount,
+      notSeenInLatestScanCount: analysed.filter((item) => item.notSeenInLatestScan).length,
+      staleDetailCount: analysed.filter((item) => item.pageStatus === "stale").length,
       platform: target,
       checkedAt: new Date().toISOString()
     };

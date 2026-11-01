@@ -462,6 +462,32 @@ async function fetchCampaignDetails(campaigns, options = {}) {
   };
 }
 
+function createRequestedCampaignRow(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return null;
+  if (raw.length > 500) throw new Error("The on-demand campaign URL must be 500 characters or fewer.");
+  const officialUrl = canonicalPublicCampaignDetailUrl(raw);
+  if (!officialUrl) {
+    throw new Error("On-demand analysis accepts only a public HTTPS Content Rewards campaign URL in /c/campaigns/{id} format. Private, sign-in-only and other-site URLs are not fetched.");
+  }
+  const url = new URL(officialUrl);
+  const id = url.pathname.split("/").filter(Boolean).pop();
+  return {
+    id,
+    title: "Public campaign page awaiting analysis",
+    brand: "",
+    type: "",
+    description: "",
+    payouts: [],
+    ageDays: 0,
+    freshness: "recent",
+    officialUrl,
+    source: "User-requested public Content Rewards campaign URL",
+    sourceVerification: "official-public-page",
+    userRequested: true
+  };
+}
+
 async function fetchFeedWithRetry(feed, options = {}) {
   if (!feed || typeof feed.fetchCampaigns !== "function") {
     throw new Error("The campaign feed adapter is not configured.");
@@ -520,6 +546,8 @@ async function runScheduledScan(options = {}) {
   }
 
   try {
+    const requestedCampaign = createRequestedCampaignRow(options.campaignUrl);
+    const requestedCampaignUrl = requestedCampaign ? requestedCampaign.officialUrl : "";
     try {
       const official = await fetchPublicDiscoverCampaigns({
         fetchImpl: options.fetchDiscoverImpl || options.fetchImpl || globalThis.fetch,
@@ -554,6 +582,23 @@ async function runScheduledScan(options = {}) {
       sourceVerification = "third-party";
     }
 
+    if (requestedCampaign) {
+      const existingRequested = (result.campaigns || []).find((row) =>
+        canonicalPublicCampaignDetailUrl(row && row.officialUrl) === requestedCampaignUrl
+      );
+      const priorityRow = existingRequested
+        ? { ...existingRequested, userRequested: true }
+        : requestedCampaign;
+      result = {
+        ...result,
+        campaigns: [priorityRow, ...(result.campaigns || []).filter((row) =>
+          canonicalPublicCampaignDetailUrl(row && row.officialUrl) !== requestedCampaignUrl
+        )],
+        totalReceived: (Number(result.totalReceived) || 0) + (existingRequested ? 0 : 1),
+        sourceLabel: (result.sourceLabel || "Content Rewards public campaign source") + " · includes one on-demand public URL"
+      };
+    }
+
     const priorCampaigns = (previous.campaigns || []).filter((row) => {
       const cameFromOfficialDiscover = row && (row.sourceVerification === "official-public-page" || row.source === "Official Content Rewards public Discover page");
       return !cameFromOfficialDiscover || Boolean(canonicalPublicCampaignDetailUrl(row.officialUrl));
@@ -568,9 +613,23 @@ async function runScheduledScan(options = {}) {
       timeoutMs: options.detailTimeoutMs,
       retryDelaysMs: options.detailRetryDelaysMs
     });
+    const requestedUrls = new Set(requestedCampaignUrl ? [requestedCampaignUrl] : []);
     const campaigns = sourceVerification === "official-public-page"
       ? enrichOfficialCampaignRows(merged.campaigns, pageDetails.details, now)
-      : merged.campaigns;
+      : requestedUrls.size
+        ? (() => {
+            const requestedRows = enrichOfficialCampaignRows(
+              merged.campaigns.filter((row) => requestedUrls.has(canonicalPublicCampaignDetailUrl(row && row.officialUrl))),
+              pageDetails.details,
+              now
+            );
+            const enrichedByUrl = new Map(requestedRows.map((row) => [canonicalPublicCampaignDetailUrl(row.officialUrl), row]));
+            return merged.campaigns.map((row) => enrichedByUrl.get(canonicalPublicCampaignDetailUrl(row && row.officialUrl)) || row);
+          })()
+        : merged.campaigns;
+    const requestedDetail = requestedCampaignUrl
+      ? pageDetails.details.find((detail) => canonicalPublicCampaignDetailUrl(detail && detail.url) === requestedCampaignUrl)
+      : null;
     const record = {
       at: result.fetchedAt || startedAt,
       completedAt: new Date(now).toISOString(),
@@ -588,6 +647,8 @@ async function runScheduledScan(options = {}) {
       sourceUrl: result.sourceUrl || OFFICIAL_DISCOVER_URL,
       sourceVerification,
       fallbackReason,
+      requestedCampaignUrl,
+      requestedCampaignPageStatus: requestedCampaignUrl ? requestedDetail && requestedDetail.status || "not-attempted" : "",
       summary: {
         saved: campaigns.length,
         high: campaigns.filter((row) => row.opportunity && row.opportunity.tier === "high").length,
@@ -645,7 +706,7 @@ async function runScheduledScan(options = {}) {
 }
 
 if (require.main === module) {
-  runScheduledScan().then((result) => {
+  runScheduledScan({ campaignUrl: process.env.CAMPAIGN_URL || "" }).then((result) => {
     if (!result.ok) {
       const attempts = result.snapshot && result.snapshot.lastScan ? result.snapshot.lastScan.feedRequestAttempts || 0 : 0;
       process.stderr.write("Scheduled discovery failed after " + attempts + " feed request(s): " + result.error + "\n");
@@ -660,4 +721,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { DEFAULT_FILE, OFFICIAL_DISCOVER_URL, MAX_DETAIL_PAGES, MAX_PAGE_BYTES, MAX_PAGE_TEXT, MAX_REDIRECTS, TRANSIENT_FEED_STATUSES, DEFAULT_FEED_RETRY_DELAYS_MS, readSnapshot, writeSnapshot, decodeHtmlEntities, extractVisibleText, canonicalDiscoverUrl, canonicalPublicCampaignDetailUrl, extractDiscoverCampaigns, createRetryingFetcher, fetchApprovedHtmlPage, fetchPublicDiscoverCampaigns, enrichOfficialCampaignRows, fetchPublicCampaignPage, fetchCampaignDetails, fetchFeedWithRetry, runScheduledScan };
+module.exports = { DEFAULT_FILE, OFFICIAL_DISCOVER_URL, MAX_DETAIL_PAGES, MAX_PAGE_BYTES, MAX_PAGE_TEXT, MAX_REDIRECTS, TRANSIENT_FEED_STATUSES, DEFAULT_FEED_RETRY_DELAYS_MS, readSnapshot, writeSnapshot, decodeHtmlEntities, extractVisibleText, canonicalDiscoverUrl, canonicalPublicCampaignDetailUrl, extractDiscoverCampaigns, createRetryingFetcher, fetchApprovedHtmlPage, fetchPublicDiscoverCampaigns, enrichOfficialCampaignRows, fetchPublicCampaignPage, fetchCampaignDetails, createRequestedCampaignRow, fetchFeedWithRetry, runScheduledScan };

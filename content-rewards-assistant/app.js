@@ -612,8 +612,9 @@
   async function analysePublicCampaignUrl() {
     const button = $("scout-url-analyse-button");
     const canonicalUrl = window.ClipRewardFeed.canonicalCampaignUrl($("scout-source-url").value);
-    if (!canonicalUrl) {
-      showToast("Enter a public HTTPS Content Rewards campaign URL, not the Discover index or another website.");
+    const campaignPathIsValid = Boolean(canonicalUrl && /^\/c\/campaigns\/[^/]+$/.test(new URL(canonicalUrl).pathname));
+    if (!campaignPathIsValid) {
+      showToast("Enter a public HTTPS Content Rewards campaign detail URL in /c/campaigns/{id} format.");
       return;
     }
     button.disabled = true;
@@ -626,10 +627,13 @@
       );
       if (!detail) {
         const detailCount = (snapshot.campaignDetails || []).length;
-        throw new Error(detailCount
-          ? "This URL is not in the latest public campaign scan. Open a campaign from official Discover or wait for the next scheduled scan; only listed and fetched public pages can be auto-read."
-          : "No public campaign detail pages have been scanned yet. Run the GitHub Actions workflow “Scheduled Content Rewards discovery snapshot” once, then retry this URL.");
+        $("scout-on-demand-actions").hidden = false;
+        $("scout-on-demand-help").textContent = detailCount
+          ? "This URL is not in the latest saved campaign pages. Copy it, open the GitHub Actions scanner, choose Run workflow, and paste it into “Campaign URL to analyse”. The scanner fetches the public page and republishes the snapshot."
+          : "No campaign detail pages are saved yet. Use the on-demand GitHub Actions scanner to fetch this public URL now.";
+        return false;
       }
+      $("scout-on-demand-actions").hidden = true;
       if (!detail.pageText || !["ok", "stale"].includes(detail.status)) {
         throw new Error(detail.lastError || "The public campaign page could not be fetched. It may be blocked or require sign-in.");
       }
@@ -651,6 +655,8 @@
       }
       return false;
     } catch (error) {
+      $("scout-on-demand-actions").hidden = false;
+      $("scout-on-demand-help").textContent = (error && error.message ? error.message : "The saved scan could not be loaded.") + " You can queue this public URL through the GitHub Actions scanner and retry after its deployment finishes.";
       showToast(error && error.message ? error.message : "Could not auto-analyse this public campaign URL.");
       return false;
     } finally {
@@ -727,6 +733,7 @@
 
   function clearCampaignScout() {
     $("campaign-scout-form").reset();
+    $("scout-on-demand-actions").hidden = true;
     $("scout-results").hidden = true;
     $("scout-found-grid").innerHTML = "";
     $("ri-campaign-summary").innerHTML = "";
@@ -1002,6 +1009,24 @@
   $("campaign-feed-load").addEventListener("click", loadCampaignFeed);
   $("campaign-scout-form").addEventListener("submit", analyseCampaignBrief);
   $("scout-url-analyse-button").addEventListener("click", analysePublicCampaignUrl);
+  $("scout-copy-on-demand-url").addEventListener("click", async () => {
+    const url = window.ClipRewardFeed.canonicalCampaignUrl($("scout-source-url").value);
+    if (!url || !/^\/c\/campaigns\/[^/]+$/.test(new URL(url).pathname)) {
+      showToast("Enter a valid public Content Rewards campaign URL first.");
+      return;
+    }
+    try {
+      if (!navigator.clipboard || typeof navigator.clipboard.writeText !== "function") {
+        throw new Error("Clipboard access is unavailable.");
+      }
+      await navigator.clipboard.writeText(url);
+      showToast("Campaign URL copied. Open GitHub Actions, choose Run workflow, and paste it into Campaign URL to analyse.");
+    } catch (_) {
+      $("scout-source-url").focus();
+      $("scout-source-url").select();
+      showToast("Copy the selected campaign URL, then open the on-demand scanner.");
+    }
+  });
   $("scout-brief-text").addEventListener("input", () => {
     if ($("scout-brief-text").value.trim().length < 12) {
       campaignScoutResult = null;

@@ -114,19 +114,6 @@ function createServer(options = {}) {
   const server = http.createServer(async (request, response) => {
     const pathname = new URL(request.url ?? "/", "http://localhost").pathname;
 
-    if (pathname.startsWith("/api/discovery/")) {
-      if (!applyDiscoveryCors(request, response, env)) {
-        return sendJson(response, 403, { error: "origin_not_allowed" });
-      }
-      if (request.method === "OPTIONS") {
-        response.writeHead(204, {
-          "cache-control": "no-store",
-          "access-control-allow-methods": "GET, OPTIONS",
-          "access-control-allow-headers": "Accept, Content-Type"
-        });
-        return response.end();
-      }
-  
     if (pathname.startsWith("/api/social/")) {
       const sessionId = parseCookie(request, socialSessionCookieName(env));
       const isNavigationRoute = pathname === "/api/social/youtube/connect" || pathname === "/api/social/youtube/callback";
@@ -134,11 +121,9 @@ function createServer(options = {}) {
       if (isNavigationRoute && request.headers.origin && !allowedSocialOrigins(env).includes(request.headers.origin)) {
         return sendJson(response, 403, { error: "origin_not_allowed" });
       }
-
       if (!isNavigationRoute && !applySocialCors(request, response, env)) {
         return sendJson(response, 403, { error: "origin_not_allowed" });
       }
-
       if (request.method === "OPTIONS" && !isNavigationRoute) {
         response.writeHead(204, {
           "cache-control": "no-store",
@@ -200,7 +185,7 @@ function createServer(options = {}) {
           response.setHeader("allow", "POST, OPTIONS");
           return sendJson(response, 405, { error: "method_not_allowed" });
         }
-        if (!request.headers.origin || !allowedSocialOrigins(env).includes(request.headers.origin) ||
+        if (!sessionId || !request.headers.origin || !allowedSocialOrigins(env).includes(request.headers.origin) ||
             request.headers["x-ai-commerce-action"] !== "social-disconnect") {
           return sendJson(response, 403, { error: "social_request_not_authorized" });
         }
@@ -231,7 +216,19 @@ function createServer(options = {}) {
       return sendJson(response, 404, { error: "not_found" });
     }
 
-    if (request.method !== "GET") {
+    if (pathname.startsWith("/api/discovery/")) {
+      if (!applyDiscoveryCors(request, response, env)) {
+        return sendJson(response, 403, { error: "origin_not_allowed" });
+      }
+      if (request.method === "OPTIONS") {
+        response.writeHead(204, {
+          "cache-control": "no-store",
+          "access-control-allow-methods": "GET, OPTIONS",
+          "access-control-allow-headers": "Accept, Content-Type"
+        });
+        return response.end();
+      }
+      if (request.method !== "GET") {
         response.setHeader("allow", "GET, OPTIONS");
         return sendJson(response, 405, { error: "method_not_allowed" });
       }

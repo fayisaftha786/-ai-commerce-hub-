@@ -78,7 +78,7 @@
     return "Not checked yet";
   }
 
-  function renderSnapshot(document, container, statusNode, rawSnapshot) {
+  function renderSnapshot(document, container, statusNode, rawSnapshot, importProgram) {
     const snapshot = normalizeSnapshot(rawSnapshot);
     container.replaceChildren();
     for (const source of snapshot.sources) {
@@ -116,7 +116,28 @@
       link.target = "_blank";
       link.rel = "noopener noreferrer";
       link.textContent = "Open official source ↗";
-      card.append(heading, state, title, note, account, evidenceHeading, evidence, limitation, link);
+      const addButton = document.createElement("button");
+      addButton.type = "button";
+      addButton.className = "secondary";
+      addButton.textContent = source.status === "available" ? "Add research task to tracker" : "Source unavailable";
+      addButton.disabled = source.status !== "available";
+      const importStatus = document.createElement("p");
+      importStatus.className = "hint";
+      addButton.addEventListener("click", () => {
+        if (typeof importProgram !== "function") {
+          importStatus.textContent = "Tracker import is not available. Refresh the app and try again.";
+          return;
+        }
+        const result = importProgram(source, snapshot.generatedAt);
+        if (result && (result.added || result.duplicate)) {
+          addButton.disabled = true;
+          addButton.textContent = result.duplicate ? "Already in tracker" : "Added to tracker";
+        }
+        importStatus.textContent = result && (result.message || result.error)
+          ? result.message || result.error
+          : "The programme was not added.";
+      });
+      card.append(heading, state, title, note, account, evidenceHeading, evidence, limitation, link, addButton, importStatus);
       container.append(card);
     }
 
@@ -145,7 +166,13 @@
         headers: { Accept: "application/json" }
       });
       if (!response || !response.ok) throw new Error("The latest source-check snapshot is not available.");
-      renderSnapshot(document, container, statusNode, await response.json());
+      renderSnapshot(document, container, statusNode, await response.json(), (source, generatedAt) => {
+        const hub = root.AIEarningHub;
+        if (!hub || typeof hub.importOfficialProgram !== "function") {
+          return { added: false, error: "The Earning Hub tracker is not available. Refresh the app and try again." };
+        }
+        return hub.importOfficialProgram(source, generatedAt);
+      });
     } catch (error) {
       statusNode.textContent = (error && error.message ? error.message : "Source report could not be loaded.") +
         " Official eligibility must still be checked in the platform account.";

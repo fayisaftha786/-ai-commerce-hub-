@@ -205,7 +205,6 @@
     if (model === "CPM") {
       if (!Number.isFinite(views) || views < 0) return unavailable("Enter a non-negative view count to estimate CPM earnings.");
       if (minimumViews === null) {
-        thresholdMet = false;
         warnings.push("The campaign's minimum-view threshold is unknown; this is a scenario, not an eligibility result.");
       } else if (views < minimumViews) {
         thresholdMet = false;
@@ -250,7 +249,7 @@
       projectedGross: Math.round(gross * 100) / 100,
       creatorFeePercent: fee.percent,
       projectedNet: Math.round(net * 100) / 100,
-      payableNow: approved && thresholdMet ? Math.round(net * 100) / 100 : 0,
+      payableNow: approved && thresholdMet && (model !== "CPM" || minimumViews !== null) ? Math.round(net * 100) / 100 : 0,
       approved, thresholdMet,
       confidence: warnings.length ? "incomplete" : "scenario-only",
       warnings

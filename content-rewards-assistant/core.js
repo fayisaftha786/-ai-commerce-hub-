@@ -44,7 +44,7 @@
   function optionalCount(value, label) {
     if (value == null || value === "") return null;
     const raw = String(value).replace(/[ ,]/g, "");
-    if (!/^\\d+$/.test(raw)) throw new Error(label + " must be a whole number.");
+    if (!/^\d+$/.test(raw)) throw new Error(label + " must be a whole number.");
     const number = Number(raw);
     if (!Number.isSafeInteger(number) || number < 0 || number > 1000000000000) {
       throw new Error(label + " is outside the supported range.");
@@ -55,7 +55,7 @@
   function optionalAmount(value, label) {
     if (value == null || value === "") return null;
     const raw = String(value).replace(/,/g, "").trim();
-    if (!/^(?:\\d+)(?:\\.\\d{1,2})?$/.test(raw)) throw new Error(label + " must be a non-negative amount with up to two decimal places.");
+    if (!/^(?:\d+)(?:\.\d{1,2})?$/.test(raw)) throw new Error(label + " must be a non-negative amount with up to two decimal places.");
     const number = Number(raw);
     if (!Number.isFinite(number) || number < 0 || number > 1000000000) {
       throw new Error(label + " is outside the supported range.");

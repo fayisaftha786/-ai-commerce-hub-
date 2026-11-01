@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "ai-commerce-hub-pwa-v7";
+const CACHE_NAME = "ai-commerce-hub-pwa-v8";
 const ASSET_PATHS = [
   "./",
   "./index.html", "./content-rewards-assistant/core.js",

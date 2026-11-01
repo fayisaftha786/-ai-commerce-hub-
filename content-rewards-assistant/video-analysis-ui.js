@@ -11,6 +11,9 @@
     const generateButton = $("video-analysis-generate");
     const status = $("video-analysis-status");
     const frames = $("video-analysis-frames");
+    const scenes = $("video-analysis-scenes");
+    const sceneCaptions = $("video-analysis-scene-captions");
+    const downloadSrtButton = $("video-analysis-download-srt");
     const metadata = $("video-analysis-metadata");
     const packagePanel = $("video-analysis-package");
     const titleOutput = $("video-analysis-title");
@@ -68,6 +71,38 @@
       }
     }
 
+    function renderSceneMap(sceneMap) {
+      scenes.replaceChildren();
+      if (!sceneMap || !Array.isArray(sceneMap.scenes) || !sceneMap.scenes.length) {
+        scenes.textContent = "Scene mapping was not available for this file.";
+        downloadSrtButton.disabled = true;
+        return;
+      }
+      const summary = root.document.createElement("p");
+      summary.className = "video-scene-map-summary";
+      summary.textContent = sceneMap.scenes.length + " scene segment(s) · " +
+        sceneMap.cuts.length + " possible cut(s) · " + sceneMap.sampleCount +
+        " sampled frames · about every " + sceneMap.sampleIntervalSeconds + " sec";
+      scenes.append(summary);
+      const list = root.document.createElement("ol");
+      list.className = "video-scene-list";
+      sceneMap.scenes.forEach((scene) => {
+        const item = root.document.createElement("li");
+        const strong = root.document.createElement("strong");
+        strong.textContent = "Scene " + scene.number + " · " +
+          Analysis.formatDuration(scene.startSeconds) + " – " +
+          Analysis.formatDuration(scene.endSeconds);
+        const detail = root.document.createElement("small");
+        detail.textContent = scene.durationSeconds.toFixed(1) + " sec" +
+          (scene.cutScore === null ? " · opening segment" : " · change score " + scene.cutScore);
+        item.append(strong, detail);
+        list.append(item);
+      });
+      scenes.append(list);
+      downloadSrtButton.disabled = false;
+      sceneCaptions.placeholder = sceneMap.scenes.map((scene) => "Scene " + scene.number + " subtitle").join("\n");
+    }
+
     function selectedCampaign() {
       const select = $("draft-campaign");
       const option = select && select.selectedOptions && select.selectedOptions[0];
@@ -88,13 +123,21 @@
       analysis = null;
       postPackage = null;
       packagePanel.hidden = true;
+      downloadSrtButton.disabled = true;
+      sceneCaptions.value = "";
       setStatus("Reading video metadata and sampling frame previews on this device…", false);
       try {
-        analysis = await Analysis.analyzeVideoFile(file, root);
+        analysis = await Analysis.analyzeVideoFile(file, root, {
+          onSceneProgress: (percent) => setStatus("Checking scene changes locally… " + percent + "%", false)
+        });
         renderMetadata(analysis);
+        renderSceneMap(analysis.sceneMap);
         const frameText = analysis.frames.length + " frame preview(s) created. ";
+        const sceneText = analysis.sceneMap
+          ? " Detected " + analysis.sceneMap.scenes.length + " scene segment(s) from " + analysis.sceneMap.sampleCount + " samples."
+          : " Scene detection was unavailable on this browser.";
         setStatus("Analysis complete: " + analysis.durationLabel + " · " + analysis.width + " × " + analysis.height +
-          " · " + analysis.sizeMb + " MB. " + frameText + "Your source file stays in this browser.", false);
+          " · " + analysis.sizeMb + " MB. " + frameText + sceneText + " Your source file stays in this browser.", false);
         generateButton.disabled = false;
       } catch (error) {
         setStatus((error && error.message) || "Could not analyse this video.", true);
@@ -153,6 +196,17 @@
       anchor.remove();
       root.setTimeout(() => root.URL.revokeObjectURL(url), 1500);
     }
+
+    downloadSrtButton.addEventListener("click", () => {
+      if (!analysis || !analysis.sceneMap) return setStatus("Analyse the video to build scene timings first.", true);
+      try {
+        const srt = Analysis.buildSrt(analysis.sceneMap, sceneCaptions.value);
+        download("clip-subtitles.srt", "application/x-subrip;charset=utf-8", srt);
+        setStatus("SRT subtitles downloaded. Check the timestamps and wording in your video editor.", false);
+      } catch (error) {
+        setStatus((error && error.message) || "Could not build the subtitle file.", true);
+      }
+    });
 
     async function copyText(value, target) {
       if (!value.trim()) {
@@ -264,6 +318,9 @@
       postPackage = null;
       metadata.replaceChildren();
       frames.replaceChildren();
+      scenes.textContent = "Analyse a video to detect possible scene changes.";
+      sceneCaptions.value = "";
+      downloadSrtButton.disabled = true;
       packagePanel.hidden = true;
       generateButton.disabled = true;
       setStatus("Video selected. Press Analyse to read its metadata and preview frames.", false);

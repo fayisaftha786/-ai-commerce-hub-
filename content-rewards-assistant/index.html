@@ -271,6 +271,18 @@
   <p id="video-analysis-status" class="video-export-status" role="status" aria-live="polite">Choose a video to inspect its technical properties and sample frames.</p>
   <div id="video-analysis-metadata" class="video-analysis-metrics"></div>
   <div id="video-analysis-frames" class="video-analysis-frames" aria-label="Selected video frame previews"></div>
+  <div class="video-scene-map-panel">
+    <div class="video-scene-map-heading"><strong>Automatic scene map</strong><span class="tiny-note">Local frame-change detection · no cloud upload</span></div>
+    <p class="tiny-note">Samples up to 60 small frames. Motion or lighting shifts can look like cuts; fast cuts between samples can be missed. Review every suggested boundary.</p>
+    <div id="video-analysis-scenes" class="video-analysis-scenes" aria-live="polite">Analyse a video to detect possible scene changes.</div>
+  </div>
+  <div class="video-srt-panel">
+    <label>Subtitle text <span class="optional">One non-empty line for each detected scene, in order</span>
+      <textarea id="video-analysis-scene-captions" rows="4" maxlength="5000" placeholder="Scene 1 subtitle&#10;Scene 2 subtitle&#10;Scene 3 subtitle"></textarea>
+    </label>
+    <button class="button button-quiet" type="button" id="video-analysis-download-srt" disabled>Build & download timed SRT subtitles</button>
+    <p class="tiny-note">Subtitle timings follow detected scene boundaries. This is not speech-to-text; review timing and wording before use.</p>
+  </div>
   <div class="video-analysis-copy-form">
     <label>What is the video about? <span class="optional">Required; describe the actual footage</span>
       <input id="video-analysis-topic" maxlength="180" placeholder="e.g. Three ways to organise a small kitchen">

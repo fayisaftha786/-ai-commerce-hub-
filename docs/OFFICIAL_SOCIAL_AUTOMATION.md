@@ -135,3 +135,10 @@ The Clip Studio branch adds a local-first workflow for a creator's own downloade
 - Add the selected source file to the existing local editor, or hand the video and prepared caption to the same-origin Social Media Desk using an origin- and opener-checked postMessage handshake.
 
 The analysis file is not uploaded to a third-party AI service. Speech transcription and semantic scene/object recognition are not included; the creator must provide accurate notes or a transcript. The Social Media Desk handoff is preparation only. It does not silently publish. YouTube publishing uses the existing official OAuth/backend path and still requires a connected channel, correct upload permission, a supported file, and an explicit confirmation. Instagram, Facebook and X remain manual until their approved official publishing integrations are implemented. Content Rewards campaign submission, review, credited views and payout remain outside this handoff and must not be marked complete without official evidence.
+
+
+## Clip Studio: scene-change map and SRT subtitle timing
+
+The next video workflow stage adds a browser-local scene-change map. It samples up to 60 small frames, compares compact colour histograms and flags possible edit boundaries. The output is a scene timeline with start/end times and a cut score. This is a low-cost visual heuristic, not semantic AI scene understanding: camera motion or lighting changes may create false positives, while fast cuts between sample points may be missed.
+
+Creators can enter one subtitle line per detected scene and download an SRT file whose cue times follow the suggested scene boundaries. The tool does not claim to transcribe speech or produce word-level timing. Review and correct the scene boundaries and subtitle wording in a video editor before publishing. All scene sampling stays in the browser; no source video is uploaded for this analysis.

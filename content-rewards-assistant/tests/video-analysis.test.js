@@ -99,3 +99,78 @@ test("Clip Studio wires local analysis, package download and Social Desk handoff
   assert.match(packageJson.scripts.check, /content-rewards-assistant\/video-analysis\.js/);
   assert.match(packageJson.scripts.check, /content-rewards-assistant\/video-analysis-ui\.js/);
 });
+
+
+test("colour histogram and distance identify visibly different sampled frames", () => {
+  const pixels = {
+    data: new Uint8ClampedArray([0, 0, 0, 255, 255, 255, 255, 255])
+  };
+  const histogram = Analysis.colorHistogram(pixels);
+  assert.equal(histogram.length, 64);
+  assert.equal(histogram[0], 0.5);
+  assert.equal(histogram[63], 0.5);
+  const dark = new Array(64).fill(0);
+  const bright = new Array(64).fill(0);
+  dark[0] = 1;
+  bright[63] = 1;
+  assert.equal(Analysis.histogramDistance(dark, dark), 0);
+  assert.equal(Analysis.histogramDistance(dark, bright), 1);
+});
+
+test("scene map detects sampled cut candidates while suppressing cuts too close together", () => {
+  const dark = new Array(64).fill(0);
+  const bright = new Array(64).fill(0);
+  dark[0] = 1;
+  bright[63] = 1;
+  const result = Analysis.buildSceneMap([
+    { timeSeconds: 0, histogram: dark },
+    { timeSeconds: 1, histogram: dark },
+    { timeSeconds: 2, histogram: bright },
+    { timeSeconds: 2.5, histogram: dark },
+    { timeSeconds: 4, histogram: bright }
+  ], 5, { threshold: 0.42, minSceneSeconds: 1.25 });
+  assert.equal(result.sampleCount, 5);
+  assert.deepEqual(result.cuts.map((cut) => cut.timeSeconds), [2, 4]);
+  assert.deepEqual(result.scenes.map((scene) => [scene.startSeconds, scene.endSeconds]), [
+    [0, 2], [2, 4], [4, 5]
+  ]);
+  assert.equal(result.scenes[1].cutScore, 1);
+});
+
+test("scene map validates inputs and caps the number of suggested segments", () => {
+  const histogram = new Array(64).fill(0);
+  assert.throws(() => Analysis.buildSceneMap([], 10), /not enough video frames/i);
+  assert.throws(() => Analysis.buildSceneMap([{ timeSeconds: 0, histogram }], 0), /valid video duration/i);
+  const samples = Array.from({ length: 60 }, (_, index) => {
+    const frame = new Array(64).fill(0);
+    frame[index % 2 ? 63 : 0] = 1;
+    return { timeSeconds: index, histogram: frame };
+  });
+  const result = Analysis.buildSceneMap(samples, 60, { maxScenes: 5, minSceneSeconds: 0.5 });
+  assert.ok(result.scenes.length <= 5);
+});
+
+test("builds SRT cues from detected scene times and requires one caption per scene", () => {
+  const map = {
+    scenes: [
+      { startSeconds: 0, endSeconds: 2.45 },
+      { startSeconds: 2.45, endSeconds: 7.1 }
+    ]
+  };
+  const srt = Analysis.buildSrt(map, "Opening line\nSecond scene caption");
+  assert.match(srt, /1\n00:00:00,000 --> 00:00:02,450\nOpening line/);
+  assert.match(srt, /2\n00:00:02,450 --> 00:00:07,100\nSecond scene caption/);
+  assert.throws(() => Analysis.buildSrt(map, "Only one caption"), /exactly 2 non-empty subtitle lines/i);
+  assert.throws(() => Analysis.buildSrt({ scenes: [] }, "Caption"), /scene map/i);
+});
+
+test("Clip Studio exposes scene map, timed SRT and explanatory accuracy boundary", () => {
+  const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
+  const ui = fs.readFileSync(path.join(__dirname, "..", "video-analysis-ui.js"), "utf8");
+  for (const id of [
+    "video-analysis-scenes", "video-analysis-scene-captions", "video-analysis-download-srt"
+  ]) assert.ok(html.includes('id="' + id + '"'), "missing scene/subtitle control " + id);
+  assert.match(ui, /renderSceneMap/);
+  assert.match(ui, /Analysis\.buildSrt/);
+  assert.match(html, /not speech-to-text/i);
+});

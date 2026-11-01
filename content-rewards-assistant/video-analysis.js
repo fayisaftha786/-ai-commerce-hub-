@@ -8,6 +8,7 @@
   const MAX_SOURCE_BYTES = 150 * 1024 * 1024;
   const MAX_NOTES_CHARS = 2500;
   const MAX_TRANSCRIPT_CHARS = 12000;
+  const MAX_SCENE_SAMPLES = 60;
 
   function clean(value, max) {
     return String(value == null ? "" : value).replace(/\r/g, "").trim().slice(0, max || 2000);
@@ -64,6 +65,139 @@
       element.addEventListener("error", onError, { once: true });
     });
   }
+  function colorHistogram(imageData) {
+    const pixels = imageData && imageData.data;
+    if (!pixels || pixels.length < 4 || pixels.length % 4 !== 0) {
+      throw new Error("Could not read the sampled video frame pixels.");
+    }
+    const histogram = new Array(64).fill(0);
+    const pixelCount = pixels.length / 4;
+    for (let index = 0; index < pixels.length; index += 4) {
+      const red = pixels[index] >> 6;
+      const green = pixels[index + 1] >> 6;
+      const blue = pixels[index + 2] >> 6;
+      histogram[red * 16 + green * 4 + blue] += 1 / pixelCount;
+    }
+    return histogram;
+  }
+
+  function histogramDistance(left, right) {
+    if (!Array.isArray(left) || !Array.isArray(right) || left.length !== 64 || right.length !== 64) {
+      throw new Error("Scene comparison requires two 64-bin colour histograms.");
+    }
+    let distance = 0;
+    for (let index = 0; index < 64; index += 1) {
+      distance += Math.abs(Number(left[index]) - Number(right[index]));
+    }
+    return Math.min(1, distance / 2);
+  }
+
+  function buildSceneMap(samples, durationSeconds, options) {
+    const duration = Number(durationSeconds);
+    if (!Number.isFinite(duration) || duration <= 0) throw new Error("A valid video duration is required for scene mapping.");
+    const settings = options && typeof options === "object" ? options : {};
+    const threshold = Number.isFinite(settings.threshold) ? Math.max(0.1, Math.min(0.9, settings.threshold)) : 0.42;
+    const minSceneSeconds = Number.isFinite(settings.minSceneSeconds) ? Math.max(0.5, settings.minSceneSeconds) : 1.25;
+    const maxScenes = Number.isFinite(settings.maxScenes) ? Math.max(2, Math.min(30, Math.floor(settings.maxScenes))) : 20;
+    const ordered = Array.from(samples || []).filter((sample) =>
+      sample && Number.isFinite(sample.timeSeconds) && Array.isArray(sample.histogram)
+    ).sort((a, b) => a.timeSeconds - b.timeSeconds);
+    if (ordered.length < 2) throw new Error("Not enough video frames were sampled to detect scene changes.");
+
+    const cuts = [];
+    let lastCut = 0;
+    for (let index = 1; index < ordered.length; index += 1) {
+      const time = ordered[index].timeSeconds;
+      const score = histogramDistance(ordered[index - 1].histogram, ordered[index].histogram);
+      if (score >= threshold && time - lastCut >= minSceneSeconds && cuts.length < maxScenes - 1) {
+        cuts.push({ timeSeconds: Number(time.toFixed(2)), score: Number(score.toFixed(3)) });
+        lastCut = time;
+      }
+    }
+    const boundaries = [0].concat(cuts.map((cut) => cut.timeSeconds), duration);
+    const scenes = [];
+    for (let index = 0; index < boundaries.length - 1; index += 1) {
+      const startSeconds = boundaries[index];
+      const endSeconds = boundaries[index + 1];
+      if (endSeconds - startSeconds < 0.15) continue;
+      scenes.push({
+        number: scenes.length + 1,
+        startSeconds: Number(startSeconds.toFixed(2)),
+        endSeconds: Number(endSeconds.toFixed(2)),
+        durationSeconds: Number((endSeconds - startSeconds).toFixed(2)),
+        cutScore: index > 0 ? cuts[index - 1].score : null
+      });
+    }
+    return {
+      sampleCount: ordered.length,
+      sampleIntervalSeconds: Number((duration / Math.max(1, ordered.length - 1)).toFixed(2)),
+      threshold,
+      cuts,
+      scenes
+    };
+  }
+
+  async function seekVideo(video, timeSeconds, environment) {
+    const maximum = Math.max(0, video.duration - 0.08);
+    const target = Math.min(maximum, Math.max(0, timeSeconds));
+    if (video.readyState >= 2 && Math.abs(video.currentTime - target) < 0.04) return;
+    const seeked = waitFor(video, "seeked", environment, "a scene-analysis frame");
+    video.currentTime = target;
+    await seeked;
+  }
+
+  async function sampleSceneChanges(video, duration, environment, onProgress) {
+    const documentRef = environment.document;
+    const canvas = documentRef.createElement("canvas");
+    canvas.width = 32;
+    canvas.height = 32;
+    const context = canvas.getContext("2d", { willReadFrequently: true });
+    if (!context) throw new Error("Scene detection is not supported by this browser's canvas.");
+    if (video.readyState < 2) await waitFor(video, "loadeddata", environment, "the first video frame");
+
+    const sampleCount = Math.min(MAX_SCENE_SAMPLES, Math.max(2, Math.ceil(duration / 1.5) + 1));
+    const end = Math.max(0, duration - 0.08);
+    const samples = [];
+    for (let index = 0; index < sampleCount; index += 1) {
+      const timeSeconds = sampleCount === 1 ? 0 : end * index / (sampleCount - 1);
+      await seekVideo(video, timeSeconds, environment);
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const pixels = context.getImageData(0, 0, canvas.width, canvas.height);
+      samples.push({ timeSeconds, histogram: colorHistogram(pixels) });
+      if (typeof onProgress === "function") onProgress(Math.round((index + 1) / sampleCount * 100));
+    }
+    return buildSceneMap(samples, duration);
+  }
+
+  function srtTimestamp(seconds) {
+    const milliseconds = Math.max(0, Math.round(Number(seconds) * 1000));
+    const hours = Math.floor(milliseconds / 3600000);
+    const minutes = Math.floor((milliseconds % 3600000) / 60000);
+    const wholeSeconds = Math.floor((milliseconds % 60000) / 1000);
+    const remainder = milliseconds % 1000;
+    return [String(hours).padStart(2, "0"), String(minutes).padStart(2, "0"), String(wholeSeconds).padStart(2, "0")].join(":") +
+      "," + String(remainder).padStart(3, "0");
+  }
+
+  function buildSrt(sceneMap, captions) {
+    const scenes = sceneMap && Array.isArray(sceneMap.scenes) ? sceneMap.scenes : [];
+    const lines = String(captions || "").replace(/\r/g, "").split("\n").map((line) => line.trim()).filter(Boolean);
+    if (!scenes.length) throw new Error("Analyse the video and detect its scene map before creating subtitles.");
+    if (lines.length !== scenes.length) {
+      throw new Error("Enter exactly " + scenes.length + " non-empty subtitle lines, one for each detected scene.");
+    }
+    return scenes.map((scene, index) => {
+      if (!(Number.isFinite(scene.startSeconds) && Number.isFinite(scene.endSeconds) && scene.endSeconds > scene.startSeconds)) {
+        throw new Error("The detected scene map contains an invalid subtitle time range.");
+      }
+      return [
+        String(index + 1),
+        srtTimestamp(scene.startSeconds) + " --> " + srtTimestamp(scene.endSeconds),
+        lines[index]
+      ].join("\n");
+    }).join("\n\n") + "\n";
+  }
+
   function captureFrame(video, seconds, environment, label) {
     const canvas = environment.document.createElement("canvas");
     canvas.width = 180;
@@ -80,7 +214,7 @@
     context.drawImage(video, (canvas.width - drawWidth) / 2, (canvas.height - drawHeight) / 2, drawWidth, drawHeight);
     return { label, timeSeconds: seconds, dataUrl: canvas.toDataURL("image/jpeg", 0.72) };
   }
-  async function analyzeVideoFile(file, environment) {
+  async function analyzeVideoFile(file, environment, options) {
     const env = environment || (typeof globalThis !== "undefined" ? globalThis : this);
     const fileInfo = validateSourceVideo(file);
     if (!env.document || !env.URL || typeof env.URL.createObjectURL !== "function") {
@@ -122,12 +256,18 @@
           break;
         }
       }
+      let sceneMap = null;
+      try {
+        sceneMap = await sampleSceneChanges(video, duration, env, options && options.onSceneProgress);
+      } catch (_) {
+        frameWarnings.push("Automatic scene-change sampling was unavailable. The metadata and frame previews are still valid.");
+      }
       return {
         file: fileInfo, durationSeconds: duration, durationLabel: formatDuration(duration),
         width, height, aspectRatio: Number((width / height).toFixed(3)), aspect,
         sizeBytes: fileInfo.size, sizeMb: Number((fileInfo.size / (1024 * 1024)).toFixed(2)),
         averageBitrateKbps: Number((fileInfo.size * 8 / duration / 1000).toFixed(0)),
-        frames, warnings: frameWarnings
+        frames, sceneMap, warnings: frameWarnings
       };
     } finally {
       try { video.pause(); } catch (_) {}
@@ -211,8 +351,9 @@
   }
 
   return Object.freeze({
-    MAX_SOURCE_BYTES, MAX_NOTES_CHARS, MAX_TRANSCRIPT_CHARS,
-    validateSourceVideo, formatDuration, classifyAspect, analyzeVideoFile,
+    MAX_SOURCE_BYTES, MAX_NOTES_CHARS, MAX_TRANSCRIPT_CHARS, MAX_SCENE_SAMPLES,
+    validateSourceVideo, formatDuration, classifyAspect, colorHistogram, histogramDistance,
+    buildSceneMap, sampleSceneChanges, srtTimestamp, buildSrt, analyzeVideoFile,
     normalizePlatform, buildPostPackage
   });
 });

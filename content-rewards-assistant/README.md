@@ -174,3 +174,6 @@ The payout ledger now distinguishes three different events instead of calling al
 An expected payout date is only recorded when it is displayed by the official Earnings page. The app does not forecast settlement dates. Validation prevents recording a transfer larger than the prior recorded CR balance credit, and prevents recording a final Whop payout larger than the amount transferred to Whop. Partial transfers and payments remain possible.
 
 These fields are evidence manually entered from the respective official dashboards. They are not live integrations. Version 2 backups continue to round-trip and older version 1 backups remain importable; all additional settlement fields are optional for existing records.
+
+
+Legacy receipt safety: records created before the three-stage ledger may contain a generic “received” amount without identifying whether it was in Content Rewards Balance, Whop Balance or a bank account. Such records are kept intact but displayed as **legacy amount · destination unknown** and do not count as confirmed CR balance credits. Before recording a subsequent Whop transfer, explicitly confirm the earlier amount came from Content Rewards Balance. This avoids silently reclassifying historical amounts.

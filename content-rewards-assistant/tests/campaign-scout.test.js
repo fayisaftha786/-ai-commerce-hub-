@@ -168,7 +168,8 @@ test("campaign finder is wired to official Discover, local parser, and existing 
   assert.match(app, /navigator\.clipboard\.writeText/);
   assert.match(html, /official Content Rewards Discover page first/i);
   assert.doesNotMatch(html, /Only the existing third-party public feed is scanned automatically/i);
-  assert.match(app, /only listed and fetched public pages can be auto-read/i);
+  assert.match(html, /A public campaign outside that listing can be queued for an on-demand background scan/i);
+  assert.match(app, /choose Run workflow, and paste it into/);
   assert.match(html, /campaign-scout\.js/);
   assert.match(app, /ClipRewardScout\.parseCampaignBrief/);
   assert.match(app, /function analysePublicCampaignUrl/);

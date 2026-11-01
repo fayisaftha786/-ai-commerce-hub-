@@ -105,6 +105,7 @@ function fakeYouTubeOAuth() {
       calls.push({ action: "status", id });
       return id ? { provider: "youtube", status: "connected", channelTitle: "Test channel" } : { provider: "youtube", status: "not_connected" };
     },
+    async uploadVideo(id, input) { calls.push({ action: "publish", id, input }); return { ok: true, provider: "youtube", videoId: "test-video", url: "https://www.youtube.com/watch?v=test-video", privacyStatus: "private" }; },
     disconnect(id) {
       calls.push({ action: "disconnect", id });
       return Boolean(id);
@@ -171,6 +172,39 @@ test("connection status enables credentialed CORS only for the exact app origin"
     });
     const rejected = await fetch(base + "/api/social/connections", { headers: { Origin: "https://evil.example" } });
     assert.equal(rejected.status, 403);
+  }, {
+    env: { SOCIAL_CORS_ORIGINS: "https://app.example.com" },
+    socialOAuthService: oauth
+  });
+});
+
+
+test("YouTube publish endpoint requires the browser session, exact origin and explicit action header", async () => {
+  const oauth = fakeYouTubeOAuth();
+  await withServer(async (base) => {
+    const denied = await fetch(base + "/api/social/youtube/publish", {
+      method: "POST",
+      headers: { Origin: "https://app.example.com", Cookie: "aihub_session=" + oauth.sessionId, "Content-Type": "video/mp4" },
+      body: Buffer.alloc(2048)
+    });
+    assert.equal(denied.status, 403);
+    const response = await fetch(base + "/api/social/youtube/publish?title=Test%20video&privacy=private", {
+      method: "POST",
+      headers: {
+        Origin: "https://app.example.com",
+        Cookie: "aihub_session=" + oauth.sessionId,
+        "X-AI-Commerce-Action": "youtube-publish",
+        "Content-Type": "video/mp4"
+      },
+      body: Buffer.alloc(2048)
+    });
+    assert.equal(response.status, 201);
+    assert.equal((await response.json()).url, "https://www.youtube.com/watch?v=test-video");
+    const call = oauth.calls.find((item) => item.action === "publish");
+    assert.equal(call.id, oauth.sessionId);
+    assert.equal(call.input.title, "Test video");
+    assert.equal(call.input.privacyStatus, "private");
+    assert.equal(call.input.video.length, 2048);
   }, {
     env: { SOCIAL_CORS_ORIGINS: "https://app.example.com" },
     socialOAuthService: oauth

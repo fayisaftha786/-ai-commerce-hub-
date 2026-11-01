@@ -79,6 +79,14 @@ test("Earning Hub hydrates tasks and earnings with their own 1,000-record limits
   assert.equal(nodes.get("earningRecordList").children.length, 400);
 });
 
+
+test("Earning Hub exposes official program import without treating it as verified earnings", () => {
+  assert.match(app, /function importOfficialProgram\(source, snapshotGeneratedAt\)/);
+  assert.match(app, /window\.AIEarningHub = Object\.freeze\(\{ importOfficialProgram \}\)/);
+  assert.match(app, /eligibility.*unknown|createOfficialProgramOpportunity/);
+  assert.match(html, /Add research task to tracker/);
+});
+
 test("earning hub uses local storage and explains its limits", () => {
   assert.match(app, /ai-commerce-hub\.earning-opportunities\.v1/);
   assert.match(app, /ai-commerce-hub\.earning-tasks\.v1/);

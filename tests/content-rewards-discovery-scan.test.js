@@ -4,7 +4,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs/promises");
 const os = require("node:os");
 const path = require("node:path");
-const { runScheduledScan, decodeHtmlEntities, extractVisibleText, canonicalDiscoverUrl, canonicalPublicCampaignDetailUrl, extractDiscoverCampaigns, fetchPublicDiscoverCampaigns, fetchPublicCampaignPage, fetchCampaignDetails, fetchFeedWithRetry } = require("../scripts/content-rewards-discovery-scan.js");
+const { runScheduledScan, decodeHtmlEntities, extractVisibleText, canonicalDiscoverUrl, canonicalPublicCampaignDetailUrl, extractDiscoverCampaigns, fetchPublicDiscoverCampaigns, fetchPublicCampaignPage, fetchCampaignDetails, createRequestedCampaignRow, fetchFeedWithRetry } = require("../scripts/content-rewards-discovery-scan.js");
 const Feed = require("../content-rewards-assistant/campaign-feed.js");
 
 function sample(id) {
@@ -331,6 +331,108 @@ test("scheduled scanner uses official Discover first and enriches campaigns from
 });
 
 
+
+test("on-demand campaign URL validator accepts one canonical public campaign URL and rejects unsafe targets", () => {
+  const row = createRequestedCampaignRow("https://contentrewards.com/c/campaigns/custom-123?utm_source=app#rules");
+  assert.equal(row.officialUrl, "https://contentrewards.com/c/campaigns/custom-123");
+  assert.equal(row.id, "custom-123");
+  assert.equal(row.userRequested, true);
+  assert.equal(row.sourceVerification, "official-public-page");
+  assert.equal(createRequestedCampaignRow(""), null);
+  for (const value of [
+    "https://evil.example/c/campaigns/custom",
+    "http://contentrewards.com/c/campaigns/custom",
+    "https://user:pass@contentrewards.com/c/campaigns/custom",
+    "https://contentrewards.com/c/analytics",
+    "https://contentrewards.com/c/campaigns/custom/extra",
+    "x".repeat(501)
+  ]) {
+    assert.throws(() => createRequestedCampaignRow(value), /on-demand campaign URL|On-demand analysis/);
+  }
+});
+
+test("scheduled scanner fetches an on-demand public URL first and adds its full page analysis to the snapshot", async () => {
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), "clipreward-on-demand-"));
+  const filePath = path.join(directory, "snapshot.json");
+  const requestedUrl = "https://contentrewards.com/c/campaigns/custom-outside-discover";
+  const fetched = [];
+  try {
+    const result = await runScheduledScan({
+      filePath,
+      campaignUrl: requestedUrl,
+      now: Date.parse("2026-10-31T00:00:00Z"),
+      discoverRetryDelaysMs: [0, 0],
+      fetchDiscoverImpl: async (url) => ({
+        ok: true, status: 200, url,
+        headers: { get: () => "text/html" },
+        text: async () => DISCOVER_HTML
+      }),
+      fetchPageImpl: async (url) => {
+        fetched.push(url);
+        return {
+          ok: true, status: 200, url,
+          headers: { get: () => "text/html" },
+          text: async () => PUBLIC_HTML
+        };
+      },
+      feed: { fetchCampaigns: async () => { throw new Error("third-party feed must not run"); } }
+    });
+    assert.equal(result.ok, true);
+    assert.equal(fetched[0], requestedUrl, "the user-requested page gets the first detail-fetch slot");
+    assert.equal(result.snapshot.lastScan.requestedCampaignUrl, requestedUrl);
+    assert.equal(result.snapshot.lastScan.requestedCampaignPageStatus, "ok");
+    assert.equal(result.snapshot.lastScan.detailPagesAttempted, 3);
+    const detail = result.snapshot.campaignDetails.find((item) => item.url === requestedUrl);
+    assert.equal(detail.status, "ok");
+    assert.match(detail.pageText, /Seasonal Creator Clips/);
+    const campaign = result.snapshot.campaigns.find((row) => row.officialUrl === requestedUrl);
+    assert.ok(campaign);
+    assert.equal(campaign.title, "Seasonal Creator Clips");
+    assert.equal(campaign.sourceVerification, "official-public-page");
+    assert.equal(campaign.userRequested, true);
+  } finally {
+    await fs.rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("on-demand public URL remains official when the Discover page falls back to third-party leads", async () => {
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), "clipreward-on-demand-fallback-"));
+  const filePath = path.join(directory, "snapshot.json");
+  const requestedUrl = "https://contentrewards.com/c/campaigns/extra-public";
+  try {
+    const result = await runScheduledScan({
+      filePath,
+      campaignUrl: requestedUrl,
+      now: Date.parse("2026-10-31T00:00:00Z"),
+      discoverRetryDelaysMs: [0, 0],
+      fetchDiscoverImpl: async () => { throw new Error("official Discover unavailable in fixture"); },
+      feedRetryDelaysMs: [0],
+      feed: { fetchCampaigns: async () => ({
+        campaigns: [sample("third-party-only")],
+        totalReceived: 1,
+        fetchedAt: "2026-10-31T00:00:00.000Z",
+        sourceLabel: "Third-party public snapshot",
+        sourceUrl: "https://contentrewards.xyz/api/cr/campaigns"
+      }) },
+      fetchPageImpl: async (url) => ({
+        ok: true, status: 200, url,
+        headers: { get: () => "text/html" },
+        text: async () => PUBLIC_HTML
+      })
+    });
+    assert.equal(result.ok, true);
+    assert.equal(result.snapshot.source.verification, "third-party");
+    const requested = result.snapshot.campaigns.find((row) => row.officialUrl === requestedUrl);
+    const fallback = result.snapshot.campaigns.find((row) => row.id === "third-party-only");
+    assert.equal(requested.sourceVerification, "official-public-page");
+    assert.equal(requested.title, "Seasonal Creator Clips");
+    assert.equal(fallback.sourceVerification, "third-party");
+    assert.equal(result.snapshot.lastScan.requestedCampaignPageStatus, "ok");
+  } finally {
+    await fs.rm(directory, { recursive: true, force: true });
+  }
+});
+
 test("scheduled scan marks detail-page fetch failures as partial instead of a full success", async () => {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), "clipreward-partial-scan-"));
   const filePath = path.join(directory, "snapshot.json");
@@ -595,6 +697,9 @@ test("background page scan bootstraps on main changes but ignores snapshot-only 
   assert.match(pushBlock, /branches:\s*\n\s*- main/);
   assert.match(pushBlock, /paths-ignore:\s*\n\s*- "content-rewards-assistant\/discovery-snapshot\.json"/);
   assert.match(workflow, /workflow_dispatch:/);
+  assert.match(workflow, /campaign_url:/);
+  assert.match(workflow, /CAMPAIGN_URL:.*inputs\\.campaign_url/);
+  assert.match(workflow, /Campaign URL to analyse/);
   assert.match(workflow, /cron: "17 \*\/6 \* \* \*"/);
 });
 

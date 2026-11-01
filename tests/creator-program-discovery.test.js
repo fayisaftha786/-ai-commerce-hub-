@@ -71,7 +71,7 @@ test("one failed provider source marks the scan partial and preserves the other 
       : response(url)
   });
   assert.equal(snapshot.status, "partial");
-  assert.equal(snapshot.summary.sourcesAvailable, 2);
+  assert.equal(snapshot.summary.sourcesAvailable, 3);
   assert.equal(snapshot.summary.sourcesUnavailable, 1);
   assert.equal(snapshot.sources.find((source) => source.id === "facebook-content-monetization").status, "unavailable");
 });

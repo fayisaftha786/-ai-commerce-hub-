@@ -426,7 +426,7 @@ test("on-demand public URL remains official when the Discover page falls back to
     const fallback = result.snapshot.campaigns.find((row) => row.id === "third-party-only");
     assert.equal(requested.sourceVerification, "official-public-page");
     assert.equal(requested.title, "Seasonal Creator Clips");
-    assert.equal(fallback.sourceVerification, "third-party");
+    assert.equal(fallback.verification, "third-party");
     assert.equal(result.snapshot.lastScan.requestedCampaignPageStatus, "ok");
   } finally {
     await fs.rm(directory, { recursive: true, force: true });

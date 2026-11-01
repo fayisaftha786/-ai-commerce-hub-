@@ -75,11 +75,12 @@ function parseCookie(request, name) {
 }
 
 function buildSessionCookie(sessionId, env = process.env) {
-  const secure = env.NODE_ENV === "production" || env.SOCIAL_COOKIE_SECURE === "true";
-  const requestedSameSite = String(env.SOCIAL_COOKIE_SAMESITE || (secure ? "None" : "Lax"));
+  const productionSecure = env.NODE_ENV === "production" || env.SOCIAL_COOKIE_SECURE === "true";
+  const requestedSameSite = String(env.SOCIAL_COOKIE_SAMESITE || (productionSecure ? "None" : "Lax"));
   const sameSite = requestedSameSite === "None" || requestedSameSite === "Lax"
     ? requestedSameSite
     : "Lax";
+  const secure = productionSecure || sameSite === "None";
   const name = socialSessionCookieName(env);
   return name + "=" + sessionId + "; Path=/; Max-Age=2592000; HttpOnly; SameSite=" +
     sameSite + (secure ? "; Secure" : "");

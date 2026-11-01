@@ -332,3 +332,7 @@ details > summary::marker { color: var(--gold); }
 .creator-rule-evidence{display:grid;gap:6px;padding:10px;border:1px solid var(--line);border-radius:10px;background:rgba(8,14,25,.28)}
 .creator-rule-evidence p{margin:0!important;font-size:12px;line-height:1.55;color:#c8d5e8;overflow-wrap:anywhere}
 .creator-program-directory .candidate-card>.creator-rule-evidence+p{margin-top:0}
+
+#socialAccountConnectionStatus{margin:10px 0;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:rgba(8,14,25,.25);overflow-wrap:anywhere}
+#socialBackendOrigin{width:100%}
+#connectYouTubeAccount:disabled,#disconnectYouTubeAccount:disabled{opacity:.55;cursor:not-allowed}

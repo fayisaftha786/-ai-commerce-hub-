@@ -4,6 +4,7 @@ const http = require("node:http");
 const { getProviderReadiness } = require("./social-provider-readiness.js");
 const { createFileStore } = require("./discovery-store.js");
 const { createDiscoveryService } = require("./discovery-service.js");
+const { createYouTubeOAuthService } = require("./youtube-oauth.js");
 
 function sendJson(response, statusCode, payload, extraHeaders = {}) {
   const body = JSON.stringify(payload);
@@ -35,6 +36,62 @@ function applyDiscoveryCors(request, response, env = process.env) {
   return true;
 }
 
+
+function allowedSocialOrigins(env = process.env) {
+  return String(env.SOCIAL_CORS_ORIGINS || "").split(",").map((value) => value.trim()).filter(Boolean);
+}
+
+function applySocialCors(request, response, env = process.env) {
+  const origin = request.headers.origin;
+  if (!origin) return true;
+  const allowed = allowedSocialOrigins(env);
+  if (!allowed.includes(origin)) return false;
+  response.setHeader("access-control-allow-origin", origin);
+  response.setHeader("access-control-allow-credentials", "true");
+  response.setHeader("access-control-allow-methods", "GET, POST, OPTIONS");
+  response.setHeader("access-control-allow-headers", "Accept, Content-Type, X-AI-Commerce-Action");
+  response.setHeader("access-control-max-age", "600");
+  response.setHeader("vary", "Origin");
+  return true;
+}
+
+function socialSessionCookieName(env = process.env) {
+  return env.NODE_ENV === "production" || env.SOCIAL_COOKIE_SECURE === "true"
+    ? "__Host-aihub_session"
+    : "aihub_session";
+}
+
+function parseCookie(request, name) {
+  const raw = String(request.headers.cookie || "");
+  for (const item of raw.split(";")) {
+    const separator = item.indexOf("=");
+    if (separator < 0) continue;
+    if (item.slice(0, separator).trim() !== name) continue;
+    const value = item.slice(separator + 1).trim();
+    return /^[A-Za-z0-9_-]{43}$/.test(value) ? value : "";
+  }
+  return "";
+}
+
+function buildSessionCookie(sessionId, env = process.env) {
+  const secure = env.NODE_ENV === "production" || env.SOCIAL_COOKIE_SECURE === "true";
+  const name = socialSessionCookieName(env);
+  return name + "=" + sessionId + "; Path=/; Max-Age=2592000; HttpOnly; SameSite=" +
+    (secure ? "None; Secure" : "Lax");
+}
+
+function socialRedirect(response, url, setCookie = "") {
+  const headers = {
+    location: url,
+    "cache-control": "no-store",
+    "referrer-policy": "no-referrer",
+    "x-content-type-options": "nosniff"
+  };
+  if (setCookie) headers["set-cookie"] = setCookie;
+  response.writeHead(303, headers);
+  response.end();
+}
+
 function createServer(options = {}) {
   const env = options.env ?? process.env;
   const discoveryService = options.discoveryService || createDiscoveryService({
@@ -48,8 +105,116 @@ function createServer(options = {}) {
     clearInterval: options.clearInterval
   });
   const ownsDiscoveryService = !options.discoveryService;
+  const socialOAuthService = options.socialOAuthService || createYouTubeOAuthService({
+    env,
+    tokenVault: options.socialTokenVault,
+    fetchImpl: options.socialFetchImpl || options.fetchImpl,
+    now: options.now
+  });
   const server = http.createServer(async (request, response) => {
     const pathname = new URL(request.url ?? "/", "http://localhost").pathname;
+
+    if (pathname.startsWith("/api/social/")) {
+      const sessionId = parseCookie(request, socialSessionCookieName(env));
+      const isNavigationRoute = pathname === "/api/social/youtube/connect" || pathname === "/api/social/youtube/callback";
+
+      if (isNavigationRoute && request.headers.origin && !allowedSocialOrigins(env).includes(request.headers.origin)) {
+        return sendJson(response, 403, { error: "origin_not_allowed" });
+      }
+      if (!isNavigationRoute && !applySocialCors(request, response, env)) {
+        return sendJson(response, 403, { error: "origin_not_allowed" });
+      }
+      if (request.method === "OPTIONS" && !isNavigationRoute) {
+        response.writeHead(204, {
+          "cache-control": "no-store",
+          "access-control-allow-methods": "GET, POST, OPTIONS",
+          "access-control-allow-headers": "Accept, Content-Type, X-AI-Commerce-Action"
+        });
+        return response.end();
+      }
+
+      if (pathname === "/api/social/youtube/connect") {
+        if (request.method !== "GET") {
+          response.setHeader("allow", "GET");
+          return sendJson(response, 405, { error: "method_not_allowed" });
+        }
+        const started = socialOAuthService.createAuthorizationRequest(sessionId);
+        if (!started.ok) return sendJson(response, 503, {
+          error: "youtube_oauth_not_configured",
+          missing: started.missing || [],
+          status: started.error
+        });
+        return socialRedirect(response, started.url, started.setCookie ? buildSessionCookie(started.sessionId, env) : "");
+      }
+
+      if (pathname === "/api/social/youtube/callback") {
+        if (request.method !== "GET") {
+          response.setHeader("allow", "GET");
+          return sendJson(response, 405, { error: "method_not_allowed" });
+        }
+        const url = new URL(request.url ?? "/", "http://localhost");
+        const result = await socialOAuthService.completeAuthorization({
+          state: url.searchParams.get("state") || "",
+          code: url.searchParams.get("code") || "",
+          providerError: url.searchParams.get("error") || "",
+          sessionId
+        });
+        const destination = socialOAuthService.buildReturnUrl(
+          result.ok ? "success" : "error",
+          result.ok ? "" : result.error
+        );
+        if (!destination) return sendJson(response, 503, { error: "social_return_url_not_configured" });
+        return socialRedirect(response, destination);
+      }
+
+      if (pathname === "/api/social/connections") {
+        if (request.method !== "GET") {
+          response.setHeader("allow", "GET, OPTIONS");
+          return sendJson(response, 405, { error: "method_not_allowed" });
+        }
+        try {
+          const youtube = await socialOAuthService.getConnection(sessionId);
+          return sendJson(response, 200, { connections: [youtube] });
+        } catch (_) {
+          return sendJson(response, 503, { error: "social_connection_status_unavailable" });
+        }
+      }
+
+      if (pathname === "/api/social/youtube/disconnect") {
+        if (request.method !== "POST") {
+          response.setHeader("allow", "POST, OPTIONS");
+          return sendJson(response, 405, { error: "method_not_allowed" });
+        }
+        if (!sessionId || !request.headers.origin || !allowedSocialOrigins(env).includes(request.headers.origin) ||
+            request.headers["x-ai-commerce-action"] !== "social-disconnect") {
+          return sendJson(response, 403, { error: "social_request_not_authorized" });
+        }
+        try {
+          socialOAuthService.disconnect(sessionId);
+          return sendJson(response, 200, { provider: "youtube", status: "not_connected" });
+        } catch (_) {
+          return sendJson(response, 503, { error: "social_disconnect_failed" });
+        }
+      }
+
+      if (pathname === "/api/social/providers") {
+        if (request.method !== "GET") {
+          response.setHeader("allow", "GET, OPTIONS");
+          return sendJson(response, 405, { error: "method_not_allowed" });
+        }
+        return sendJson(response, 200, {
+          providers: [
+            getProviderReadiness("instagram", env),
+            getProviderReadiness("meta", env),
+            getProviderReadiness("youtube", env)
+          ],
+          youtubeOAuth: socialOAuthService.getReadiness(),
+          note: "YouTube OAuth routes are implemented but remain unconfigured until server credentials, HTTPS callback, CORS origin, and encrypted token storage are supplied. Instagram and Facebook OAuth are not implemented yet."
+        });
+      }
+
+      return sendJson(response, 404, { error: "not_found" });
+    }
 
     if (pathname.startsWith("/api/discovery/")) {
       if (!applyDiscoveryCors(request, response, env)) {
@@ -104,18 +269,7 @@ function createServer(options = {}) {
       return sendJson(response, 200, {
         ok: true,
         service: "ai-commerce-hub-social-api",
-        oauthImplemented: false
-      });
-    }
-
-    if (pathname === "/api/social/providers") {
-      return sendJson(response, 200, {
-        providers: [
-          getProviderReadiness("instagram", env),
-          getProviderReadiness("meta", env),
-          getProviderReadiness("youtube", env)
-        ],
-        note: "Configuration readiness only; no accounts are connected and OAuth is not implemented."
+        oauthImplemented: true
       });
     }
 
@@ -163,4 +317,7 @@ if (require.main === module) {
   startServer();
 }
 
-module.exports = { sendJson, allowedOrigins, applyDiscoveryCors, createServer, getListenConfig, startServer };
+module.exports = {
+  sendJson, allowedOrigins, applyDiscoveryCors, allowedSocialOrigins, applySocialCors,
+  socialSessionCookieName, parseCookie, buildSessionCookie, createServer, getListenConfig, startServer
+};

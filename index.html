@@ -393,8 +393,18 @@
       <h2 id="socialDeskHeading">9. Social Media Desk</h2>
       <p>Prepare a post, preview authorised media, open the platform, and analyze metrics you enter from its official insights. This browser-only version does not sign in to accounts or publish automatically.</p>
       <div class="social-status notice">
-        <strong>Account connection status: Not connected</strong>
-        <p>Secure OAuth/API connection is not configured in this prototype. Never enter your social-media password here. Use the official platform site below.</p>
+        <strong>Social account connection</strong>
+        <p>Use the private HTTPS backend for Google OAuth. Your Google password is entered only on Google's consent screen. OAuth tokens are stored encrypted on the backend, never in this browser or GitHub Pages. Instagram and Facebook OAuth are not enabled in this version.</p>
+        <label for="socialBackendOrigin">Private backend HTTPS origin
+          <input id="socialBackendOrigin" type="url" maxlength="300" inputmode="url" placeholder="https://your-private-backend.example">
+        </label>
+        <div class="form-grid">
+          <button id="saveSocialBackend" type="button" class="secondary">Save backend & check</button>
+          <button id="connectYouTubeAccount" type="button" disabled>Connect YouTube with Google</button>
+          <button id="disconnectYouTubeAccount" type="button" class="secondary" disabled>Disconnect YouTube</button>
+        </div>
+        <p id="socialAccountConnectionStatus" role="status" aria-live="polite">No private backend configured. GitHub Pages alone cannot run OAuth or store social tokens.</p>
+        <p class="hint">YouTube connection requests read-only channel identification and upload permission. Publishing is not included in this connection step. For reliable browser sessions, host the app and API on the same site or use a custom domain; some browsers block third-party cookies across GitHub Pages and a separate backend host.</p>
       </div>
       <div class="form-grid">
         <label for="socialPlatform">Target platform
@@ -522,6 +532,7 @@
   <script src="campaign-report.js"></script>
   <script src="video-maker.js"></script>
   <script src="social-center.js"></script>
+  <script src="social-account-connect.js"></script>
   <script src="app.js"></script>
   <script src="pwa-install.js"></script>
   <script src="app-health.js"></script>

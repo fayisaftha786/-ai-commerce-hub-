@@ -319,7 +319,8 @@
     <article><small>Views recorded</small><strong id="ops-metric-views">0</strong></article>
     <article><small>Approved rewards recorded</small><strong id="ops-metric-rewards">0</strong></article>
     <article><small>Awaiting payout</small><strong id="ops-metric-pending">0</strong></article>
-    <article><small>Payment records</small><strong id="ops-metric-paid">0</strong></article>
+    <article><small>CR balance credits</small><strong id="ops-metric-paid">0</strong></article>
+    <article><small>Whop transfers</small><strong id="ops-metric-withdrawn">0</strong></article>
   </div>
   <div class="ops-layout">
     <form id="ops-form" class="ops-form">
@@ -331,10 +332,17 @@
         <label>Views checked at<input id="ops-views-checked" type="datetime-local"></label>
         <label>Approved reward amount <span class="optional">(only an amount confirmed by the official campaign)</span><input id="ops-reward-approved" type="number" min="0" max="1000000000" step="0.01" inputmode="decimal" placeholder="e.g. 12.50"></label>
         <label>Currency<select id="ops-currency"><option value="USD">USD</option><option value="INR">INR</option><option value="EUR">EUR</option><option value="GBP">GBP</option></select></label>
-        <label>Payout status<select id="ops-payout-status"><option value="unconfirmed">Not confirmed</option><option value="pending">Pending</option><option value="available">Available to withdraw</option><option value="partially-paid">Partially paid</option><option value="paid">Paid in full</option><option value="not-eligible">Not eligible / rejected</option></select></label>
-        <label>Amount actually received<input id="ops-paid-amount" type="number" min="0" max="1000000000" step="0.01" inputmode="decimal" placeholder="e.g. 10.00"></label>
-        <label>Payment received at<input id="ops-paid-at" type="datetime-local"></label>
-        <label>Payment / transaction reference<input id="ops-payout-reference" maxlength="120" placeholder="Optional reference"></label>
+        <label>Payout status<select id="ops-payout-status"><option value="unconfirmed">Not confirmed</option><option value="pending">Pending</option><option value="available">Available in Content Rewards balance</option><option value="partially-paid">Partially credited to CR balance</option><option value="paid">Credited to CR balance</option><option value="not-eligible">Not eligible / rejected</option></select></label>
+        <label>Amount credited to Content Rewards Balance<input id="ops-paid-amount" type="number" min="0" max="1000000000" step="0.01" inputmode="decimal" placeholder="e.g. 10.00"></label>
+        <label>Credited to Content Rewards Balance at<input id="ops-paid-at" type="datetime-local"></label>
+        <label>CR balance credit reference<input id="ops-payout-reference" maxlength="120" placeholder="Optional reference"></label>
+        <label>Expected payout date <span class="optional">(only copy a date shown by the official earnings page)</span><input id="ops-expected-payout-at" type="datetime-local"></label>
+        <label>Amount transferred from CR Balance to Whop Balance<input id="ops-withdrawn-amount" type="number" min="0" max="1000000000" step="0.01" inputmode="decimal" placeholder="e.g. 10.00"></label>
+        <label>Transferred to Whop at<input id="ops-withdrawn-at" type="datetime-local"></label>
+        <label>CR → Whop transfer reference<input id="ops-withdrawal-reference" maxlength="120" placeholder="Optional reference"></label>
+        <label>Amount paid by Whop to bank / selected method<input id="ops-whop-payout-amount" type="number" min="0" max="1000000000" step="0.01" inputmode="decimal" placeholder="e.g. 10.00"></label>
+        <label>Whop payout received at<input id="ops-whop-payout-at" type="datetime-local"></label>
+        <label>Whop payout / bank reference<input id="ops-whop-payout-reference" maxlength="120" placeholder="Optional reference"></label>
         <label>Review decision checked at<input id="ops-reviewed-at" type="datetime-local"></label>
       </div>
       <label>Review / payout notes<textarea id="ops-review-notes" rows="3" maxlength="1000" placeholder="Record official dashboard wording, hold reason, or the next follow-up date. Do not enter private credentials."></textarea></label>
@@ -342,11 +350,12 @@
     </form>
     <div class="ops-ledger">
       <div class="ops-ledger-heading"><strong>Campaign operations ledger</strong><span class="tiny-note">Updated locally on this device</span></div>
-      <div class="table-wrap"><table class="ops-table"><thead><tr><th>Campaign</th><th>Views</th><th>Approved reward</th><th>Payout state</th><th>Received</th><th></th></tr></thead><tbody id="ops-table"></tbody></table></div>
+      <div class="table-wrap"><table class="ops-table"><thead><tr><th>Campaign</th><th>Views</th><th>Approved reward</th><th>CR balance credit</th><th>Transferred to Whop</th><th>Whop payout</th><th>Expected date</th><th>CR status</th><th></th></tr></thead><tbody id="ops-table"></tbody></table></div>
       <div id="ops-empty" class="table-empty" hidden>No campaigns yet. Add a campaign, then record official views and payout evidence here.</div>
     </div>
   </div>
-  <p class="ops-boundary"><strong>Accuracy rule:</strong> views, approval amount, payout state and money received are separate facts. Enter only values visible in the relevant official dashboard. Raw Instagram / YouTube / Facebook views are not automatically eligible Content Rewards views. CPM, pool and retainer estimates are not added to confirmed earnings. This tracker does not query private accounts, submit clips, approve reviews, initiate withdrawals or sync bank / Whop balances.</p>
+  <p class="ops-boundary"><strong>Three separate money stages:</strong> (1) an amount credited to Content Rewards Balance; (2) a withdrawal from Content Rewards Balance into Whop Balance; (3) Whop sending the money to your bank or selected payout method. Record each stage only after seeing its own official receipt or balance entry. Enter an expected date only when the official Earnings page displays one; this app does not estimate it. A campaign being approved does not mean a withdrawal or bank payment has happened.</p>
+  <p class="ops-boundary">Views, approval amount, payout state and cash movement are separate facts. Raw Instagram / YouTube / Facebook views are not automatically eligible Content Rewards views. CPM, pool and retainer estimates are not recorded as confirmed income. The ledger does not query private accounts, submit clips, approve reviews, initiate withdrawals or sync Content Rewards / Whop balances.</p>
   <div class="campaign-actions">
     <a class="text-button" href="https://help.contentrewards.com/en/articles/15319801-approval-and-review" target="_blank" rel="noopener noreferrer">Official review timing ↗</a>
     <a class="text-button" href="https://help.contentrewards.com/en/articles/15319815-payouts" target="_blank" rel="noopener noreferrer">Official payout terms ↗</a>

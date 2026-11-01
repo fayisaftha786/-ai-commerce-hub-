@@ -140,8 +140,7 @@ The private backend now implements an authorization-code connection for YouTube.
 5. Copy the client ID and secret only into the backend host's private environment variables. Never commit them or enter them in the browser.
 
 The flow requests only:
-- https://www.googleapis.com/auth/youtube.readonly — identify the authorized channel.
-- https://www.googleapis.com/auth/youtube.upload — prepare for future authorized video-upload work.
+- https://www.googleapis.com/auth/youtube.readonly — identify the authorized channel. It does not request upload or publishing permission in this release.
 
 The flow uses a random, one-use state, PKCE S256, offline access, exact HTTPS redirect configuration and a browser-session cookie. Callback codes are exchanged server-side. The server reads the channel list with the returned bearer token and stores the access/refresh token only inside an AES-256-GCM encrypted vault. API responses return channel metadata and connection status only, never token values.
 
@@ -169,7 +168,7 @@ In the same-origin Docker deployment, the API uses an HttpOnly, Secure, SameSite
 
 - This is a YouTube connection slice only. Instagram Login and Facebook Pages OAuth are not implemented in this release; configuration readiness for those providers is not a connection.
 - A successful connection confirms Google consent and an authorized YouTube channel. It does not grant YouTube Partner Program eligibility or confirm monetization/payout status.
-- The upload scope is requested, but this release does not upload or publish videos. Upload/publishing needs its own endpoint, content review/approval, format checks, resumable upload handling and real platform-response tests.
+- YouTube upload permission is not requested and this release does not upload or publish videos. A future upload feature must add a dedicated endpoint, explicit consent for the extra scope, content review/approval, format checks, resumable upload handling and real platform-response tests.
 - The connection is attached to an opaque browser session, not an app user account. Clearing cookies, using another browser/device, or losing the session means the connection will not be visible there. No cloud account sync exists.
 - Access and refresh tokens are encrypted at rest. The server must remain HTTPS, the host disk and environment variables must be private, and backups must protect both the encrypted file and the encryption key separately.
 - Google can revoke tokens or require re-consent. Expired tokens are refreshed when possible; otherwise the app shows reconnect_required.

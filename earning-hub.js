@@ -59,6 +59,9 @@
       reward.textContent = "Reward: " + (item.reward == null ? "Not entered" : money(item.reward, item.currency)) +
         " · Effort: " + (item.effortHours == null ? "Unknown" : item.effortHours + " hours") +
         " · Hourly estimate: " + (item.analysis.estimatedHourlyReward == null ? "Unavailable" : money(item.analysis.estimatedHourlyReward, item.currency));
+      const description = document.createElement("p");
+      description.className = "hint";
+      description.textContent = item.description || item.notes || "No opportunity details were supplied.";
       const source = document.createElement("a");
       source.href = item.sourceUrl;
       source.target = "_blank";
@@ -78,7 +81,7 @@
       close.disabled = item.status === "closed";
       close.addEventListener("click", () => closeOpportunity(item.id));
       actions.append(plan, close);
-      card.append(heading, score, detail, reward, source, actions);
+      card.append(heading, score, detail, reward, description, source, actions);
       list.append(card);
     }
     }
@@ -160,6 +163,33 @@
     render();
     $("earningHubMessage").textContent = "Opportunity marked closed on this device.";
   }
+
+
+  function importOfficialProgram(source, snapshotGeneratedAt) {
+    if (typeof engine.createOfficialProgramOpportunity !== "function") {
+      return { added: false, error: "Official programme import is unavailable in this app version." };
+    }
+    const created = engine.createOfficialProgramOpportunity(source, snapshotGeneratedAt || "");
+    if (!created.valid) return { added: false, error: created.error };
+    const opportunity = created.opportunity;
+    if (opportunities.some((item) => item.id === opportunity.id)) {
+      return { added: false, duplicate: true, id: opportunity.id, message: "ഈ official programme ഇതിനകം tracker-ൽ ചേർത്തിട്ടുണ്ട്." };
+    }
+    if (opportunities.length >= MAX_OPPORTUNITIES) {
+      return { added: false, error: "Opportunity limit reached. Close or export older records first." };
+    }
+    opportunities.push(opportunity);
+    if (!save(STORAGE_KEY, opportunities)) {
+      opportunities.pop();
+      return { added: false, error: "Browser storage failed. Official programme was not added." };
+    }
+    render();
+    const message = "Official programme research task tracker-ൽ ചേർത്തു. Eligibility, reward, payout എന്നിവ പരിശോധിക്കാത്ത നിലയിലാണ്.";
+    $("earningHubMessage").textContent = message;
+    return { added: true, id: opportunity.id, message };
+  }
+
+  window.AIEarningHub = Object.freeze({ importOfficialProgram });
 
   $("earningOpportunityForm").addEventListener("submit", event => {
     event.preventDefault();

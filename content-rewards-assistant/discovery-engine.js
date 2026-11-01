@@ -255,6 +255,132 @@
       checkedCount: current.length
     };
   }
+  function canonicalPublicCampaignUrl(value) {
+    try {
+      const url = new URL(String(value || ""));
+      const host = url.hostname.toLowerCase();
+      if (url.protocol !== "https:" || (host !== "contentrewards.com" && !host.endsWith(".contentrewards.com")) ||
+          url.username || url.password || (url.port && url.port !== "443") ||
+          !/^\/c\/campaigns\/[^/]+$/.test(url.pathname)) return "";
+      return url.origin + url.pathname;
+    } catch (_) {
+      return "";
+    }
+  }
+
+  function analyzePublicCampaigns(campaigns, details, scout, intelligence, platform, options) {
+    const rows = Array.isArray(campaigns) ? campaigns : [];
+    const pages = Array.isArray(details) ? details : [];
+    const target = clean(platform, 30);
+    const opts = options && typeof options === "object" ? options : {};
+    if (!target) throw new Error("Choose a target platform before analysing saved campaigns.");
+    if (!scout || typeof scout.parseCampaignBrief !== "function" ||
+        !intelligence || typeof intelligence.assessAll !== "function") {
+      throw new Error("The campaign parser or Rewards Intelligence engine is unavailable.");
+    }
+    const today = /^\d{4}-\d{2}-\d{2}$/.test(String(opts.today || ""))
+      ? String(opts.today)
+      : new Date().toISOString().slice(0, 10);
+    const detailMap = new Map();
+    pages.forEach((page) => {
+      const url = canonicalPublicCampaignUrl(page && page.url);
+      if (url && !detailMap.has(url)) detailMap.set(url, page);
+    });
+
+    const analysed = [];
+    let missingDetailCount = 0;
+    let unreadableDetailCount = 0;
+    let parserFailureCount = 0;
+    rows.forEach((row) => {
+      const url = canonicalPublicCampaignUrl(row && (row.officialUrl || row.sourceUrl));
+      const detail = url ? detailMap.get(url) : null;
+      if (!detail) {
+        missingDetailCount += 1;
+        return;
+      }
+      if (!["ok", "stale"].includes(detail.status) || typeof detail.pageText !== "string" || detail.pageText.trim().length < 20) {
+        unreadableDetailCount += 1;
+        return;
+      }
+      try {
+        const brief = scout.parseCampaignBrief({
+          url,
+          requestedPlatform: target,
+          text: detail.pageText
+        });
+        if (!brief.title && row.title) brief.title = clean(row.title, 180);
+        const assessment = intelligence.assessAll({
+          brief,
+          platform: target,
+          today,
+          account: opts.account || null
+        });
+        const campaignAssessment = Object.assign({}, assessment.campaign);
+        if (detail.status === "stale" && campaignAssessment.state === "promising") {
+          campaignAssessment.state = "verify";
+          campaignAssessment.stateLabel = "More evidence required";
+          campaignAssessment.reasons = [
+            ...campaignAssessment.reasons,
+            "The saved campaign detail is stale; re-fetch the current public page before joining."
+          ];
+          campaignAssessment.nextStep = "Re-check the live campaign page and rules before taking action.";
+        }
+        const coverage = Number.isFinite(brief.coverageScore) ? brief.coverageScore : 0;
+        const discovery = row.opportunity && Number.isFinite(row.opportunity.score)
+          ? row.opportunity.score
+          : 0;
+        analysed.push({
+          id: clean(row.id || row.discoveryKey || url, 160),
+          url,
+          title: clean(brief.title || row.title || "Untitled campaign", 180),
+          brand: clean(row.brand || "", 120),
+          platform: target,
+          state: campaignAssessment.state,
+          stateLabel: campaignAssessment.stateLabel,
+          coverageScore: coverage,
+          discoveryScore: discovery,
+          pageStatus: detail.status,
+          pageFetchedAt: clean(detail.fetchedAt || "", 40),
+          rate: brief.rate,
+          platformRates: brief.platformRates,
+          minimumPayout: brief.minimumPayout,
+          pool: brief.pool,
+          budget: brief.budget,
+          deadline: brief.deadline,
+          entryMode: brief.entryMode,
+          campaignStatus: brief.campaignStatus,
+          missing: brief.missing.slice(0, 12),
+          reasons: campaignAssessment.reasons.slice(0, 8),
+          assessment: campaignAssessment,
+          brief
+        });
+      } catch (_) {
+        parserFailureCount += 1;
+      }
+    });
+
+    const stateOrder = { promising: 0, verify: 1, blocked: 2 };
+    analysed.sort((a, b) =>
+      (stateOrder[a.state] ?? 3) - (stateOrder[b.state] ?? 3) ||
+      b.coverageScore - a.coverageScore ||
+      b.discoveryScore - a.discoveryScore ||
+      a.title.localeCompare(b.title)
+    );
+    const summary = {
+      totalCampaigns: rows.length,
+      analysed: analysed.length,
+      promising: analysed.filter((item) => item.state === "promising").length,
+      verify: analysed.filter((item) => item.state === "verify").length,
+      blocked: analysed.filter((item) => item.state === "blocked").length,
+      missingDetailCount,
+      unreadableDetailCount,
+      parserFailureCount,
+      platform: target,
+      checkedAt: new Date().toISOString()
+    };
+    return { summary, campaigns: analysed };
+  }
+
   async function scan(options) {
     const opts = options || {};
     if (!opts.feed || typeof opts.feed.fetchCampaigns !== "function") throw new Error("The public campaign feed connector is not available.");
@@ -272,5 +398,5 @@
       }
     };
   }
-  return { STORAGE_KEY, SETTINGS_KEY, DEFAULT_INTERVAL_HOURS, SOURCES, keyFor, assessOpportunity, enrich, deduplicate, readState, writeState, readSettings, writeSettings, normalizeBackendUrl, fetchBackendSnapshot, fetchStaticSnapshot, mergeHistory, scan };
+  return { STORAGE_KEY, SETTINGS_KEY, DEFAULT_INTERVAL_HOURS, SOURCES, keyFor, assessOpportunity, enrich, deduplicate, readState, writeState, readSettings, writeSettings, normalizeBackendUrl, fetchBackendSnapshot, fetchStaticSnapshot, mergeHistory, canonicalPublicCampaignUrl, analyzePublicCampaigns, scan };
 });

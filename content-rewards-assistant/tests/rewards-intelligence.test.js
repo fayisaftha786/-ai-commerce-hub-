@@ -350,3 +350,13 @@ test("pool payout and mismatched currency do not produce a false estimate", () =
   });
   assert.equal(mismatch.available, false);
 });
+
+test("Rewards Studio wires the payout scenario calculator and refreshes its static cache", () => {
+  const root = path.join(__dirname, "..");
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  const worker = fs.readFileSync(path.join(root, "service-worker.js"), "utf8");
+  assert.match(app, /estimateCreatorNetPayout/);
+  assert.match(app, /ri-estimate-views/);
+  assert.match(app, /confirmedPayable/);
+  assert.match(worker, /clipreward-static-v27/);
+});

@@ -9,7 +9,7 @@ const valid = {
   country: "IN",
   status: "success",
   generatedAt: "2026-11-01T00:00:00.000Z",
-  summary: { sourcesAttempted: 1, sourcesAvailable: 1, sourcesUnavailable: 0 },
+  summary: { sourcesAttempted: 1, sourcesAvailable: 1, sourcesUnavailable: 0, sourcesWithRuleEvidence: 1, ruleEvidenceCount: 1 },
   sources: [{
     id: "youtube-ypp",
     platform: "YouTube",

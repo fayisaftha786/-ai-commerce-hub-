@@ -4,7 +4,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 function collectLocalAssets(html) {
-  const assets = new Set(["index.html", "service-worker.js"]);
+  const assets = new Set(["index.html", "service-worker.js", "creator-programs-snapshot.json"]);
   const tags = html.match(/<(?:script|link)\b[^>]*>/gi) || [];
   for (const tag of tags) {
     const isScript = /^<script\b/i.test(tag);

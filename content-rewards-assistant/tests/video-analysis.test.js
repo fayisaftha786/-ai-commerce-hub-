@@ -95,7 +95,7 @@ test("Clip Studio wires local analysis, package download and Social Desk handoff
   assert.match(worker, /video-analysis\.js/);
   assert.match(worker, /video-analysis-ui\.js/);
   assert.match(ui, /AI_COMMERCE_CLIP_HANDOFF/);
-  assert.match(ui, /video file stays in this browser/i);
+  assert.match(ui, /source file stays in this browser/i);
   assert.match(packageJson.scripts.check, /content-rewards-assistant\/video-analysis\.js/);
   assert.match(packageJson.scripts.check, /content-rewards-assistant\/video-analysis-ui\.js/);
 });

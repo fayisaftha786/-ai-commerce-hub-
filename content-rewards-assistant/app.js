@@ -200,7 +200,12 @@
   function moneyLabel(amount, currency) {
     return amount == null ? "Not recorded" : (currency || "USD") + " " + Number(amount).toFixed(2);
   }
-  function payoutStatusLabel(status) {
+  function payoutStatusLabel(record) {
+    const status = typeof record === "string" ? record : record && record.payoutStatus;
+    if (status === "paid" && record && typeof record === "object" &&
+        record.paidAmountStage !== "content-rewards-balance") {
+      return "Legacy receipt · destination unknown";
+    }
     return ({
       unconfirmed: "Not confirmed",
       pending: "Pending",
@@ -276,7 +281,7 @@
         '<td>' + escapeHtml(whopTransfer) + (c.withdrawnToWhopAt ? '<small class="ops-source">' + escapeHtml(new Date(c.withdrawnToWhopAt).toLocaleDateString()) + '</small>' : "") + '</td>' +
         '<td>' + escapeHtml(whopPayout) + (c.whopPayoutAt ? '<small class="ops-source">' + escapeHtml(new Date(c.whopPayoutAt).toLocaleDateString()) + '</small>' : "") + '</td>' +
         '<td>' + escapeHtml(expected) + '</td>' +
-        '<td><span class="ops-payout-status ops-payout-' + escapeHtml(c.payoutStatus || "unconfirmed") + '">' + escapeHtml(payoutStatusLabel(c.payoutStatus)) + '</span></td>' +
+        '<td><span class="ops-payout-status ops-payout-' + escapeHtml(c.payoutStatus || "unconfirmed") + '">' + escapeHtml(payoutStatusLabel(c)) + '</span></td>' +
         '<td><button type="button" class="text-button" data-ops-edit="' + escapeHtml(c.id) + '">Update</button></td></tr>';
     }).join("");
     $("ops-empty").hidden = rows.length > 0;

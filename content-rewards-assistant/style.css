@@ -211,3 +211,28 @@
 
 .feed-heading-actions{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap}
 @media(max-width:640px){.feed-heading-actions{width:100%;justify-content:flex-start}.feed-heading-actions .button{flex:1 1 auto}}
+
+/* Batch campaign analysis */
+.deep-analysis-panel{margin-top:16px;padding:16px;border:1px solid #2b3852;border-radius:14px;background:linear-gradient(145deg,#111b30,#101829)}
+.deep-analysis-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:14px}
+.deep-analysis-heading h4{font-size:16px;margin:5px 0 3px;letter-spacing:-.3px}
+.deep-analysis-heading p{max-width:690px}
+.deep-analysis-icon{display:grid;place-items:center;flex:0 0 auto;width:34px;height:34px;border-radius:10px;background:#29254d;color:#b9adff;font-size:20px}
+.deep-analysis-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:12px 0}
+.deep-summary-chip{display:flex;align-items:center;gap:9px;min-width:0;padding:9px 10px;border:1px solid #2a3851;background:#0f1829;border-radius:9px}
+.deep-summary-chip strong{font-size:19px;line-height:1;color:#e9edfa}
+.deep-summary-chip small{font-size:10px;color:#9eabc3}
+.deep-summary-promising strong{color:#80e8be}.deep-summary-verify strong{color:#ffd58a}.deep-summary-blocked strong{color:#ff9999}.deep-summary-unknown strong{color:#aeb8ca}
+.deep-analysis-list{display:grid;gap:9px;margin-top:10px}
+.deep-campaign-card{padding:12px;border:1px solid #29364e;background:#0e1728;border-radius:11px;min-width:0}
+.deep-campaign-head{display:flex;justify-content:space-between;align-items:flex-start;gap:9px}
+.deep-campaign-head strong{font-size:12px;line-height:1.45;overflow-wrap:anywhere}
+.deep-state{font-size:9px;line-height:1.3;font-weight:800;padding:5px 7px;border-radius:6px;flex:0 0 auto}
+.deep-state-promising{color:#8af0c4;background:#14372f}.deep-state-verify{color:#ffda92;background:#3b301d}.deep-state-blocked{color:#ffa0a0;background:#40252c}
+.deep-campaign-card>p{font-size:10px;color:#99a8c1;margin:7px 0}
+.deep-campaign-metrics{display:flex;flex-wrap:wrap;gap:7px;margin:8px 0}
+.deep-campaign-metrics span{font-size:10px;color:#c4cde0;background:#18243a;border:1px solid #273650;border-radius:6px;padding:5px 7px}
+.deep-campaign-card>small{display:block;font-size:10px;color:#8998b4;line-height:1.5;margin-top:6px}
+.deep-campaign-card .deep-missing{color:#aeb9cf}
+.deep-campaign-card .deep-stale-note{color:#ffd58a}
+@media(max-width:700px){.deep-analysis-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.deep-campaign-head{display:grid}.deep-state{justify-self:start}}

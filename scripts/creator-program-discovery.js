@@ -158,7 +158,7 @@ function extractRuleEvidence(source, html) {
         key: "facebook-invite-only",
         label: "Content Monetization access",
         pattern: /content monetization.{0,180}?invite-only/i,
-        interpretation: "Meta describes Content Monetization as invite-only in this announcement. Check the account's Professional Dashboard for its real invitation or interest status."
+        interpretation: "Meta describes Content Monetization as invite-only in this announcement. An interest form is not an invitation, approval or earnings confirmation. Check the account's Professional Dashboard for its real status."
       },
       {
         key: "facebook-interest-form",

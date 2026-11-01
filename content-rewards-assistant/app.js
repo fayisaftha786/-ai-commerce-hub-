@@ -627,10 +627,32 @@
       );
       if (!detail) {
         const detailCount = (snapshot.campaignDetails || []).length;
+        const scan = snapshot.status && snapshot.status.lastScan || {};
+        const scanUrl = window.ClipRewardFeed.canonicalCampaignUrl(scan.requestedCampaignUrl || "");
+        const completedAt = scan.completedAt || scan.at || "";
+        const scanTime = completedAt ? " Last scan completed at " + completedAt + "." : "";
+        const matchingDetail = (snapshot.campaignDetails || []).find((item) =>
+          window.ClipRewardFeed.canonicalCampaignUrl(item.url) === canonicalUrl
+        );
+        let helpText;
+        if (scanUrl === canonicalUrl && (scan.requestedCampaignPageStatus === "failed" || matchingDetail && matchingDetail.status === "failed")) {
+          const pageError = matchingDetail && matchingDetail.lastError || "The public page could not be read.";
+          helpText = "The latest on-demand scan tried this exact URL, but fetching its public page failed: " + pageError + scanTime + " Check that the campaign is still publicly accessible, then retry the scan.";
+        } else if (scanUrl === canonicalUrl && scan.requestedCampaignPageStatus === "not-attempted") {
+          helpText = "The latest scan recorded this URL but did not reach its page-fetch step. " + (scan.error || "Inspect the workflow run for the source error.") + scanTime + " Retry after the source issue is resolved.";
+        } else if (scanUrl === canonicalUrl && scan.requestedCampaignPageStatus === "ok") {
+          helpText = "The latest scan reports this URL fetched successfully, but its page text is missing from the published snapshot. Reload once; if this persists, inspect the workflow run before retrying." + scanTime;
+        } else if (scan.status === "failed") {
+          helpText = "The latest background scan failed before publishing a usable result: " + (scan.error || "No error detail was recorded.") + scanTime + " You can retry this URL after checking the workflow run.";
+        } else if (scan.status === "partial") {
+          helpText = "The latest background scan was partial (" + Number(scan.detailPagesAvailable || 0) + " readable of " + Number(scan.detailPagesAttempted || 0) + " attempted pages). This URL is not in the saved page details. Request it directly below." + scanTime;
+        } else if (detailCount) {
+          helpText = "This URL is not in the latest saved campaign pages. Copy it, open the GitHub Actions scanner, choose Run workflow, and paste it into “Campaign URL to analyse”. The scanner fetches the public page and republishes the snapshot." + scanTime;
+        } else {
+          helpText = "No campaign detail pages are saved yet. Use the on-demand GitHub Actions scanner to fetch this public URL now." + scanTime;
+        }
         $("scout-on-demand-actions").hidden = false;
-        $("scout-on-demand-help").textContent = detailCount
-          ? "This URL is not in the latest saved campaign pages. Copy it, open the GitHub Actions scanner, choose Run workflow, and paste it into “Campaign URL to analyse”. The scanner fetches the public page and republishes the snapshot."
-          : "No campaign detail pages are saved yet. Use the on-demand GitHub Actions scanner to fetch this public URL now.";
+        $("scout-on-demand-help").textContent = helpText;
         return false;
       }
       $("scout-on-demand-actions").hidden = true;

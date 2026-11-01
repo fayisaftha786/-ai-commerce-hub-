@@ -386,3 +386,15 @@ test("deep analysis keeps historical leads visible but counts them separately fr
   assert.match(appSource, /Historical lead · absent from the latest official Discover scan/);
   assert.match(appSource, /notSeenInLatestScan/);
 });
+
+
+test("historical campaign count includes leads whose detail page is missing from the current snapshot", () => {
+  const result = Discovery.analyzePublicCampaigns([
+    { id: "current", title: "Current", officialUrl: "https://contentrewards.com/c/campaigns/current" },
+    { id: "history-a", title: "History A", officialUrl: "https://contentrewards.com/c/campaigns/history-a", notSeenInLatestScan: true },
+    { id: "history-b", title: "History B", officialUrl: "https://contentrewards.com/c/campaigns/history-b", opportunity: { status: "not-seen-in-latest-scan" } }
+  ], [], require("../campaign-scout.js"), require("../rewards-intelligence.js"), "Instagram", { today: "2026-11-01" });
+  assert.equal(result.summary.notSeenInLatestScanCount, 2);
+  assert.equal(result.summary.missingDetailCount, 3);
+  assert.equal(result.summary.analysed, 0);
+});

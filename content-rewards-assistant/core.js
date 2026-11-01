@@ -183,9 +183,6 @@
     if (!/^[A-Z]{3}$/.test(payoutCurrency)) throw new Error("Payout currency must be a three-letter currency code.");
     if (paidAmount != null && paidAmount > 0 && !paidAt) throw new Error("Record when the amount was actually received in Content Rewards Balance.");
     if (payoutStatus === "paid" && !(paidAmount > 0)) throw new Error("Enter the amount actually credited to Content Rewards Balance before marking this stage paid.");
-    if (payoutStatus === "paid" && paidAmountStage !== "content-rewards-balance") {
-      throw new Error("Confirm that the amount was received in Content Rewards Balance before marking this stage credited.");
-    }
     if (rewardApprovedAmount != null && paidAmount != null && paidAmount > rewardApprovedAmount) {
       throw new Error("Content Rewards balance credit cannot exceed the approved reward recorded for this campaign.");
     }

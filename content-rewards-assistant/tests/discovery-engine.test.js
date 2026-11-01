@@ -1,3 +1,5 @@
+const fs = require("node:fs");
+const path = require("node:path");
 "use strict";
 const test = require("node:test");
 const assert = require("node:assert/strict");
@@ -300,4 +302,21 @@ test("batch analyser rejects a detail page outside the canonical Content Rewards
   assert.equal(Discovery.canonicalPublicCampaignUrl("http://contentrewards.com/c/campaigns/x"), "");
   assert.equal(Discovery.canonicalPublicCampaignUrl("https://contentrewards.com/c/settings"), "");
   assert.equal(Discovery.canonicalPublicCampaignUrl("https://contentrewards.com/c/campaigns/x?ref=public"), "https://contentrewards.com/c/campaigns/x");
+});
+
+test("ClipReward auto shortlist is wired into the radar and deep findings panel", () => {
+  const root = path.join(__dirname, "..");
+  const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  const worker = fs.readFileSync(path.join(root, "service-worker.js"), "utf8");
+  for (const id of [
+    "discovery-deep-status",
+    "discovery-deep-summary",
+    "discovery-deep-list"
+  ]) assert.ok(html.includes('id="' + id + '"'), "missing batch analysis panel node " + id);
+  assert.match(app, /analyzePublicCampaigns/);
+  assert.match(app, /renderDeepCampaignAnalysis/);
+  assert.match(app, /data-deep-open/);
+  assert.match(worker, /clipreward-static-v23/);
+  assert.match(worker, /discovery-engine\.js/);
 });

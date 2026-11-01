@@ -707,7 +707,7 @@ test("scheduled discovery workflow publishes retained data and reports source ou
   const fs = require("node:fs");
   const workflow = fs.readFileSync(path.join(__dirname, "..", ".github", "workflows", "scheduled-content-rewards-discovery.yml"), "utf8");
   assert.match(workflow, /Warn when source scan fails; retained snapshot is still published/);
-  assert.match(workflow, /::warning::Official Discover and the third-party fallback source were unavailable/);
+  assert.match(workflow, /::warning::The Content Rewards discovery scan did not complete/);
   assert.match(workflow, /Report campaign scan coverage/);
   assert.match(workflow, /one or more public detail pages were unreadable/);
   assert.match(workflow, /Saved campaign leads retained/);

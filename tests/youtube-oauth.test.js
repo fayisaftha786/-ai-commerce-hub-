@@ -138,7 +138,7 @@ test("refuses to connect when required permissions are missing", async () => {
   const store = makeStore();
   const service = createYouTubeOAuthService({
     env: ENV, tokenVault: store,
-    fetchImpl: async () => jsonResponse(tokenResponse({ scope: REQUIRED_SCOPES[0] }))
+    fetchImpl: async () => jsonResponse(tokenResponse({ scope: "" }))
   });
   const started = service.createAuthorizationRequest();
   const state = new URL(started.url).searchParams.get("state");

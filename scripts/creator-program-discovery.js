@@ -230,6 +230,7 @@ async function checkSource(source, options = {}) {
     finalUrl: "",
     pageTitle: "",
     pageDescription: "",
+    ruleEvidence: [],
     error: ""
   };
 
@@ -322,6 +323,8 @@ async function scanSources(options = {}) {
       sourcesAttempted: sources.length,
       sourcesAvailable: available,
       sourcesUnavailable: failed,
+      sourcesWithRuleEvidence: sources.filter((source) => source.ruleEvidence.length > 0).length,
+      ruleEvidenceCount: sources.reduce((total, source) => total + source.ruleEvidence.length, 0),
       accountEligibilityChecksRequired: sources.length
     },
     limitations: [
@@ -347,6 +350,7 @@ function appendSummary(snapshot, env = process.env) {
     "- **Status:** " + snapshot.status,
     "- **Official pages:** " + snapshot.summary.sourcesAvailable + " reachable / " +
       snapshot.summary.sourcesAttempted + " attempted / " + snapshot.summary.sourcesUnavailable + " unavailable",
+    "- **Public rule signals extracted:** " + snapshot.summary.ruleEvidenceCount + " across " + snapshot.summary.sourcesWithRuleEvidence + " sources.",
     "- **Account eligibility:** not checked; each account must be verified in its official dashboard.",
     "",
     "| Platform | Program | Public source check |",

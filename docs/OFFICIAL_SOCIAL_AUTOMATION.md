@@ -2,7 +2,7 @@
 
 ## Current truth (2026-11-01)
 
-This repository is **not yet fully automated**. The current backend has a secure, read-only YouTube OAuth connection slice. It does not yet upload videos. Instagram and Facebook provider readiness checks exist, but their OAuth flows and publishing APIs are not implemented. The Content Rewards scanner reads public campaign pages; it does not authenticate to creator accounts or operate private campaign actions.
+This repository is **not yet fully automated**. PR #185 adds a YouTube OAuth upload path: channel connection, `youtube.upload` scope validation, a server-side resumable upload endpoint and an explicit-confirmation Social Media Desk action (Private by default, one MP4/QuickTime/WebM file up to 64 MB). The PR's CI and a real provider account test must pass before this can be treated as release-ready. Instagram and Facebook OAuth/publishing are not implemented. The Content Rewards scanner reads public campaign pages; it does not authenticate to creator accounts or operate private campaign actions.
 
 This document is the implementation contract. A provider is not "connected", "published", "submitted", "approved" or "paid" until an authoritative API response or verified user evidence establishes that state.
 
@@ -12,13 +12,13 @@ This document is the implementation contract. A provider is not "connected", "pu
 |---|---|---|---|
 | Discover public Content Rewards campaigns | Public Discover pages + scheduled snapshot | Implemented, public-only | Private/invite-only campaigns remain invisible |
 | Join / apply to a campaign | No supported public creator API documented in the available official help material | Not integrated | Open campaign in Content Rewards and apply/join there; app can deep-link and track the user's confirmed result |
-| Connect YouTube | Google OAuth authorization-code + PKCE; encrypted server token vault | Read-only OAuth implemented | Google Cloud OAuth web client, YouTube Data API v3, HTTPS callback, consent and account approval |
-| Publish YouTube video | YouTube Data API v3 `videos.insert` with `youtube.upload` scope | Not implemented | Add upload scope, complete applicable Google OAuth verification, user authorizes and confirms each publish |
+| Connect YouTube | Google OAuth authorization-code + PKCE; encrypted server token vault | Code implemented; deployment and real-account verification pending | Google Cloud OAuth web client, YouTube Data API v3, HTTPS callback, consent and account approval |
+| Publish YouTube video | YouTube Data API v3 resumable upload with `youtube.upload` scope | Code path implemented in PR #185; CI must pass and live upload remains unverified | Backend deployment, Google OAuth consent/verification, user authorizes and confirms each publish |
 | Connect Instagram | Meta OAuth / Instagram Graph API | Not implemented; config readiness only | Instagram professional (Business/Creator) account, linked Facebook Page where required, Meta app, permissions and app review/access level |
 | Publish Instagram Reel | Instagram Graph API media container + publish flow | Not implemented | `instagram_content_publish` and the account/API prerequisites; hosted public media URL; user confirmation |
 | Connect Facebook Page | Meta OAuth / Graph API | Not implemented; config readiness only | Page admin/task access, Meta app, Page token and approved permissions |
 | Publish Facebook Reel/video | Facebook Pages/Graph API publishing endpoints | Not implemented | Page publishing permissions (including `pages_manage_posts` where applicable), app review/access level and user confirmation |
-| Start 30-minute timer after publishing | Server timestamp + client countdown/notifications | Local timer/reminders implemented | The timer is advisory; device/browser must be available for local notifications |
+| Start 30-minute timer after publishing | Verified provider response timestamp + client countdown/notifications | Creator Operations timer/reminders implemented; end-to-end auto-start must be confirmed with a live provider response | Content Rewards requires the public post link to be submitted less than 30 minutes after posting; local reminders are advisory |
 | Submit post link to Content Rewards | Official Content Rewards creator submission flow | Not integrated; no public creator submission API has been established | Creator must submit the public post URL in Content Rewards within 30 minutes |
 | Verify private views, review, approval and reward | Content Rewards creator account | Not integrated; no official API contract available | Use official dashboard evidence or a future documented/approved API; store source and capture time |
 | Track balance and withdrawal | Content Rewards Balance -> Whop Balance -> payout method | Evidence ledger exists; no account sync | Confirm each balance/transfer/payout in the relevant official account |
@@ -50,9 +50,10 @@ Meta developer docs:
 
 ## Content Rewards: the hard boundary
 
-The official creator instructions say the creator connects and verifies the account, publishes the clip, then submits the public post link within 30 minutes. Content Rewards fetches the clip, caption and view count after submission. Submissions remain pending until the campaign team reviews them; approval is not automatic. Some campaigns require a draft pre-approval before the creator publishes.
+The current official creator instructions say a creator needs at least one connected and verified social account. Open campaigns can be joined immediately; application campaigns require selecting an account, answering the brand's questions and waiting for brand approval. Some campaigns are private/invitation-only. For a live submission, the creator posts publicly from a connected account and pastes the post URL into the campaign within 30 minutes. Content Rewards checks account ownership, duplicate submission and post age, then fetches the clip, caption and view count. Submissions remain pending until the campaign team reviews them; approval is not automatic. Some campaigns require a draft pre-approval before the creator publishes.
 
 Official instructions:
+- Find and apply to a campaign: https://help.contentrewards.com/en/articles/16817237-find-and-apply-to-a-campaign
 - Submit a video: https://help.contentrewards.com/en/articles/15319814-submit-a-video
 - How Content Rewards works: https://help.contentrewards.com/en/articles/15319790-how-content-rewards-works
 - Connect social accounts: https://help.contentrewards.com/en/articles/16746780-connect-your-social-accounts

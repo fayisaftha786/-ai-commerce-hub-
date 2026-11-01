@@ -56,8 +56,11 @@ test("requires HTTPS callback, a return origin in the CORS allowlist and an encr
   assert.ok(service.getReadiness().missing.includes("SOCIAL_TOKEN_ENCRYPTION_KEY"));
 });
 
-test("requests only read-only channel identification until a real upload endpoint exists", () => {
-  assert.deepEqual(REQUIRED_SCOPES, ["https://www.googleapis.com/auth/youtube.readonly"]);
+test("requests the read and upload scopes required for channel identification and publishing", () => {
+  assert.deepEqual(REQUIRED_SCOPES, [
+    "https://www.googleapis.com/auth/youtube.readonly",
+    "https://www.googleapis.com/auth/youtube.upload"
+  ]);
 });
 
 test("builds a Google OAuth URL with minimal YouTube scopes, state and PKCE", () => {
@@ -184,6 +187,72 @@ test("reports expired connections as reconnect required when no refresh token is
   const service = createYouTubeOAuthService({ env: ENV, tokenVault: store, now: () => 1000 });
   const result = await service.getConnection(sessionId);
   assert.equal(result.status, "reconnect_required");
+});
+
+test("uploads a video through the official resumable API and returns its verified permalink", async () => {
+  const store = makeStore();
+  const sessionId = "1234567890123456789012345678901234567890123";
+  store.set(sha256(sessionId), "youtube", {
+    accessToken: "valid-access",
+    refreshToken: "valid-refresh",
+    expiresAt: Date.now() + 3600000,
+    scopes: [...REQUIRED_SCOPES],
+    channelId: "channel-upload",
+    channelTitle: "Upload channel",
+    connectedAt: new Date().toISOString()
+  });
+  const calls = [];
+  const service = createYouTubeOAuthService({
+    env: ENV, tokenVault: store,
+    fetchImpl: async (url, request) => {
+      calls.push({ url, request });
+      if (url === "https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable&part=snippet,status") {
+        return {
+          ok: true, status: 200,
+          headers: { get(name) { return name.toLowerCase() === "location" ? "https://www.googleapis.com/upload/youtube/v3/videos?upload_id=unit-test" : null; } },
+          async text() { return ""; }
+        };
+      }
+      return jsonResponse({ id: "video-987" }, 201);
+    }
+  });
+  const result = await service.uploadVideo(sessionId, {
+    video: Buffer.alloc(2048, 7),
+    mimeType: "video/mp4",
+    title: "Test publish",
+    description: "Description",
+    privacyStatus: "private"
+  });
+  assert.equal(result.ok, true);
+  assert.equal(result.videoId, "video-987");
+  assert.equal(result.url, "https://www.youtube.com/watch?v=video-987");
+  assert.equal(result.privacyStatus, "private");
+  assert.equal(calls.length, 2);
+  assert.equal(calls[1].request.method, "PUT");
+  assert.equal(calls[1].request.body.length, 2048);
+  assert.equal(JSON.stringify(result).includes("valid-access"), false);
+});
+
+test("does not publish when upload scope is missing", async () => {
+  const store = makeStore();
+  const sessionId = "1234567890123456789012345678901234567890123";
+  store.set(sha256(sessionId), "youtube", {
+    accessToken: "valid-access", refreshToken: "valid-refresh",
+    expiresAt: Date.now() + 3600000,
+    scopes: ["https://www.googleapis.com/auth/youtube.readonly"],
+    channelId: "channel-readonly", channelTitle: "Read only",
+    connectedAt: new Date().toISOString()
+  });
+  let calls = 0;
+  const service = createYouTubeOAuthService({
+    env: ENV, tokenVault: store,
+    fetchImpl: async () => { calls += 1; return jsonResponse({}); }
+  });
+  const result = await service.uploadVideo(sessionId, {
+    video: Buffer.alloc(2048), mimeType: "video/mp4", title: "No permission"
+  });
+  assert.deepEqual(result, { ok: false, error: "upload_permission_required" });
+  assert.equal(calls, 0);
 });
 
 test("disconnect removes the current browser session's YouTube token record", () => {

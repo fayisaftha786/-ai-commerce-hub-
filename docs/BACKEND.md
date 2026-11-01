@@ -27,10 +27,11 @@ npm start
 By default the server binds to `127.0.0.1:3000` and the discovery scheduler is disabled. The API exposes:
 
 - `GET /health` — process health only; does not claim OAuth.
-- `GET /api/social/providers` — provider configuration readiness; exposes no secret values. YouTube OAuth readiness is reported separately.
+- `GET /api/social/providers` — provider configuration readiness; exposes no secret values. YouTube OAuth readiness is reported separately, including the `youtube.upload` scope needed for publishing.
 - `GET /api/social/connections` — current browser session's safe connection metadata (never tokens).
 - `GET /api/social/youtube/connect` — starts the Google authorization-code flow with PKCE and browser-bound OAuth state.
 - `GET /api/social/youtube/callback` — validates state, exchanges the code server-side, resolves the authorised channel and stores tokens encrypted.
+- `POST /api/social/youtube/publish?title=<title>&description=<description>&privacy=private|unlisted|public` — accepts a raw MP4/QuickTime/WebM video body (maximum 64 MB), requires the browser-bound session, exact allowlisted Origin and explicit `youtube-publish` action header, then uploads through YouTube resumable upload and returns the provider video ID/permalink. Default privacy is private.
 - `POST /api/social/youtube/disconnect` — removes the current browser session's YouTube token record; requires the exact allowlisted Origin and action header.
 - `GET /api/discovery/status` — scheduler state, latest scan, saved lead count and source registry.
 - `GET /api/discovery/campaigns` — read-only saved public campaign snapshots. Optional query parameters: `platform`, `search`, and `limit` (1–100).
@@ -129,7 +130,7 @@ A Google OAuth project with an **External** audience and publishing status **Tes
 
 ## YouTube OAuth connection — first provider vertical slice
 
-The private backend now implements an authorization-code connection for YouTube. It is separate from GitHub Pages; the static site never receives a Google client secret, access token, or refresh token.
+The private backend now implements an authorization-code connection for YouTube with channel identification and `youtube.upload` permission, plus a server-side resumable upload endpoint (raw video body up to 64 MB). The Social Media Desk includes a publish action for one selected MP4/QuickTime/WebM file; each upload requires an explicit confirmation and defaults to Private. This is an implemented code path, not a live provider verification: backend hosting, Google OAuth configuration/consent and a real-account upload test are still required. It is separate from GitHub Pages; the static site never receives a Google client secret, access token, or refresh token.
 
 ### Google Cloud setup
 
@@ -140,7 +141,8 @@ The private backend now implements an authorization-code connection for YouTube.
 5. Copy the client ID and secret only into the backend host's private environment variables. Never commit them or enter them in the browser.
 
 The flow requests only:
-- https://www.googleapis.com/auth/youtube.readonly — identify the authorized channel. It does not request upload or publishing permission in this release.
+- https://www.googleapis.com/auth/youtube.readonly — identify the authorized channel.
+- https://www.googleapis.com/auth/youtube.upload — upload videos through the server-side resumable upload route.
 
 The flow uses a random, one-use state, PKCE S256, offline access, exact HTTPS redirect configuration and a browser-session cookie. Callback codes are exchanged server-side. The server reads the channel list with the returned bearer token and stores the access/refresh token only inside an AES-256-GCM encrypted vault. API responses return channel metadata and connection status only, never token values.
 

@@ -391,10 +391,10 @@
 
     <section class="panel" aria-labelledby="socialDeskHeading">
       <h2 id="socialDeskHeading">9. Social Media Desk</h2>
-      <p>Prepare a post, preview authorised media, open the platform, and analyze metrics you enter from its official insights. This browser-only version does not sign in to accounts or publish automatically.</p>
+      <p>Prepare a post, preview authorised media, open the platform, and analyze metrics you enter from its official insights. The private backend supports official YouTube OAuth and server-side video uploads; Instagram and Facebook publishing still require their Meta integrations.</p>
       <div class="social-status notice">
         <strong>Social account connection</strong>
-        <p>Use the private HTTPS backend for Google OAuth. Your Google password is entered only on Google's consent screen. OAuth tokens are stored encrypted on the backend, never in this browser or GitHub Pages. Instagram and Facebook OAuth are not enabled in this version.</p>
+        <p>Use the private HTTPS backend for Google OAuth. Your Google password is entered only on Google's consent screen. OAuth tokens are stored encrypted on the backend, never in this browser or GitHub Pages. Instagram and Facebook OAuth/publishing are not enabled yet. YouTube requires the private backend and Google upload permission.</p>
         <label for="socialBackendOrigin">Private backend HTTPS origin (optional when hosted together)
           <input id="socialBackendOrigin" type="url" maxlength="300" inputmode="url" placeholder="Auto-detected on same-origin hosting">
         </label>
@@ -405,7 +405,7 @@
           <button id="disconnectYouTubeAccount" type="button" class="secondary" disabled>Disconnect YouTube</button>
         </div>
         <p id="socialAccountConnectionStatus" role="status" aria-live="polite">Checking for a secure same-origin backend…</p>
-        <p class="hint">This connection requests read-only channel identification only. Upload permission will be requested separately if a reviewed upload workflow is added. For reliable browser sessions, host the app and API on the same site or use a custom domain; some browsers block third-party cookies across GitHub Pages and a separate backend host.</p>
+        <p class="hint">This connection requests YouTube channel identification and video-upload permission. The publish action below requires a separate explicit confirmation for each upload. For reliable browser sessions, host the app and API on the same site or use a custom domain; some browsers block third-party cookies across GitHub Pages and a separate backend host.</p>
       </div>
       <div class="form-grid">
         <label for="socialPlatform">Target platform
@@ -425,6 +425,8 @@
       <label for="socialCaption">Post caption / description
         <textarea id="socialCaption" rows="6" maxlength="5000" placeholder="Write your post caption. Include a clear affiliate disclosure when relevant."></textarea>
       </label>
+      <button id="publishYouTubeVideo" type="button" disabled>Publish selected video to YouTube</button>
+      <p class="hint">YouTube upload accepts one MP4/QuickTime/WebM file up to 64 MB in this first API slice. New uploads default to Private. Publishing requires a connected YouTube channel and explicit confirmation.</p>
       <button id="copySocialCaption" type="button">Copy caption</button>
       <button id="openSocialPlatform" type="button" class="secondary">Open official platform</button>
       <p id="socialPostStatus" role="status" aria-live="polite"></p>

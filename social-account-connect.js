@@ -25,6 +25,7 @@
     const connectButton = $("connectYouTubeAccount");
     const disconnectButton = $("disconnectYouTubeAccount");
     const statusNode = $("socialAccountConnectionStatus");
+    const publishButton = $("publishYouTubeVideo");
     if (!originInput || !saveButton || !connectButton || !disconnectButton || !statusNode) return;
 
     let backendOrigin = "";
@@ -69,6 +70,7 @@
     async function refresh() {
       connectButton.disabled = true;
       disconnectButton.disabled = true;
+      if (publishButton) publishButton.disabled = true;
       youtubeConfigured = false;
       if (!backendOrigin && !(await detectSameOriginBackend())) {
         status("No same-origin private backend was detected. GitHub Pages is static; enter the HTTPS backend origin or deploy the app and API together.");
@@ -104,8 +106,9 @@
 
         if (state === "connected") {
           status("YouTube connected: " + (connection.channelTitle || "Channel") +
-            ". This browser session is linked; publishing has not been enabled by this connection.");
+            ". The server has a connection; upload permission is checked again by the publishing API.");
           disconnectButton.disabled = false;
+          if (publishButton) publishButton.disabled = false;
         } else if (state === "reconnect_required") {
           status("YouTube token needs reconnection. Start the official Google consent flow again.");
           connectButton.disabled = !youtubeConfigured;
@@ -120,6 +123,46 @@
           " Cross-site cookie blocking can also prevent a session from being recognised; same-site app/API hosting is recommended.");
         connectButton.disabled = true;
       }
+    }
+
+
+    if (publishButton) {
+      publishButton.addEventListener("click", async () => {
+        const fileInput = $("socialMediaFiles");
+        const captionInput = $("socialCaption");
+        const file = fileInput && fileInput.files && fileInput.files[0];
+        const caption = captionInput ? captionInput.value.trim() : "";
+        if (!backendOrigin || !file || !file.type.match(/^video\/(mp4|quicktime|webm)$/) || file.size > 64 * 1024 * 1024) {
+          status("Choose one MP4, MOV or WebM video no larger than 64 MB and connect YouTube first.");
+          return;
+        }
+        const title = (caption.split(/\r?\n/)[0] || file.name.replace(/\.[^.]+$/, "")).slice(0, 100);
+        if (!windowObject.confirm("Publish this video to the connected YouTube channel as PRIVATE?\n\n" + title)) return;
+        publishButton.disabled = true;
+        status("Uploading video to YouTube… Keep this page open until the upload finishes.");
+        try {
+          const query = new URLSearchParams({ title, description: caption, privacy: "private" });
+          const response = await windowObject.fetch(backendOrigin + "/api/social/youtube/publish?" + query.toString(), {
+            method: "POST",
+            credentials: "include",
+            cache: "no-store",
+            headers: {
+              "X-AI-Commerce-Action": "youtube-publish",
+              "Content-Type": file.type
+            },
+            body: file
+          });
+          const result = await response.json();
+          if (!response.ok || !result.ok || !result.url) {
+            throw new Error(result.error || "YouTube upload failed.");
+          }
+          status("YouTube upload complete (Private): " + result.url + ". Open YouTube Studio to review visibility before making it public.");
+          await refresh();
+        } catch (error) {
+          status((error && error.message ? error.message : "YouTube upload failed.") + " Check the connection and retry; confirm in YouTube Studio before uploading again.");
+          publishButton.disabled = false;
+        }
+      });
     }
 
     saveButton.addEventListener("click", async () => {

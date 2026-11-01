@@ -98,6 +98,17 @@ function socialRedirect(response, url, setCookie = "") {
   response.end();
 }
 
+async function readRawBody(request, maxBytes) {
+  const chunks = [];
+  let size = 0;
+  for await (const chunk of request) {
+    size += chunk.length;
+    if (size > maxBytes) throw new Error("request_body_too_large");
+    chunks.push(chunk);
+  }
+  return Buffer.concat(chunks, size);
+}
+
 function createServer(options = {}) {
   const env = options.env ?? process.env;
   const discoveryService = options.discoveryService || createDiscoveryService({
@@ -193,6 +204,37 @@ function createServer(options = {}) {
         }
       }
 
+      if (pathname === "/api/social/youtube/publish") {
+        if (request.method !== "POST") {
+          response.setHeader("allow", "POST, OPTIONS");
+          return sendJson(response, 405, { error: "method_not_allowed" });
+        }
+        if (!sessionId || !request.headers.origin || !allowedSocialOrigins(env).includes(request.headers.origin) ||
+            request.headers["x-ai-commerce-action"] !== "youtube-publish" ||
+            !String(request.headers["content-type"] || "").toLowerCase().startsWith("video/")) {
+          return sendJson(response, 403, { error: "social_request_not_authorized" });
+        }
+        const url = new URL(request.url ?? "/", "http://localhost");
+        const title = url.searchParams.get("title") || "";
+        const description = url.searchParams.get("description") || "";
+        const privacyStatus = url.searchParams.get("privacy") || "private";
+        try {
+          const video = await readRawBody(request, 64 * 1024 * 1024);
+          const result = await socialOAuthService.uploadVideo(sessionId, {
+            video,
+            mimeType: String(request.headers["content-type"]).split(";")[0].trim(),
+            title,
+            description,
+            privacyStatus
+          });
+          return sendJson(response, result.ok ? 201 : 400, result);
+        } catch (error) {
+          return sendJson(response, String(error && error.message) === "request_body_too_large" ? 413 : 400, {
+            error: String(error && error.message) === "request_body_too_large" ? "video_too_large_max_64mb" : "video_upload_request_failed"
+          });
+        }
+      }
+
       if (pathname === "/api/social/youtube/disconnect") {
         if (request.method !== "POST") {
           response.setHeader("allow", "POST, OPTIONS");
@@ -222,7 +264,7 @@ function createServer(options = {}) {
             getProviderReadiness("youtube", env)
           ],
           youtubeOAuth: socialOAuthService.getReadiness(),
-          note: "YouTube OAuth routes are implemented but remain unconfigured until server credentials, HTTPS callback, CORS origin, and encrypted token storage are supplied. Instagram and Facebook OAuth are not implemented yet."
+          note: "YouTube OAuth and a server-side resumable video upload route are implemented; they remain unavailable until upload-scope consent and backend credentials are configured. Instagram and Facebook OAuth/publishing are not implemented yet."
         });
       }
 
@@ -348,6 +390,6 @@ if (require.main === module) {
 }
 
 module.exports = {
-  sendJson, allowedOrigins, applyDiscoveryCors, allowedSocialOrigins, applySocialCors,
+  sendJson, allowedOrigins, applyDiscoveryCors, allowedSocialOrigins, applySocialCors, readRawBody,
   socialSessionCookieName, parseCookie, buildSessionCookie, createServer, getListenConfig, startServer
 };

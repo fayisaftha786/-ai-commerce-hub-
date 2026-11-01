@@ -64,6 +64,11 @@ test("both Pages deployment workflows refresh creator-program status before site
   assert.match(rewards, /id: creator_scan/);
   assert.match(rewards, /git add creator-programs-snapshot\.json/);
   assert.match(rewards, /git checkout -- creator-programs-snapshot\.json/);
+  assert.ok(
+    rewards.indexOf("git checkout -- creator-programs-snapshot.json") <
+      rewards.indexOf("git commit -m"),
+    "restore the old snapshot before rebasing and committing"
+  );
   const ignore = 'paths-ignore:\n      - "content-rewards-assistant/discovery-snapshot.json"\n      - "creator-programs-snapshot.json"';
   assert.ok(primary.includes(ignore));
   assert.ok(rewards.includes(ignore));

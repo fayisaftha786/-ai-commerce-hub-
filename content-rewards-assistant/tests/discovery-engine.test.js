@@ -343,7 +343,7 @@ test("historical leads absent from the latest official scan cannot remain Promis
       "$250.00",
       "Budget",
       "$500 / $2,000"
-    ].join("\\n")
+    ].join("\n")
   };
   const result = Discovery.analyzePublicCampaigns([{
     id: "historical-only",

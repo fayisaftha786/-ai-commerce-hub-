@@ -28,8 +28,11 @@
       Number.isFinite(item && item.flatAmount) || item && ["Pool", "Retainer"].includes(item.payoutModel));
     const knownMinimum = payoutRows.some((item) => Number.isFinite(item && item.minViewsRequired) ||
       Number.isFinite(item && item.minPayout && item.minPayout.value));
-    const knownCap = payoutRows.some((item) => Number.isFinite(item && item.maxPayoutPerSubmission));
+    const poolAllocationKnown = payoutRows.some((item) => item && item.payoutModel === "Pool") &&
+      Boolean(row.pool && row.pool.amount && row.pool.splitBy && row.pool.paidWhen);
+    const knownCap = payoutRows.some((item) => Number.isFinite(item && item.maxPayoutPerSubmission)) || poolAllocationKnown;
     const hasDeadline = Boolean(row.deadline || row.endDate);
+    const currentlyAccepting = row.campaignStatus === "Appears live in copied text";
     const hasSource = Boolean(row.source || row.sourceUrl || row.officialUrl);
     const age = Number.isFinite(row.ageDays) ? row.ageDays : null;
     const today = new Date(now == null ? Date.now() : now).toISOString().slice(0, 10);
@@ -38,7 +41,7 @@
     if (knownRate) score += 25;
     if (knownMinimum) score += 10;
     if (knownCap) score += 10;
-    if (hasDeadline) score += 10;
+    if (hasDeadline || currentlyAccepting) score += 10;
     if (hasSource) score += 10;
     if (row.title && row.title !== "Untitled campaign") score += 10;
     if (row.brand) score += 5;
@@ -52,8 +55,8 @@
     const missing = [];
     if (!knownRate) missing.push("Payout model / rate");
     if (!knownMinimum) missing.push("Minimum payout or view threshold");
-    if (!knownCap) missing.push("Maximum payout");
-    if (!hasDeadline) missing.push("Deadline");
+    if (!knownCap) missing.push("Per-clip maximum or pool allocation rules");
+    if (!hasDeadline && !currentlyAccepting) missing.push("Deadline or current accepting status");
     if (!hasSource) missing.push("Source link");
     if (age == null) missing.push("Snapshot date");
     if (row.notSeenInLatestScan === true) missing.push("Not present in the latest public feed scan");

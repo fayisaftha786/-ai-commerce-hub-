@@ -4,7 +4,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs/promises");
 const os = require("node:os");
 const path = require("node:path");
-const { runScheduledScan, decodeHtmlEntities, extractVisibleText, canonicalDiscoverUrl, canonicalPublicCampaignDetailUrl, extractDiscoverCampaigns, fetchPublicDiscoverCampaigns, fetchPublicCampaignPage, fetchCampaignDetails, createRequestedCampaignRow, fetchFeedWithRetry } = require("../scripts/content-rewards-discovery-scan.js");
+const { runScheduledScan, decodeHtmlEntities, extractVisibleText, canonicalDiscoverUrl, canonicalPublicCampaignDetailUrl, extractDiscoverCampaigns, fetchPublicDiscoverCampaigns, fetchPublicCampaignPage, fetchCampaignDetails, enrichOfficialCampaignRows, MAX_DETAIL_PAGES, createRequestedCampaignRow, fetchFeedWithRetry } = require("../scripts/content-rewards-discovery-scan.js");
 const Feed = require("../content-rewards-assistant/campaign-feed.js");
 
 function sample(id) {
@@ -713,4 +713,40 @@ test("scheduled discovery workflow publishes retained data and reports source ou
   assert.match(workflow, /Saved campaign leads retained/);
   assert.match(workflow, /A green deployment does not mean the upstream source is healthy/);
   assert.doesNotMatch(workflow, /echo "The public source scan failed[\s\S]*?exit 1/);
+});
+
+test("official campaign enrichment retains per-platform minimum payout and Pool allocation terms", () => {
+  const campaigns = [{
+    id: "public-pool",
+    title: "Pool campaign",
+    brand: "Creator brand",
+    officialUrl: "https://contentrewards.com/c/campaigns/public-pool",
+    platforms: ["Instagram", "YouTube"]
+  }];
+  const pageText = [
+    "Campaign: Pool campaign",
+    "Accepting clips",
+    "Instagram YouTube",
+    "Pool",
+    "$25,000.00",
+    "Split by",
+    "Views",
+    "Paid",
+    "When the pool ends"
+  ].join("\n");
+  const detail = [{
+    url: campaigns[0].officialUrl,
+    status: "ok",
+    fetchedAt: "2026-11-01T00:00:00.000Z",
+    pageText
+  }];
+  const enriched = enrichOfficialCampaignRows(campaigns, detail, Date.parse("2026-11-01T00:00:00.000Z"))[0];
+  assert.equal(enriched.pool.amount.value, 25000);
+  assert.equal(enriched.pool.splitBy, "Views");
+  assert.equal(enriched.pool.paidWhen, "When the pool ends");
+  assert.ok(enriched.payouts.every((item) => item.payoutModel === "Pool" && item.ratePerKViews === null));
+});
+
+test("detail-page scan limit allows all currently visible Discover listings plus headroom", () => {
+  assert.equal(MAX_DETAIL_PAGES, 100);
 });

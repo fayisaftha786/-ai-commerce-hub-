@@ -142,8 +142,9 @@
     }
     if (/\bretainer\b/i.test(raw)) return { model: "Retainer", amount: null, label: "Retainer (amount not parsed)" };
 
-    if (/\b(?:payout|reward|payment)\s*(?:model|type)?\s*[:=-]?\s*pool\b|\bpool[- ]based\s+(?:payout|reward)\b|\bpool\s+campaign\b|\bprize\s+pool\b/i.test(raw)) {
-      return { model: "Pool", amount: null, label: "Pool — variable allocation depends on the campaign's pool rules and eligible views" };
+    if (/\b(?:payout|reward|payment)\s*(?:model|type)?\s*[:=-]?\s*pool\b|\bpool[- ]based\s+(?:payout|reward)\b|\bpool\s+campaign\b|\bprize\s+pool\b/i.test(raw) ||
+        (/\bsplit\s+by\b/i.test(raw) && /\bpaid\b/i.test(raw) && /(?:^|\n)\s*pool\s*(?:\n|$)/i.test(raw))) {
+      return { model: "Pool", amount: null, label: "Pool — variable allocation from a shared pool; the per-creator amount depends on the published split and eligible views" };
     }
     return null;
   }
@@ -329,9 +330,10 @@
   }
 
   function extractAccessMode(text) {
-    if (/\b(?:private|invitation[- ]only|invite[- ]only|invite only)\b/i.test(text)) return "Private / invitation-only";
-    if (/\bapplication(?:s)?[- ]only\b|\bapply\s+to\s+join\b|\bapply\s+now\b|\bapplication\s+campaign\b/i.test(text)) return "Application / brand review";
-    if (/\bopen\s+campaign\b|\bopen\s+to\s+all\b|\bjoin\s+campaign\b|\bjoin\s+now\b|\baccepting\s+clips\b/i.test(text)) return "Open campaign / direct join";
+    const raw = String(text || "");
+    if (/\b(?:private|invitation[- ]only|invite[- ]only|invite only)\b/i.test(raw)) return "Private / invitation-only";
+    if (/\bapplication(?:s)?[- ]only\b|\bapply\s+to\s+join\b|\bapply\s+now\b|\bapplication\s+campaign\b|(?:^|\n)\s*apply\s*(?:\n|$)/i.test(raw)) return "Application / brand review";
+    if (/\bopen\s+campaign\b|\bopen\s+to\s+all\b|\bjoin\s+campaign\b|\bjoin\s+now\b|\baccepting\s+clips\b/i.test(raw)) return "Open campaign / direct join";
     return "";
   }
 
@@ -343,8 +345,32 @@
     return "Not stated";
   }
 
+  function extractPoolTerms(lines) {
+    const rows = Array.isArray(lines) ? lines : String(lines || "").split("\n");
+    const normalized = rows.map((line) => clean(line, 300));
+    const poolLabel = normalized.findIndex((line) => /^pool$/i.test(line));
+    const amountLine = poolLabel >= 0 ? normalized.slice(poolLabel + 1, poolLabel + 4).find((line) =>
+      /[$€£₹]\s*[\d,]+(?:\.\d+)?\s*[kKmM]?|\b(?:USD|EUR|GBP|INR)\s*[\d,]+(?:\.\d+)?\s*[kKmM]?/i.test(line)
+    ) : "";
+    const splitLabel = normalized.findIndex((line) => /^split\s+by$/i.test(line));
+    const paidLabel = normalized.findIndex((line) => /^paid$/i.test(line));
+    const splitBy = splitLabel >= 0 ? normalized.slice(splitLabel + 1, splitLabel + 3).find((line) =>
+      line && !/^(pool|paid|split by|when the pool ends)$/i.test(line)
+    ) || "" : "";
+    const paidWhen = paidLabel >= 0 ? normalized.slice(paidLabel + 1, paidLabel + 3).find((line) =>
+      line && !/^(pool|split by|paid)$/i.test(line)
+    ) || "" : "";
+    const amount = amountLine ? parseAmount(amountLine) : null;
+    return {
+      amount,
+      splitBy: clean(splitBy, 80),
+      paidWhen: clean(paidWhen, 120),
+      evidence: [amountLine, splitBy, paidWhen].filter(Boolean).join(" · ")
+    };
+  }
+
   function extractPlatformTerms(lines) {
-    const result = { rates: [], caps: [], minimumViews: [], maximumViews: [] };
+    const result = { rates: [], caps: [], minimumViews: [], maximumViews: [], minimumPayouts: [] };
     let activePlatform = "";
     for (let index = 0; index < lines.length; index += 1) {
       const line = lines[index];
@@ -366,10 +392,15 @@
           : null;
       const minimumViews = extractMinimumViews(line) ?? extractMinimumViews(sample);
       const maximumViews = extractMaximumViews(line) ?? extractMaximumViews(sample);
+      const hasMinimumPayoutLabel = /(?:minimum|min\.?)\s+payout\b/i.test(line);
+      const minimumPayout = hasMinimumPayoutLabel
+        ? extractPayoutBound([line, lines[index + 1] || ""].join("\n"), "minimum")
+        : null;
       if (rate) result.rates.push({ platform: activePlatform, ...rate, evidence: clean(sample, 300) });
       if (cap) result.caps.push({ platform: activePlatform, amount: cap, evidence: clean([line, lines[index + 1] || ""].join(" "), 300) });
       if (minimumViews != null) result.minimumViews.push({ platform: activePlatform, value: minimumViews, evidence: clean(sample, 300) });
       if (maximumViews != null) result.maximumViews.push({ platform: activePlatform, value: maximumViews, evidence: clean(sample, 300) });
+      if (minimumPayout) result.minimumPayouts.push({ platform: activePlatform, amount: minimumPayout, evidence: clean([line, lines[index + 1] || ""].join(" "), 300) });
     }
     for (const key of Object.keys(result)) {
       result[key] = result[key].filter((item, index) => result[key].findIndex((other) => other.platform === item.platform) === index);
@@ -419,7 +450,6 @@
     const deadline = parseDeadline(rawText);
     const entryMode = extractAccessMode(rawText);
     const sourceUrl = findCampaignUrl(source.url, rawText);
-    const minimumPayout = extractPayoutBound(rawText, "minimum");
     const maximumPayout = extractPayoutBound(rawText, "maximum");
     const capPerClip = maximumPayout || extractCap(rawText);
     const hiddenRequirements = detectLockedRequirements(rawText);
@@ -432,6 +462,13 @@
     const platformCaps = platformTerms.caps;
     const platformMinimumViews = platformTerms.minimumViews;
     const platformMaximumViews = platformTerms.maximumViews;
+    const platformMinimumPayouts = platformTerms.minimumPayouts;
+    const selectedMinimumPayout = platformMinimumPayouts.find((item) => item.platform === requestedPlatform);
+    const minimumPayout = (selectedMinimumPayout && selectedMinimumPayout.amount) || extractPayoutBound(rawText, "minimum");
+    const pool = extractPoolTerms(lines);
+    const campaignRate = rate || (pool.amount || pool.splitBy || pool.paidWhen
+      ? { model: "Pool", amount: null, label: "Pool — variable allocation from a shared pool; the per-creator amount depends on the published split and eligible views" }
+      : null);
     const campaignType = extractCampaignType(rawText);
     const campaignStatus = extractCampaignStatus(rawText) === "Not stated" && budget && budget.remaining && budget.remaining.value === 0
       ? "Out of budget"
@@ -452,8 +489,16 @@
     const addFinding = (kind, label, value) => findings.push({ kind, label, value: clean(value, 500) });
     if (title) addFinding("found", "Campaign name", title);
     if (campaignType) addFinding("found", "Campaign type", campaignType);
-    if (rate) addFinding("found", "Payout model", rate.label);
+    if (campaignRate) addFinding("found", "Payout model", campaignRate.label);
     if (platformRates.length) addFinding("found", "Platform-specific rates", platformRates.map((item) => item.platform + ": " + item.label).join(" · "));
+    if (platformMinimumPayouts.length) addFinding("found", "Platform-specific minimum payout thresholds", platformMinimumPayouts.map((item) => item.platform + ": " + formatAmount(item.amount)).join(" · "));
+    if (pool.amount || pool.splitBy || pool.paidWhen) {
+      addFinding("found", "Shared pool terms", [
+        pool.amount ? "Pool total " + formatAmount(pool.amount) : "",
+        pool.splitBy ? "Split by " + pool.splitBy : "",
+        pool.paidWhen ? "Paid " + pool.paidWhen : ""
+      ].filter(Boolean).join(" · "));
+    }
     if (platformCaps.length) addFinding("found", "Platform-specific maximums", platformCaps.map((item) => item.platform + ": " + formatAmount(item.amount)).join(" · "));
     if (platformMinimumViews.length) addFinding("found", "Platform-specific minimum views", platformMinimumViews.map((item) => item.platform + ": " + new Intl.NumberFormat("en").format(item.value)).join(" · "));
     if (capPerClip) addFinding("found", "Maximum payout / per-clip cap", formatAmount(capPerClip));
@@ -498,7 +543,7 @@
 
     const missing = [];
     if (!title) missing.push("Campaign title not reliably identified — check the heading on the official page");
-    if (!rate) missing.push("Payout model / rate not recognised");
+    if (!campaignRate) missing.push("Payout model / rate not recognised");
     if (!budget || !budget.remaining) missing.push("Remaining campaign budget not recognised — check the live campaign card");
     if (!platforms.length) missing.push("Accepted platform not recognised — verify the campaign configuration");
     if (platformMatch === "mismatch") missing.push(requestedPlatform + " is not listed as accepted or is explicitly excluded");
@@ -507,22 +552,24 @@
     if (!deadline) missing.push("Campaign deadline not stated or not recognised");
     if (rate && rate.model === "CPM" && !capPerClip) missing.push("CPM maximum payout per clip not recognised — check the selected platform's campaign page");
     if (hiddenRequirements.locked) missing.push("Creator requirements are locked until Join Campaign; review them after joining before creating or publishing content.");
-    if (rate && rate.model === "CPM" && minimumViews == null) missing.push("CPM minimum views not recognised — check the campaign page");
+    if (campaignRate && campaignRate.model === "CPM" && minimumViews == null && !minimumPayout) {
+      missing.push("CPM minimum payout or minimum views threshold not recognised — check the campaign page");
+    }
     if (unsupportedPlatforms.length) missing.push(unsupportedPlatforms.join(", ") + " is not available in the India workflow; do not select it as a posting destination");
     if (campaignStatus === "Paused" || campaignStatus === "Ended / closed" || campaignStatus === "Out of budget") {
       missing.push("Campaign status appears to be " + campaignStatus + " — do not assume new clips are being accepted");
     }
     if (!sourceUrl) missing.push("Official Content Rewards campaign URL not supplied");
-    const coreFields = [Boolean(title), Boolean(rate), Boolean(budget && budget.remaining), platforms.length > 0, Boolean(entryMode), Boolean(deadline)];
+    const coreFields = [Boolean(title), Boolean(campaignRate), Boolean(budget && budget.remaining), platforms.length > 0, Boolean(entryMode), Boolean(deadline)];
     const coverageScore = Math.round(coreFields.filter(Boolean).length / coreFields.length * 100);
     const confidence = coverageScore >= 85 ? "Strong field coverage" : coverageScore >= 55 ? "Partial field coverage" : "Limited field coverage";
 
     return {
-      title, sourceUrl, requestedPlatform, platformMatch, deadline, entryMode, rate, budget,
+      title, sourceUrl, requestedPlatform, platformMatch, deadline, entryMode, budget,
       platforms, excludedPlatforms, unsupportedPlatforms, category, requirementLines, findings, missing,
-      confidence, coverageScore, campaignType, campaignStatus, capPerClip, minimumViews, maximumViews,
+      confidence, coverageScore, campaignType, campaignStatus, rate: campaignRate, capPerClip, minimumViews, maximumViews,
       minimumFollowers, duration, creativeFormat, languages, hashtags, mentions, platformRates,
-      platformCaps, platformMinimumViews, platformMaximumViews, minimumPayout, maximumPayout, hiddenRequirements,
+      platformCaps, platformMinimumViews, platformMaximumViews, platformMinimumPayouts, minimumPayout, maximumPayout, pool, hiddenRequirements,
       ruleGroups: extractRuleGroups(lines),
       rawText,
       rawExcerpt: rawText.slice(0, 1400)
@@ -540,6 +587,10 @@
       "Campaign type: " + (result.campaignType || "Not recognised"),
       "Payout: " + (result.rate ? result.rate.label : "Not recognised"),
       "Platform rates: " + (result.platformRates.length ? result.platformRates.map((item) => item.platform + " " + item.label).join("; ") : "Not separately recognised"),
+      "Platform minimum payout thresholds: " + (result.platformMinimumPayouts.length ? result.platformMinimumPayouts.map((item) => item.platform + " " + formatAmount(item.amount)).join("; ") : "Not separately recognised"),
+      "Pool terms: " + (result.pool && (result.pool.amount || result.pool.splitBy || result.pool.paidWhen)
+        ? [result.pool.amount ? "Total " + formatAmount(result.pool.amount) : "", result.pool.splitBy ? "Split by " + result.pool.splitBy : "", result.pool.paidWhen ? "Paid " + result.pool.paidWhen : ""].filter(Boolean).join(" · ")
+        : "Not recognised"),
       "Platform-specific caps: " + (result.platformCaps.length ? result.platformCaps.map((item) => item.platform + " " + formatAmount(item.amount)).join("; ") : "Not separately recognised"),
       "Platform-specific minimum views: " + (result.platformMinimumViews.length ? result.platformMinimumViews.map((item) => item.platform + " " + item.value).join("; ") : "Not separately recognised"),
       "Minimum payout before settlement: " + formatAmount(result.minimumPayout),
@@ -576,6 +627,6 @@
   return Object.freeze({
     parseCampaignBrief, buildTrackerNotes, formatAmount, parseAmount, parseBudget, parseRate, parseCount,
     extractPlatforms, extractCap, extractMinimumViews, extractMaximumViews, extractFollowers, extractDuration,
-    extractPlatformTerms, extractPayoutBound, detectLockedRequirements
+    extractPlatformTerms, extractPayoutBound, extractPoolTerms, detectLockedRequirements
   });
 });

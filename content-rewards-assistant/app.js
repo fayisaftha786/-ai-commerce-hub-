@@ -289,10 +289,19 @@
     const rows = campaigns.slice(0, 8);
     $("discovery-list").innerHTML = rows.length ? rows.map((row, index) => {
       const payout = (row.payouts || []).find((item) => item.platform === $("scout-target-platform").value) || (row.payouts || [])[0];
-      const rate = payout && payout.ratePerKViews != null ? "$" + payout.ratePerKViews + " / 1K views" : payout && payout.flatAmount != null ? "$" + payout.flatAmount + " / post" : payout && payout.rateLabel ? payout.rateLabel : "Rate unknown";
+      const amountLabel = (amount) => amount && Number.isFinite(amount.value)
+        ? ((amount.currency === "INR" ? "₹" : amount.currency === "EUR" ? "€" : amount.currency === "GBP" ? "£" : "$") + Number(amount.value).toLocaleString("en", { maximumFractionDigits: 2 }))
+        : "";
+      const rate = payout && payout.payoutModel === "Pool"
+        ? "Shared pool · " + (row.pool && row.pool.amount ? amountLabel(row.pool.amount) + " total" : "total not recognised")
+        : payout && payout.ratePerKViews != null ? "$" + payout.ratePerKViews + " / 1K views"
+          : payout && payout.flatAmount != null ? "$" + payout.flatAmount + " / post"
+            : payout && payout.rateLabel ? payout.rateLabel : "Rate unknown";
+      const minimum = payout && payout.minPayout ? "Min payout " + amountLabel(payout.minPayout) : "";
+      const poolTerms = row.pool ? [row.pool.splitBy ? "Split by " + row.pool.splitBy : "", row.pool.paidWhen ? "Paid " + row.pool.paidWhen : ""].filter(Boolean).join(" · ") : "";
       const tier = row.opportunity ? row.opportunity.tier.toUpperCase() : "UNRATED";
       const freshness = row.opportunity ? row.opportunity.status.replace(/-/g, " ") : "unknown";
-      return '<article class="discovery-card"><div class="discovery-card-head"><strong>' + escapeHtml(row.title) + '</strong><span class="discovery-tier discovery-tier-' + escapeHtml(tier.toLowerCase()) + '">' + escapeHtml(tier) + ' · ' + escapeHtml(row.opportunity ? row.opportunity.score : 0) + '/100</span></div><p>' + escapeHtml(row.brand || "Brand not stated") + ' · ' + escapeHtml((row.platforms || []).join(", ") || "Platform unknown") + '</p><div class="feed-metrics"><span>' + escapeHtml(rate) + '</span><span>' + escapeHtml(freshness) + '</span></div><small>' + escapeHtml(row.opportunity ? row.opportunity.explanation : "Verify source details.") + '</small><div class="feed-card-actions"><button class="button button-secondary" type="button" data-discovery-import="' + index + '">Analyse campaign</button>' + (row.officialUrl ? '<a class="text-button" href="' + escapeHtml(row.officialUrl) + '" target="_blank" rel="noopener noreferrer">Verify official page ↗</a>' : '') + '</div></article>';
+      return '<article class="discovery-card"><div class="discovery-card-head"><strong>' + escapeHtml(row.title) + '</strong><span class="discovery-tier discovery-tier-' + escapeHtml(tier.toLowerCase()) + '">' + escapeHtml(tier) + ' · ' + escapeHtml(row.opportunity ? row.opportunity.score : 0) + '/100</span></div><p>' + escapeHtml(row.brand || "Brand not stated") + ' · ' + escapeHtml((row.platforms || []).join(", ") || "Platform unknown") + '</p><div class="feed-metrics"><span>' + escapeHtml(rate) + '</span><span>' + escapeHtml(minimum || freshness) + '</span></div>' + (poolTerms ? '<small>' + escapeHtml(poolTerms) + '</small>' : '') + '<small>' + escapeHtml(row.opportunity ? row.opportunity.explanation : "Verify source details.") + '</small><div class="feed-card-actions"><button class="button button-secondary" type="button" data-discovery-import="' + index + '">Analyse campaign</button>' + (row.officialUrl ? '<a class="text-button" href="' + escapeHtml(row.officialUrl) + '" target="_blank" rel="noopener noreferrer">Verify official page ↗</a>' : '') + '</div></article>';
     }).join("") : '<p class="muted small-text">No saved discoveries yet. Run the GitHub page-scan workflow for background campaign-page analysis. “Test feed in browser” checks only the public lead feed while this page is open.</p>';
     $("discovery-list").querySelectorAll("[data-discovery-import]").forEach((button) => button.addEventListener("click", () => {
       campaignFeedRows = rows;
@@ -702,6 +711,8 @@
     const selectedCap = Array.isArray(result.platformCaps) ? result.platformCaps.find((item) => item.platform === target) : null;
     const selectedMinimum = Array.isArray(result.platformMinimumViews) ? result.platformMinimumViews.find((item) => item.platform === target) : null;
     const selectedMaximum = Array.isArray(result.platformMaximumViews) ? result.platformMaximumViews.find((item) => item.platform === target) : null;
+    const selectedMinimumPayout = Array.isArray(result.platformMinimumPayouts) ? result.platformMinimumPayouts.find((item) => item.platform === target) : null;
+    const minimumPayout = (selectedMinimumPayout && selectedMinimumPayout.amount) || result.minimumPayout || null;
     const cap = (selectedCap && selectedCap.amount) || (Array.isArray(result.platformCaps) && result.platformCaps.length ? null : result.capPerClip);
     const minimumViews = selectedMinimum ? selectedMinimum.value :
       (Array.isArray(result.platformMinimumViews) && result.platformMinimumViews.length ? null : result.minimumViews);
@@ -711,9 +722,16 @@
     if (selectedRate) payoutParts.push(selectedRate.label);
     else if (hasPlatformRates) payoutParts.push(target + " payout rate not recognised in copied text");
     if (cap) payoutParts.push("Max payout / clip cap: " + window.ClipRewardScout.formatAmount(cap));
-    if (result.minimumPayout) payoutParts.push("Minimum payout: " + window.ClipRewardScout.formatAmount(result.minimumPayout));
+    if (minimumPayout) payoutParts.push("Minimum payout: " + window.ClipRewardScout.formatAmount(minimumPayout));
     if (minimumViews != null) payoutParts.push("Min views: " + Number(minimumViews).toLocaleString("en"));
     if (maximumViews != null) payoutParts.push("Max views: " + Number(maximumViews).toLocaleString("en"));
+    if (result.pool && (result.pool.amount || result.pool.splitBy || result.pool.paidWhen)) {
+      payoutParts.push("POOL: " + [
+        result.pool.amount ? window.ClipRewardScout.formatAmount(result.pool.amount) + " total" : "",
+        result.pool.splitBy ? "split by " + result.pool.splitBy : "",
+        result.pool.paidWhen ? "paid " + result.pool.paidWhen : ""
+      ].filter(Boolean).join(" · "));
+    }
     if (result.hiddenRequirements && result.hiddenRequirements.locked) {
       payoutParts.push("Creator requirements locked until join" + (result.hiddenRequirements.count == null ? "" : " (" + result.hiddenRequirements.count + ")"));
     }

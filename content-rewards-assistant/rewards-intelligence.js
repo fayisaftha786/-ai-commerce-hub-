@@ -234,7 +234,9 @@
     const platformCaps = Array.isArray(brief.platformCaps) ? brief.platformCaps : [];
     const platformMinimumViews = Array.isArray(brief.platformMinimumViews) ? brief.platformMinimumViews : [];
     const platformMaximumViews = Array.isArray(brief.platformMaximumViews) ? brief.platformMaximumViews : [];
+    const platformMinimumPayouts = Array.isArray(brief.platformMinimumPayouts) ? brief.platformMinimumPayouts : [];
     const selectedCap = platformCaps.find((item) => item.platform === platform) || null;
+    const selectedMinimumPayout = platformMinimumPayouts.find((item) => item.platform === platform) || null;
     const selectedMinimum = platformMinimumViews.find((item) => item.platform === platform) || null;
     const selectedMaximum = platformMaximumViews.find((item) => item.platform === platform) || null;
     const capPerClip = (selectedCap && selectedCap.amount) ||
@@ -243,7 +245,13 @@
       (platformMinimumViews.length ? null : brief.minimumViews);
     const maximumViews = selectedMaximum ? selectedMaximum.value :
       (platformMaximumViews.length ? null : brief.maximumViews);
-    const minimumPayout = brief.minimumPayout || null;
+    const minimumPayout = (selectedMinimumPayout && selectedMinimumPayout.amount) || brief.minimumPayout || null;
+    const hasCpmSettlementThreshold = minimumViews != null || Boolean(minimumPayout);
+    const acceptingWithoutDeadline = !brief.deadline &&
+      brief.campaignStatus === "Appears live in copied text" &&
+      brief.entryMode === "Open campaign / direct join";
+    const poolTermsComplete = !rate || rate.model !== "Pool" ||
+      Boolean(brief.pool && brief.pool.amount && brief.pool.splitBy && brief.pool.paidWhen);
     const payout = payoutGuidance(rate, brief.budget, capPerClip, minimumPayout);
     const requirements = inferBriefRequirements(brief);
 
@@ -251,17 +259,20 @@
       if (brief.platformMatch !== "match") reasons.push("Platform acceptance is not confirmed from the copied text.");
       if (!rate) reasons.push("Payout model or platform rate is missing.");
       if (!brief.budget || !brief.budget.remaining) reasons.push("Remaining campaign budget is not known.");
-      if (!brief.deadline) reasons.push("Campaign deadline is not recognised.");
+      if (!brief.deadline && !acceptingWithoutDeadline) reasons.push("Campaign deadline is not recognised.");
+      if (acceptingWithoutDeadline) reasons.push("The public page says accepting clips but shows no fixed closing date; verify it is still open immediately before joining.");
       if (!brief.entryMode) reasons.push("Open / application / private access route is not known.");
       if (rate && rate.model === "CPM" && !capPerClip) reasons.push("CPM maximum per clip is not recognised.");
-      if (rate && rate.model === "CPM" && minimumViews == null) reasons.push("CPM minimum views are not recognised.");
+      if (rate && rate.model === "CPM" && !hasCpmSettlementThreshold) reasons.push("CPM minimum payout or minimum-view threshold is not recognised.");
+      if (rate && rate.model === "Pool" && !poolTermsComplete) reasons.push("The shared pool total, allocation basis or payout timing is incomplete; confirm all three on the official campaign page.");
       if (brief.minimumFollowers != null) reasons.push("Confirm that your selected posting account meets the stated follower threshold.");
       if (brief.hiddenRequirements && brief.hiddenRequirements.locked) reasons.push("The full creator requirements are still hidden until you join; this visible-page analysis cannot clear those rules.");
       reasons.push("Creator-account eligibility and campaign approval must still be confirmed on Content Rewards.");
       const coreComplete = brief.platformMatch === "match" && Boolean(rate) &&
-        Boolean(brief.budget && brief.budget.remaining) && Boolean(brief.deadline) && Boolean(brief.entryMode) &&
+        Boolean(brief.budget && brief.budget.remaining) && (Boolean(brief.deadline) || acceptingWithoutDeadline) && Boolean(brief.entryMode) &&
         !(brief.hiddenRequirements && brief.hiddenRequirements.locked) &&
-        (rate.model !== "CPM" || (Boolean(capPerClip) && minimumViews != null));
+        (rate.model !== "CPM" || (Boolean(capPerClip) && hasCpmSettlementThreshold)) &&
+        poolTermsComplete;
       state = coreComplete ? "promising" : "verify";
     }
 
@@ -289,17 +300,25 @@
       },
       {
         label: "Minimum views",
-        status: minimumViews != null ? "pass" : rate && rate.model === "CPM" ? "unknown" : "not-applicable",
+        status: minimumViews != null ? "pass" : rate && rate.model === "CPM" ? (minimumPayout ? "not-applicable" : "unknown") : "not-applicable",
         detail: minimumViews != null ? "Detected minimum: " + Number(minimumViews).toLocaleString("en") + " views." :
-          rate && rate.model === "CPM" ? "Minimum views were not recognised. Confirm the threshold on the campaign page." :
-            "No minimum-view threshold was recognised in the copied text."
+          rate && rate.model === "CPM" && minimumPayout ? "No separate minimum-view count is displayed; a minimum payout threshold was detected below." :
+            rate && rate.model === "CPM" ? "Neither a minimum-view count nor a minimum payout threshold was recognised. Confirm the campaign page." :
+              "No minimum-view threshold was recognised in the copied text."
       },
       {
         label: "Minimum payout threshold",
         status: minimumPayout ? "pass" : rate && rate.model === "CPM" ? "unknown" : "not-applicable",
-        detail: minimumPayout ? "Detected minimum amount before payout: " + minimumPayout.currency + " " + minimumPayout.value :
-          rate && rate.model === "CPM" ? "Minimum payout threshold was not visible in the copied page." :
+        detail: minimumPayout ? "Detected minimum amount before payout for " + platform + ": " + minimumPayout.currency + " " + minimumPayout.value :
+          rate && rate.model === "CPM" ? "Minimum payout threshold was not visible for this platform in the copied page." :
             "Minimum payout threshold was not recognised for this payout model."
+      },
+      {
+        label: "Pool allocation terms",
+        status: !rate || rate.model !== "Pool" ? "not-applicable" : poolTermsComplete ? "pass" : "unknown",
+        detail: !rate || rate.model !== "Pool" ? "This is not a shared-pool campaign." : poolTermsComplete
+          ? "Pool total, allocation basis (" + brief.pool.splitBy + ") and payout timing (" + brief.pool.paidWhen + ") were detected. The actual creator share remains variable and is not forecast."
+          : "A shared-pool campaign was detected, but the pool total, split basis or payout timing is missing. Verify the complete official rules before joining."
       },
       {
         label: "Full creator requirements",
@@ -329,8 +348,10 @@
       },
       {
         label: "Deadline",
-        status: brief.deadline ? (brief.deadline < today ? "fail" : "pass") : "unknown",
-        detail: brief.deadline ? "Detected deadline: " + brief.deadline : "No recognised deadline; check the live campaign."
+        status: brief.deadline ? (brief.deadline < today ? "fail" : "pass") : acceptingWithoutDeadline ? "unknown" : "unknown",
+        detail: brief.deadline ? "Detected deadline: " + brief.deadline : acceptingWithoutDeadline
+          ? "The public text says accepting clips, but no fixed closing date is shown. Re-check the live page before joining."
+          : "No recognised deadline; check the live campaign."
       },
       {
         label: "Access type",
@@ -358,7 +379,8 @@
       stateLabel: state === "blocked" ? "Blocked / do not proceed yet" :
         state === "promising" ? "Promising copied brief · verify before joining" : "More evidence required",
       reasons, missing, platform, acceptedPlatforms: accepted, excludedPlatforms: excluded, rate, payout, requirements, checks,
-      capPerClip, minimumPayout, minimumViews, maximumViews, creatorFee: payout.creatorFee,
+      capPerClip, minimumPayout, minimumViews, maximumViews, acceptingWithoutDeadline,
+      poolTermsComplete, creatorFee: payout.creatorFee,
       nextStep,
       earningsNote: "This is a rule and evidence assessment, not an earnings forecast. No views, campaign approval, actual payout or paid balance is assumed."
     };

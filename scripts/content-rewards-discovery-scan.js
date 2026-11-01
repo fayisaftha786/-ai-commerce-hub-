@@ -6,7 +6,7 @@ const Feed = require("../content-rewards-assistant/campaign-feed.js");
 const Discovery = require("../content-rewards-assistant/discovery-engine.js");
 const Scout = require("../content-rewards-assistant/campaign-scout.js");
 
-const MAX_DETAIL_PAGES = 60;
+const MAX_DETAIL_PAGES = 100;
 const OFFICIAL_DISCOVER_URL = "https://contentrewards.com/c/discover";
 const MAX_PAGE_BYTES = 1_500_000;
 const MAX_PAGE_TEXT = 20_000;
@@ -310,12 +310,14 @@ function enrichOfficialCampaignRows(campaigns, details, now) {
       const cap = (parsed.platformCaps || []).find((item) => item.platform === rate.platform);
       const minimum = (parsed.platformMinimumViews || []).find((item) => item.platform === rate.platform);
       const maximum = (parsed.platformMaximumViews || []).find((item) => item.platform === rate.platform);
+      const minimumPayout = (parsed.platformMinimumPayouts || []).find((item) => item.platform === rate.platform);
       return {
         platform: rate.platform,
         ratePerKViews: rate.model === "CPM" && rate.amount ? rate.amount.value : null,
         flatAmount: rate.model === "Per post" && rate.amount ? rate.amount.value : null,
         rateLabel: rate.label || "",
         payoutModel: rate.model || "",
+        minPayout: minimumPayout ? minimumPayout.amount : parsed.minimumPayout || null,
         minViewsRequired: minimum ? minimum.value : parsed.minimumViews,
         maxViewsAllowed: maximum ? maximum.value : parsed.maximumViews,
         maxPayoutPerSubmission: cap && cap.amount ? cap.amount.value : parsed.capPerClip ? parsed.capPerClip.value : null
@@ -343,6 +345,8 @@ function enrichOfficialCampaignRows(campaigns, details, now) {
       maximumViews: parsed.maximumViews,
       minimumFollowers: parsed.minimumFollowers,
       hiddenRequirements: parsed.hiddenRequirements,
+      pool: parsed.pool || null,
+      platformMinimumPayouts: parsed.platformMinimumPayouts || [],
       source: "Official Content Rewards public Discover page",
       sourceVerification: "official-public-page",
       pageFetchStatus: detail.status

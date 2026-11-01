@@ -157,3 +157,26 @@ test("marks saved campaigns absent from the latest scan as unverified instead of
   assert.ok(row.opportunity.missing.includes("Not present in the latest public feed scan"));
   assert.match(row.opportunity.explanation, /not present in the latest public feed scan/i);
 });
+
+test("scores current minimum-payout CPM and recognised pool campaigns without inventing per-creator rates", () => {
+  const cpm = Discovery.assessOpportunity(sample("min-payout", {
+    payouts: [{
+      platform: "Instagram",
+      ratePerKViews: 2,
+      payoutModel: "CPM",
+      minViewsRequired: null,
+      minPayout: { value: 5, currency: "USD" },
+      maxPayoutPerSubmission: 250
+    }]
+  }), Date.parse("2026-11-01T00:00:00Z"));
+  assert.ok(!cpm.missing.includes("Minimum payout or view threshold"));
+
+  const pool = Discovery.assessOpportunity(sample("pool", {
+    payouts: [{ platform: "Instagram", payoutModel: "Pool", ratePerKViews: null, minViewsRequired: null, maxPayoutPerSubmission: null }],
+    pool: { amount: { value: 25000, currency: "USD" }, splitBy: "Views", paidWhen: "When the pool ends" },
+    campaignStatus: "Appears live in copied text"
+  }), Date.parse("2026-11-01T00:00:00Z"));
+  assert.ok(!pool.missing.includes("Payout model / rate"));
+  assert.ok(!pool.missing.includes("Per-clip maximum or pool allocation rules"));
+  assert.ok(!pool.missing.includes("Deadline or current accepting status"));
+});

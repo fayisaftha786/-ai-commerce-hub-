@@ -180,3 +180,16 @@ test("scores current minimum-payout CPM and recognised pool campaigns without in
   assert.ok(!pool.missing.includes("Per-clip maximum or pool allocation rules"));
   assert.ok(!pool.missing.includes("Deadline or current accepting status"));
 });
+test("does not mark a shared Pool or flat-fee campaign as missing a CPM threshold", () => {
+  const pool = Discovery.assessOpportunity(sample("pool-no-threshold", {
+    payouts: [{ platform: "Instagram", payoutModel: "Pool", ratePerKViews: null }],
+    pool: { amount: { value: 9000, currency: "USD" }, splitBy: "Views", paidWhen: "When the pool ends" },
+    campaignStatus: "Appears live in copied text"
+  }), Date.parse("2026-11-01T00:00:00Z"));
+  assert.ok(!pool.missing.includes("Minimum payout or view threshold"));
+  const perPost = Discovery.assessOpportunity(sample("flat-fee", {
+    payouts: [{ platform: "YouTube", payoutModel: "Per post", flatAmount: 50 }]
+  }), Date.parse("2026-11-01T00:00:00Z"));
+  assert.ok(!perPost.missing.includes("Minimum payout or view threshold"));
+});
+

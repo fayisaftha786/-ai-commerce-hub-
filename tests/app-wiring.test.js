@@ -828,12 +828,12 @@ test("Content Rewards radar distinguishes browser feed tests from the GitHub pag
 
 
 test("official creator-program source monitor is loaded and has matching live status targets", () => {
-  const scripts = [...html.matchAll(/<script\\s+src="([^"]+)"/g)].map((match) => match[1]);
+  const scripts = [...html.matchAll(/<script\s+src="([^"]+)"/g)].map((match) => match[1]);
   assert.ok(scripts.includes("creator-program-directory.js"));
   assert.ok(scripts.indexOf("creator-program-directory.js") < scripts.indexOf("app.js"));
   assert.ok(html.includes('id="creatorProgramScanStatus"'));
   assert.ok(html.includes('id="creatorProgramDirectory"'));
-  assert.match(html, /does not access private dashboards[\\s\\S]*verify your eligibility/i);
-  assert.match(serviceWorker, /creator-program-directory\\.js/);
-  assert.match(serviceWorker, /creator-programs-snapshot\\.json/);
+  assert.match(html, /does not access private dashboards[\s\S]*verify your eligibility/i);
+  assert.match(serviceWorker, /creator-program-directory\.js/);
+  assert.match(serviceWorker, /creator-programs-snapshot\.json/);
 });

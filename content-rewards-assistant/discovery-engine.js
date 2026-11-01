@@ -309,6 +309,7 @@
           text: detail.pageText
         });
         if (!brief.title && row.title) brief.title = clean(row.title, 180);
+        brief.rawText = detail.pageText;
         const assessment = intelligence.assessAll({
           brief,
           platform: target,

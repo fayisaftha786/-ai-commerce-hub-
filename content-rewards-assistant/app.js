@@ -213,7 +213,7 @@
   function populateOperationsForm() {
     const campaign = campaignById($("ops-campaign").value);
     if (!campaign) {
-      ["ops-views", "ops-views-checked", "ops-reward-approved", "ops-paid-amount", "ops-paid-at", "ops-payout-reference", "ops-reviewed-at", "ops-review-notes",
+      ["ops-views", "ops-views-checked", "ops-reward-approved", "ops-paid-amount", "ops-paid-at", "ops-paid-stage", "ops-payout-reference", "ops-reviewed-at", "ops-review-notes",
         "ops-expected-payout-at", "ops-withdrawn-amount", "ops-withdrawn-at", "ops-withdrawal-reference",
         "ops-whop-payout-amount", "ops-whop-payout-at", "ops-whop-payout-reference"].forEach((id) => { $(id).value = ""; });
       $("ops-view-source").value = "Content Rewards";
@@ -228,6 +228,7 @@
     $("ops-currency").value = campaign.payoutCurrency || "USD";
     $("ops-payout-status").value = campaign.payoutStatus || "unconfirmed";
     $("ops-paid-amount").value = campaign.paidAmount == null ? "" : String(campaign.paidAmount);
+    $("ops-paid-stage").value = campaign.paidAmountStage || "unknown";
     $("ops-paid-at").value = localDateTimeValue(campaign.paidAt);
     $("ops-payout-reference").value = campaign.payoutReference || "";
     $("ops-expected-payout-at").value = localDateTimeValue(campaign.expectedPayoutAt);
@@ -252,7 +253,7 @@
     const measuredViews = state.campaigns.reduce((sum, c) => sum + (c.viewsCount == null ? 0 : c.viewsCount), 0);
     const rewardsLogged = state.campaigns.filter((c) => c.rewardApprovedAmount != null).length;
     const awaitingPayout = state.campaigns.filter((c) => ["pending", "available", "partially-paid"].includes(c.payoutStatus)).length;
-    const paidRecords = state.campaigns.filter((c) => c.paidAmount != null && c.paidAmount > 0).length;
+    const paidRecords = state.campaigns.filter((c) => c.paidAmountStage === "content-rewards-balance" && c.paidAmount != null && c.paidAmount > 0).length;
     const whopTransfers = state.campaigns.filter((c) => c.withdrawnToWhopAmount != null && c.withdrawnToWhopAmount > 0).length;
     $("ops-metric-views").textContent = measuredViews.toLocaleString("en");
     $("ops-metric-rewards").textContent = String(rewardsLogged);
@@ -262,7 +263,8 @@
 
     const rows = state.campaigns.slice().sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
     $("ops-table").innerHTML = rows.map((c) => {
-      const crCredit = c.paidAmount == null ? "—" : moneyLabel(c.paidAmount, c.payoutCurrency);
+      const crCredit = c.paidAmount == null ? "—" :
+        (c.paidAmountStage === "content-rewards-balance" ? moneyLabel(c.paidAmount, c.payoutCurrency) : "Legacy amount · destination unknown");
       const whopTransfer = c.withdrawnToWhopAmount == null ? "—" : moneyLabel(c.withdrawnToWhopAmount, c.payoutCurrency);
       const whopPayout = c.whopPayoutAmount == null ? "—" : moneyLabel(c.whopPayoutAmount, c.payoutCurrency);
       const source = c.viewsSource ? '<small class="ops-source">' + escapeHtml(c.viewsSource) + '</small>' : "";
@@ -293,6 +295,7 @@
         payoutCurrency: $("ops-currency").value,
         payoutStatus: $("ops-payout-status").value,
         paidAmount: $("ops-paid-amount").value,
+        paidAmountStage: $("ops-paid-stage").value,
         paidAt: $("ops-paid-at").value ? new Date($("ops-paid-at").value).toISOString() : "",
         payoutReference: $("ops-payout-reference").value,
         expectedPayoutAt: $("ops-expected-payout-at").value ? new Date($("ops-expected-payout-at").value).toISOString() : "",
@@ -1103,6 +1106,7 @@
         payoutCurrency: old ? old.payoutCurrency : "USD",
         payoutStatus: old ? old.payoutStatus : "unconfirmed",
         paidAmount: old ? old.paidAmount : null,
+        paidAmountStage: old ? old.paidAmountStage : "unknown",
         paidAt: old ? old.paidAt : "",
         payoutReference: old ? old.payoutReference : "",
         expectedPayoutAt: old ? old.expectedPayoutAt : "",

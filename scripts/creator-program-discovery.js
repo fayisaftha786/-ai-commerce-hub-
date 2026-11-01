@@ -129,13 +129,13 @@ function extractRuleEvidence(source, html) {
       {
         key: "standard-watch-hours",
         label: "Full YPP · long-form route",
-        pattern: /1,000 subscribers.{0,240}?4,000 (?:qualified )?(?:public )?watch hours?.{0,100}?(?:last|past) 12 months?/i,
+        pattern: /1,000 subscribers.{0,240}?4,000 (?:(?:qualified|valid) )?(?:public )?watch hours?.{0,100}?(?:last|past) 12 months?/i,
         interpretation: "This is a public threshold route for the full YPP application; channel policy review and other account requirements still apply."
       },
       {
         key: "standard-shorts-views",
         label: "Full YPP · Shorts route",
-        pattern: /1,000 subscribers.{0,240}?10 million (?:qualified )?(?:public )?shorts views?.{0,100}?(?:last|past) 90 days?/i,
+        pattern: /1,000 subscribers.{0,240}?10 million (?:(?:qualified|valid) )?(?:public )?shorts views?.{0,100}?(?:last|past) 90 days?/i,
         interpretation: "This is an alternative public threshold route for the full YPP application; qualified views and channel review rules still apply."
       }
     ],
@@ -143,13 +143,13 @@ function extractRuleEvidence(source, html) {
       {
         key: "expanded-ypp-watch-hours",
         label: "Expanded YPP · earlier access",
-        pattern: /500 subscribers.{0,260}?3 valid public uploads?.{0,260}?3,000 (?:qualified )?(?:public )?watch hours?.{0,100}?(?:last|past) 12 months?/i,
+        pattern: /500 subscribers.{0,260}?3 valid public uploads?.{0,260}?3,000 (?:(?:qualified|valid) )?(?:public )?watch hours?.{0,100}?(?:last|past) 12 months?/i,
         interpretation: "This lower threshold is for earlier access to selected YPP features in eligible countries; it is not the full ad-revenue threshold."
       },
       {
         key: "expanded-ypp-shorts-views",
         label: "Expanded YPP · Shorts route",
-        pattern: /500 subscribers.{0,260}?3 valid public uploads?.{0,260}?3 million (?:qualified )?(?:public )?shorts views?.{0,100}?(?:last|past) 90 days?/i,
+        pattern: /500 subscribers.{0,260}?3 valid public uploads?.{0,260}?3 million (?:(?:qualified|valid) )?(?:public )?shorts views?.{0,100}?(?:last|past) 90 days?/i,
         interpretation: "This lower threshold is for earlier access to selected YPP features in eligible countries; it is not the full ad-revenue threshold."
       }
     ],

@@ -83,6 +83,15 @@ Existing YouTube variables are documented in [BACKEND.md](./BACKEND.md). Future 
 
 Do not configure or advertise a provider as ready merely because these values exist. Readiness must distinguish: missing config, configured-not-authorized, connected-read-only, connected-publish-permission, publishing-ready, and disconnected/revoked.
 
+## Earnings scenario and success controls
+
+The Rewards Studio includes a conservative scenario calculator for CPM and fixed payout models. It applies the recognised creator fee, visible per-clip cap and visible remaining campaign budget. `projectedNet` is a hypothetical scenario; `estimatedNetAfterApproval` is conditional on visible thresholds; `confirmedPayable` remains zero until official account evidence is recorded. None of these values is a prediction of approval or a promise of money. Unknown minimum-view thresholds, missing caps, missing budgets, approval status and pool allocation rules remain explicit warnings. A score or scenario is a prioritisation aid, not an earning probability, guarantee or account eligibility check.
+
+Current Content Rewards creator guidance describes CPM, per-post and retainer models, brand review before approval, and platform-specific payout timing. CPM projections depend on qualified views, caps and campaign budget; pool allocations are inherently variable. Verify the latest official terms and campaign page before relying on any calculation:
+- https://help.contentrewards.com/en/articles/15319790-how-content-rewards-works
+- https://contentrewards.com/terms
+- https://contentrewards.com/pricing/creators
+
 ## Safe publishing workflow
 
 1. Discover campaign and capture its public source URL, rules, reward model, budget/freshness evidence.

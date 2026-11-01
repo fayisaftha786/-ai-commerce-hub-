@@ -111,13 +111,13 @@ function extractPageMetadata(html) {
 
 function extractVisibleText(html) {
   return decodeEntities(String(html || "")
-    .replace(/<!--[\\s\\S]*?-->/g, " ")
-    .replace(/<(script|style|noscript|svg)\\b[^>]*>[\\s\\S]*?<\\/\\1>/gi, " ")
-    .replace(/<(?:br|\\/p|\\/div|\\/li|\\/h[1-6]|\\/section|\\/article|\\/tr)\\b[^>]*>/gi, "\\n")
+    .replace(/<!--[\s\S]*?-->/g, " ")
+    .replace(/<(script|style|noscript|svg)\b[^>]*>[\s\S]*?<\/\1>/gi, " ")
+    .replace(/<(?:br|\/p|\/div|\/li|\/h[1-6]|\/section|\/article|\/tr)\b[^>]*>/gi, "\n")
     .replace(/<[^>]*>/g, " "))
-    .replace(/[ \\t]+/g, " ")
-    .replace(/ *\\n */g, "\\n")
-    .replace(/\\n{2,}/g, "\\n")
+    .replace(/[ \t]+/g, " ")
+    .replace(/ *\n */g, "\n")
+    .replace(/\n{2,}/g, "\n")
     .trim()
     .slice(0, 60000);
 }
@@ -169,13 +169,13 @@ function extractRuleEvidence(source, html) {
       {
         key: "creator-fast-track-100k",
         label: "Creator Fast Track · 100K tier",
-        pattern: /\\$1,000 per month.{0,180}?100,000 followers/i,
+        pattern: /\$1,000 per month.{0,180}?100,000 followers/i,
         interpretation: "This amount is described for the separate Creator Fast Track route and a stated follower tier; it is not a general Facebook monetization rate or a promise to this account."
       },
       {
         key: "creator-fast-track-1m",
         label: "Creator Fast Track · 1M tier",
-        pattern: /\\$3,000 per month.{0,180}?one million followers/i,
+        pattern: /\$3,000 per month.{0,180}?one million followers/i,
         interpretation: "This amount is described for the separate Creator Fast Track route and a stated follower tier; it is not a general Facebook monetization rate or a promise to this account."
       }
     ],

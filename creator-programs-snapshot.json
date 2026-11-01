@@ -1,17 +1,19 @@
 {
   "schemaVersion": 1,
   "country": "IN",
-  "scope": "official-public-source-reachability-only",
+  "scope": "official-public-source-reachability-and-limited-rule-extraction",
   "generatedAt": "",
   "status": "pending",
   "summary": {
-    "sourcesAttempted": 3,
+    "sourcesAttempted": 4,
     "sourcesAvailable": 0,
     "sourcesUnavailable": 0,
-    "accountEligibilityChecksRequired": 3
+    "accountEligibilityChecksRequired": 4,
+    "sourcesWithRuleEvidence": 0,
+    "ruleEvidenceCount": 0
   },
   "limitations": [
-    "This scan checks only whether allowlisted official public documentation pages can be fetched and reads their page title/description.",
+    "This scan fetches allowlisted official public pages and extracts only selected rule snippets; extraction is a helper, not a complete or account-specific policy interpretation.",
     "It does not sign in, read private creator dashboards, discover private invitations, verify account eligibility, determine live campaign availability, or verify payouts.",
     "A reachable source page is not evidence that an account is eligible or that earnings are available."
   ],
@@ -31,6 +33,25 @@
       "httpStatus": null,
       "pageTitle": "",
       "pageDescription": "",
+      "error": ""
+    },
+    {
+      "id": "youtube-expanded-ypp",
+      "platform": "YouTube",
+      "program": "Expanded YouTube Partner Program access",
+      "programType": "early-access-monetization-features",
+      "sourceUrl": "https://support.google.com/youtube/answer/13429240?hl=en-IN",
+      "sourceLabel": "YouTube official expanded YPP guide",
+      "accountCheck": "YouTube Studio → Earn",
+      "indiaNote": "The expanded YPP guide lists country-specific availability and earlier access to selected fan-funding/Shopping features. Check India availability and this channel's exact feature status in Studio.",
+      "limitation": "The lower expanded-YPP threshold is not the full ad-revenue threshold. A public guide cannot inspect this channel's country, policy status or feature access.",
+      "status": "not_checked",
+      "checkedAt": "",
+      "httpStatus": null,
+      "finalUrl": "",
+      "pageTitle": "",
+      "pageDescription": "",
+      "ruleEvidence": [],
       "error": ""
     },
     {

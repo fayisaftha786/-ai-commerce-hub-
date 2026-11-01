@@ -20,15 +20,26 @@ const SOURCE_REGISTRY = Object.freeze([
     limitation: "A public help page cannot inspect this channel's eligibility, policy status, thresholds or payout setup."
   },
   {
+    id: "youtube-expanded-ypp",
+    platform: "YouTube",
+    program: "Expanded YouTube Partner Program access",
+    programType: "early-access-monetization-features",
+    sourceUrl: "https://support.google.com/youtube/answer/13429240?hl=en-IN",
+    sourceLabel: "YouTube official expanded YPP guide",
+    accountCheck: "YouTube Studio → Earn",
+    indiaNote: "The expanded YPP guide lists country-specific availability and earlier access to selected fan-funding/Shopping features. Check India availability and this channel's exact feature status in Studio.",
+    limitation: "The lower expanded-YPP threshold is not the full ad-revenue threshold. A public guide cannot inspect this channel's country, policy status or feature access."
+  },
+  {
     id: "facebook-content-monetization",
     platform: "Facebook",
-    program: "Facebook Content Monetization",
-    programType: "native-monetization",
+    program: "Creator Fast Track and Facebook Content Monetization",
+    programType: "invitation-based-native-monetization",
     sourceUrl: "https://about.fb.com/news/2026/03/creator-fast-track-grow-your-audience-earn-money-on-facebook/",
     sourceLabel: "Meta official 2026 creator monetization update",
     accountCheck: "Facebook Professional dashboard → Monetization",
-    indiaNote: "Check the exact account and country in Professional dashboard. Meta describes access as invite-based; public announcements do not establish this account's availability.",
-    limitation: "A reachable announcement does not mean this profile or Page has an invitation, is eligible in India, or has an approved payout account."
+    indiaNote: "The 2026 Creator Fast Track announcement describes a distinct invitation-based route with follower-based tiers. It is not a general eligibility threshold for all Facebook monetization. Check the exact account in Professional dashboard.",
+    limitation: "Public documentation does not reveal whether this profile/Page has an invitation, qualifies for Fast Track, has access to Content Monetization, or has an approved payout account."
   },
   {
     id: "instagram-creator-marketplace",
@@ -98,6 +109,114 @@ function extractPageMetadata(html) {
   };
 }
 
+function extractVisibleText(html) {
+  return decodeEntities(String(html || "")
+    .replace(/<!--[\s\S]*?-->/g, " ")
+    .replace(/<(script|style|noscript|svg)\b[^>]*>[\s\S]*?<\/\1>/gi, " ")
+    .replace(/<(?:br|\/p|\/div|\/li|\/h[1-6]|\/section|\/article|\/tr)\b[^>]*>/gi, "\n")
+    .replace(/<[^>]*>/g, " "))
+    .replace(/[ \t]+/g, " ")
+    .replace(/ *\n */g, "\n")
+    .replace(/\n{2,}/g, "\n")
+    .trim()
+    .slice(0, 60000);
+}
+
+function extractRuleEvidence(source, html) {
+  const text = extractVisibleText(html);
+  const rules = {
+    "youtube-ypp": [
+      {
+        key: "standard-watch-hours",
+        label: "Full YPP · long-form route",
+        pattern: /1,000 subscribers.{0,240}?4,000 (?:(?:qualified|valid) )?(?:public )?watch hours?.{0,100}?(?:last|past) 12 months?/i,
+        interpretation: "This is a public threshold route for the full YPP application; channel policy review and other account requirements still apply."
+      },
+      {
+        key: "standard-shorts-views",
+        label: "Full YPP · Shorts route",
+        pattern: /1,000 subscribers.{0,240}?10 million (?:(?:qualified|valid) )?(?:public )?shorts views?.{0,100}?(?:last|past) 90 days?/i,
+        interpretation: "This is an alternative public threshold route for the full YPP application; qualified views and channel review rules still apply."
+      }
+    ],
+    "youtube-expanded-ypp": [
+      {
+        key: "expanded-ypp-watch-hours",
+        label: "Expanded YPP · earlier access",
+        pattern: /500 subscribers.{0,260}?3 valid public uploads?.{0,260}?3,000 (?:(?:qualified|valid) )?(?:public )?watch hours?.{0,100}?(?:last|past) 12 months?/i,
+        interpretation: "This lower threshold is for earlier access to selected YPP features in eligible countries; it is not the full ad-revenue threshold."
+      },
+      {
+        key: "expanded-ypp-shorts-views",
+        label: "Expanded YPP · Shorts route",
+        pattern: /500 subscribers.{0,260}?3 valid public uploads?.{0,260}?3 million (?:(?:qualified|valid) )?(?:public )?shorts views?.{0,100}?(?:last|past) 90 days?/i,
+        interpretation: "This lower threshold is for earlier access to selected YPP features in eligible countries; it is not the full ad-revenue threshold."
+      }
+    ],
+    "facebook-content-monetization": [
+      {
+        key: "facebook-invite-only",
+        label: "Content Monetization access",
+        pattern: /content monetization.{0,180}?invite-only/i,
+        interpretation: "Meta describes Content Monetization as invite-only in this announcement. An interest form is not an invitation, approval or earnings confirmation. Check the account's Professional Dashboard for its real status."
+      },
+      {
+        key: "facebook-interest-form",
+        label: "Express interest",
+        pattern: /professional dashboard.{0,220}?interest form/i,
+        interpretation: "The public announcement describes an in-product interest route. Sending interest is not an invitation, approval or earnings confirmation."
+      },
+      {
+        key: "creator-fast-track-100k",
+        label: "Creator Fast Track · 100K tier",
+        pattern: /\$1,000 per month.{0,180}?100,000 followers/i,
+        interpretation: "This amount is described for the separate Creator Fast Track route and a stated follower tier; it is not a general Facebook monetization rate or a promise to this account."
+      },
+      {
+        key: "creator-fast-track-1m",
+        label: "Creator Fast Track · 1M tier",
+        pattern: /\$3,000 per month.{0,180}?one million followers/i,
+        interpretation: "This amount is described for the separate Creator Fast Track route and a stated follower tier; it is not a general Facebook monetization rate or a promise to this account."
+      }
+    ],
+    "instagram-creator-marketplace": [
+      {
+        key: "instagram-india-rollout",
+        label: "India rollout reference",
+        pattern: /invite creators and brands based in[^.]{0,240}?India/i,
+        interpretation: "Meta's 2024 announcement named India in its planned Creator Marketplace expansion. This historical rollout reference does not prove current access for a specific account."
+      },
+      {
+        key: "instagram-professional-dashboard",
+        label: "Creator entry point",
+        pattern: /creators join from their professional dashboard/i,
+        interpretation: "The public guide describes the Instagram Professional Dashboard as the creator entry point. Check whether Creator Marketplace appears in this account."
+      },
+      {
+        key: "instagram-partnership-messages",
+        label: "Brand partnership workflow",
+        pattern: /partnership messages folder/i,
+        interpretation: "The guide describes a dedicated partnership message route. Rates and project availability depend on the individual brand agreement."
+      }
+    ]
+  };
+  const definitions = rules[source && source.id] || [];
+  const evidence = [];
+  for (const rule of definitions) {
+    const match = rule.pattern.exec(text);
+    if (!match) continue;
+    const start = Math.max(0, match.index - 70);
+    const end = Math.min(text.length, match.index + match[0].length + 90);
+    evidence.push({
+      key: rule.key,
+      label: rule.label,
+      excerpt: cleanText(text.slice(start, end), 360),
+      interpretation: rule.interpretation
+    });
+  }
+  return evidence;
+}
+
 async function checkSource(source, options = {}) {
   const fetchImpl = options.fetchImpl || globalThis.fetch;
   const now = options.now == null ? Date.now() : Number(options.now);
@@ -111,6 +230,7 @@ async function checkSource(source, options = {}) {
     finalUrl: "",
     pageTitle: "",
     pageDescription: "",
+    ruleEvidence: [],
     error: ""
   };
 
@@ -173,7 +293,8 @@ async function checkSource(source, options = {}) {
       status: "available",
       httpStatus,
       finalUrl,
-      ...extractPageMetadata(html)
+      ...extractPageMetadata(html),
+      ruleEvidence: extractRuleEvidence(source, html)
     };
   } catch (error) {
     const message = error && error.name === "AbortError"
@@ -195,17 +316,19 @@ async function scanSources(options = {}) {
   return {
     schemaVersion: 1,
     country: "IN",
-    scope: "official-public-source-reachability-only",
+    scope: "official-public-source-reachability-and-limited-rule-extraction",
     generatedAt: new Date(now).toISOString(),
     status,
     summary: {
       sourcesAttempted: sources.length,
       sourcesAvailable: available,
       sourcesUnavailable: failed,
+      sourcesWithRuleEvidence: sources.filter((source) => source.ruleEvidence.length > 0).length,
+      ruleEvidenceCount: sources.reduce((total, source) => total + source.ruleEvidence.length, 0),
       accountEligibilityChecksRequired: sources.length
     },
     limitations: [
-      "This scan checks only whether allowlisted official public documentation pages can be fetched and reads their page title/description.",
+      "This scan fetches allowlisted official public pages and extracts only selected rule snippets; extraction is a helper, not a complete or account-specific policy interpretation.",
       "It does not sign in, read private creator dashboards, discover private invitations, verify account eligibility, determine live campaign availability, or verify payouts.",
       "A reachable source page is not evidence that an account is eligible or that earnings are available."
     ],
@@ -227,6 +350,7 @@ function appendSummary(snapshot, env = process.env) {
     "- **Status:** " + snapshot.status,
     "- **Official pages:** " + snapshot.summary.sourcesAvailable + " reachable / " +
       snapshot.summary.sourcesAttempted + " attempted / " + snapshot.summary.sourcesUnavailable + " unavailable",
+    "- **Public rule signals extracted:** " + snapshot.summary.ruleEvidenceCount + " across " + snapshot.summary.sourcesWithRuleEvidence + " sources.",
     "- **Account eligibility:** not checked; each account must be verified in its official dashboard.",
     "",
     "| Platform | Program | Public source check |",
@@ -263,6 +387,8 @@ module.exports = {
   SOURCE_REGISTRY,
   isApprovedSourceUrl,
   extractPageMetadata,
+  extractVisibleText,
+  extractRuleEvidence,
   checkSource,
   scanSources,
   writeSnapshot,

@@ -9,7 +9,7 @@ const valid = {
   country: "IN",
   status: "success",
   generatedAt: "2026-11-01T00:00:00.000Z",
-  summary: { sourcesAttempted: 1, sourcesAvailable: 1, sourcesUnavailable: 0 },
+  summary: { sourcesAttempted: 1, sourcesAvailable: 1, sourcesUnavailable: 0, sourcesWithRuleEvidence: 1, ruleEvidenceCount: 1 },
   sources: [{
     id: "youtube-ypp",
     platform: "YouTube",
@@ -20,7 +20,13 @@ const valid = {
     accountCheck: "YouTube Studio → Earn",
     indiaNote: "Check the channel account.",
     limitation: "Public docs do not verify account access.",
-    pageTitle: "Official help"
+    pageTitle: "Official help",
+    ruleEvidence: [{
+      key: "standard-watch-hours",
+      label: "Full YPP route",
+      excerpt: "<script>untrusted</script> 1,000 subscribers and 4,000 hours",
+      interpretation: "Check the account dashboard."
+    }]
   }]
 };
 
@@ -38,6 +44,30 @@ test("rejects unknown snapshot shapes and removes unapproved source URLs", () =>
   assert.throws(() => directory.normalizeSnapshot({
     ...valid, sources: [{ ...valid.sources[0], sourceUrl: "https://evil.example/page" }]
   }), /no valid sources/i);
+});
+
+
+test("renders extracted rule evidence as text, never as HTML", () => {
+  const makeNode = (tagName) => ({
+    tagName,
+    children: [],
+    className: "",
+    _text: "",
+    set textContent(value) { this._text = String(value); },
+    get textContent() { return this._text; },
+    append(...children) { this.children.push(...children); },
+    replaceChildren(...children) { this.children = [...children]; }
+  });
+  const document = { createElement: makeNode };
+  const container = makeNode("container");
+  const status = makeNode("status");
+  directory.renderSnapshot(document, container, status, valid);
+  const card = container.children[0];
+  const evidence = card.children.find((node) => node.className === "creator-rule-evidence");
+  assert.ok(evidence);
+  assert.ok(evidence.children[0].textContent.includes("<script>untrusted</script>"));
+  assert.equal(Object.prototype.hasOwnProperty.call(evidence.children[0], "innerHTML"), false);
+  assert.match(status.textContent, /account eligibility and payout remain unverified/i);
 });
 
 test("unknown source states are downgraded to not checked", () => {

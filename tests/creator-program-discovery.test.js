@@ -28,7 +28,7 @@ function response(url, options = {}) {
 }
 
 test("source registry contains only HTTPS public documentation on approved official hosts", () => {
-  assert.equal(monitor.SOURCE_REGISTRY.length, 3);
+  assert.equal(monitor.SOURCE_REGISTRY.length, 4);
   for (const source of monitor.SOURCE_REGISTRY) {
     assert.equal(monitor.isApprovedSourceUrl(source.sourceUrl), true, source.sourceUrl);
     assert.ok(source.accountCheck);
@@ -53,8 +53,9 @@ test("all successful source checks create a success snapshot without claiming ac
   });
   assert.equal(snapshot.status, "success");
   assert.deepEqual(snapshot.summary, {
-    sourcesAttempted: 3, sourcesAvailable: 3, sourcesUnavailable: 0,
-    accountEligibilityChecksRequired: 3
+    sourcesAttempted: 4, sourcesAvailable: 4, sourcesUnavailable: 0,
+    sourcesWithRuleEvidence: 0, ruleEvidenceCount: 0,
+    accountEligibilityChecksRequired: 4
   });
   assert.ok(snapshot.sources.every((source) => source.status === "available"));
   assert.ok(snapshot.sources.every((source) => source.pageTitle === "Official source"));
@@ -70,7 +71,7 @@ test("one failed provider source marks the scan partial and preserves the other 
       : response(url)
   });
   assert.equal(snapshot.status, "partial");
-  assert.equal(snapshot.summary.sourcesAvailable, 2);
+  assert.equal(snapshot.summary.sourcesAvailable, 3);
   assert.equal(snapshot.summary.sourcesUnavailable, 1);
   assert.equal(snapshot.sources.find((source) => source.id === "facebook-content-monetization").status, "unavailable");
 });
@@ -105,10 +106,44 @@ test("writes a complete JSON snapshot to the requested path", async () => {
     assert.equal(monitor.writeSnapshot(snapshot, output), output);
     const stored = JSON.parse(fs.readFileSync(output, "utf8"));
     assert.equal(stored.schemaVersion, 1);
-    assert.equal(stored.sources.length, 3);
+    assert.equal(stored.sources.length, 4);
   } finally {
     fs.rmSync(directory, { recursive: true, force: true });
   }
+});
+
+
+test("extracts full YPP thresholds from visible official text while stripping scripts", () => {
+  const page = "<html><body><p>1,000 subscribers with 4,000 qualified public watch hours in the last 12 months, or 1,000 subscribers with 10 million qualified Shorts views in the last 90 days.</p><script>1,000 subscribers with 4,000 qualified public watch hours in the last 12 months</script></body></html>";
+  const evidence = monitor.extractRuleEvidence({ id: "youtube-ypp" }, page);
+  assert.deepEqual(evidence.map((item) => item.key), ["standard-watch-hours", "standard-shorts-views"]);
+  assert.ok(evidence.every((item) => !item.excerpt.includes("<script>")));
+  assert.ok(evidence.every((item) => /full YPP/i.test(item.interpretation)));
+});
+
+test("keeps expanded YPP thresholds distinct from full ad-revenue eligibility", () => {
+  const page = "<html><body>500 subscribers and 3 valid public uploads in the last 90 days, plus 3,000 valid public watch hours in the last 12 months.</body></html>";
+  const evidence = monitor.extractRuleEvidence({ id: "youtube-expanded-ypp" }, page);
+  assert.deepEqual(evidence.map((item) => item.key), ["expanded-ypp-watch-hours"]);
+  assert.match(evidence[0].interpretation, /not the full ad-revenue threshold/i);
+});
+
+test("extracts Facebook invitation and Fast Track facts without converting them into a user payout promise", () => {
+  const page = "<html><body>Facebook Content Monetization is invite-only. In the Professional Dashboard, complete the interest form. Creator Fast Track creators can earn $1,000 per month if they have at least 100,000 followers on Instagram, TikTok, or YouTube.</body></html>";
+  const evidence = monitor.extractRuleEvidence({ id: "facebook-content-monetization" }, page);
+  assert.deepEqual(evidence.map((item) => item.key), ["facebook-invite-only", "facebook-interest-form", "creator-fast-track-100k"]);
+  assert.ok(evidence.every((item) => /not a general Facebook monetization rate|not an invitation/i.test(item.interpretation)));
+});
+
+test("records Instagram's historical India rollout and creator dashboard path as public evidence only", () => {
+  const page = "<html><body>We plan to invite creators and brands based in Canada, Australia, India and Brazil. Creators join from their Professional Dashboard. See your Partnership Messages folder.</body></html>";
+  const evidence = monitor.extractRuleEvidence({ id: "instagram-creator-marketplace" }, page);
+  assert.deepEqual(evidence.map((item) => item.key), ["instagram-india-rollout", "instagram-professional-dashboard", "instagram-partnership-messages"]);
+  assert.ok(evidence[0].interpretation.includes("historical rollout"));
+});
+
+test("unknown or missing public text produces no inferred eligibility", () => {
+  assert.deepEqual(monitor.extractRuleEvidence({ id: "youtube-ypp" }, "<html><body>Welcome</body></html>"), []);
 });
 
 test("all-unavailable sources are represented as failed instead of a false success", async () => {
@@ -117,5 +152,5 @@ test("all-unavailable sources are represented as failed instead of a false succe
   });
   assert.equal(snapshot.status, "failed");
   assert.equal(snapshot.summary.sourcesAvailable, 0);
-  assert.equal(snapshot.summary.sourcesUnavailable, 3);
+  assert.equal(snapshot.summary.sourcesUnavailable, 4);
 });

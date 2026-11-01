@@ -43,6 +43,14 @@
         httpStatus: Number.isInteger(row.httpStatus) ? row.httpStatus : null,
         pageTitle: String(row.pageTitle || "").slice(0, 180),
         pageDescription: String(row.pageDescription || "").slice(0, 500),
+        ruleEvidence: Array.isArray(row.ruleEvidence) ? row.ruleEvidence.slice(0, 12).filter((item) =>
+          item && typeof item === "object" && /^[a-z0-9-]{2,80}$/i.test(String(item.key || ""))
+        ).map((item) => ({
+          key: String(item.key).slice(0, 80),
+          label: String(item.label || "Public rule signal").slice(0, 100),
+          excerpt: String(item.excerpt || "").slice(0, 360),
+          interpretation: String(item.interpretation || "").slice(0, 320)
+        })) : [],
         error: String(row.error || "").slice(0, 240)
       };
     }).filter(Boolean);
@@ -56,7 +64,9 @@
       summary: {
         sourcesAttempted: Number.isInteger(summary.sourcesAttempted) ? summary.sourcesAttempted : sources.length,
         sourcesAvailable: Number.isInteger(summary.sourcesAvailable) ? summary.sourcesAvailable : 0,
-        sourcesUnavailable: Number.isInteger(summary.sourcesUnavailable) ? summary.sourcesUnavailable : 0
+        sourcesUnavailable: Number.isInteger(summary.sourcesUnavailable) ? summary.sourcesUnavailable : 0,
+        sourcesWithRuleEvidence: Number.isInteger(summary.sourcesWithRuleEvidence) ? summary.sourcesWithRuleEvidence : 0,
+        ruleEvidenceCount: Number.isInteger(summary.ruleEvidenceCount) ? summary.ruleEvidenceCount : 0
       },
       sources
     };
@@ -86,12 +96,27 @@
       account.textContent = "Account check: " + source.accountCheck;
       const limitation = document.createElement("p");
       limitation.textContent = source.error || source.limitation;
+      const evidenceHeading = document.createElement("p");
+      evidenceHeading.textContent = "Public rule signals (" + source.ruleEvidence.length + ") · not account verified";
+      const evidence = document.createElement("div");
+      evidence.className = "creator-rule-evidence";
+      if (source.ruleEvidence.length) {
+        for (const item of source.ruleEvidence) {
+          const signal = document.createElement("p");
+          signal.textContent = item.label + ": " + item.excerpt + " " + item.interpretation;
+          evidence.append(signal);
+        }
+      } else {
+        const none = document.createElement("p");
+        none.textContent = "No structured rule text was extracted from this page. Open the official source to review its full current terms; no missing rule is inferred.";
+        evidence.append(none);
+      }
       const link = document.createElement("a");
       link.href = source.sourceUrl;
       link.target = "_blank";
       link.rel = "noopener noreferrer";
       link.textContent = "Open official source ↗";
-      card.append(heading, state, title, note, account, limitation, link);
+      card.append(heading, state, title, note, account, evidenceHeading, evidence, limitation, link);
       container.append(card);
     }
 
@@ -100,7 +125,8 @@
     } else {
       statusNode.textContent = "Latest public-source check: " + snapshot.status + " · " +
         snapshot.summary.sourcesAvailable + "/" + snapshot.summary.sourcesAttempted +
-        " pages reachable · " + (snapshot.generatedAt || "time not recorded") +
+        " pages reachable · " + snapshot.summary.ruleEvidenceCount + " public rule signals across " +
+        snapshot.summary.sourcesWithRuleEvidence + " sources · " + (snapshot.generatedAt || "time not recorded") +
         ". Account eligibility and payout remain unverified.";
     }
     return snapshot;

@@ -160,6 +160,12 @@ test("campaign finder is wired to official Discover, local parser, and existing 
   assert.match(html, /id="scout-paste-button"/);
   assert.match(html, /id="scout-url-analyse-button"/);
   assert.match(html, /Analyse website automatically/i);
+  assert.match(html, /id="scout-on-demand-actions"/);
+  assert.match(html, /id="scout-copy-on-demand-url"/);
+  assert.match(html, /id="scout-open-on-demand-workflow"/);
+  assert.match(html, /Campaign URL to analyse/);
+  assert.match(app, /scout-on-demand-actions/);
+  assert.match(app, /navigator\.clipboard\.writeText/);
   assert.match(html, /official Content Rewards Discover page first/i);
   assert.doesNotMatch(html, /Only the existing third-party public feed is scanned automatically/i);
   assert.match(app, /only listed and fetched public pages can be auto-read/i);
@@ -175,7 +181,7 @@ test("campaign finder is wired to official Discover, local parser, and existing 
   assert.ok(app.includes("analyseCampaignBrief();"));
   assert.ok(app.includes('addEventListener("input"'));
   assert.match(app, /result\.platformMatch === "mismatch"/);
-  assert.match(worker, /clipreward-static-v20/);
+  assert.match(worker, /clipreward-static-v21/);
   assert.match(worker, /campaign-scout\.js/);
 });
 
@@ -233,7 +239,7 @@ test("unified Rewards Intelligence engine is loaded and displayed with the campa
   assert.match(html, /id="reward-intelligence-results"/);
   assert.match(app, /ClipRewardIntelligence\.assessAll/);
   assert.match(app, /renderRewardsIntelligence/);
-  assert.match(worker, /clipreward-static-v20/);
+  assert.match(worker, /clipreward-static-v21/);
   assert.match(worker, /rewards-intelligence\.js/);
 });
 

@@ -99,7 +99,7 @@ function createYouTubeOAuthService(options = {}) {
     if (!String(env.GOOGLE_CLIENT_ID || "").trim()) missing.push("GOOGLE_CLIENT_ID");
     if (!String(env.GOOGLE_CLIENT_SECRET || "").trim()) missing.push("GOOGLE_CLIENT_SECRET");
     if (!parseRedirectUri(env.GOOGLE_REDIRECT_URI)) missing.push("GOOGLE_REDIRECT_URI");
-    if (!tokenVault) missing.push("SOCIAL_TOKEN_ENCRYPTION_KEY");
+    if (!String(env.SOCIAL_TOKEN_ENCRYPTION_KEY || "").trim()) missing.push("SOCIAL_TOKEN_ENCRYPTION_KEY");
     const origins = allowedOrigins(env);
     if (!origins.length) missing.push("SOCIAL_CORS_ORIGINS");
     if (!parseReturnUrl(env.SOCIAL_RETURN_URL, origins)) missing.push("SOCIAL_RETURN_URL");
@@ -242,7 +242,7 @@ function createYouTubeOAuthService(options = {}) {
     }
   }
 
-  async function refreshRecord(record) {
+  async function refreshRecord(record, sessionId) {
     if (!record.refreshToken) return { ok: false, error: "reconnect_required" };
     try {
       const tokens = await postToken({
@@ -263,7 +263,7 @@ function createYouTubeOAuthService(options = {}) {
         scopes: typeof tokens.scope === "string" ? tokens.scope.split(/\s+/).filter(Boolean) : record.scopes,
         updatedAt: new Date(now()).toISOString()
       };
-      tokenVault.set(sha256(record.sessionId), "youtube", updated);
+      tokenVault.set(sha256(sessionId), "youtube", updated);
       return { ok: true, record: updated };
     } catch (error) {
       return { ok: false, error: String(error && error.message || "") === "authorization_expired" ? "reconnect_required" : "refresh_failed" };
@@ -280,7 +280,7 @@ function createYouTubeOAuthService(options = {}) {
     let active = record;
     if (Number(record.expiresAt) <= now() + 60000) {
       if (!record.refreshToken) return publicConnection(record, "reconnect_required");
-      const refreshed = await refreshRecord({ ...record, sessionId });
+      const refreshed = await refreshRecord(record, sessionId);
       if (!refreshed.ok) return publicConnection(record, "reconnect_required");
       active = refreshed.record;
     }

@@ -693,6 +693,7 @@ test("version 2 backups preserve the three distinct settlement stages", () => {
       id: "three-stages-backup",
       name: "Wallet settlement",
       paidAmount: 25,
+      paidAmountStage: "content-rewards-balance",
       paidAt: "2026-11-01T08:00:00.000Z",
       expectedPayoutAt: "2026-11-02T08:00:00.000Z",
       withdrawnToWhopAmount: 20,

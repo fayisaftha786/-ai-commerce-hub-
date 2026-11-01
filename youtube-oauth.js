@@ -9,7 +9,8 @@ const STATE_TTL_MS = 10 * 60 * 1000;
 // Keep the first account-link step read-only. Request upload permission only
 // when a provider-backed upload flow is implemented and reviewed.
 const REQUIRED_SCOPES = Object.freeze([
-  "https://www.googleapis.com/auth/youtube.readonly"
+  "https://www.googleapis.com/auth/youtube.readonly",
+  "https://www.googleapis.com/auth/youtube.upload"
 ]);
 const AUTHORIZE_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
@@ -288,6 +289,72 @@ function createYouTubeOAuthService(options = {}) {
     return publicConnection(active);
   }
 
+  async function uploadVideo(sessionId, input = {}) {
+    if (typeof sessionId !== "string" || !SESSION_ID_PATTERN.test(sessionId) || !tokenVault) {
+      return { ok: false, error: "not_connected" };
+    }
+    const video = input.video;
+    if (!Buffer.isBuffer(video) || video.length < 1024 || video.length > 64 * 1024 * 1024) {
+      return { ok: false, error: "invalid_video_size" };
+    }
+    const mimeType = String(input.mimeType || "");
+    if (!/^video\/(mp4|quicktime|webm)$/.test(mimeType)) return { ok: false, error: "unsupported_video_type" };
+    const title = String(input.title || "").trim().slice(0, 100);
+    const description = String(input.description || "").trim().slice(0, 5000);
+    const privacyStatus = ["private", "unlisted", "public"].includes(input.privacyStatus) ? input.privacyStatus : "private";
+    if (!title) return { ok: false, error: "title_required" };
+
+    const connection = await getConnection(sessionId);
+    if (connection.status !== "connected") return { ok: false, error: "reconnect_required" };
+    const record = tokenVault.get(sha256(sessionId), "youtube");
+    if (!record || !record.scopes.includes("https://www.googleapis.com/auth/youtube.upload")) {
+      return { ok: false, error: "upload_permission_required" };
+    }
+    const metadata = {
+      snippet: { title, description },
+      status: { privacyStatus, selfDeclaredMadeForKids: false }
+    };
+    try {
+      const start = await fetchImpl("https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable&part=snippet,status", {
+        method: "POST", redirect: "error", credentials: "omit", cache: "no-store",
+        headers: {
+          authorization: "Bearer " + record.accessToken,
+          "content-type": "application/json; charset=UTF-8",
+          "x-upload-content-length": String(video.length),
+          "x-upload-content-type": mimeType
+        },
+        body: JSON.stringify(metadata)
+      });
+      if (!start.ok) return { ok: false, error: start.status === 401 ? "reconnect_required" : "youtube_upload_session_failed" };
+      const uploadUrl = start.headers && typeof start.headers.get === "function" ? start.headers.get("location") : "";
+      let parsed;
+      try { parsed = new URL(uploadUrl); } catch (_) { return { ok: false, error: "youtube_upload_session_invalid" }; }
+      if (parsed.protocol !== "https:" || parsed.hostname !== "www.googleapis.com") {
+        return { ok: false, error: "youtube_upload_session_invalid" };
+      }
+      const uploaded = await fetchImpl(parsed.href, {
+        method: "PUT", redirect: "error", credentials: "omit", cache: "no-store",
+        headers: { authorization: "Bearer " + record.accessToken, "content-type": mimeType },
+        body: video
+      });
+      const data = await readJson(uploaded);
+      if (!uploaded.ok || typeof data.id !== "string" || !data.id) {
+        return { ok: false, error: uploaded.status === 401 ? "reconnect_required" : "youtube_video_upload_failed" };
+      }
+      return {
+        ok: true,
+        provider: "youtube",
+        videoId: data.id,
+        url: "https://www.youtube.com/watch?v=" + encodeURIComponent(data.id),
+        privacyStatus,
+        publishedAt: new Date(now()).toISOString(),
+        channelId: connection.channelId
+      };
+    } catch (_) {
+      return { ok: false, error: "youtube_upload_unavailable" };
+    }
+  }
+
   function disconnect(sessionId) {
     if (typeof sessionId !== "string" || !SESSION_ID_PATTERN.test(sessionId) || !tokenVault) return false;
     return tokenVault.deleteProvider(sha256(sessionId), "youtube");
@@ -308,6 +375,7 @@ function createYouTubeOAuthService(options = {}) {
     createAuthorizationRequest,
     completeAuthorization,
     getConnection,
+    uploadVideo,
     disconnect,
     buildReturnUrl
   });

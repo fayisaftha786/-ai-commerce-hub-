@@ -126,7 +126,7 @@ jobs:
       - name: Warn when source scan fails; retained snapshot is still published
         if: ${{ always() && steps.scan.outcome == 'failure' }}
         run: |
-          echo "::warning::Official Discover and the third-party fallback source were unavailable. Previous campaign rows were retained; the failed scan status is recorded in the published snapshot."
+          echo "::warning::The Content Rewards discovery scan did not complete. Previous campaign rows were retained; inspect the published error for URL validation or public-source fetch failures."
           node - <<'NODE'
           const fs = require("node:fs");
           const snapshot = JSON.parse(fs.readFileSync("content-rewards-assistant/discovery-snapshot.json", "utf8"));

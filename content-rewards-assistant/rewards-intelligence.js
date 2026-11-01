@@ -159,6 +159,104 @@
     return { percent: null, label: "Creator fee is not recognised; confirm the official campaign terms.", source };
   }
 
+  function estimateCreatorNetPayout(input) {
+    const source = input && typeof input === "object" ? input : {};
+    const rate = source.rate && typeof source.rate === "object" ? source.rate : null;
+    const model = rate && clean(rate.model, 40);
+    const warnings = [];
+    const amount = rate && rate.amount ? Number(rate.amount.value) : NaN;
+    const currency = rate && rate.amount ? clean(rate.amount.currency, 3).toUpperCase() : "";
+    const views = source.views == null || source.views === "" ? NaN : Number(source.views);
+    const minimumViews = source.minimumViews == null || source.minimumViews === "" ? null : Number(source.minimumViews);
+    const cap = source.capPerClip && Number.isFinite(Number(source.capPerClip.value))
+      ? { value: Number(source.capPerClip.value), currency: clean(source.capPerClip.currency, 3).toUpperCase() } : null;
+    const remaining = source.budgetRemaining && Number.isFinite(Number(source.budgetRemaining.value))
+      ? { value: Number(source.budgetRemaining.value), currency: clean(source.budgetRemaining.currency, 3).toUpperCase() } : null;
+    const budget = source.budget && typeof source.budget === "object" ? source.budget : null;
+    const approved = source.approved === true;
+    const minimumPayout = source.minimumPayout && Number.isFinite(Number(source.minimumPayout.value))
+      ? { value: Number(source.minimumPayout.value), currency: clean(source.minimumPayout.currency, 3).toUpperCase() } : null;
+
+    const unavailable = (reason) => ({
+      available: false, model: model || "Unknown", currency: currency || null,
+      projectedGross: null, creatorFeePercent: null, projectedNet: null,
+      payableNow: 0, approved, confidence: "unavailable", warnings: [reason]
+    });
+    if (!rate || !["CPM", "Per post", "Retainer", "Pool"].includes(model)) {
+      return unavailable("A recognised campaign payout model and rate are required.");
+    }
+    if (model === "Pool") {
+      return unavailable("Pool earnings depend on the final shared allocation; a reliable individual forecast cannot be calculated from the visible terms.");
+    }
+    if (!Number.isFinite(amount) || amount < 0 || !currency || !/^[A-Z]{3}$/.test(currency)) {
+      return unavailable("The payout amount and currency are missing or invalid.");
+    }
+    for (const limit of [cap, remaining, minimumPayout]) {
+      if (limit && (limit.value < 0 || limit.currency !== currency)) {
+        return unavailable("The campaign rate, cap, remaining budget and minimum payout must use the same currency.");
+      }
+    }
+    if (minimumViews !== null && (!Number.isFinite(minimumViews) || minimumViews < 0)) {
+      return unavailable("The minimum-view threshold is invalid.");
+    }
+
+    let gross = 0;
+    let thresholdMet = true;
+    if (model === "CPM") {
+      if (!Number.isFinite(views) || views < 0) return unavailable("Enter a non-negative view count to estimate CPM earnings.");
+      if (minimumViews === null) {
+        thresholdMet = false;
+        warnings.push("The campaign's minimum-view threshold is unknown; this is a scenario, not an eligibility result.");
+      } else if (views < minimumViews) {
+        thresholdMet = false;
+        warnings.push("The visible minimum-view threshold has not been reached.");
+      }
+      gross = thresholdMet ? amount * views / 1000 : 0;
+      if (!cap) warnings.push("Per-clip payout cap is unknown; the gross estimate may be overstated.");
+      if (!remaining) warnings.push("Remaining campaign budget is unknown; actual payable funds may be lower.");
+      if (cap) gross = Math.min(gross, cap.value);
+      if (remaining) gross = Math.min(gross, remaining.value);
+    } else {
+      gross = amount;
+      if (model === "Per post" && minimumViews !== null && (!Number.isFinite(views) || views < minimumViews)) {
+        thresholdMet = false;
+        warnings.push("The minimum-view condition is not yet met.");
+      }
+      if (model === "Retainer") {
+        const required = Number(source.deliverablesRequired);
+        const completed = Number(source.deliverablesCompleted);
+        if (!Number.isFinite(required) || required <= 0 || !Number.isFinite(completed) || completed < required) {
+          thresholdMet = false;
+          warnings.push("Retainer deliverables are not confirmed complete; the full cycle amount is not yet earned.");
+        }
+      }
+      if (remaining) gross = Math.min(gross, remaining.value);
+      else warnings.push("Remaining campaign budget is unknown.");
+    }
+
+    const fee = creatorFee(rate, budget);
+    if (fee.percent === null) {
+      return {
+        available: true, model, currency, projectedGross: Math.round(gross * 100) / 100,
+        creatorFeePercent: null, projectedNet: null, payableNow: 0, approved,
+        confidence: "incomplete", thresholdMet, warnings: warnings.concat(fee.label)
+      };
+    }
+    const net = Math.max(0, gross * (1 - fee.percent / 100));
+    if (!approved) warnings.push("Brand approval is not confirmed; this amount is only a projection and is not payable.");
+    if (minimumPayout && net < minimumPayout.value) warnings.push("Projected net is below the campaign's stated minimum payout threshold.");
+    return {
+      available: true, model, currency,
+      projectedGross: Math.round(gross * 100) / 100,
+      creatorFeePercent: fee.percent,
+      projectedNet: Math.round(net * 100) / 100,
+      payableNow: approved && thresholdMet ? Math.round(net * 100) / 100 : 0,
+      approved, thresholdMet,
+      confidence: warnings.length ? "incomplete" : "scenario-only",
+      warnings
+    };
+  }
+
   function payoutGuidance(rate, budget, capPerClip, minimumPayout) {
     const fee = creatorFee(rate, budget);
     if (!rate) return {

@@ -26,7 +26,10 @@
     const payoutRows = Array.isArray(row.payouts) ? row.payouts : [];
     const knownRate = payoutRows.some((item) => Number.isFinite(item && item.ratePerKViews) ||
       Number.isFinite(item && item.flatAmount) || item && ["Pool", "Retainer"].includes(item.payoutModel));
-    const knownMinimum = payoutRows.some((item) => Number.isFinite(item && item.minViewsRequired) ||
+    const noSeparateThresholdRequired = payoutRows.length > 0 && payoutRows.every((item) =>
+      item && ["Pool", "Per post", "Retainer"].includes(item.payoutModel)
+    );
+    const knownMinimum = noSeparateThresholdRequired || payoutRows.some((item) => Number.isFinite(item && item.minViewsRequired) ||
       Number.isFinite(item && item.minPayout && item.minPayout.value));
     const poolAllocationKnown = payoutRows.some((item) => item && item.payoutModel === "Pool") &&
       Boolean(row.pool && row.pool.amount && row.pool.splitBy && row.pool.paidWhen);

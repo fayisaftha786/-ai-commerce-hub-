@@ -53,7 +53,7 @@
     if (expired) score -= 35;
     score = Math.max(0, Math.min(100, score));
     const missing = [];
-    if (!knownRate) missing.push("Payout model / rate");
+    if (!knownRate) missing.push("Reward rate");
     if (!knownMinimum) missing.push("Minimum payout or view threshold");
     if (!knownCap) missing.push("Per-clip maximum or pool allocation rules");
     if (!hasDeadline && !currentlyAccepting) missing.push("Deadline or current accepting status");

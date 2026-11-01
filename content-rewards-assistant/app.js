@@ -318,6 +318,7 @@
       ["Promising", summary.promising, "promising"],
       ["Verify", summary.verify, "verify"],
       ["Blocked", summary.blocked, "blocked"],
+      ["Historical / recheck", summary.notSeenInLatestScanCount || 0, "unknown"],
       ["Detail missing", summary.missingDetailCount + summary.unreadableDetailCount, "unknown"]
     ].map((item) => '<span class="deep-summary-chip deep-summary-' + item[2] + '"><strong>' + item[1] + '</strong><small>' + item[0] + '</small></span>').join("");
     const amountLabel = (amount) => amount && Number.isFinite(amount.value)

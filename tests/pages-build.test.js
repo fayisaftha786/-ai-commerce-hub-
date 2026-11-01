@@ -14,6 +14,7 @@ test("Pages asset discovery includes every app script, styles and PWA dependency
   const assets = collectLocalAssets(html);
   for (const name of [
     "index.html", "style.css", "manifest.webmanifest", "icon.svg",
+    "creator-program-directory.js", "creator-programs-snapshot.json",
     "earning-engine.js", "earning-hub.js", "product-utils.js", "offer-engine.js",
     "discovery-engine.js", "catalog-import.js", "marketplace-search.js",
     "campaign-report.js", "video-maker.js", "social-center.js", "app.js",
@@ -29,6 +30,8 @@ test("assembled Pages bundle contains every referenced root asset and nested ass
   try {
     const result = assembleSite({ rootDir: root, outputDir: output });
     assert.ok(result.assets.includes("earning-engine.js"));
+    assert.ok(result.assets.includes("creator-program-directory.js"));
+    assert.ok(result.assets.includes("creator-programs-snapshot.json"));
     assert.ok(result.assets.includes("earning-hub.js"));
     for (const name of result.assets) assert.ok(fs.statSync(path.join(output, name)).isFile(), name);
     assert.ok(fs.statSync(path.join(output, "content-rewards-assistant", "index.html")).isFile());

@@ -3,6 +3,8 @@ name: Deploy AI Commerce Hub to GitHub Pages
 on:
   push:
     branches: [main]
+  schedule:
+    - cron: "43 */6 * * *"
   workflow_dispatch:
 
 permissions:
@@ -35,6 +37,9 @@ jobs:
         run: |
           npm run check
           npm test
+
+      - name: Refresh official creator-program source checks
+        run: node scripts/creator-program-discovery.js
 
       - name: Configure GitHub Pages
         id: pages

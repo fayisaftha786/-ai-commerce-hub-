@@ -56,3 +56,47 @@ test("social analytics rejects an unsafe aggregate interaction count", () => {
   assert.equal(result.valid, false);
   assert.match(result.error, /safe numeric range/);
 });
+
+
+test("Social Desk validates a same-origin Clip Studio video handoff before loading it", () => {
+  const valid = social.validatePostHandoff({
+    platform: "youtube",
+    title: "My clip",
+    caption: "Original caption #Shorts",
+    file: { name: "clip.mp4", type: "video/mp4", size: 1024 }
+  });
+  assert.equal(valid.valid, true);
+  assert.equal(valid.platform, "youtube");
+  assert.equal(valid.caption, "Original caption #Shorts");
+  assert.equal(valid.file.name, "clip.mp4");
+
+  assert.equal(social.validatePostHandoff({
+    platform: "instagram",
+    caption: "caption",
+    file: { name: "large.mp4", type: "video/mp4", size: social.MAX_FILE_BYTES + 1 }
+  }).valid, false);
+
+  assert.equal(social.validatePostHandoff({
+    platform: "tiktok",
+    caption: "caption",
+    file: { name: "clip.mp4", type: "video/mp4", size: 100 }
+  }).valid, false);
+
+  assert.equal(social.validatePostHandoff({
+    platform: "youtube",
+    caption: "caption",
+    file: { name: "photo.jpg", type: "image/jpeg", size: 100 }
+  }).valid, false);
+});
+
+test("Social Desk includes X destination and checks the opener origin during Clip Studio handoff", () => {
+  const fs = require("node:fs");
+  const path = require("node:path");
+  const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
+  const source = fs.readFileSync(path.join(__dirname, "..", "social-center.js"), "utf8");
+  assert.ok(html.includes('<option value="x">X</option>'));
+  assert.match(source, /event\.origin !== root\.location\.origin/);
+  assert.match(source, /event\.source !== root\.opener/);
+  assert.match(source, /AI_COMMERCE_SOCIAL_DESK_READY/);
+  assert.match(source, /AI_COMMERCE_CLIP_HANDOFF_ACK/);
+});

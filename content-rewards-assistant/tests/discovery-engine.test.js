@@ -317,6 +317,84 @@ test("ClipReward auto shortlist is wired into the radar and deep findings panel"
   assert.match(app, /analyzePublicCampaigns/);
   assert.match(app, /renderDeepCampaignAnalysis/);
   assert.match(app, /data-deep-open/);
-  assert.match(worker, /clipreward-static-v23/);
+  assert.match(worker, /clipreward-static-v24/);
   assert.match(worker, /discovery-engine\.js/);
+});
+
+
+test("historical leads absent from the latest official scan cannot remain Promising", () => {
+  const Scout = require("../campaign-scout.js");
+  const Rewards = require("../rewards-intelligence.js");
+  const url = "https://contentrewards.com/c/campaigns/historical-only";
+  const page = {
+    url,
+    status: "ok",
+    fetchedAt: "2026-11-01T00:00:00.000Z",
+    pageText: [
+      "Campaign: Historical YouTube Clips",
+      "Accepting clips",
+      "YouTube",
+      "Join Campaign",
+      "Per 1K views",
+      "$3.00",
+      "Min payout",
+      "$5.00",
+      "Max payout",
+      "$250.00",
+      "Budget",
+      "$500 / $2,000"
+    ].join("\n")
+  };
+  const result = Discovery.analyzePublicCampaigns([{
+    id: "historical-only",
+    title: "Historical YouTube Clips",
+    officialUrl: url,
+    notSeenInLatestScan: true,
+    lastSeenAt: "2026-10-31T00:00:00.000Z",
+    opportunity: { score: 92, status: "not-seen-in-latest-scan" }
+  }], [page], Scout, Rewards, "YouTube", { today: "2026-11-01" });
+  assert.equal(result.summary.analysed, 1);
+  assert.equal(result.summary.promising, 0);
+  assert.equal(result.summary.verify, 1);
+  assert.equal(result.summary.notSeenInLatestScanCount, 1);
+  assert.equal(result.campaigns[0].state, "verify");
+  assert.equal(result.campaigns[0].notSeenInLatestScan, true);
+  assert.match(result.campaigns[0].reasons.join(" "), /absent from the latest official Discover listing/i);
+});
+
+test("current official leads rank ahead of higher-scoring historical leads", () => {
+  const merged = Discovery.mergeHistory([
+    sample("old-high", {
+      opportunity: { score: 99, tier: "high", status: "needs-verification", expired: false, missing: [], confidence: "strong", explanation: "old" },
+      lastSeenAt: "2026-10-30T00:00:00.000Z"
+    })
+  ], [
+    sample("current-lower", {
+      opportunity: { score: 58, tier: "medium", status: "needs-verification", expired: false, missing: [], confidence: "partial", explanation: "current" },
+      lastSeenAt: "2026-11-01T00:00:00.000Z"
+    })
+  ], Date.parse("2026-11-01T00:00:00.000Z"));
+  assert.equal(merged.campaigns[0].id, "current-lower");
+  assert.equal(merged.campaigns[0].notSeenInLatestScan, false);
+  assert.equal(merged.campaigns[1].id, "old-high");
+  assert.equal(merged.campaigns[1].notSeenInLatestScan, true);
+});
+
+test("deep analysis keeps historical leads visible but counts them separately from current high-information leads", () => {
+  const appSource = fs.readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
+  assert.match(appSource, /row\.notSeenInLatestScan !== true && row\.opportunity/);
+  assert.match(appSource, /Historical lead · absent from the latest official Discover scan/);
+  assert.match(appSource, /notSeenInLatestScan/);
+});
+
+
+test("historical campaign count includes leads whose detail page is missing from the current snapshot", () => {
+  const result = Discovery.analyzePublicCampaigns([
+    { id: "current", title: "Current", officialUrl: "https://contentrewards.com/c/campaigns/current" },
+    { id: "history-a", title: "History A", officialUrl: "https://contentrewards.com/c/campaigns/history-a", notSeenInLatestScan: true },
+    { id: "history-b", title: "History B", officialUrl: "https://contentrewards.com/c/campaigns/history-b", opportunity: { status: "not-seen-in-latest-scan" } }
+  ], [], require("../campaign-scout.js"), require("../rewards-intelligence.js"), "Instagram", { today: "2026-11-01" });
+  assert.equal(result.summary.notSeenInLatestScanCount, 2);
+  assert.equal(result.summary.missingDetailCount, 3);
+  assert.equal(result.summary.analysed, 0);
 });

@@ -218,7 +218,7 @@
 .deep-analysis-heading h4{font-size:16px;margin:5px 0 3px;letter-spacing:-.3px}
 .deep-analysis-heading p{max-width:690px}
 .deep-analysis-icon{display:grid;place-items:center;flex:0 0 auto;width:34px;height:34px;border-radius:10px;background:#29254d;color:#b9adff;font-size:20px}
-.deep-analysis-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:12px 0}
+.deep-analysis-summary{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:12px 0}
 .deep-summary-chip{display:flex;align-items:center;gap:9px;min-width:0;padding:9px 10px;border:1px solid #2a3851;background:#0f1829;border-radius:9px}
 .deep-summary-chip strong{font-size:19px;line-height:1;color:#e9edfa}
 .deep-summary-chip small{font-size:10px;color:#9eabc3}

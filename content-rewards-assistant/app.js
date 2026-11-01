@@ -318,6 +318,7 @@
       ["Promising", summary.promising, "promising"],
       ["Verify", summary.verify, "verify"],
       ["Blocked", summary.blocked, "blocked"],
+      ["Historical / recheck", summary.notSeenInLatestScanCount || 0, "unknown"],
       ["Detail missing", summary.missingDetailCount + summary.unreadableDetailCount, "unknown"]
     ].map((item) => '<span class="deep-summary-chip deep-summary-' + item[2] + '"><strong>' + item[1] + '</strong><small>' + item[0] + '</small></span>').join("");
     const amountLabel = (amount) => amount && Number.isFinite(amount.value)
@@ -333,7 +334,11 @@
       const budget = row.budget && row.budget.remaining ? "Remaining " + amountLabel(row.budget.remaining) : "Remaining budget unknown";
       const minimum = row.minimumPayout ? "Min payout " + amountLabel(row.minimumPayout) : "";
       const missing = row.missing.length ? row.missing.slice(0, 3).join(" · ") : "No parser gaps detected; verify the full official brief.";
-      const staleNote = row.pageStatus === "stale" ? '<small class="deep-stale-note">Saved detail is stale — recheck the current campaign page.</small>' : "";
+      const staleNote = row.notSeenInLatestScan
+        ? '<small class="deep-stale-note">Historical lead · absent from the latest official Discover scan. Verify it is still accepting creators before applying.</small>'
+        : row.pageStatus === "stale"
+          ? '<small class="deep-stale-note">Saved detail is stale — recheck the current campaign page.</small>'
+          : "";
       return '<article class="deep-campaign-card deep-campaign-' + escapeHtml(row.state) + '">' +
         '<div class="deep-campaign-head"><strong>' + escapeHtml(row.title) + '</strong>' +
         '<span class="deep-state deep-state-' + escapeHtml(row.state) + '">' + escapeHtml(row.stateLabel) + '</span></div>' +
@@ -375,7 +380,9 @@
     const backendConfigured = Boolean(discoverySettings.backendUrl);
     const scheduledSnapshot = Boolean(discoveryStaticStatus && discoveryStaticStatus.lastScan);
     $("discovery-total").textContent = campaigns.length;
-    $("discovery-high").textContent = campaigns.filter((row) => row.opportunity && row.opportunity.tier === "high").length;
+    $("discovery-high").textContent = campaigns.filter((row) =>
+      row.notSeenInLatestScan !== true && row.opportunity && row.opportunity.tier === "high"
+    ).length;
     $("discovery-new").textContent = latest ? latest.newCount : "—";
     $("discovery-last-scan").textContent = latest ? new Date(latest.completedAt || latest.at).toLocaleString() : "Not scanned yet";
     $("discovery-mode").textContent = backendConfigured

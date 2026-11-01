@@ -708,7 +708,7 @@ test("version 2 backups preserve the three distinct settlement stages", () => {
   const restored = Core.parseBackup(backup);
   const record = restored.campaigns[0];
   assert.equal(record.paidAmount, 25);
-  assert.equal(record.paidAmountStage, "unknown");
+  assert.equal(record.paidAmountStage, "content-rewards-balance");
   assert.equal(record.withdrawnToWhopAmount, 20);
   assert.equal(record.whopPayoutAmount, 20);
   assert.equal(record.expectedPayoutAt, "2026-11-02T08:00:00.000Z");

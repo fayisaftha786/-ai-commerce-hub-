@@ -150,3 +150,14 @@ The radar keeps older leads for history, but if a campaign disappears from the l
 
 Read [the optional backend deployment and security guide](../docs/BACKEND.md) for the Node.js worker, persistent store, exact-origin CORS and read-only APIs. No account passwords, OTPs, cookies, tokens or private creator analytics are sent to the public feed or stored in the published snapshot.
 
+
+
+## Creator Operations — evidence, review and payout tracking
+
+The Creator Operations panel links operational evidence to each saved campaign. It records views with their source and capture time, the reward amount explicitly confirmed by the official campaign, the review decision timestamp and notes, payout state (unconfirmed, pending, available, partially paid, paid, or not eligible), the amount actually received, payment date and an optional transaction reference. The dashboard keeps **views**, **approved rewards**, **payout state** and **cash received** separate; values are not inferred from one another. Currency values are never added across different currencies.
+
+The app gives one-time in-page reminders when a recorded Content Rewards post is within five minutes and within one minute of its 30-minute link-submission deadline. These reminders run only while this page is open and its timer is active. They do not submit a clip, extend the deadline, or prove the official platform accepted the link.
+
+**Data boundary:** creator views and payout records are typed from the relevant official dashboard by the account owner. Public campaign scans do not include private creator analytics. Raw social-platform views are not automatically treated as eligible Content Rewards views. CPM and pool amounts are not forecast as confirmed income. The app does not approve clips, read private account status, initiate withdrawals, or sync Whop / bank balances. The payout ledger is a local evidence log, not an official financial statement or payout integration.
+
+Backup format is now version 2. Version 1 ClipReward backups continue to import; new fields default to “not recorded” rather than inventing historical figures. Campaign operations data is included in the normal ClipReward backup and in the main AI Commerce Hub backup when that workspace export is used.

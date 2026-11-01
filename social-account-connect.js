@@ -45,12 +45,33 @@
       }
     }
 
+    async function detectSameOriginBackend() {
+      const candidate = normalizeBackendOrigin(windowObject.location.origin || "");
+      if (!candidate) return false;
+      try {
+        const response = await windowObject.fetch(candidate + "/api/social/providers", {
+          method: "GET",
+          credentials: "omit",
+          cache: "no-store",
+          headers: { Accept: "application/json" }
+        });
+        if (!response.ok) return false;
+        const data = await response.json();
+        if (!data || !data.youtubeOAuth || data.youtubeOAuth.provider !== "youtube") return false;
+        backendOrigin = candidate;
+        originInput.value = candidate;
+        return true;
+      } catch (_) {
+        return false;
+      }
+    }
+
     async function refresh() {
       connectButton.disabled = true;
       disconnectButton.disabled = true;
       youtubeConfigured = false;
-      if (!backendOrigin) {
-        status("No private backend configured. GitHub Pages alone cannot run OAuth or store social tokens.");
+      if (!backendOrigin && !(await detectSameOriginBackend())) {
+        status("No same-origin private backend was detected. GitHub Pages is static; enter the HTTPS backend origin or deploy the app and API together.");
         return;
       }
 

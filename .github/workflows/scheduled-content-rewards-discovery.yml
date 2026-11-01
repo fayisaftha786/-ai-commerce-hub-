@@ -57,9 +57,16 @@ jobs:
         id: creator_scan
         run: node scripts/creator-program-discovery.js
 
+      - name: Restore last known-good creator snapshot before git operations
+        id: prepare_sources
+        if: ${{ always() && steps.creator_scan.outcome == 'failure' }}
+        run: |
+          git checkout -- creator-programs-snapshot.json
+          echo "::warning::Official creator-program checks were fully unavailable. The previous known-good snapshot is retained."
+
       - name: Commit latest scan snapshots
         id: snapshot
-        if: ${{ always() && steps.scan.outcome != 'skipped' }}
+        if: ${{ always() && steps.scan.outcome != 'skipped' && (steps.creator_scan.outcome == 'success' || steps.prepare_sources.outcome == 'success') }}
         env:
           CREATOR_SCAN_OUTCOME: ${{ steps.creator_scan.outcome }}
         run: |
@@ -110,13 +117,6 @@ jobs:
           }
           fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, lines.join("\n") + "\n");
           NODE
-
-      - name: Keep the last known-good creator snapshot if checks failed
-        id: prepare_sources
-        if: ${{ always() && steps.snapshot.outcome == 'success' && steps.creator_scan.outcome == 'failure' }}
-        run: |
-          git checkout -- creator-programs-snapshot.json
-          echo "::warning::Official creator-program checks were fully unavailable. The previous known-good snapshot is retained."
 
       - name: Warn when official creator-program checks are unavailable
         if: ${{ always() && steps.creator_scan.outcome == 'failure' }}

@@ -698,7 +698,7 @@ test("background page scan bootstraps on main changes but ignores snapshot-only 
   assert.match(pushBlock, /paths-ignore:\s*\n\s*- "content-rewards-assistant\/discovery-snapshot\.json"/);
   assert.match(workflow, /workflow_dispatch:/);
   assert.match(workflow, /campaign_url:/);
-  assert.match(workflow, /CAMPAIGN_URL:.*inputs\\.campaign_url/);
+  assert.ok(workflow.includes("CAMPAIGN_URL: ${{ inputs.campaign_url || '' }}"));
   assert.match(workflow, /Campaign URL to analyse/);
   assert.match(workflow, /cron: "17 \*\/6 \* \* \*"/);
 });

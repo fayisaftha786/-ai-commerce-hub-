@@ -83,6 +83,85 @@ function validateOpportunity(input) {
   };
 }
 
+
+const OFFICIAL_CREATOR_PROGRAMS = Object.freeze({
+  "youtube-ypp": {
+    platform: "youtube",
+    title: "YouTube Partner Program (YPP)",
+    sourceUrl: "https://support.google.com/youtube/answer/72851?hl=en-IN"
+  },
+  "youtube-expanded-ypp": {
+    platform: "youtube",
+    title: "Expanded YouTube Partner Program access",
+    sourceUrl: "https://support.google.com/youtube/answer/13429240?hl=en-IN"
+  },
+  "facebook-content-monetization": {
+    platform: "facebook",
+    title: "Facebook Creator Fast Track / Content Monetization",
+    sourceUrl: "https://about.fb.com/news/2026/03/creator-fast-track-grow-your-audience-earn-money-on-facebook/"
+  },
+  "instagram-creator-marketplace": {
+    platform: "instagram",
+    title: "Instagram Creator Marketplace",
+    sourceUrl: "https://about.fb.com/news/2024/02/creator-marketplace-for-brands-and-creators-to-collaborate-on-instagram/"
+  }
+});
+
+function createOfficialProgramOpportunity(source, snapshotGeneratedAt = "") {
+  if (!source || typeof source !== "object" || Array.isArray(source)) {
+    return { valid: false, error: "An official source record is required." };
+  }
+  const definition = OFFICIAL_CREATOR_PROGRAMS[cleanText(source.id, 80)];
+  if (!definition) return { valid: false, error: "This source is not in the approved creator-program registry." };
+  if (source.status !== "available") {
+    return { valid: false, error: "Only a reachable official source can be added for research." };
+  }
+  const sourceUrl = safeHttpsUrl(source.sourceUrl);
+  if (!sourceUrl || sourceUrl !== definition.sourceUrl) {
+    return { valid: false, error: "The source URL does not match the approved official programme reference." };
+  }
+
+  const evidence = Array.isArray(source.ruleEvidence) ? source.ruleEvidence.slice(0, 6) : [];
+  const evidenceLines = evidence.map((item) => {
+    if (!item || typeof item !== "object") return "";
+    const label = cleanText(item.label, 100);
+    const excerpt = cleanText(item.excerpt, 360);
+    const interpretation = cleanText(item.interpretation, 320);
+    return label && excerpt ? label + ": " + excerpt + (interpretation ? " — " + interpretation : "") : "";
+  }).filter(Boolean);
+  const pageTitle = cleanText(source.pageTitle, 180);
+  const accountCheck = cleanText(source.accountCheck, 160);
+  const limitation = cleanText(source.limitation, 320);
+  const checkedAt = cleanText(source.checkedAt, 40) || cleanText(snapshotGeneratedAt, 40);
+  const dateMatch = /^(\\d{4}-\\d{2}-\\d{2})/.exec(checkedAt);
+  const description = [
+    "Imported from the official public-source monitor. Source reachability is not proof of account eligibility, programme access or earnings.",
+    pageTitle ? "Official page: " + pageTitle + "." : "",
+    evidenceLines.length ? "Extracted public rule signals: " + evidenceLines.join(" | ") : "No structured public rule signal was extracted; review the complete official source.",
+    accountCheck ? "Account check: " + accountCheck + "." : "",
+    limitation ? "Limitations: " + limitation : ""
+  ].filter(Boolean).join(" ").slice(0, 1200);
+
+  return validateOpportunity({
+    id: "official-" + source.id,
+    title: definition.title,
+    platform: definition.platform,
+    description,
+    sourceUrl: definition.sourceUrl,
+    eligibility: "unknown",
+    payoutConfidence: "unknown",
+    risk: "unknown",
+    reward: null,
+    effortHours: null,
+    currency: "INR",
+    deadline: "",
+    sourceCheckedAt: dateMatch ? dateMatch[1] : "",
+    deliverables: [],
+    status: "open",
+    notes: "Research task auto-imported from an official public source. Confirm current rules, country availability and account-specific eligibility in the platform dashboard before treating this as an earning opportunity."
+  });
+}
+
 function deadlinePoints(deadline, now = new Date()) {
   if (!deadline) return null;
   const end = new Date(deadline + "T23:59:59");
@@ -177,6 +256,6 @@ function rankOpportunities(items, now = new Date()) {
     .map(entry => ({ ...entry.item, analysis: entry.result.analysis }));
 }
 
-const api = { INDIA_PROVIDER_REGISTRY, MAX_OPPORTUNITIES, validateOpportunity, analyzeOpportunity, createTaskPlan, summarizeEarnings, rankOpportunities };
+const api = { INDIA_PROVIDER_REGISTRY, MAX_OPPORTUNITIES, OFFICIAL_CREATOR_PROGRAMS, validateOpportunity, createOfficialProgramOpportunity, analyzeOpportunity, createTaskPlan, summarizeEarnings, rankOpportunities };
 if (typeof module !== "undefined" && module.exports) module.exports = api;
 if (typeof window !== "undefined") window.AIEarningEngine = api;

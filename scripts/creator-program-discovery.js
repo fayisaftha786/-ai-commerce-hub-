@@ -316,7 +316,7 @@ async function scanSources(options = {}) {
   return {
     schemaVersion: 1,
     country: "IN",
-    scope: "official-public-source-reachability-only",
+    scope: "official-public-source-reachability-and-limited-rule-extraction",
     generatedAt: new Date(now).toISOString(),
     status,
     summary: {

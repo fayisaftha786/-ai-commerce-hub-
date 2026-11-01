@@ -77,7 +77,7 @@ test("provider endpoint returns readiness without leaking credential values", as
     assert.equal(data.providers[0].configured, false);
     assert.equal(serialized.includes("sentinel-meta-secret-value"), false);
     assert.equal(serialized.includes("sentinel-google-secret-value"), false);
-    assert.match(data.note, /no accounts are connected/i);
+    assert.match(data.note, /Instagram and Facebook OAuth are not implemented yet/i);
   });
 });
 

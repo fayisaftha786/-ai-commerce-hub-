@@ -227,6 +227,45 @@ test("social API preflight allows credentialed requests only from configured app
   }, { env: { SOCIAL_CORS_ORIGINS: "https://app.example.com" } });
 });
 
+
+test("disconnect rejects requests without a browser-bound session", async () => {
+  const oauth = fakeYouTubeOAuth();
+  await withServer(async (base) => {
+    const response = await fetch(base + "/api/social/youtube/disconnect", {
+      method: "POST",
+      headers: {
+        Origin: "https://app.example.com",
+        "X-AI-Commerce-Action": "social-disconnect"
+      }
+    });
+    assert.equal(response.status, 403);
+    assert.equal(oauth.calls.filter((call) => call.action === "disconnect").length, 0);
+  }, { env: { SOCIAL_CORS_ORIGINS: "https://app.example.com" }, socialOAuthService: oauth });
+});
+
+test("YouTube OAuth readiness never returns configured credential values", async () => {
+  await withServer(async (base) => {
+    const response = await fetch(base + "/api/social/providers");
+    const body = await response.text();
+    assert.equal(response.status, 200);
+    assert.equal(body.includes("sentinel-google-secret-value"), false);
+    assert.equal(body.includes("SOCIAL_TOKEN_ENCRYPTION_KEY="), false);
+  }, {
+    env: {
+      GOOGLE_CLIENT_ID: "private-google-id",
+      GOOGLE_CLIENT_SECRET: "private-google-secret",
+      GOOGLE_REDIRECT_URI: "https://api.example.com/api/social/youtube/callback",
+      SOCIAL_TOKEN_ENCRYPTION_KEY: Buffer.alloc(32, 5).toString("base64"),
+      SOCIAL_TOKEN_STORE_PATH: "/tmp/unused-test-vault.json",
+      SOCIAL_CORS_ORIGINS: "https://app.example.com",
+      SOCIAL_RETURN_URL: "https://app.example.com/"
+    },
+    socialTokenVault: {
+      get() { return null; }, set() { return true; }, deleteProvider() { return false; }
+    }
+  });
+});
+
 test("rejects non-GET methods", async () => {
   await withServer(async (base) => {
     const response = await fetch(base + "/health", { method: "POST" });

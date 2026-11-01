@@ -240,7 +240,7 @@
 
 /* Creator operations and payout evidence ledger */
 .ops-panel{margin-top:17px;border-color:#47416f}
-.ops-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:14px 0}
+.ops-metrics{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px;margin:14px 0}
 .ops-metrics article{padding:13px;border:1px solid #33415e;border-radius:10px;background:#101a2c;min-width:0}
 .ops-metrics small,.ops-metrics strong{display:block}
 .ops-metrics small{font-size:9px;color:#9eacc4;line-height:1.4}
@@ -256,7 +256,7 @@
 .ops-form button{width:100%}
 .ops-ledger{min-width:0;padding:13px;border:1px solid #34415d;border-radius:12px;background:#0e1728}
 .ops-ledger-heading{margin-bottom:9px}
-.ops-table{min-width:680px}
+.ops-table{min-width:1080px}
 .ops-table td{font-size:10px}
 .ops-table td strong,.ops-source{display:block}
 .ops-source{font-size:9px;line-height:1.4;color:#8190aa;margin-top:3px;overflow-wrap:anywhere}

@@ -161,3 +161,19 @@ The app gives one-time in-page reminders when a recorded Content Rewards post is
 **Data boundary:** creator views and payout records are typed from the relevant official dashboard by the account owner. Public campaign scans do not include private creator analytics. Raw social-platform views are not automatically treated as eligible Content Rewards views. CPM and pool amounts are not forecast as confirmed income. The app does not approve clips, read private account status, initiate withdrawals, or sync Whop / bank balances. The payout ledger is a local evidence log, not an official financial statement or payout integration.
 
 Backup format is now version 2. Version 1 ClipReward backups continue to import; new fields default to “not recorded” rather than inventing historical figures. Campaign operations data is included in the normal ClipReward backup and in the main AI Commerce Hub backup when that workspace export is used.
+
+
+## Separate Content Rewards and Whop settlement stages
+
+The payout ledger now distinguishes three different events instead of calling all of them “paid”:
+
+1. **Content Rewards Balance credit** — the amount shown as received in the Content Rewards Earnings area. The old local fields `paidAmount` / `paidAt` are retained for backup compatibility, and the UI now labels them as CR balance credit.
+2. **Withdrawal to Whop Balance** — the amount and date shown after the creator moves money out of the Content Rewards balance into Whop. This has its own reference field.
+3. **Final Whop payout** — the amount/date shown by Whop as paid to the bank or selected payout method. This has separate fields and a separate reference.
+
+An expected payout date is only recorded when it is displayed by the official Earnings page. The app does not forecast settlement dates. Validation prevents recording a transfer larger than the prior recorded CR balance credit, and prevents recording a final Whop payout larger than the amount transferred to Whop. Partial transfers and payments remain possible.
+
+These fields are evidence manually entered from the respective official dashboards. They are not live integrations. Version 2 backups continue to round-trip and older version 1 backups remain importable; all additional settlement fields are optional for existing records.
+
+
+Legacy receipt safety: records created before the three-stage ledger may contain a generic “received” amount without identifying whether it was in Content Rewards Balance, Whop Balance or a bank account. Such records are kept intact but displayed as **legacy amount · destination unknown** and do not count as confirmed CR balance credits. Before recording a subsequent Whop transfer, explicitly confirm the earlier amount came from Content Rewards Balance. This avoids silently reclassifying historical amounts.

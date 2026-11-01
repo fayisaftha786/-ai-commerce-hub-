@@ -164,7 +164,16 @@
     <label>Target platform <span class="optional">(select one to filter the findings and autofill)</span><select id="scout-target-platform"><option value="Instagram">Instagram</option><option value="Facebook">Facebook</option><option value="YouTube">YouTube</option><option value="X">X</option></select></label>
     <label>Public campaign URL <span class="optional">(enter a Content Rewards public campaign page)</span><input id="scout-source-url" type="url" inputmode="url" maxlength="500" placeholder="https://contentrewards.com/c/campaigns/..."></label>
     <div class="scout-actions"><button class="button button-primary" id="scout-url-analyse-button" type="button">⌕ Analyse website automatically</button><button class="button button-quiet" id="scout-clear-button" type="button">Clear</button></div>
-    <p class="tiny-note">The app reads public campaign-page text saved by its scheduled scan (up to 60 pages from the official Discover listing, refreshed about every six hours). You do not need to copy or paste the page. A URL outside the latest public listing, or one that is private or needs sign-in, cannot be auto-read by this snapshot analyser.</p>
+    <p class="tiny-note">The app reads public campaign-page text saved by its scheduled scan (up to 60 pages from the official Discover listing, refreshed about every six hours). A public campaign outside that listing can be queued for an on-demand background scan below. Private, sign-in-only and non-Content Rewards URLs are not fetched.</p>
+    <div id="scout-on-demand-actions" class="account-warning" hidden>
+      <strong>This public URL is not in the latest saved scan.</strong>
+      <p id="scout-on-demand-help">Copy the URL and request an on-demand background scan.</p>
+      <div class="scout-actions">
+        <button class="button button-secondary" id="scout-copy-on-demand-url" type="button">Copy URL for scan</button>
+        <a class="button button-primary" id="scout-open-on-demand-workflow" href="https://github.com/fayisaftha786/-ai-commerce-hub-/actions/workflows/scheduled-content-rewards-discovery.yml" target="_blank" rel="noopener noreferrer">Open on-demand scanner ↗</a>
+      </div>
+      <p class="tiny-note">In GitHub Actions, choose <strong>Run workflow</strong>, paste the URL into <strong>Campaign URL to analyse</strong>, and run. After the scan and Pages deployment succeed, reload this app and analyse the same URL again. No GitHub token is stored in this app.</p>
+    </div>
     <details class="scout-manual-fallback"><summary>Optional fallback: analyse copied page text</summary>
       <label>Campaign page text <span class="optional">(only use this when public URL analysis is unavailable · up to 20,000 characters)</span><textarea id="scout-brief-text" rows="6" maxlength="20000" placeholder="Optional: paste visible campaign details here…"></textarea></label>
       <button class="button button-secondary" id="scout-paste-button" type="button">Paste & analyse brief</button>

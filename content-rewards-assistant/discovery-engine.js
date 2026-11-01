@@ -24,8 +24,10 @@
   function assessOpportunity(campaign, now) {
     const row = campaign && typeof campaign === "object" ? campaign : {};
     const payoutRows = Array.isArray(row.payouts) ? row.payouts : [];
-    const knownRate = payoutRows.some((item) => Number.isFinite(item && item.ratePerKViews));
-    const knownMinimum = payoutRows.some((item) => Number.isFinite(item && item.minViewsRequired));
+    const knownRate = payoutRows.some((item) => Number.isFinite(item && item.ratePerKViews) ||
+      Number.isFinite(item && item.flatAmount) || item && ["Pool", "Retainer"].includes(item.payoutModel));
+    const knownMinimum = payoutRows.some((item) => Number.isFinite(item && item.minViewsRequired) ||
+      Number.isFinite(item && item.minPayout && item.minPayout.value));
     const knownCap = payoutRows.some((item) => Number.isFinite(item && item.maxPayoutPerSubmission));
     const hasDeadline = Boolean(row.deadline || row.endDate);
     const hasSource = Boolean(row.source || row.sourceUrl || row.officialUrl);
@@ -48,8 +50,8 @@
     if (expired) score -= 35;
     score = Math.max(0, Math.min(100, score));
     const missing = [];
-    if (!knownRate) missing.push("Reward rate");
-    if (!knownMinimum) missing.push("Minimum views");
+    if (!knownRate) missing.push("Payout model / rate");
+    if (!knownMinimum) missing.push("Minimum payout or view threshold");
     if (!knownCap) missing.push("Maximum payout");
     if (!hasDeadline) missing.push("Deadline");
     if (!hasSource) missing.push("Source link");

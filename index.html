@@ -395,16 +395,17 @@
       <div class="social-status notice">
         <strong>Social account connection</strong>
         <p>Use the private HTTPS backend for Google OAuth. Your Google password is entered only on Google's consent screen. OAuth tokens are stored encrypted on the backend, never in this browser or GitHub Pages. Instagram and Facebook OAuth are not enabled in this version.</p>
-        <label for="socialBackendOrigin">Private backend HTTPS origin
-          <input id="socialBackendOrigin" type="url" maxlength="300" inputmode="url" placeholder="https://your-private-backend.example">
+        <label for="socialBackendOrigin">Private backend HTTPS origin (optional when hosted together)
+          <input id="socialBackendOrigin" type="url" maxlength="300" inputmode="url" placeholder="Auto-detected on same-origin hosting">
         </label>
+        <p class="hint">Same-origin hosting is detected automatically. When using the GitHub Pages version, enter the separate private backend HTTPS origin here.</p>
         <div class="form-grid">
-          <button id="saveSocialBackend" type="button" class="secondary">Save backend & check</button>
+          <button id="saveSocialBackend" type="button" class="secondary">Save separate backend & check</button>
           <button id="connectYouTubeAccount" type="button" disabled>Connect YouTube with Google</button>
           <button id="disconnectYouTubeAccount" type="button" class="secondary" disabled>Disconnect YouTube</button>
         </div>
-        <p id="socialAccountConnectionStatus" role="status" aria-live="polite">No private backend configured. GitHub Pages alone cannot run OAuth or store social tokens.</p>
-        <p class="hint">YouTube connection requests read-only channel identification and upload permission. Publishing is not included in this connection step. For reliable browser sessions, host the app and API on the same site or use a custom domain; some browsers block third-party cookies across GitHub Pages and a separate backend host.</p>
+        <p id="socialAccountConnectionStatus" role="status" aria-live="polite">Checking for a secure same-origin backend…</p>
+        <p class="hint">This connection requests read-only channel identification only. Upload permission will be requested separately if a reviewed upload workflow is added. For reliable browser sessions, host the app and API on the same site or use a custom domain; some browsers block third-party cookies across GitHub Pages and a separate backend host.</p>
       </div>
       <div class="form-grid">
         <label for="socialPlatform">Target platform

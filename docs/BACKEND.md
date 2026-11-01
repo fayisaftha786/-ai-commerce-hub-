@@ -86,6 +86,47 @@ The optional private Node.js discovery backend is a separate server integration;
 The default GitHub Actions scheduled snapshot does not require this optional backend. The current environment has not deployed the Node.js backend to a hosting provider. Until a separate server is deployed and configured, advanced server-only integrations remain unavailable; the public snapshot schedule continues through GitHub Actions.
 
 
+## One-origin Docker deployment (recommended for OAuth)
+
+The backend can serve the same tested static asset bundle and API on one HTTPS origin. This avoids relying on third-party cookies between GitHub Pages and a separate API host. GitHub Pages remains the public static deployment; the single-origin Docker service is the recommended path for a persistent browser-bound YouTube OAuth session.
+
+### Deploy the repository on Railway
+
+1. Create a Railway project and add a service connected to this GitHub repository's `main` branch. The root `Dockerfile` is auto-detected and starts `node server.js`.
+2. In the service's **Volumes** settings, attach a persistent volume mounted at `/data`. Do not skip this: OAuth tokens are encrypted, but the token-vault file must survive deployments and restarts.
+3. Generate a public HTTPS domain in the service's networking settings. Railway injects the listening `PORT` value; the app binds to all interfaces in production.
+4. Add these service variables, replacing `<service-domain>` with the exact generated hostname:
+   - `NODE_ENV=production`
+   - `SERVE_STATIC_APP=true`
+   - `STATIC_SITE_DIR=/tmp/ai-commerce-hub-site`
+   - `SOCIAL_TOKEN_STORE_PATH=/data/social-token-vault.json`
+   - `SOCIAL_CORS_ORIGINS=https://<service-domain>`
+   - `SOCIAL_RETURN_URL=https://<service-domain>/`
+   - `SOCIAL_COOKIE_SAMESITE=Lax`
+   - `GOOGLE_REDIRECT_URI=https://<service-domain>/api/social/youtube/callback`
+   - `SOCIAL_TOKEN_ENCRYPTION_KEY=<new base64 32-byte key>`
+   - `GOOGLE_CLIENT_ID=<Google OAuth web client ID>`
+   - `GOOGLE_CLIENT_SECRET=<Google OAuth web client secret>`
+   - `DISCOVERY_SCHEDULER_ENABLED=false` (GitHub Actions owns the scheduled Content Rewards public snapshot)
+5. Generate the encryption key on a trusted machine with `openssl rand -base64 32`. Paste it only into the hosting provider's private variable manager. Do not put it in GitHub, the app UI or this chat. Back up the key separately from the encrypted volume data.
+6. In Google Cloud, enable YouTube Data API v3, configure the OAuth consent screen, create a **Web application** OAuth client and register the exact `GOOGLE_REDIRECT_URI` above. Add your own Google account as a test user while validating. Never use an Android/iOS client ID for this server callback.
+7. Configure the host's healthcheck path as `/health`. After deploy, open the service domain: the full AI Commerce Hub should load. The Social Media Desk automatically detects the same-origin API; no separate backend origin needs to be pasted.
+8. Check `/api/social/providers` for readiness, then use **Connect YouTube with Google**. Complete Google's consent screen and verify that the app shows the channel name. A green health endpoint alone does not mean OAuth is configured or a channel is connected.
+
+Railway supports deploying a GitHub repository and auto-detects a root `Dockerfile`; its persistent volumes are mounted at runtime, so token storage belongs on the mounted path rather than in the image build. Review the hosting plan's current compute, volume and backup terms before relying on it. [Railway GitHub deployment and Dockerfile docs](https://docs.railway.com/services) · [Railway persistent volumes](https://docs.railway.com/volumes).
+
+### Why this is one origin
+
+- The app and API share the same HTTPS host, so the browser session cookie is first-party; production uses `HttpOnly; Secure; SameSite=Lax`.
+- The service worker explicitly bypasses `/api/*` and `/health`. OAuth connection status and API responses are never cached as offline app assets.
+- The server publishes only the bundle assembled by `scripts/pages-build.js`; backend source files, environment files, tests and documentation are not served from the static root.
+- The encrypted token vault uses `/data`; the generated static bundle uses `/tmp` and is rebuilt on each container start.
+- Keep the service to one replica until pending OAuth state is moved from process memory to a shared expiring store. A callback routed to a different replica or after a restart will fail safely.
+
+### Google OAuth test-mode limitation
+
+A Google OAuth project with an **External** audience and publishing status **Testing** issues refresh tokens that expire after seven days for scopes such as YouTube access. Testing is useful for a private account-connection trial, but it is not a durable production configuration. For broader use, complete Google's applicable OAuth verification/publishing requirements before relying on persistent refresh tokens. [Google OAuth token lifetime in Testing](https://developers.google.com/identity/protocols/oauth2) · [Google OAuth production verification](https://developers.google.com/identity/protocols/oauth2/policies).
+
 ## YouTube OAuth connection — first provider vertical slice
 
 The private backend now implements an authorization-code connection for YouTube. It is separate from GitHub Pages; the static site never receives a Google client secret, access token, or refresh token.
@@ -99,8 +140,7 @@ The private backend now implements an authorization-code connection for YouTube.
 5. Copy the client ID and secret only into the backend host's private environment variables. Never commit them or enter them in the browser.
 
 The flow requests only:
-- https://www.googleapis.com/auth/youtube.readonly — identify the authorized channel.
-- https://www.googleapis.com/auth/youtube.upload — prepare for future authorized video-upload work.
+- https://www.googleapis.com/auth/youtube.readonly — identify the authorized channel. It does not request upload or publishing permission in this release.
 
 The flow uses a random, one-use state, PKCE S256, offline access, exact HTTPS redirect configuration and a browser-session cookie. Callback codes are exchanged server-side. The server reads the channel list with the returned bearer token and stores the access/refresh token only inside an AES-256-GCM encrypted vault. API responses return channel metadata and connection status only, never token values.
 
@@ -122,13 +162,13 @@ Deploy a single backend instance initially with a persistent private disk. Pendi
 4. In Social Media Desk → Social account connection, enter the backend origin and tap Save backend & check.
 5. When readiness is complete, tap Connect YouTube with Google, review the Google permission screen, and return to the app. Use Disconnect YouTube to remove the encrypted connection record.
 
-The API uses an HttpOnly, Secure, SameSite=None browser session cookie in production and credentialed CORS restricted to the configured exact origin. Some browsers block third-party cookies between GitHub Pages and a separately hosted backend; a same-site custom domain or serving the app and API from the same site is recommended for reliable sessions. The app shows an explicit backend/cookie error rather than claiming a connection.
+In the same-origin Docker deployment, the API uses an HttpOnly, Secure, SameSite=Lax cookie and the app detects the API automatically. For the separate GitHub Pages + backend arrangement, configure an exact CORS origin and SameSite=None; third-party-cookie restrictions may still prevent reliable browser-session recognition. The app shows an explicit backend/cookie error rather than claiming a connection.
 
 ### Current boundaries
 
 - This is a YouTube connection slice only. Instagram Login and Facebook Pages OAuth are not implemented in this release; configuration readiness for those providers is not a connection.
 - A successful connection confirms Google consent and an authorized YouTube channel. It does not grant YouTube Partner Program eligibility or confirm monetization/payout status.
-- The upload scope is requested, but this release does not upload or publish videos. Upload/publishing needs its own endpoint, content review/approval, format checks, resumable upload handling and real platform-response tests.
+- YouTube upload permission is not requested and this release does not upload or publish videos. A future upload feature must add a dedicated endpoint, explicit consent for the extra scope, content review/approval, format checks, resumable upload handling and real platform-response tests.
 - The connection is attached to an opaque browser session, not an app user account. Clearing cookies, using another browser/device, or losing the session means the connection will not be visible there. No cloud account sync exists.
 - Access and refresh tokens are encrypted at rest. The server must remain HTTPS, the host disk and environment variables must be private, and backups must protect both the encrypted file and the encryption key separately.
 - Google can revoke tokens or require re-consent. Expired tokens are refreshed when possible; otherwise the app shows reconnect_required.

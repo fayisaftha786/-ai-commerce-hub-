@@ -24,13 +24,18 @@ function makeWindow(options = {}) {
       getItem(key) { return values.get(key) || ""; },
       setItem(key, value) { values.set(key, value); }
     },
-    location: { href: "https://app.example.com/", assigned: "", assign(value) { this.assigned = value; } },
+    location: {
+      href: options.href || "https://app.example.com/",
+      origin: new URL(options.href || "https://app.example.com/").origin,
+      assigned: "",
+      assign(value) { this.assigned = value; }
+    },
     history: { replaceState() {} },
     URL,
     fetch: async (url, init) => {
       requests.push({ url, init });
       if (url.endsWith("/api/social/providers")) {
-        return { ok: true, async json() { return { youtubeOAuth: { configured: options.configured === true, missing: options.missing || ["GOOGLE_CLIENT_ID"] } }; } };
+        return { ok: true, async json() { return { youtubeOAuth: { provider: "youtube", configured: options.configured === true, missing: options.missing || ["GOOGLE_CLIENT_ID"] } }; } };
       }
       if (url.endsWith("/api/social/connections")) {
         return { ok: true, async json() { return { connections: [{ provider: "youtube", status: options.connectionStatus || "not_connected", channelTitle: "Creator channel" }] }; } };
@@ -98,4 +103,32 @@ test("disconnect sends only the expected action header with credentialed request
   assert.equal(request.init.method, "POST");
   assert.equal(request.init.credentials, "include");
   assert.equal(request.init.headers["X-AI-Commerce-Action"], "social-disconnect");
+});
+
+test("automatically detects a private backend hosted on the same origin as the app", async () => {
+  const fixture = makeWindow({ configured: true });
+  connector.init(fixture.windowObject);
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(fixture.nodes.get("socialBackendOrigin").value, "https://app.example.com");
+  assert.equal(fixture.nodes.get("connectYouTubeAccount").disabled, false);
+  assert.ok(fixture.requests.some((item) => item.url === "https://app.example.com/api/social/providers"));
+  fixture.nodes.get("connectYouTubeAccount").events.click();
+  assert.equal(fixture.windowObject.location.assigned, "https://app.example.com/api/social/youtube/connect");
+});
+
+test("does not assume GitHub Pages is a backend when same-origin API is missing", async () => {
+  const fixture = makeWindow({ configured: true });
+  const originalFetch = fixture.windowObject.fetch;
+  fixture.windowObject.fetch = async (url, init) => {
+    if (url.endsWith("/api/social/providers") && url.startsWith("https://pages.example.com")) {
+      return { ok: false, status: 404 };
+    }
+    return originalFetch(url, init);
+  };
+  fixture.windowObject.location.href = "https://pages.example.com/-ai-commerce-hub-/";
+  fixture.windowObject.location.origin = "https://pages.example.com";
+  connector.init(fixture.windowObject);
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(fixture.nodes.get("connectYouTubeAccount").disabled, true);
+  assert.match(fixture.nodes.get("socialAccountConnectionStatus").textContent, /enter the HTTPS backend origin|GitHub Pages is static/i);
 });

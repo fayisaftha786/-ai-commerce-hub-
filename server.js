@@ -5,6 +5,7 @@ const { getProviderReadiness } = require("./social-provider-readiness.js");
 const { createFileStore } = require("./discovery-store.js");
 const { createDiscoveryService } = require("./discovery-service.js");
 const { createYouTubeOAuthService } = require("./youtube-oauth.js");
+const { createStaticSite } = require("./static-site.js");
 
 function sendJson(response, statusCode, payload, extraHeaders = {}) {
   const body = JSON.stringify(payload);
@@ -74,10 +75,15 @@ function parseCookie(request, name) {
 }
 
 function buildSessionCookie(sessionId, env = process.env) {
-  const secure = env.NODE_ENV === "production" || env.SOCIAL_COOKIE_SECURE === "true";
+  const productionSecure = env.NODE_ENV === "production" || env.SOCIAL_COOKIE_SECURE === "true";
+  const requestedSameSite = String(env.SOCIAL_COOKIE_SAMESITE || (productionSecure ? "None" : "Lax"));
+  const sameSite = requestedSameSite === "None" || requestedSameSite === "Lax"
+    ? requestedSameSite
+    : "Lax";
+  const secure = productionSecure || sameSite === "None";
   const name = socialSessionCookieName(env);
   return name + "=" + sessionId + "; Path=/; Max-Age=2592000; HttpOnly; SameSite=" +
-    (secure ? "None; Secure" : "Lax");
+    sameSite + (secure ? "; Secure" : "");
 }
 
 function socialRedirect(response, url, setCookie = "") {
@@ -111,6 +117,13 @@ function createServer(options = {}) {
     fetchImpl: options.socialFetchImpl || options.fetchImpl,
     now: options.now
   });
+  const ownsStaticSite = !options.staticSite && env.SERVE_STATIC_APP === "true";
+  const staticSite = options.staticSite || (ownsStaticSite
+    ? createStaticSite({
+      rootDir: options.staticRootDir || __dirname,
+      outputDir: env.STATIC_SITE_DIR
+    })
+    : null);
   const server = http.createServer(async (request, response) => {
     const pathname = new URL(request.url ?? "/", "http://localhost").pathname;
 
@@ -260,23 +273,40 @@ function createServer(options = {}) {
       }
     }
 
-    if (request.method !== "GET") {
-      response.setHeader("allow", "GET");
-      return sendJson(response, 405, { error: "method_not_allowed" });
-    }
-
     if (pathname === "/health") {
-      return sendJson(response, 200, {
+      if (!["GET", "HEAD"].includes(request.method)) {
+        response.setHeader("allow", "GET, HEAD");
+        return sendJson(response, 405, { error: "method_not_allowed" });
+      }
+      const payload = {
         ok: true,
         service: "ai-commerce-hub-social-api",
-        oauthImplemented: true
-      });
+        oauthImplemented: true,
+        staticAppServed: Boolean(staticSite)
+      };
+      if (request.method === "HEAD") {
+        response.writeHead(200, {
+          "content-type": "application/json; charset=utf-8",
+          "cache-control": "no-store",
+          "x-content-type-options": "nosniff"
+        });
+        return response.end();
+      }
+      return sendJson(response, 200, payload);
+    }
+
+    if (staticSite && staticSite.handle(request, response)) return;
+
+    if (request.method !== "GET") {
+      response.setHeader("allow", "GET, HEAD");
+      return sendJson(response, 405, { error: "method_not_allowed" });
     }
 
     return sendJson(response, 404, { error: "not_found" });
   });
 
   if (ownsDiscoveryService) server.on("close", () => discoveryService.stop());
+  if (ownsStaticSite) server.on("close", () => staticSite.dispose());
   if (env.DISCOVERY_SCHEDULER_ENABLED === "true") discoveryService.start();
   return server;
 }

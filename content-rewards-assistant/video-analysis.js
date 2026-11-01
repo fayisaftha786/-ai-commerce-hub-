@@ -8,6 +8,7 @@
   const MAX_SOURCE_BYTES = 150 * 1024 * 1024;
   const MAX_NOTES_CHARS = 2500;
   const MAX_TRANSCRIPT_CHARS = 12000;
+  const MAX_SCENE_SAMPLES = 60;
 
   function clean(value, max) {
     return String(value == null ? "" : value).replace(/\r/g, "").trim().slice(0, max || 2000);
@@ -154,7 +155,7 @@
     if (!context) throw new Error("Scene detection is not supported by this browser's canvas.");
     if (video.readyState < 2) await waitFor(video, "loadeddata", environment, "the first video frame");
 
-    const sampleCount = Math.min(90, Math.max(2, Math.ceil(duration / 1.5) + 1));
+    const sampleCount = Math.min(MAX_SCENE_SAMPLES, Math.max(2, Math.ceil(duration / 1.5) + 1));
     const end = Math.max(0, duration - 0.08);
     const samples = [];
     for (let index = 0; index < sampleCount; index += 1) {
@@ -350,7 +351,7 @@
   }
 
   return Object.freeze({
-    MAX_SOURCE_BYTES, MAX_NOTES_CHARS, MAX_TRANSCRIPT_CHARS,
+    MAX_SOURCE_BYTES, MAX_NOTES_CHARS, MAX_TRANSCRIPT_CHARS, MAX_SCENE_SAMPLES,
     validateSourceVideo, formatDuration, classifyAspect, colorHistogram, histogramDistance,
     buildSceneMap, sampleSceneChanges, srtTimestamp, buildSrt, analyzeVideoFile,
     normalizePlatform, buildPostPackage

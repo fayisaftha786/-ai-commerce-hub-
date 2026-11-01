@@ -171,7 +171,9 @@
     if (detail.length < 5) throw new Error("Add the video's key points or a transcript. The app will not guess what the footage shows.");
     const cta = language === "ml"
       ? "കൂടുതൽ വിവരങ്ങൾക്ക് കമന്റ് ചെയ്യൂ; ഉപകാരപ്പെട്ടാൽ സേവ് ചെയ്യൂ."
-      : "Save this for later and share your question or experience in the comments.";
+      : language === "both"
+        ? "Save this for later and share your experience. · ഉപകാരപ്പെട്ടാൽ സേവ് ചെയ്യൂ; അഭിപ്രായം പങ്കുവെക്കൂ."
+        : "Save this for later and share your question or experience in the comments.";
     const disclosureText = disclosure ? "\n\n" + disclosure : "";
     const mentions = tagsFromRules(campaignRules, "Mentions");
     const requiredHashtags = tagsFromRules(campaignRules, "Hashtags");
@@ -179,7 +181,7 @@
       platform === "Instagram" || platform === "Facebook" ? ["#Reels"] : [];
     const hashtags = unique(requiredHashtags.concat(topicHashtags(topic), platformTags)).slice(0, 12);
     const captionBody = topic + "\n\n" + detail + "\n\n" + cta + disclosureText;
-    const caption = [captionBody, hashtags.join(" ")].filter(Boolean).join("\n\n");
+    const caption = [captionBody, hashtags.join(" "), mentions.join(" ")].filter(Boolean).join("\n\n");
     const title = topic.length > 95 ? topic.slice(0, 92).trimEnd() + "..." : topic;
     const warnings = [];
     if (!campaignRules) warnings.push("No saved campaign rules were linked to this package. Check the live brief before posting.");

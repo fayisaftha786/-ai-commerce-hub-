@@ -207,3 +207,66 @@ test("minimum payout threshold is separate from minimum views", () => {
   assert.equal(result.minimumViews, null);
   assert.equal(result.checks.find((item) => item.label === "Minimum payout threshold").status, "pass");
 });
+
+test("current CPM cards can use a platform-specific minimum payout when no minimum view count is displayed", () => {
+  const result = Engine.assessCampaign({
+    platform: "YouTube",
+    today: "2026-11-01",
+    brief: brief({
+      deadline: "",
+      campaignStatus: "Appears live in copied text",
+      entryMode: "Open campaign / direct join",
+      minimumViews: null,
+      minimumPayout: { value: 5, currency: "USD" },
+      platformMinimumPayouts: [
+        { platform: "Instagram", amount: { value: 2, currency: "USD" } },
+        { platform: "YouTube", amount: { value: 5, currency: "USD" } }
+      ],
+      platformRates: [
+        { platform: "Instagram", model: "CPM", label: "$2 per 1K views", amount: { value: 2, currency: "USD" } },
+        { platform: "YouTube", model: "CPM", label: "$3 per 1K views", amount: { value: 3, currency: "USD" } }
+      ],
+      platformCaps: [{ platform: "YouTube", amount: { value: 250, currency: "USD" } }],
+      platformMinimumViews: []
+    })
+  });
+  assert.equal(result.state, "promising");
+  assert.equal(result.rate.amount.value, 3);
+  assert.equal(result.minimumPayout.value, 5);
+  assert.equal(result.acceptingWithoutDeadline, true);
+  assert.equal(result.checks.find((item) => item.label === "Minimum views").status, "not-applicable");
+  assert.equal(result.checks.find((item) => item.label === "Minimum payout threshold").status, "pass");
+  assert.ok(result.reasons.some((item) => /no fixed closing date/i.test(item)));
+});
+
+test("Pool campaigns require visible pool size, split basis and payout timing before a promising assessment", () => {
+  const complete = Engine.assessCampaign({
+    platform: "Instagram",
+    today: "2026-11-01",
+    brief: brief({
+      rate: { model: "Pool", amount: null, label: "Pool — shared allocation" },
+      minimumViews: null,
+      minimumPayout: null,
+      capPerClip: null,
+      pool: {
+        amount: { value: 25000, currency: "USD" },
+        splitBy: "Views",
+        paidWhen: "When the pool ends"
+      }
+    })
+  });
+  assert.equal(complete.state, "promising");
+  assert.equal(complete.checks.find((item) => item.label === "Pool allocation terms").status, "pass");
+  assert.equal(complete.payout.amountKnown, false);
+
+  const incomplete = Engine.assessCampaign({
+    platform: "Instagram",
+    today: "2026-11-01",
+    brief: brief({
+      rate: { model: "Pool", amount: null, label: "Pool — shared allocation" },
+      pool: { amount: { value: 25000, currency: "USD" }, splitBy: "", paidWhen: "" }
+    })
+  });
+  assert.equal(incomplete.state, "verify");
+  assert.equal(incomplete.checks.find((item) => item.label === "Pool allocation terms").status, "unknown");
+});

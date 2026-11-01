@@ -35,7 +35,7 @@ function makeWindow(options = {}) {
     fetch: async (url, init) => {
       requests.push({ url, init });
       if (url.endsWith("/api/social/providers")) {
-        return { ok: true, async json() { return { youtubeOAuth: { configured: options.configured === true, missing: options.missing || ["GOOGLE_CLIENT_ID"] } }; } };
+        return { ok: true, async json() { return { youtubeOAuth: { provider: "youtube", configured: options.configured === true, missing: options.missing || ["GOOGLE_CLIENT_ID"] } }; } };
       }
       if (url.endsWith("/api/social/connections")) {
         return { ok: true, async json() { return { connections: [{ provider: "youtube", status: options.connectionStatus || "not_connected", channelTitle: "Creator channel" }] }; } };

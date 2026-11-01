@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "ai-commerce-hub-pwa-v10";
+const CACHE_NAME = "ai-commerce-hub-pwa-v11";
 const ASSET_PATHS = [
   "./",
   "./index.html", "./content-rewards-assistant/core.js",
@@ -56,6 +56,10 @@ self.addEventListener("fetch", (event) => {
   const requestUrl = new URL(request.url);
   const scopeUrl = self.registration.scope;
   if (requestUrl.origin !== self.location.origin || !requestUrl.href.startsWith(scopeUrl)) return;
+
+  const scopePath = new URL(scopeUrl).pathname;
+  const appRelativePath = requestUrl.pathname.slice(scopePath.length);
+  if (appRelativePath === "health" || appRelativePath === "api" || appRelativePath.startsWith("api/")) return;
 
   event.respondWith((async () => {
     const cache = await caches.open(CACHE_NAME);

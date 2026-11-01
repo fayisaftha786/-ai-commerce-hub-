@@ -173,7 +173,10 @@ test("scores current minimum-payout CPM and recognised pool campaigns without in
 
   const pool = Discovery.assessOpportunity(sample("pool", {
     payouts: [{ platform: "Instagram", payoutModel: "Pool", ratePerKViews: null, minViewsRequired: null, maxPayoutPerSubmission: null }],
-    pool: { amount: { value: 25000, currency: "USD" }, splitBy: "Views", paidWhen: "When the pool ends" }
+    pool: { amount: { value: 25000, currency: "USD" }, splitBy: "Views", paidWhen: "When the pool ends" },
+    campaignStatus: "Appears live in copied text"
   }), Date.parse("2026-11-01T00:00:00Z"));
   assert.ok(!pool.missing.includes("Payout model / rate"));
+  assert.ok(!pool.missing.includes("Per-clip maximum or pool allocation rules"));
+  assert.ok(!pool.missing.includes("Deadline or current accepting status"));
 });

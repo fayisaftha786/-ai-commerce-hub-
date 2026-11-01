@@ -389,8 +389,9 @@
       missingDetailCount,
       unreadableDetailCount,
       parserFailureCount,
-      notSeenInLatestScanCount: analysed.filter((item) => item.notSeenInLatestScan).length,
-      staleDetailCount: analysed.filter((item) => item.pageStatus === "stale").length,
+      notSeenInLatestScanCount: rows.filter((row) => row && (row.notSeenInLatestScan === true ||
+        (row.opportunity && row.opportunity.status === "not-seen-in-latest-scan"))).length,
+      staleDetailCount: pages.filter((page) => page && page.status === "stale").length,
       platform: target,
       checkedAt: new Date().toISOString()
     };

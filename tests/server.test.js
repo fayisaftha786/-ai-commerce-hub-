@@ -408,3 +408,16 @@ test("single-origin mode serves only the assembled public app and keeps API rout
     fs.rmSync(directory, { recursive: true, force: true });
   }
 });
+
+test("Docker deployment defaults to same-origin app/API serving and private persistent token storage", () => {
+  const dockerfile = fs.readFileSync(path.join(__dirname, "..", "Dockerfile"), "utf8");
+  const ignore = fs.readFileSync(path.join(__dirname, "..", ".dockerignore"), "utf8");
+  assert.match(dockerfile, /FROM node:24-alpine/);
+  assert.match(dockerfile, /SERVE_STATIC_APP=true/);
+  assert.match(dockerfile, /SOCIAL_COOKIE_SAMESITE=Lax/);
+  assert.match(dockerfile, /SOCIAL_TOKEN_STORE_PATH=\/data\/social-token-vault\.json/);
+  assert.match(dockerfile, /CMD \["node", "server\.js"\]/);
+  assert.match(ignore, /^\.env\n\.env\.\*/m);
+  assert.match(ignore, /^\.data$/m);
+  assert.match(ignore, /^\.git$/m);
+});

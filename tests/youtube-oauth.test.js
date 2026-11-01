@@ -56,6 +56,10 @@ test("requires HTTPS callback, a return origin in the CORS allowlist and an encr
   assert.ok(service.getReadiness().missing.includes("SOCIAL_TOKEN_ENCRYPTION_KEY"));
 });
 
+test("requests only read-only channel identification until a real upload endpoint exists", () => {
+  assert.deepEqual(REQUIRED_SCOPES, ["https://www.googleapis.com/auth/youtube.readonly"]);
+});
+
 test("builds a Google OAuth URL with minimal YouTube scopes, state and PKCE", () => {
   const service = createYouTubeOAuthService({ env: ENV, tokenVault: makeStore(), now: () => 1000 });
   const result = service.createAuthorizationRequest();

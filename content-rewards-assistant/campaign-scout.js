@@ -543,7 +543,7 @@
 
     const missing = [];
     if (!title) missing.push("Campaign title not reliably identified — check the heading on the official page");
-    if (!rate) missing.push("Payout model / rate not recognised");
+    if (!campaignRate) missing.push("Payout model / rate not recognised");
     if (!budget || !budget.remaining) missing.push("Remaining campaign budget not recognised — check the live campaign card");
     if (!platforms.length) missing.push("Accepted platform not recognised — verify the campaign configuration");
     if (platformMatch === "mismatch") missing.push(requestedPlatform + " is not listed as accepted or is explicitly excluded");
@@ -565,7 +565,7 @@
     const confidence = coverageScore >= 85 ? "Strong field coverage" : coverageScore >= 55 ? "Partial field coverage" : "Limited field coverage";
 
     return {
-      title, sourceUrl, requestedPlatform, platformMatch, deadline, entryMode, rate, budget,
+      title, sourceUrl, requestedPlatform, platformMatch, deadline, entryMode, budget,
       platforms, excludedPlatforms, unsupportedPlatforms, category, requirementLines, findings, missing,
       confidence, coverageScore, campaignType, campaignStatus, rate: campaignRate, capPerClip, minimumViews, maximumViews,
       minimumFollowers, duration, creativeFormat, languages, hashtags, mentions, platformRates,

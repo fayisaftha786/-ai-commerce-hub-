@@ -250,6 +250,8 @@
     const acceptingWithoutDeadline = !brief.deadline &&
       brief.campaignStatus === "Appears live in copied text" &&
       brief.entryMode === "Open campaign / direct join";
+    const poolTermsComplete = !rate || rate.model !== "Pool" ||
+      Boolean(brief.pool && brief.pool.amount && brief.pool.splitBy && brief.pool.paidWhen);
     const payout = payoutGuidance(rate, brief.budget, capPerClip, minimumPayout);
     const requirements = inferBriefRequirements(brief);
 
@@ -262,13 +264,15 @@
       if (!brief.entryMode) reasons.push("Open / application / private access route is not known.");
       if (rate && rate.model === "CPM" && !capPerClip) reasons.push("CPM maximum per clip is not recognised.");
       if (rate && rate.model === "CPM" && !hasCpmSettlementThreshold) reasons.push("CPM minimum payout or minimum-view threshold is not recognised.");
+      if (rate && rate.model === "Pool" && !poolTermsComplete) reasons.push("The shared pool total, allocation basis or payout timing is incomplete; confirm all three on the official campaign page.");
       if (brief.minimumFollowers != null) reasons.push("Confirm that your selected posting account meets the stated follower threshold.");
       if (brief.hiddenRequirements && brief.hiddenRequirements.locked) reasons.push("The full creator requirements are still hidden until you join; this visible-page analysis cannot clear those rules.");
       reasons.push("Creator-account eligibility and campaign approval must still be confirmed on Content Rewards.");
       const coreComplete = brief.platformMatch === "match" && Boolean(rate) &&
         Boolean(brief.budget && brief.budget.remaining) && (Boolean(brief.deadline) || acceptingWithoutDeadline) && Boolean(brief.entryMode) &&
         !(brief.hiddenRequirements && brief.hiddenRequirements.locked) &&
-        (rate.model !== "CPM" || (Boolean(capPerClip) && hasCpmSettlementThreshold));
+        (rate.model !== "CPM" || (Boolean(capPerClip) && hasCpmSettlementThreshold)) &&
+        poolTermsComplete;
       state = coreComplete ? "promising" : "verify";
     }
 
@@ -308,6 +312,13 @@
         detail: minimumPayout ? "Detected minimum amount before payout for " + platform + ": " + minimumPayout.currency + " " + minimumPayout.value :
           rate && rate.model === "CPM" ? "Minimum payout threshold was not visible for this platform in the copied page." :
             "Minimum payout threshold was not recognised for this payout model."
+      },
+      {
+        label: "Pool allocation terms",
+        status: !rate || rate.model !== "Pool" ? "not-applicable" : poolTermsComplete ? "pass" : "unknown",
+        detail: !rate || rate.model !== "Pool" ? "This is not a shared-pool campaign." : poolTermsComplete
+          ? "Pool total, allocation basis (" + brief.pool.splitBy + ") and payout timing (" + brief.pool.paidWhen + ") were detected. The actual creator share remains variable and is not forecast."
+          : "A shared-pool campaign was detected, but the pool total, split basis or payout timing is missing. Verify the complete official rules before joining."
       },
       {
         label: "Full creator requirements",
@@ -368,7 +379,8 @@
       stateLabel: state === "blocked" ? "Blocked / do not proceed yet" :
         state === "promising" ? "Promising copied brief · verify before joining" : "More evidence required",
       reasons, missing, platform, acceptedPlatforms: accepted, excludedPlatforms: excluded, rate, payout, requirements, checks,
-      capPerClip, minimumPayout, minimumViews, maximumViews, acceptingWithoutDeadline, creatorFee: payout.creatorFee,
+      capPerClip, minimumPayout, minimumViews, maximumViews, acceptingWithoutDeadline,
+      poolTermsComplete, creatorFee: payout.creatorFee,
       nextStep,
       earningsNote: "This is a rule and evidence assessment, not an earnings forecast. No views, campaign approval, actual payout or paid balance is assumed."
     };

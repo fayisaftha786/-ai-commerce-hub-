@@ -270,3 +270,82 @@ test("Pool campaigns require visible pool size, split basis and payout timing be
   assert.equal(incomplete.state, "verify");
   assert.equal(incomplete.checks.find((item) => item.label === "Pool allocation terms").status, "unknown");
 });
+
+
+test("CPM net scenario applies the per-clip cap, remaining budget and 10% creator fee", () => {
+  const result = Engine.estimateCreatorNetPayout({
+    rate: { model: "CPM", amount: { value: 2, currency: "USD" } },
+    views: 100000,
+    minimumViews: 1000,
+    capPerClip: { value: 100, currency: "USD" },
+    budgetRemaining: { value: 80, currency: "USD" },
+    approved: true
+  });
+  assert.equal(result.available, true);
+  assert.equal(result.projectedGross, 80);
+  assert.equal(result.creatorFeePercent, 10);
+  assert.equal(result.projectedNet, 72);
+  assert.equal(result.payableNow, 72);
+  assert.equal(result.confidence, "scenario-only");
+});
+
+test("CPM scenario does not pay before the minimum views threshold", () => {
+  const result = Engine.estimateCreatorNetPayout({
+    rate: { model: "CPM", amount: { value: 3, currency: "USD" } },
+    views: 500,
+    minimumViews: 1000,
+    capPerClip: { value: 50, currency: "USD" },
+    budgetRemaining: { value: 500, currency: "USD" },
+    approved: true
+  });
+  assert.equal(result.projectedGross, 0);
+  assert.equal(result.payableNow, 0);
+  assert.ok(result.warnings.some((warning) => /minimum-view threshold/i.test(warning)));
+});
+
+test("unknown CPM threshold permits a labelled scenario but never a payable amount", () => {
+  const result = Engine.estimateCreatorNetPayout({
+    rate: { model: "CPM", amount: { value: 2, currency: "USD" } },
+    views: 10000,
+    minimumViews: null,
+    capPerClip: { value: 50, currency: "USD" },
+    budgetRemaining: { value: 500, currency: "USD" },
+    approved: true
+  });
+  assert.equal(result.projectedGross, 20);
+  assert.equal(result.projectedNet, 18);
+  assert.equal(result.payableNow, 0);
+  assert.equal(result.confidence, "incomplete");
+});
+
+test("per-post payout uses the campaign budget fee rule and requires approval", () => {
+  const baseInput = {
+    rate: { model: "Per post", amount: { value: 75, currency: "USD" } },
+    budget: { total: { value: 6000, currency: "USD" } },
+    budgetRemaining: { value: 500, currency: "USD" },
+    minimumViews: 5000,
+    views: 8000
+  };
+  const pending = Engine.estimateCreatorNetPayout({ ...baseInput, approved: false });
+  assert.equal(pending.creatorFeePercent, 0);
+  assert.equal(pending.projectedNet, 75);
+  assert.equal(pending.payableNow, 0);
+  const approved = Engine.estimateCreatorNetPayout({ ...baseInput, approved: true });
+  assert.equal(approved.payableNow, 75);
+});
+
+test("pool payout and mismatched currency do not produce a false estimate", () => {
+  const pool = Engine.estimateCreatorNetPayout({
+    rate: { model: "Pool", amount: null, currency: "USD" },
+    views: 100000
+  });
+  assert.equal(pool.available, false);
+  const mismatch = Engine.estimateCreatorNetPayout({
+    rate: { model: "CPM", amount: { value: 2, currency: "USD" } },
+    views: 10000,
+    minimumViews: 1000,
+    capPerClip: { value: 50, currency: "INR" },
+    budgetRemaining: { value: 500, currency: "USD" }
+  });
+  assert.equal(mismatch.available, false);
+});

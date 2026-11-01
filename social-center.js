@@ -11,10 +11,38 @@
     instagram: "https://www.instagram.com/",
     facebook: "https://www.facebook.com/",
     youtube: "https://studio.youtube.com/",
-    whatsapp: "https://web.whatsapp.com/"
+    whatsapp: "https://web.whatsapp.com/",
+    x: "https://x.com/"
   });
   const MAX_FILES = 5;
   const MAX_FILE_BYTES = 50 * 1024 * 1024;
+
+  function validatePostHandoff(payload) {
+    const source = payload && typeof payload === "object" ? payload : {};
+    const platform = String(source.platform || "").toLowerCase();
+    if (!["instagram", "facebook", "youtube", "x", "whatsapp"].includes(platform)) {
+      return { valid: false, error: "The Clip Studio handoff has an unsupported platform." };
+    }
+    const file = source.file;
+    if (!file || typeof file.size !== "number" || file.size <= 0 ||
+        !String(file.type || "").toLowerCase().startsWith("video/")) {
+      return { valid: false, error: "The handoff must include one readable video file." };
+    }
+    if (file.size > MAX_FILE_BYTES) {
+      return { valid: false, error: "The Social Media Desk accepts videos up to 50 MB." };
+    }
+    const caption = String(source.caption || "").trim();
+    if (!caption || caption.length > 5000) {
+      return { valid: false, error: "The handoff caption is empty or exceeds 5,000 characters." };
+    }
+    return {
+      valid: true,
+      platform,
+      caption,
+      title: String(source.title || "").trim().slice(0, 100),
+      file
+    };
+  }
 
   function analyzeSocialMetrics(values) {
     const reach = Number(values.reach);
@@ -125,6 +153,46 @@
       postStatus.textContent = "Opened the official platform. Sign in there and upload/publish manually; this app did not post anything.";
     });
 
+    function receiveClipHandoff(event) {
+      if (!root.opener || event.source !== root.opener ||
+          event.origin !== root.location.origin || !event.data ||
+          event.data.type !== "AI_COMMERCE_CLIP_HANDOFF") return;
+      const checked = validatePostHandoff(event.data.payload);
+      if (!checked.valid) {
+        root.opener.postMessage({
+          type: "AI_COMMERCE_CLIP_HANDOFF_ACK",
+          ok: false,
+          error: checked.error
+        }, event.origin);
+        return;
+      }
+      $("socialPlatform").value = checked.platform;
+      $("socialCaption").value = checked.caption;
+      let mediaImported = false;
+      try {
+        if (!root.DataTransfer) throw new Error("DataTransfer is unavailable.");
+        const transfer = new root.DataTransfer();
+        transfer.items.add(checked.file);
+        fileInput.files = transfer.files;
+        fileInput.dispatchEvent(new root.Event("change", { bubbles: true }));
+        mediaImported = true;
+      } catch (_) {
+        uploadStatus.textContent = "Caption imported. Select the source video manually; this browser does not support file handoff.";
+      }
+      postStatus.textContent = mediaImported
+        ? "Video and caption imported from Clip Studio. Review the target account and confirm any publish action yourself."
+        : "Caption imported from Clip Studio. The video still needs to be selected manually.";
+      root.opener.postMessage({
+        type: "AI_COMMERCE_CLIP_HANDOFF_ACK",
+        ok: true,
+        mediaImported
+      }, event.origin);
+    }
+    root.addEventListener("message", receiveClipHandoff);
+    if (root.opener && root.opener !== root && root.location.origin) {
+      root.opener.postMessage({ type: "AI_COMMERCE_SOCIAL_DESK_READY" }, root.location.origin);
+    }
+
     $("socialAnalyticsForm").addEventListener("submit", (event) => {
       event.preventDefault();
       const result = analyzeSocialMetrics({
@@ -176,5 +244,5 @@
     });
   }
 
-  return { analyzeSocialMetrics, init, PLATFORM_URLS, MAX_FILES, MAX_FILE_BYTES };
+  return { analyzeSocialMetrics, validatePostHandoff, init, PLATFORM_URLS, MAX_FILES, MAX_FILE_BYTES };
 });

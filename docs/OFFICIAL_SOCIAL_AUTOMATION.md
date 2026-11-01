@@ -122,3 +122,16 @@ A provider is not complete until all of the following pass:
 ## What is still needed to turn this on
 
 The repository can contain the integration code, but it cannot create provider developer apps or accept permissions on the user's behalf. The owner must create/configure Google and Meta developer apps, register the exact deployed HTTPS callback URLs, complete verification/review where required, and enter credentials only into the hosting provider's private environment-variable manager. No passwords, OTPs, access tokens or app secrets should be sent in chat.
+
+
+## Clip Studio: local video analysis and post handoff
+
+The Clip Studio branch adds a local-first workflow for a creator's own downloaded video:
+
+- Read the selected file's duration, dimensions, aspect ratio, file size and approximate average bitrate in the browser.
+- Generate up to four sampled frame previews locally. This is a contact sheet for the creator to inspect, not AI scene recognition.
+- Build platform-specific title/caption/hashtag copy from the topic, key points or transcript supplied by the creator, plus detected campaign hashtags and mentions.
+- Warn when the saved campaign notes indicate disclosure or pre-approval requirements, and warn when the source is not vertical.
+- Add the selected source file to the existing local editor, or hand the video and prepared caption to the same-origin Social Media Desk using an origin- and opener-checked postMessage handshake.
+
+The analysis file is not uploaded to a third-party AI service. Speech transcription and semantic scene/object recognition are not included; the creator must provide accurate notes or a transcript. The Social Media Desk handoff is preparation only. It does not silently publish. YouTube publishing uses the existing official OAuth/backend path and still requires a connected channel, correct upload permission, a supported file, and an explicit confirmation. Instagram, Facebook and X remain manual until their approved official publishing integrations are implemented. Content Rewards campaign submission, review, credited views and payout remain outside this handoff and must not be marked complete without official evidence.

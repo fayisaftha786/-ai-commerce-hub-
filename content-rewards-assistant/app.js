@@ -612,8 +612,9 @@
   async function analysePublicCampaignUrl() {
     const button = $("scout-url-analyse-button");
     const canonicalUrl = window.ClipRewardFeed.canonicalCampaignUrl($("scout-source-url").value);
-    if (!canonicalUrl) {
-      showToast("Enter a public HTTPS Content Rewards campaign URL, not the Discover index or another website.");
+    const campaignPathIsValid = Boolean(canonicalUrl && /^\\/c\\/campaigns\\/[^/]+$/.test(new URL(canonicalUrl).pathname));
+    if (!campaignPathIsValid) {
+      showToast("Enter a public HTTPS Content Rewards campaign detail URL in /c/campaigns/{id} format.");
       return;
     }
     button.disabled = true;

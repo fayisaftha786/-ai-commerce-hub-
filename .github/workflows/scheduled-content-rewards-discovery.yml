@@ -11,6 +11,11 @@ on:
   schedule:
     - cron: "17 */6 * * *"
   workflow_dispatch:
+    inputs:
+      campaign_url:
+        description: "Optional public Content Rewards campaign URL (/c/campaigns/{id}) to fetch now"
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -43,6 +48,8 @@ jobs:
       - name: Run public campaign discovery scan
         id: scan
         continue-on-error: true
+        env:
+          CAMPAIGN_URL: ${{ inputs.campaign_url || '' }}
         run: node scripts/content-rewards-discovery-scan.js
 
       - name: Commit latest scan snapshot
@@ -81,6 +88,12 @@ jobs:
             "- **Saved campaign records:** " + ((snapshot.campaigns || []).length),
             "- **Completed at:** " + (scan.completedAt || scan.at || "not recorded")
           ];
+          if (scan.requestedCampaignUrl) {
+            lines.push(
+              "- **On-demand URL:** " + scan.requestedCampaignUrl,
+              "- **On-demand page status:** " + (scan.requestedCampaignPageStatus || "not recorded")
+            );
+          }
           if (scan.status === "partial") {
             console.log("::warning::The campaign listing was read, but one or more public detail pages were unreadable.");
             lines.push("", "Some public campaign pages could not be fetched or parsed. The app labels this scan as partial.");

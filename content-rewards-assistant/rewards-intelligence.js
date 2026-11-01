@@ -498,6 +498,6 @@
 
   return Object.freeze({
     INDIA_POSTING_PLATFORMS, NATIVE_PROGRAMS, inferBriefRequirements, creatorFee,
-    payoutGuidance, assessCampaign, assessAll
+    estimateCreatorNetPayout, payoutGuidance, assessCampaign, assessAll
   });
 });

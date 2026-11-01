@@ -330,7 +330,8 @@ test("per-post payout uses the campaign budget fee rule and requires approval", 
   const pending = Engine.estimateCreatorNetPayout({ ...baseInput, approved: false });
   assert.equal(pending.creatorFeePercent, 0);
   assert.equal(pending.projectedNet, 75);
-  assert.equal(pending.estimatedNetAfterApproval, 0);
+  assert.equal(pending.estimatedNetAfterApproval, 75);
+  assert.equal(pending.confirmedPayable, 0);
   const approved = Engine.estimateCreatorNetPayout({ ...baseInput, approved: true });
   assert.equal(approved.estimatedNetAfterApproval, 75);
 });

@@ -50,3 +50,21 @@ test("Pages asset discovery rejects path traversal", () => {
     /Unsafe local asset path/
   );
 });
+
+test("both Pages deployment workflows refresh creator-program status before site assembly", () => {
+  const primary = fs.readFileSync(path.join(root, ".github", "workflows", "deploy-pages.yml"), "utf8");
+  const rewards = fs.readFileSync(path.join(root, ".github", "workflows", "scheduled-content-rewards-discovery.yml"), "utf8");
+  for (const [name, workflow] of [["primary Pages", primary], ["Content Rewards Pages", rewards]]) {
+    const refresh = workflow.indexOf("run: node scripts/creator-program-discovery.js");
+    const assemble = workflow.indexOf("run: node scripts/pages-build.js _site");
+    assert.ok(refresh >= 0, name + " workflow must run official creator-program checks");
+    assert.ok(assemble > refresh, name + " workflow must refresh creator data before building the site");
+    assert.ok(workflow.includes("creator-programs-snapshot.json"));
+  }
+  assert.match(rewards, /id: creator_scan/);
+  assert.match(rewards, /git add creator-programs-snapshot\.json/);
+  assert.match(rewards, /git checkout -- creator-programs-snapshot\.json/);
+  const ignore = 'paths-ignore:\n      - "content-rewards-assistant/discovery-snapshot.json"\n      - "creator-programs-snapshot.json"';
+  assert.ok(primary.includes(ignore));
+  assert.ok(rewards.includes(ignore));
+});

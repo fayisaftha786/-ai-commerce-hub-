@@ -6,9 +6,10 @@ const { createEncryptedTokenVault } = require("./social-token-vault.js");
 const SESSION_ID_PATTERN = /^[A-Za-z0-9_-]{43}$/;
 const STATE_PATTERN = /^[A-Za-z0-9_-]{43}$/;
 const STATE_TTL_MS = 10 * 60 * 1000;
+// Keep the first account-link step read-only. Request upload permission only
+// when a provider-backed upload flow is implemented and reviewed.
 const REQUIRED_SCOPES = Object.freeze([
-  "https://www.googleapis.com/auth/youtube.readonly",
-  "https://www.googleapis.com/auth/youtube.upload"
+  "https://www.googleapis.com/auth/youtube.readonly"
 ]);
 const AUTHORIZE_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 const TOKEN_URL = "https://oauth2.googleapis.com/token";

@@ -486,3 +486,86 @@ test("platform X is still recognised when it appears as an explicit destination"
   assert.ok(result.platformRates.some((item) => item.platform === "X"));
   assert.ok(result.platformCaps.some((item) => item.platform === "X" && item.amount.value === 100));
 });
+
+test("parses the current public CPM card layout with separate per-platform minimum payouts", () => {
+  const text = [
+    "Campaign: Current CPM creator offer",
+    "Accepting clips",
+    "Launched 3 days ago",
+    "Instagram YouTube",
+    "Join Campaign",
+    "Instagram",
+    "Per 1K views",
+    "$2.00",
+    "Min payout",
+    "$5.00",
+    "Max payout",
+    "$250.00",
+    "YouTube",
+    "Per 1K views",
+    "$3.00",
+    "Min payout",
+    "$10.00",
+    "Max payout",
+    "$500.00",
+    "Budget",
+    "$1,200 / $5,000"
+  ].join("\n");
+  const parsed = Scout.parseCampaignBrief({
+    url: "https://contentrewards.com/c/campaigns/current-cpm",
+    requestedPlatform: "YouTube",
+    text
+  });
+  assert.equal(parsed.rate.model, "CPM");
+  assert.equal(parsed.entryMode, "Open campaign / direct join");
+  assert.equal(parsed.campaignStatus, "Appears live in copied text");
+  assert.deepEqual(parsed.platformMinimumPayouts.map((item) => [item.platform, item.amount.value]), [
+    ["Instagram", 5],
+    ["YouTube", 10]
+  ]);
+  assert.equal(parsed.minimumPayout.value, 10);
+  assert.equal(parsed.platformRates.find((item) => item.platform === "YouTube").amount.value, 3);
+  assert.equal(parsed.platformCaps.find((item) => item.platform === "YouTube").amount.value, 500);
+  assert.ok(!parsed.missing.some((item) => /minimum payout or minimum-view threshold/i.test(item)));
+  assert.match(Scout.buildTrackerNotes(parsed), /YouTube \$10/);
+});
+
+test("parses the current shared-pool campaign card without inventing a CPM or per-creator payout", () => {
+  const parsed = Scout.parseCampaignBrief({
+    url: "https://contentrewards.com/c/campaigns/current-pool",
+    requestedPlatform: "Instagram",
+    text: [
+      "Campaign: Lacy 30 Day Campaign",
+      "Clip content from Lacy's social media accounts",
+      "Accepting clips",
+      "Launched 1 week ago",
+      "Instagram YouTube",
+      "2,321",
+      "$25K pool",
+      "Join Campaign",
+      "Pool",
+      "$25,000.00",
+      "Split by",
+      "Views",
+      "Paid",
+      "When the pool ends",
+      "Reference materials 4 files",
+      "Visible once you join"
+    ].join("\n")
+  });
+  assert.equal(parsed.rate.model, "Pool");
+  assert.equal(parsed.rate.amount, null);
+  assert.deepEqual(parsed.pool.amount, { value: 25000, currency: "USD", raw: "$25,000.00" });
+  assert.equal(parsed.pool.splitBy, "Views");
+  assert.equal(parsed.pool.paidWhen, "When the pool ends");
+  assert.equal(parsed.hiddenRequirements.locked, true);
+  assert.match(Scout.buildTrackerNotes(parsed), /Pool terms: Total \$25,000 · Split by Views · Paid When the pool ends/);
+});
+
+test("recognises the standalone Apply action as a brand-reviewed application route", () => {
+  const parsed = Scout.parseCampaignBrief({
+    requestedPlatform: "Instagram",
+    text: ["Campaign: Review-first launch", "Apply", "Instagram", "$2 CPM"].join("\n")
+  });
+  assert.equal(parsed.entryMode, "Application / brand review");
+});

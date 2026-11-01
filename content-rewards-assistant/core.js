@@ -173,12 +173,35 @@
     const payoutStatus = PAYOUT_STATUSES.includes(source.payoutStatus) ? source.payoutStatus : "unconfirmed";
     const viewsCheckedAt = optionalDateTime(source.viewsCheckedAt, "Views checked time");
     const reviewedAt = optionalDateTime(source.reviewedAt, "Review decision time");
-    const paidAt = optionalDateTime(source.paidAt, "Paid time");
+    const paidAt = optionalDateTime(source.paidAt, "Content Rewards balance credit time");
+    const expectedPayoutAt = optionalDateTime(source.expectedPayoutAt, "Expected payout time");
+    const withdrawnToWhopAmount = optionalAmount(source.withdrawnToWhopAmount, "Amount transferred to Whop");
+    const withdrawnToWhopAt = optionalDateTime(source.withdrawnToWhopAt, "Whop transfer time");
+    const whopPayoutAmount = optionalAmount(source.whopPayoutAmount, "Final Whop payout");
+    const whopPayoutAt = optionalDateTime(source.whopPayoutAt, "Whop payout time");
     if (!/^[A-Z]{3}$/.test(payoutCurrency)) throw new Error("Payout currency must be a three-letter currency code.");
-    if (paidAmount != null && paidAmount > 0 && !paidAt) throw new Error("Record when the payout was actually received.");
-    if (payoutStatus === "paid" && !(paidAmount > 0)) throw new Error("Enter the amount actually received before marking a payout paid.");
+    if (paidAmount != null && paidAmount > 0 && !paidAt) throw new Error("Record when the amount was credited to Content Rewards Balance.");
+    if (payoutStatus === "paid" && !(paidAmount > 0)) throw new Error("Enter the amount actually credited to Content Rewards Balance before marking this stage paid.");
     if (rewardApprovedAmount != null && paidAmount != null && paidAmount > rewardApprovedAmount) {
-      throw new Error("Paid amount cannot exceed the approved reward recorded for this campaign.");
+      throw new Error("Content Rewards balance credit cannot exceed the approved reward recorded for this campaign.");
+    }
+    if (withdrawnToWhopAmount != null && withdrawnToWhopAmount > 0 && !withdrawnToWhopAt) {
+      throw new Error("Record when the funds were transferred from Content Rewards to Whop.");
+    }
+    if (withdrawnToWhopAmount != null && withdrawnToWhopAmount > 0 && !(paidAmount > 0)) {
+      throw new Error("Record the Content Rewards balance credit before recording a transfer to Whop.");
+    }
+    if (paidAmount != null && withdrawnToWhopAmount != null && withdrawnToWhopAmount > paidAmount) {
+      throw new Error("Transferred amount cannot exceed the recorded Content Rewards balance credit.");
+    }
+    if (whopPayoutAmount != null && whopPayoutAmount > 0 && !whopPayoutAt) {
+      throw new Error("Record when Whop paid the amount to your bank or selected payout method.");
+    }
+    if (whopPayoutAmount != null && whopPayoutAmount > 0 && !(withdrawnToWhopAmount > 0)) {
+      throw new Error("Record the transfer to Whop Balance before recording the final Whop payout.");
+    }
+    if (withdrawnToWhopAmount != null && whopPayoutAmount != null && whopPayoutAmount > withdrawnToWhopAmount) {
+      throw new Error("Final Whop payout cannot exceed the amount recorded as transferred to Whop.");
     }
     if (!name) throw new Error("Campaign name is required.");
     if (campaignUrl === null) throw new Error("Campaign URL must be a valid HTTPS link.");
@@ -210,6 +233,13 @@
       paidAmount,
       paidAt,
       payoutReference: text(source.payoutReference, 120),
+      expectedPayoutAt,
+      withdrawnToWhopAmount,
+      withdrawnToWhopAt,
+      withdrawalReference: text(source.withdrawalReference, 120),
+      whopPayoutAmount,
+      whopPayoutAt,
+      whopPayoutReference: text(source.whopPayoutReference, 120),
       reviewedAt,
       reviewNotes: text(source.reviewNotes, 1000),
       createdAt: text(source.createdAt, 40) || stamp,

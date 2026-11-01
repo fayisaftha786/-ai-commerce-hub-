@@ -125,7 +125,8 @@
     } else {
       statusNode.textContent = "Latest public-source check: " + snapshot.status + " · " +
         snapshot.summary.sourcesAvailable + "/" + snapshot.summary.sourcesAttempted +
-        " pages reachable · " + (snapshot.generatedAt || "time not recorded") +
+        " pages reachable · " + snapshot.summary.ruleEvidenceCount + " public rule signals across " +
+        snapshot.summary.sourcesWithRuleEvidence + " sources · " + (snapshot.generatedAt || "time not recorded") +
         ". Account eligibility and payout remain unverified.";
     }
     return snapshot;

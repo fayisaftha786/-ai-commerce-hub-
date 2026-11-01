@@ -57,7 +57,7 @@ test("health endpoint confirms service status without claiming OAuth works", asy
     assert.deepEqual(await response.json(), {
       ok: true,
       service: "ai-commerce-hub-social-api",
-      oauthImplemented: false
+      oauthImplemented: true
     });
   });
 });
@@ -71,12 +71,160 @@ test("provider endpoint returns readiness without leaking credential values", as
     assert.equal(data.providers.length, 3);
     assert.equal(data.providers[0].provider, "instagram");
     assert.equal(data.providers[0].configured, false);
-    assert.match(data.note, /OAuth is not implemented/i);
+    assert.match(data.note, /YouTube OAuth routes are implemented/i);
+    assert.equal(data.youtubeOAuth.configured, false);
+    assert.ok(data.youtubeOAuth.missing.includes("GOOGLE_CLIENT_ID"));
     assert.equal(data.providers[0].configured, false);
     assert.equal(serialized.includes("sentinel-meta-secret-value"), false);
     assert.equal(serialized.includes("sentinel-google-secret-value"), false);
     assert.match(data.note, /no accounts are connected/i);
   });
+});
+
+
+function fakeYouTubeOAuth() {
+  const calls = [];
+  const sessionId = "a".repeat(43);
+  return {
+    calls,
+    sessionId,
+    getReadiness() { return { provider: "youtube", configured: true, missing: [], status: "oauth_ready_not_connected" }; },
+    createAuthorizationRequest(existing) {
+      calls.push({ action: "start", existing });
+      return { ok: true, url: "https://accounts.google.com/o/oauth2/v2/auth?state=fake", sessionId, setCookie: !existing };
+    },
+    async completeAuthorization(input) {
+      calls.push({ action: "callback", input });
+      return { ok: true, connection: { provider: "youtube", status: "connected", channelTitle: "Test channel" } };
+    },
+    async getConnection(id) {
+      calls.push({ action: "status", id });
+      return id ? { provider: "youtube", status: "connected", channelTitle: "Test channel" } : { provider: "youtube", status: "not_connected" };
+    },
+    disconnect(id) {
+      calls.push({ action: "disconnect", id });
+      return Boolean(id);
+    },
+    buildReturnUrl(outcome, reason) {
+      const url = new URL("https://app.example.com/");
+      url.searchParams.set("social_connect", outcome);
+      if (reason) url.searchParams.set("social_reason", reason);
+      return url.href;
+    }
+  };
+}
+
+test("YouTube connect starts a server-side OAuth flow and sets an HttpOnly session cookie", async () => {
+  const oauth = fakeYouTubeOAuth();
+  await withServer(async (base) => {
+    const response = await fetch(base + "/api/social/youtube/connect", {
+      headers: { Origin: "https://app.example.com" },
+      redirect: "manual"
+    });
+    assert.equal(response.status, 303);
+    assert.equal(response.headers.get("location"), "https://accounts.google.com/o/oauth2/v2/auth?state=fake");
+    const cookie = response.headers.get("set-cookie");
+    assert.match(cookie, /__Host-aihub_session=a{43}/);
+    assert.match(cookie, /HttpOnly/);
+    assert.match(cookie, /Secure/);
+    assert.match(cookie, /SameSite=None/);
+    assert.equal(oauth.calls[0].action, "start");
+  }, {
+    env: { NODE_ENV: "production", SOCIAL_CORS_ORIGINS: "https://app.example.com" },
+    socialOAuthService: oauth
+  });
+});
+
+test("YouTube callback binds the state to the browser cookie and redirects without exposing the auth code", async () => {
+  const oauth = fakeYouTubeOAuth();
+  await withServer(async (base) => {
+    const response = await fetch(base + "/api/social/youtube/callback?code=temporary-auth-code&state=opaque-state", {
+      headers: { Cookie: "__Host-aihub_session=" + oauth.sessionId },
+      redirect: "manual"
+    });
+    assert.equal(response.status, 303);
+    assert.equal(response.headers.get("location"), "https://app.example.com/?social_connect=success");
+    assert.equal(response.headers.get("referrer-policy"), "no-referrer");
+    assert.equal(oauth.calls[0].input.sessionId, oauth.sessionId);
+    assert.equal(oauth.calls[0].input.code, "temporary-auth-code");
+  }, {
+    env: { NODE_ENV: "production", SOCIAL_CORS_ORIGINS: "https://app.example.com" },
+    socialOAuthService: oauth
+  });
+});
+
+test("connection status enables credentialed CORS only for the exact app origin", async () => {
+  const oauth = fakeYouTubeOAuth();
+  await withServer(async (base) => {
+    const allowed = await fetch(base + "/api/social/connections", {
+      headers: { Origin: "https://app.example.com", Cookie: "aihub_session=" + oauth.sessionId }
+    });
+    assert.equal(allowed.status, 200);
+    assert.equal(allowed.headers.get("access-control-allow-origin"), "https://app.example.com");
+    assert.equal(allowed.headers.get("access-control-allow-credentials"), "true");
+    assert.deepEqual((await allowed.json()).connections[0], {
+      provider: "youtube", status: "connected", channelTitle: "Test channel"
+    });
+    const rejected = await fetch(base + "/api/social/connections", { headers: { Origin: "https://evil.example" } });
+    assert.equal(rejected.status, 403);
+  }, {
+    env: { SOCIAL_CORS_ORIGINS: "https://app.example.com" },
+    socialOAuthService: oauth
+  });
+});
+
+test("YouTube disconnect requires the exact allowlisted origin and action header", async () => {
+  const oauth = fakeYouTubeOAuth();
+  await withServer(async (base) => {
+    const missingHeader = await fetch(base + "/api/social/youtube/disconnect", {
+      method: "POST", headers: { Origin: "https://app.example.com", Cookie: "aihub_session=" + oauth.sessionId }
+    });
+    assert.equal(missingHeader.status, 403);
+    const response = await fetch(base + "/api/social/youtube/disconnect", {
+      method: "POST",
+      headers: {
+        Origin: "https://app.example.com",
+        Cookie: "aihub_session=" + oauth.sessionId,
+        "X-AI-Commerce-Action": "social-disconnect"
+      }
+    });
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), { provider: "youtube", status: "not_connected" });
+    assert.equal(oauth.calls.filter((call) => call.action === "disconnect").length, 1);
+  }, {
+    env: { SOCIAL_CORS_ORIGINS: "https://app.example.com" },
+    socialOAuthService: oauth
+  });
+});
+
+test("OAuth connect rejects browser origins outside the exact allowlist", async () => {
+  const oauth = fakeYouTubeOAuth();
+  await withServer(async (base) => {
+    const response = await fetch(base + "/api/social/youtube/connect", {
+      headers: { Origin: "https://evil.example" }
+    });
+    assert.equal(response.status, 403);
+  }, {
+    env: { SOCIAL_CORS_ORIGINS: "https://app.example.com" },
+    socialOAuthService: oauth
+  });
+});
+
+test("social API preflight allows credentialed requests only from configured app origins", async () => {
+  await withServer(async (base) => {
+    const response = await fetch(base + "/api/social/youtube/disconnect", {
+      method: "OPTIONS",
+      headers: {
+        Origin: "https://app.example.com",
+        "Access-Control-Request-Method": "POST",
+        "Access-Control-Request-Headers": "x-ai-commerce-action"
+      }
+    });
+    assert.equal(response.status, 204);
+    assert.equal(response.headers.get("access-control-allow-origin"), "https://app.example.com");
+    assert.equal(response.headers.get("access-control-allow-credentials"), "true");
+    assert.match(response.headers.get("access-control-allow-headers"), /X-AI-Commerce-Action/i);
+  }, { env: { SOCIAL_CORS_ORIGINS: "https://app.example.com" } });
 });
 
 test("rejects non-GET methods", async () => {

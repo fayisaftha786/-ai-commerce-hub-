@@ -34,6 +34,12 @@ The fetcher allows only HTTPS pages hosted on `contentrewards.com` or its subdom
 
 The extracted visible page is evidence, not a guarantee of eligibility or approval. Verify the live page before joining, creating or submitting content. Manual clipboard analysis remains available only as a fallback.
 
+## Automatic batch deep analysis
+
+After the official public snapshot loads, ClipReward Studio automatically analyses every readable saved campaign detail page for the currently selected target platform. It uses the same campaign parser and Rewards Intelligence rules as the single-page Site Analyze flow, then ranks the results into **Promising**, **Verify** and **Blocked** groups. It shows the top 12 ranked results and the number analysed, skipped for missing/unreadable details, and each result's payout model, budget evidence, missing fields and reasons. Changing the target platform re-runs the local analysis without another network request. **Open full findings** loads that exact saved public page into the existing detailed report and tracker autofill flow.
+
+The shortlist is a rules-and-evidence screen, not a probability of approval, earnings estimate or confirmation that a campaign is still accepting creators. Stale page text is forced into Verify even when its old rules otherwise look promising. No campaign is joined or applied for, and a tracker item is not created automatically.
+
 ## Campaign finder and autofill
 
 The Finder opens the official [Content Rewards Discover page](https://contentrewards.com/c/discover) for Instagram, Facebook, YouTube and X campaigns. TikTok may appear in international briefs but is not offered as an India posting destination. Choose the platform, find the public campaign and enter its URL under Site Analyze; press **Analyse website automatically** to load the public page text from the latest scheduled snapshot. Review the detected fields and missing requirements, then press **Autofill campaign tracker**. Copy/paste remains an optional fallback for pages the scheduled scanner could not fetch. The native creator dashboards do not expose one public cross-platform campaign feed to this app.

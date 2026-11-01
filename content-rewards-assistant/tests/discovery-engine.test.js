@@ -1,3 +1,5 @@
+const fs = require("node:fs");
+const path = require("node:path");
 "use strict";
 const test = require("node:test");
 const assert = require("node:assert/strict");
@@ -193,3 +195,128 @@ test("does not mark a shared Pool or flat-fee campaign as missing a CPM threshol
   assert.ok(!perPost.missing.includes("Minimum payout or view threshold"));
 });
 
+
+test("batch analyser ranks every readable public campaign for the chosen platform", () => {
+  const Scout = require("../campaign-scout.js");
+  const Rewards = require("../rewards-intelligence.js");
+  const pages = [
+    {
+      url: "https://contentrewards.com/c/campaigns/open-good",
+      status: "ok",
+      fetchedAt: "2026-11-01T00:00:00.000Z",
+      pageText: [
+        "Campaign: Open YouTube Clips",
+        "Accepting clips",
+        "Launched 1 day ago",
+        "YouTube Instagram",
+        "Join Campaign",
+        "YouTube",
+        "Per 1K views",
+        "$3.00",
+        "Min payout",
+        "$5.00",
+        "Max payout",
+        "$250.00",
+        "Budget",
+        "$500 / $2,000"
+      ].join("\n")
+    },
+    {
+      url: "https://contentrewards.com/c/campaigns/closed-bad",
+      status: "ok",
+      fetchedAt: "2026-11-01T00:00:00.000Z",
+      pageText: [
+        "Campaign: Closed Instagram Project",
+        "Ended",
+        "Instagram",
+        "Per 1K views",
+        "$2",
+        "Min payout",
+        "$2",
+        "Max payout",
+        "$200",
+        "Budget",
+        "$0 / $200"
+      ].join("\n")
+    },
+    {
+      url: "https://contentrewards.com/c/campaigns/stale-open",
+      status: "stale",
+      fetchedAt: "2026-10-25T00:00:00.000Z",
+      pageText: [
+        "Campaign: Stale YouTube Project",
+        "Accepting clips",
+        "YouTube",
+        "Per 1K views",
+        "$3",
+        "Min payout",
+        "$5",
+        "Max payout",
+        "$250",
+        "Budget",
+        "$500 / $2,000"
+      ].join("\n")
+    }
+  ];
+  const campaigns = pages.map((page, index) => ({
+    id: "campaign-" + index,
+    title: "Snapshot title " + index,
+    officialUrl: page.url,
+    brand: "Brand " + index,
+    opportunity: { score: 90 - index }
+  }));
+  const result = Discovery.analyzePublicCampaigns(campaigns, pages, Scout, Rewards, "YouTube", {
+    today: "2026-11-01"
+  });
+  assert.equal(result.summary.totalCampaigns, 3);
+  assert.equal(result.summary.analysed, 3);
+  assert.equal(result.summary.promising + result.summary.verify + result.summary.blocked, 3);
+  assert.equal(result.campaigns[0].title, "Open YouTube Clips");
+  assert.equal(result.campaigns.find((row) => row.title === "Stale YouTube Project").state, "verify");
+  assert.equal(result.campaigns.find((row) => row.title === "Closed Instagram Project").state, "blocked");
+  assert.equal(result.campaigns[0].platform, "YouTube");
+  assert.equal(result.campaigns[0].brief.minimumPayout.value, 5);
+});
+
+test("batch analyser skips hidden or missing detail pages and rejects invalid target platforms safely", () => {
+  const Scout = require("../campaign-scout.js");
+  const Rewards = require("../rewards-intelligence.js");
+  const campaigns = [
+    { id: "a", officialUrl: "https://contentrewards.com/c/campaigns/a" },
+    { id: "b", officialUrl: "https://contentrewards.com/c/campaigns/b" },
+    { id: "c", officialUrl: "https://evil.example/c/campaigns/c" }
+  ];
+  const result = Discovery.analyzePublicCampaigns(campaigns, [{
+    url: campaigns[0].officialUrl,
+    status: "unavailable",
+    pageText: ""
+  }], Scout, Rewards, "Instagram", { today: "2026-11-01" });
+  assert.equal(result.summary.analysed, 0);
+  assert.equal(result.summary.missingDetailCount, 2);
+  assert.equal(result.summary.unreadableDetailCount, 1);
+  assert.throws(() => Discovery.analyzePublicCampaigns(campaigns, [], Scout, Rewards, "", {}), /Choose a target platform/);
+});
+
+test("batch analyser rejects a detail page outside the canonical Content Rewards campaign URL boundary", () => {
+  assert.equal(Discovery.canonicalPublicCampaignUrl("https://contentrewards.com.evil.test/c/campaigns/x"), "");
+  assert.equal(Discovery.canonicalPublicCampaignUrl("http://contentrewards.com/c/campaigns/x"), "");
+  assert.equal(Discovery.canonicalPublicCampaignUrl("https://contentrewards.com/c/settings"), "");
+  assert.equal(Discovery.canonicalPublicCampaignUrl("https://contentrewards.com/c/campaigns/x?ref=public"), "https://contentrewards.com/c/campaigns/x");
+});
+
+test("ClipReward auto shortlist is wired into the radar and deep findings panel", () => {
+  const root = path.join(__dirname, "..");
+  const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  const worker = fs.readFileSync(path.join(root, "service-worker.js"), "utf8");
+  for (const id of [
+    "discovery-deep-status",
+    "discovery-deep-summary",
+    "discovery-deep-list"
+  ]) assert.ok(html.includes('id="' + id + '"'), "missing batch analysis panel node " + id);
+  assert.match(app, /analyzePublicCampaigns/);
+  assert.match(app, /renderDeepCampaignAnalysis/);
+  assert.match(app, /data-deep-open/);
+  assert.match(worker, /clipreward-static-v23/);
+  assert.match(worker, /discovery-engine\.js/);
+});

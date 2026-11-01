@@ -255,6 +255,117 @@
   let discoveryBackendStatus = null;
   let discoveryStaticStatus = null;
   let discoveryStaticScans = [];
+  let discoveryStaticCampaigns = [];
+  let discoveryStaticDetails = [];
+  let discoveryDeepAnalysisCache = null;
+  let discoveryDeepAnalysisCacheKey = "";
+
+  function getDiscoveryDeepAnalysis() {
+    const target = $("scout-target-platform").value;
+    const lastScan = discoveryStaticStatus && discoveryStaticStatus.lastScan || {};
+    const accountKey = JSON.stringify(state.account || {});
+    const cacheKey = [target, lastScan.at || "", discoveryStaticCampaigns.length,
+      discoveryStaticDetails.length, accountKey].join("|");
+    if (discoveryDeepAnalysisCacheKey === cacheKey && discoveryDeepAnalysisCache) {
+      return discoveryDeepAnalysisCache;
+    }
+    if (!discoveryStaticDetails.length || !discoveryStaticCampaigns.length) return null;
+    try {
+      const today = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+      discoveryDeepAnalysisCache = window.ClipRewardDiscovery.analyzePublicCampaigns(
+        discoveryStaticCampaigns,
+        discoveryStaticDetails,
+        window.ClipRewardScout,
+        window.ClipRewardIntelligence,
+        target,
+        { today, account: state.account }
+      );
+      discoveryDeepAnalysisCacheKey = cacheKey;
+      return discoveryDeepAnalysisCache;
+    } catch (error) {
+      discoveryDeepAnalysisCache = { error: error && error.message ? error.message : "Batch analysis unavailable." };
+      discoveryDeepAnalysisCacheKey = cacheKey;
+      return discoveryDeepAnalysisCache;
+    }
+  }
+
+  function renderDeepCampaignAnalysis() {
+    const statusNode = $("discovery-deep-status");
+    const summaryNode = $("discovery-deep-summary");
+    const listNode = $("discovery-deep-list");
+    if (!statusNode || !summaryNode || !listNode) return;
+    const lastScan = discoveryStaticStatus && discoveryStaticStatus.lastScan || {};
+    const result = getDiscoveryDeepAnalysis();
+    if (!result) {
+      statusNode.textContent = discoveryStaticDetails.length
+        ? "No matching public campaign details are ready for batch analysis."
+        : "Waiting for the latest official public campaign-page snapshot.";
+      summaryNode.innerHTML = "";
+      listNode.innerHTML = '<p class="muted small-text">When the scheduled public snapshot is available, every readable campaign page is analysed automatically for the selected platform.</p>';
+      return;
+    }
+    if (result.error) {
+      statusNode.textContent = result.error;
+      summaryNode.innerHTML = "";
+      listNode.innerHTML = "";
+      return;
+    }
+    const summary = result.summary;
+    statusNode.textContent = summary.analysed + " / " + summary.totalCampaigns + " campaign records deeply analysed for " +
+      summary.platform + " · checked " + new Date(summary.checkedAt).toLocaleTimeString() +
+      (lastScan.source ? " · source: " + lastScan.source : "");
+    summaryNode.innerHTML = [
+      ["Promising", summary.promising, "promising"],
+      ["Verify", summary.verify, "verify"],
+      ["Blocked", summary.blocked, "blocked"],
+      ["Detail missing", summary.missingDetailCount + summary.unreadableDetailCount, "unknown"]
+    ].map((item) => '<span class="deep-summary-chip deep-summary-' + item[2] + '"><strong>' + item[1] + '</strong><small>' + item[0] + '</small></span>').join("");
+    const amountLabel = (amount) => amount && Number.isFinite(amount.value)
+      ? ((amount.currency === "INR" ? "₹" : amount.currency === "EUR" ? "€" : amount.currency === "GBP" ? "£" : "$") +
+        Number(amount.value).toLocaleString("en", { maximumFractionDigits: 2 }))
+      : "";
+    const rows = result.campaigns.slice(0, 12);
+    listNode.innerHTML = rows.length ? rows.map((row, index) => {
+      const rate = row.rate && row.rate.model === "Pool"
+        ? "Pool · " + (row.pool && row.pool.amount ? amountLabel(row.pool.amount) + " total" : "total unknown") +
+          (row.pool && row.pool.splitBy ? " · split by " + row.pool.splitBy : "")
+        : row.rate && row.rate.label ? row.rate.label : "Payout model not recognised";
+      const budget = row.budget && row.budget.remaining ? "Remaining " + amountLabel(row.budget.remaining) : "Remaining budget unknown";
+      const minimum = row.minimumPayout ? "Min payout " + amountLabel(row.minimumPayout) : "";
+      const missing = row.missing.length ? row.missing.slice(0, 3).join(" · ") : "No parser gaps detected; verify the full official brief.";
+      const staleNote = row.pageStatus === "stale" ? '<small class="deep-stale-note">Saved detail is stale — recheck the current campaign page.</small>' : "";
+      return '<article class="deep-campaign-card deep-campaign-' + escapeHtml(row.state) + '">' +
+        '<div class="deep-campaign-head"><strong>' + escapeHtml(row.title) + '</strong>' +
+        '<span class="deep-state deep-state-' + escapeHtml(row.state) + '">' + escapeHtml(row.stateLabel) + '</span></div>' +
+        '<p>' + escapeHtml(row.brand || "Brand not stated") + ' · ' + escapeHtml(row.platform) + ' · ' + escapeHtml(row.entryMode || "Access route unknown") + '</p>' +
+        '<div class="deep-campaign-metrics"><span>' + escapeHtml(rate) + '</span><span>' + escapeHtml(budget) + '</span>' +
+        (minimum ? '<span>' + escapeHtml(minimum) + '</span>' : '') + '</div>' +
+        (row.pool && row.pool.paidWhen ? '<small>Pool payment: ' + escapeHtml(row.pool.paidWhen) + '</small>' : '') +
+        staleNote + '<small class="deep-missing">Evidence gaps / checks: ' + escapeHtml(missing) + '</small>' +
+        '<div class="feed-card-actions"><button class="button button-secondary" type="button" data-deep-open="' + index + '">Open full findings</button>' +
+        '<a class="text-button" href="' + escapeHtml(row.url) + '" target="_blank" rel="noopener noreferrer">Verify official page ↗</a></div></article>';
+    }).join("") : '<p class="muted small-text">No readable public campaign detail pages were available for this platform.</p>';
+    if (result.campaigns.length > rows.length) {
+      listNode.insertAdjacentHTML("beforeend", '<p class="tiny-note">Showing the top ' + rows.length + ' of ' + result.campaigns.length + ' ranked public campaign analyses.</p>');
+    }
+    listNode.querySelectorAll("[data-deep-open]").forEach((button) => button.addEventListener("click", () => {
+      const row = result.campaigns[Number(button.dataset.deepOpen)];
+      if (!row) return;
+      $("scout-source-url").value = row.url;
+      $("scout-brief-text").value = row.brief.rawText || row.brief.rawExcerpt || "";
+      $("scout-on-demand-actions").hidden = true;
+      const opened = Object.assign({}, row.brief, {
+        analysisSource: "public-url",
+        pageFetchedAt: row.pageFetchedAt,
+        pageFetchStatus: row.pageStatus
+      });
+      renderCampaignScout(opened);
+      if (row.pageStatus === "stale") {
+        $("scout-source-note").textContent += " The saved campaign detail is stale; refresh the latest public page before using this brief.";
+      }
+      $("scout-results").scrollIntoView({ behavior: "smooth", block: "start" });
+    }));
+  }
 
   function renderDiscovery() {
     const campaigns = discoveryState.campaigns || [];
@@ -313,6 +424,7 @@
     $("discovery-history").textContent = history.length ? history.slice(0, 5).map((scan) =>
       new Date(scan.completedAt || scan.at).toLocaleString() + " · " + (scan.checkedCount || 0) + " checked · " + (scan.newCount || 0) + " new" + (scan.error || scan.status === "failed" ? " · failed" : scan.status === "partial" ? " · partial detail coverage" : "")
     ).join(" | ") : "No scan history yet.";
+    renderDeepCampaignAnalysis();
   }
 
   async function runDiscoveryScan(automatic) {
@@ -359,12 +471,20 @@
       if (!lastScan) {
         discoveryStaticStatus = null;
         discoveryStaticScans = [];
+        discoveryStaticCampaigns = [];
+        discoveryStaticDetails = [];
+        discoveryDeepAnalysisCache = null;
+        discoveryDeepAnalysisCacheKey = "";
         $("discovery-status").textContent = "The GitHub Actions page-scan workflow has not run yet. Open “Run GitHub page scan” above and select “Run workflow”. The browser feed button cannot start the background crawler.";
         renderDiscovery();
         return null;
       }
       discoveryStaticStatus = result.status;
       discoveryStaticScans = result.scans || [];
+      discoveryStaticCampaigns = result.campaigns || [];
+      discoveryStaticDetails = result.campaignDetails || [];
+      discoveryDeepAnalysisCache = null;
+      discoveryDeepAnalysisCacheKey = "";
       const merged = window.ClipRewardDiscovery.mergeHistory(discoveryState.campaigns, result.campaigns);
       discoveryState = { campaigns: merged.campaigns, scans: discoveryState.scans || [] };
       if (!window.ClipRewardDiscovery.writeState(discoveryState)) throw new Error("Snapshot loaded, but the browser could not save its local cache.");
@@ -1081,6 +1201,9 @@
   });
   $("scout-target-platform").addEventListener("change", () => {
     if ($("scout-brief-text").value.trim().length >= 12) analyseCampaignBrief();
+    discoveryDeepAnalysisCacheKey = "";
+    discoveryDeepAnalysisCache = null;
+    renderDiscovery();
   });
   $("scout-paste-button").addEventListener("click", pasteCampaignBriefFromClipboard);
   document.querySelectorAll("[data-scout-platform-link]").forEach((link) => {

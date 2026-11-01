@@ -133,7 +133,7 @@ function createOfficialProgramOpportunity(source, snapshotGeneratedAt = "") {
   const accountCheck = cleanText(source.accountCheck, 160);
   const limitation = cleanText(source.limitation, 320);
   const checkedAt = cleanText(source.checkedAt, 40) || cleanText(snapshotGeneratedAt, 40);
-  const dateMatch = /^(\\d{4}-\\d{2}-\\d{2})/.exec(checkedAt);
+  const dateMatch = /^(\d{4}-\d{2}-\d{2})/.exec(checkedAt);
   const description = [
     "Imported from the official public-source monitor. Source reachability is not proof of account eligibility, programme access or earnings.",
     pageTitle ? "Official page: " + pageTitle + "." : "",

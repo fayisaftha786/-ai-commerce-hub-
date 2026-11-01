@@ -154,3 +154,39 @@ test("all-unavailable sources are represented as failed instead of a false succe
   assert.equal(snapshot.summary.sourcesAvailable, 0);
   assert.equal(snapshot.summary.sourcesUnavailable, 4);
 });
+
+test("fully unavailable creator sources are not publishable, while partial scans remain usable", () => {
+  assert.equal(monitor.isPublishableSnapshot({ status: "success" }), true);
+  assert.equal(monitor.isPublishableSnapshot({ status: "partial" }), true);
+  assert.equal(monitor.isPublishableSnapshot({ status: "failed" }), false);
+  assert.equal(monitor.isPublishableSnapshot(null), false);
+});
+
+test("main writes partial and failed scan snapshots while preserving explicit status", async () => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "creator-program-main-"));
+  try {
+    const partialPath = path.join(directory, "partial.json");
+    const partial = await monitor.main({
+      now: Date.parse("2026-11-01T00:00:00.000Z"),
+      outputPath: partialPath,
+      env: {},
+      fetchImpl: async (url) => url.includes("about.fb.com/news/2026")
+        ? response(url, { ok: false, status: 503 })
+        : response(url)
+    });
+    assert.equal(partial.status, "partial");
+    assert.equal(JSON.parse(fs.readFileSync(partialPath, "utf8")).status, "partial");
+
+    const failedPath = path.join(directory, "failed.json");
+    const failed = await monitor.main({
+      now: Date.parse("2026-11-01T00:00:00.000Z"),
+      outputPath: failedPath,
+      env: {},
+      fetchImpl: async (url) => response(url, { ok: false, status: 503 })
+    });
+    assert.equal(failed.status, "failed");
+    assert.equal(JSON.parse(fs.readFileSync(failedPath, "utf8")).status, "failed");
+  } finally {
+    fs.rmSync(directory, { recursive: true, force: true });
+  }
+});

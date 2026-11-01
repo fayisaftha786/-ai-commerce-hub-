@@ -8,6 +8,7 @@ on:
       - main
     paths-ignore:
       - "content-rewards-assistant/discovery-snapshot.json"
+      - "creator-programs-snapshot.json"
   schedule:
     - cron: "17 */6 * * *"
   workflow_dispatch:
@@ -52,13 +53,29 @@ jobs:
           CAMPAIGN_URL: ${{ inputs.campaign_url || '' }}
         run: node scripts/content-rewards-discovery-scan.js
 
-      - name: Commit latest scan snapshot
+      - name: Refresh official creator-program source checks
+        id: creator_scan
+        run: node scripts/creator-program-discovery.js
+
+      - name: Restore last known-good creator snapshot before git operations
+        id: prepare_sources
+        if: ${{ always() && steps.creator_scan.outcome == 'failure' }}
+        run: |
+          git checkout -- creator-programs-snapshot.json
+          echo "::warning::Official creator-program checks were fully unavailable. The previous known-good snapshot is retained."
+
+      - name: Commit latest scan snapshots
         id: snapshot
-        if: ${{ always() && steps.scan.outcome != 'skipped' }}
+        if: ${{ always() && steps.scan.outcome != 'skipped' && (steps.creator_scan.outcome == 'success' || steps.prepare_sources.outcome == 'success') }}
+        env:
+          CREATOR_SCAN_OUTCOME: ${{ steps.creator_scan.outcome }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add content-rewards-assistant/discovery-snapshot.json
+          if [ "$CREATOR_SCAN_OUTCOME" = "success" ]; then
+            git add creator-programs-snapshot.json
+          fi
           if git diff --cached --quiet; then
             echo "Snapshot content is unchanged."
           else
@@ -101,26 +118,32 @@ jobs:
           fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, lines.join("\n") + "\n");
           NODE
 
+      - name: Warn when official creator-program checks are unavailable
+        if: ${{ always() && steps.creator_scan.outcome == 'failure' }}
+        run: |
+          echo "::warning::The official creator-program source check failed. The previous snapshot is retained; inspect the Creator Programs monitor summary."
+          echo "The previous known-good creator-program snapshot was retained because all official source checks were unavailable." >> "$GITHUB_STEP_SUMMARY"
+
       - name: Configure GitHub Pages
         id: pages
-        if: ${{ always() && steps.snapshot.outcome == 'success' }}
+        if: ${{ always() && steps.snapshot.outcome == 'success' && (steps.creator_scan.outcome == 'success' || steps.prepare_sources.outcome == 'success') }}
         uses: actions/configure-pages@v6
         with:
           enablement: true
 
       - name: Assemble and validate static site
-        if: ${{ always() && steps.snapshot.outcome == 'success' }}
+        if: ${{ always() && steps.snapshot.outcome == 'success' && (steps.creator_scan.outcome == 'success' || steps.prepare_sources.outcome == 'success') }}
         run: node scripts/pages-build.js _site
 
       - name: Upload Pages artifact
-        if: ${{ always() && steps.snapshot.outcome == 'success' }}
+        if: ${{ always() && steps.snapshot.outcome == 'success' && (steps.creator_scan.outcome == 'success' || steps.prepare_sources.outcome == 'success') }}
         uses: actions/upload-pages-artifact@v5
         with:
           path: _site
 
       - name: Deploy updated discovery snapshot
         id: deployment
-        if: ${{ always() && steps.snapshot.outcome == 'success' }}
+        if: ${{ always() && steps.snapshot.outcome == 'success' && (steps.creator_scan.outcome == 'success' || steps.prepare_sources.outcome == 'success') }}
         uses: actions/deploy-pages@v5
 
       - name: Warn when source scan fails; retained snapshot is still published

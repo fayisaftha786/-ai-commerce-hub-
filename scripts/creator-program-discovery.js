@@ -362,20 +362,30 @@ function appendSummary(snapshot, env = process.env) {
   return true;
 }
 
-async function main() {
-  const snapshot = await scanSources();
-  const outputPath = writeSnapshot(snapshot);
-  appendSummary(snapshot);
+function isPublishableSnapshot(snapshot) {
+  return Boolean(snapshot && (snapshot.status === "success" || snapshot.status === "partial"));
+}
+
+async function main(options = {}) {
+  const snapshot = await scanSources(options);
+  const outputPath = writeSnapshot(snapshot, options.outputPath);
+  appendSummary(snapshot, options.env || process.env);
   process.stdout.write(
     "Creator-program source monitor: " + snapshot.status + " · " +
     snapshot.summary.sourcesAvailable + "/" + snapshot.summary.sourcesAttempted +
     " official public pages reachable · snapshot: " + outputPath + "\n"
   );
   if (snapshot.status !== "success") process.stdout.write("::warning::One or more official program pages could not be checked.\n");
+  return snapshot;
 }
 
 if (require.main === module) {
-  main().catch((error) => {
+  main().then((snapshot) => {
+    if (!isPublishableSnapshot(snapshot)) {
+      process.stderr.write("::error::All official creator-program pages were unavailable; do not replace the last known-good published snapshot.\n");
+      process.exitCode = 1;
+    }
+  }).catch((error) => {
     process.stderr.write((error instanceof Error ? error.message : String(error)) + "\n");
     process.exitCode = 1;
   });
@@ -391,6 +401,8 @@ module.exports = {
   extractRuleEvidence,
   checkSource,
   scanSources,
+  isPublishableSnapshot,
+  main,
   writeSnapshot,
   appendSummary
 };

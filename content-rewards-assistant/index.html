@@ -259,6 +259,46 @@
 <p class="muted small-text">Draft a short-form script from your own footage or media you are allowed to use. This version uses local templates; no external AI service is connected yet.</p>
 <form id="draft-form" class="form-stack"><label>Campaign<select id="draft-campaign"><option value="">Select a campaign (optional)</option></select></label><label>Video topic<input id="draft-topic" required maxlength="180" placeholder="e.g. Three useful editing tips"></label><label>Language<select id="draft-language"><option value="en">English</option><option value="ml">Malayalam</option><option value="both">Malayalam + English</option></select></label><label>Platform<select id="draft-platform"><option>Instagram Reels</option><option>YouTube Shorts</option><option>Facebook Reels</option><option>X</option><option>Other</option></select></label><label>Verified takeaway or benefit<textarea id="draft-benefit" rows="2" maxlength="500" placeholder="Only include claims you can substantiate"></textarea></label><button class="button button-primary full-width" type="submit">✦ Generate content draft</button></form>
 <div id="draft-result" class="draft-result" hidden><div class="result-head"><strong>Draft preview</strong><button type="button" class="text-button" id="copy-draft">Copy text</button></div><textarea id="draft-output" rows="8" aria-label="Generated content draft"></textarea><p class="tiny-note">Review facts, rights, disclosure, campaign rules and platform requirements before posting.</p></div>
+<section class="video-analysis-panel" id="video-analysis-section">
+  <div class="video-export-heading"><div><div class="section-kicker">ANALYSE YOUR OWN DOWNLOADED VIDEO</div><h3>Video analysis & post pack</h3><p class="muted small-text">Inspect the video locally, preview key frames, then prepare copy for the selected platform and campaign.</p></div><span class="video-export-icon">⌕</span></div>
+  <label class="video-analysis-file-label">Choose your own video (MP4, WebM, MOV, M4V or 3GP · up to 150 MB)
+    <input id="video-analysis-file" type="file" accept="video/mp4,video/webm,video/quicktime,video/3gpp,.mp4,.m4v,.webm,.mov,.3gp">
+  </label>
+  <div class="video-analysis-actions">
+    <button class="button button-primary" type="button" id="video-analysis-run">Analyse video</button>
+    <button class="button button-quiet" type="button" id="video-analysis-use-editor">Use source in video editor</button>
+  </div>
+  <p id="video-analysis-status" class="video-export-status" role="status" aria-live="polite">Choose a video to inspect its technical properties and sample frames.</p>
+  <div id="video-analysis-metadata" class="video-analysis-metrics"></div>
+  <div id="video-analysis-frames" class="video-analysis-frames" aria-label="Selected video frame previews"></div>
+  <div class="video-analysis-copy-form">
+    <label>What is the video about? <span class="optional">Required; describe the actual footage</span>
+      <input id="video-analysis-topic" maxlength="180" placeholder="e.g. Three ways to organise a small kitchen">
+    </label>
+    <label>Key points / what viewers will learn <span class="optional">Required; do not add unverified claims</span>
+      <textarea id="video-analysis-notes" rows="3" maxlength="2500" placeholder="Write the real steps, demonstration or benefit shown in your video…"></textarea>
+    </label>
+    <details><summary>Paste a transcript (optional)</summary><textarea id="video-analysis-transcript" rows="4" maxlength="12000" placeholder="Paste spoken words if you already have a transcript…"></textarea></details>
+    <label>Exact sponsorship / affiliate disclosure (when applicable)
+      <input id="video-analysis-disclosure" maxlength="500" placeholder="e.g. Ad / Paid partnership / Affiliate link">
+    </label>
+    <button class="button button-primary full-width" type="button" id="video-analysis-generate" disabled>Generate platform post package</button>
+  </div>
+  <div id="video-analysis-package" class="video-analysis-package" hidden>
+    <label>Post title <input id="video-analysis-title" readonly></label>
+    <label>Caption / description <textarea id="video-analysis-caption" rows="7"></textarea></label>
+    <label>Hashtags <textarea id="video-analysis-tags" rows="2" readonly></textarea></label>
+    <strong class="video-analysis-warning-heading">Checks to review</strong>
+    <ul id="video-analysis-warnings" class="video-analysis-warnings"></ul>
+    <div class="video-analysis-actions">
+      <button class="button button-quiet" type="button" id="video-analysis-copy-caption">Copy caption</button>
+      <button class="button button-quiet" type="button" id="video-analysis-download-text">Download text</button>
+      <button class="button button-quiet" type="button" id="video-analysis-download-json">Download JSON</button>
+      <button class="button button-primary" type="button" id="video-analysis-send-social">Send video + post to Social Media Desk</button>
+    </div>
+  </div>
+  <p class="video-analysis-privacy"><strong>Privacy & accuracy:</strong> the selected file is inspected in this browser and is not uploaded for analysis. The tool reads duration, dimensions, file size and selected frame previews. It does not automatically understand scenes or transcribe speech; add accurate notes/transcript yourself. The Social Media Desk handoff only prepares the post. You must review it and explicitly confirm any supported upload.</p>
+</section>
 <section class="video-export-studio" id="real-video-export">
   <div class="video-export-heading"><div><div class="section-kicker">REAL VIDEO RENDERER · ON THIS DEVICE</div><h3>Make an MP4 / Reels video</h3><p class="muted small-text">Combine your own photos or video clips into a vertical video. Add scene captions and an optional voice-over or music file. No video is marked complete until the exported file passes a metadata check.</p></div><span class="video-export-icon">▶</span></div>
   <div class="video-capability" id="video-capability" role="status">Checking browser recording support…</div>
@@ -374,7 +414,7 @@
 <p class="muted small-text deadline-help">To mark a Content Rewards record Submitted, select the platform, use its matching public post link, and record both times. The app checks that the link-submission time is not before the post and is strictly less than 30 minutes later. Enter the time you actually pressed Submit clip; this app still cannot submit or verify the receipt.</p><div class="modal-actions"><button class="button button-quiet" id="cancel-modal" type="button">Cancel</button><button class="button button-primary" type="submit">Save campaign</button></div></form>
 </section></div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
-<script src="./campaign-scout.js"></script><script src="./campaign-feed.js"></script><script src="./discovery-engine.js"></script><script src="./rewards-intelligence.js"></script><script src="./core.js"></script><script src="./app.js"></script><script src="./video-studio.js"></script><script src="./video-studio-ui.js"></script>
+<script src="./campaign-scout.js"></script><script src="./campaign-feed.js"></script><script src="./discovery-engine.js"></script><script src="./rewards-intelligence.js"></script><script src="./core.js"></script><script src="./app.js"></script><script src="./video-studio.js"></script><script src="./video-studio-ui.js"></script><script src="./video-analysis.js"></script><script src="./video-analysis-ui.js"></script>
 <script data-register-service-worker>
   if ("serviceWorker" in navigator && location.protocol !== "file:") {
     window.addEventListener("load", () => {

@@ -2,7 +2,10 @@
 
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { createServer, getListenConfig } = require("../server.js");
+const fs = require("node:fs");
+const os = require("node:os");
+const path = require("node:path");
+const { createServer, getListenConfig, buildSessionCookie } = require("../server.js");
 
 async function withServer(run, options = {}) {
   const server = createServer({
@@ -57,7 +60,8 @@ test("health endpoint confirms API status and reports implemented OAuth routes",
     assert.deepEqual(await response.json(), {
       ok: true,
       service: "ai-commerce-hub-social-api",
-      oauthImplemented: true
+      oauthImplemented: true,
+      staticAppServed: false
     });
   });
 });
@@ -353,4 +357,54 @@ test("unknown discovery routes return JSON 404", async () => {
     assert.equal(response.status, 404);
     assert.deepEqual(await response.json(), { error: "not_found" });
   }, { discoveryService: fakeDiscovery() });
+});
+
+test("production session cookies can use same-site Lax without losing Secure and HttpOnly", () => {
+  const cookie = buildSessionCookie("a".repeat(43), {
+    NODE_ENV: "production",
+    SOCIAL_COOKIE_SAMESITE: "Lax"
+  });
+  assert.match(cookie, /^__Host-aihub_session=/);
+  assert.match(cookie, /SameSite=Lax/);
+  assert.match(cookie, /Secure/);
+  assert.match(cookie, /HttpOnly/);
+  assert.doesNotMatch(cookie, /SameSite=None/);
+});
+
+test("single-origin mode serves only the assembled public app and keeps API routes dynamic", async () => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "ai-commerce-static-server-"));
+  try {
+    await withServer(async (base) => {
+      const home = await fetch(base + "/");
+      assert.equal(home.status, 200);
+      assert.match(home.headers.get("content-type"), /text\/html/);
+      assert.match(await home.text(), /AI Commerce Hub/);
+      assert.equal(home.headers.get("cache-control"), "no-cache");
+
+      const css = await fetch(base + "/style.css");
+      assert.equal(css.status, 200);
+      assert.match(css.headers.get("content-type"), /text\/css/);
+
+      const providers = await fetch(base + "/api/social/providers");
+      assert.equal(providers.status, 200);
+      assert.match(providers.headers.get("content-type"), /application\/json/);
+      assert.equal((await providers.json()).youtubeOAuth.configured, false);
+
+      const health = await fetch(base + "/health");
+      assert.equal(health.status, 200);
+      assert.equal((await health.json()).staticAppServed, true);
+
+      for (const privatePath of ["/server.js", "/.env.example", "/docs/BACKEND.md"]) {
+        const response = await fetch(base + privatePath);
+        assert.equal(response.status, 404, privatePath);
+      }
+    }, {
+      env: {
+        SERVE_STATIC_APP: "true",
+        STATIC_SITE_DIR: path.join(directory, "site")
+      }
+    });
+  } finally {
+    fs.rmSync(directory, { recursive: true, force: true });
+  }
 });

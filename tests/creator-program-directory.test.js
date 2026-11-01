@@ -65,7 +65,7 @@ test("renders extracted rule evidence as text, never as HTML", () => {
   const card = container.children[0];
   const evidence = card.children.find((node) => node.className === "creator-rule-evidence");
   assert.ok(evidence);
-  assert.match(evidence.children[0].textContent, /<script>untrusted<\\/script>/);
+  assert.ok(evidence.children[0].textContent.includes("<script>untrusted</script>"));
   assert.equal(Object.prototype.hasOwnProperty.call(evidence.children[0], "innerHTML"), false);
   assert.match(status.textContent, /account eligibility and payout remain unverified/i);
 });

@@ -32,6 +32,8 @@ test("assembled Pages bundle contains every referenced root asset and nested ass
     assert.ok(result.assets.includes("earning-engine.js"));
     assert.ok(result.assets.includes("creator-program-directory.js"));
     assert.ok(result.assets.includes("creator-programs-snapshot.json"));
+    const snapshot = JSON.parse(fs.readFileSync(path.join(output, "creator-programs-snapshot.json"), "utf8"));
+    assert.ok(snapshot.sources.some((source) => source.id === "youtube-expanded-ypp"));
     assert.ok(result.assets.includes("earning-hub.js"));
     for (const name of result.assets) assert.ok(fs.statSync(path.join(output, name)).isFile(), name);
     assert.ok(fs.statSync(path.join(output, "content-rewards-assistant", "index.html")).isFile());

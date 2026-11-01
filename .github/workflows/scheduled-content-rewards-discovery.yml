@@ -8,6 +8,7 @@ on:
       - main
     paths-ignore:
       - "content-rewards-assistant/discovery-snapshot.json"
+      - "creator-programs-snapshot.json"
   schedule:
     - cron: "17 */6 * * *"
   workflow_dispatch:
@@ -52,13 +53,22 @@ jobs:
           CAMPAIGN_URL: ${{ inputs.campaign_url || '' }}
         run: node scripts/content-rewards-discovery-scan.js
 
-      - name: Commit latest scan snapshot
+      - name: Refresh official creator-program source checks
+        id: creator_scan
+        run: node scripts/creator-program-discovery.js
+
+      - name: Commit latest scan snapshots
         id: snapshot
         if: ${{ always() && steps.scan.outcome != 'skipped' }}
+        env:
+          CREATOR_SCAN_OUTCOME: ${{ steps.creator_scan.outcome }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add content-rewards-assistant/discovery-snapshot.json
+          if [ "$CREATOR_SCAN_OUTCOME" = "success" ]; then
+            git add creator-programs-snapshot.json
+          fi
           if git diff --cached --quiet; then
             echo "Snapshot content is unchanged."
           else
@@ -67,6 +77,105 @@ jobs:
             git rebase origin/main
             git push origin HEAD:main
           fi
+
+      - name: Keep the last known-good creator snapshot if checks failed
+        id: prepare_sources
+        name: Scheduled Content Rewards discovery snapshot
+
+on:
+  # Bootstrap after code/config changes on main. Snapshot-only commits are
+  # excluded so the crawler cannot trigger itself in an endless loop.
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "content-rewards-assistant/discovery-snapshot.json"
+      - "creator-programs-snapshot.json"
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+    inputs:
+      campaign_url:
+        description: "Campaign URL to analyse (optional public HTTPS Content Rewards /c/campaigns/{id})"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  scan-and-publish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout default branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Run public campaign discovery scan
+        id: scan
+        continue-on-error: true
+        env:
+          CAMPAIGN_URL: ${{ inputs.campaign_url || '' }}
+        run: node scripts/content-rewards-discovery-scan.js
+
+      - name: Refresh official creator-program source checks
+        id: creator_scan
+        run: node scripts/creator-program-discovery.js
+
+      - name: Commit latest scan snapshots
+        id: snapshot
+        if: ${{ always() && steps.scan.outcome != 'skipped' }}
+        env:
+          CREATOR_SCAN_OUTCOME: ${{ steps.creator_scan.outcome }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add content-rewards-assistant/discovery-snapshot.json
+          if [ "$CREATOR_SCAN_OUTCOME" = "success" ]; then
+            git add creator-programs-snapshot.json
+          fi
+          if git diff --cached --quiet; then
+            echo "Snapshot content is unchanged."
+          else
+            git commit -m "chore: refresh scheduled campaign discovery snapshot"
+            git fetch origin main
+            git rebase origin/main
+            git push origin HEAD:main
+          fi
+
+      - name: Keep the last known-good creator snapshot if checks failed
+        id: prepare_sources
+        
+        env:
+          CREATOR_SCAN_OUTCOME: ${{ steps.creator_scan.outcome }}
+        run: |
+          if [ "$CREATOR_SCAN_OUTCOME" != "success" ]; then
+            git checkout -- creator-programs-snapshot.json
+            echo "::warning::Official creator-program checks were fully unavailable. The previous known-good snapshot is retained."
+          fi
+
+      - name: Warn when official creator-program checks are unavailable
+        if: ${{ always() && steps.creator_scan.outcome == 'failure' }}
+        run: |
+          echo "::warning::The official creator-program source check failed. The previous snapshot is retained; inspect the Creator Programs monitor summary."
+          echo "The previous known-good creator-program snapshot was retained because all official source checks were unavailable." >> "$GITHUB_STEP_SUMMARY"
 
       - name: Report campaign scan coverage
         if: ${{ always() && steps.scan.outcome == 'success' && steps.snapshot.outcome == 'success' }}
@@ -103,24 +212,24 @@ jobs:
 
       - name: Configure GitHub Pages
         id: pages
-        if: ${{ always() && steps.snapshot.outcome == 'success' }}
+        if: ${{ always() && steps.snapshot.outcome == 'success' && steps.prepare_sources.outcome == 'success' }}
         uses: actions/configure-pages@v6
         with:
           enablement: true
 
       - name: Assemble and validate static site
-        if: ${{ always() && steps.snapshot.outcome == 'success' }}
+        if: ${{ always() && steps.snapshot.outcome == 'success' && steps.prepare_sources.outcome == 'success' }}
         run: node scripts/pages-build.js _site
 
       - name: Upload Pages artifact
-        if: ${{ always() && steps.snapshot.outcome == 'success' }}
+        if: ${{ always() && steps.snapshot.outcome == 'success' && steps.prepare_sources.outcome == 'success' }}
         uses: actions/upload-pages-artifact@v5
         with:
           path: _site
 
       - name: Deploy updated discovery snapshot
         id: deployment
-        if: ${{ always() && steps.snapshot.outcome == 'success' }}
+        if: ${{ always() && steps.snapshot.outcome == 'success' && steps.prepare_sources.outcome == 'success' }}
         uses: actions/deploy-pages@v5
 
       - name: Warn when source scan fails; retained snapshot is still published

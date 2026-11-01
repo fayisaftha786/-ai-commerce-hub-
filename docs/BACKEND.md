@@ -69,9 +69,11 @@ The store contains public campaign snapshot metadata, not passwords, social cook
 
 ## Current source boundary
 
-The only automatic connector is the existing public third-party snapshot feed at `https://contentrewards.xyz/api/cr/campaigns`. It is not an official Content Rewards API and can be stale, incomplete, rate-limited, or unavailable. The official Content Rewards Discover page is listed as a guided verification source; private, invitation-only, or joined-only campaigns are not crawled. A scheduled scan does not join, apply, post, submit or prove creator eligibility.
+The default GitHub Actions snapshot workflow uses the official public Content Rewards Discover page (`https://contentrewards.com/c/discover`) as its primary campaign-link source. It parses visible public campaign links and fetches up to 60 public detail pages per run. If the official Discover page cannot be fetched or its campaign links cannot be extracted, the scanner falls back to the third-party public snapshot feed at `https://contentrewards.xyz/api/cr/campaigns`. The snapshot records which source was used; the fallback is not an official Content Rewards API and may be stale, incomplete, rate-limited, or unavailable.
 
-The worker deduplicates public rows, calculates field-coverage/freshness scores, preserves previous results when a feed request fails, and records success/failure history. Scores are prioritisation aids only; they do not mean a campaign is currently live, a creator is eligible, or earnings are guaranteed.
+The scheduled workflow deduplicates public campaign rows, retains history, scores evidence coverage/freshness, and keeps previous campaign records when a scan fails. The GitHub Pages deployment also refreshes the separate allowlisted YouTube, Facebook and Instagram public creator-program source monitor. These checks read public documentation only. Private, invitation-only, joined-only campaign data and creator dashboards are not crawled. A scan never joins, applies, posts, submits, verifies account eligibility, or confirms earnings.
+
+The optional private Node.js discovery backend is a separate server integration; it is not required for the GitHub Actions snapshot. Its configured feed and persistence settings do not turn the third-party fallback into an official API. All campaign scores are prioritisation aids only; they do not mean a campaign is live, a creator is eligible, or earnings are guaranteed.
 
 ## Connect the static workspace
 

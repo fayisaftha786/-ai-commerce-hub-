@@ -5,8 +5,9 @@
 })(typeof globalThis !== "undefined" ? globalThis : this, function () {
   "use strict";
 
-  const VERSION = 1;
+  const VERSION = 2;
   const STATUSES = Object.freeze(["idea", "applied", "joined", "editing", "ready", "submitted", "approved", "rejected"]);
+  const PAYOUT_STATUSES = Object.freeze(["unconfirmed", "pending", "available", "partially-paid", "paid", "not-eligible"]);
   const PLATFORMS = Object.freeze(["Content Rewards", "Whop", "TikTok campaign", "Instagram campaign", "YouTube campaign", "Other"]);
   const MAX_CAMPAIGNS = 500;
   const MAX_TIMESTAMPS = 1000;
@@ -38,6 +39,36 @@
     } catch (_) {
       return null;
     }
+  }
+
+  function optionalCount(value, label) {
+    if (value == null || value === "") return null;
+    const raw = String(value).replace(/[ ,]/g, "");
+    if (!/^\\d+$/.test(raw)) throw new Error(label + " must be a whole number.");
+    const number = Number(raw);
+    if (!Number.isSafeInteger(number) || number < 0 || number > 1000000000000) {
+      throw new Error(label + " is outside the supported range.");
+    }
+    return number;
+  }
+
+  function optionalAmount(value, label) {
+    if (value == null || value === "") return null;
+    const raw = String(value).replace(/,/g, "").trim();
+    if (!/^(?:\\d+)(?:\\.\\d{1,2})?$/.test(raw)) throw new Error(label + " must be a non-negative amount with up to two decimal places.");
+    const number = Number(raw);
+    if (!Number.isFinite(number) || number < 0 || number > 1000000000) {
+      throw new Error(label + " is outside the supported range.");
+    }
+    return Math.round(number * 100) / 100;
+  }
+
+  function optionalDateTime(value, label) {
+    const input = text(value, 40);
+    if (!input) return "";
+    const date = new Date(input);
+    if (Number.isNaN(date.getTime())) throw new Error(label + " must be a valid date and time.");
+    return date.toISOString();
   }
 
   function validateTimestamp(value) {
@@ -135,6 +166,20 @@
     const postedAt = postedAtDate ? postedAtDate.toISOString() : "";
     const submittedAt = submittedAtDate ? submittedAtDate.toISOString() : "";
     const postPlatform = SOCIAL_PLATFORMS.includes(source.postPlatform) ? source.postPlatform : "Other";
+    const viewsCount = optionalCount(source.viewsCount, "Views");
+    const rewardApprovedAmount = optionalAmount(source.rewardApprovedAmount, "Approved reward");
+    const paidAmount = optionalAmount(source.paidAmount, "Paid amount");
+    const payoutCurrency = text(source.payoutCurrency || "USD", 3).toUpperCase();
+    const payoutStatus = PAYOUT_STATUSES.includes(source.payoutStatus) ? source.payoutStatus : "unconfirmed";
+    const viewsCheckedAt = optionalDateTime(source.viewsCheckedAt, "Views checked time");
+    const reviewedAt = optionalDateTime(source.reviewedAt, "Review decision time");
+    const paidAt = optionalDateTime(source.paidAt, "Paid time");
+    if (!/^[A-Z]{3}$/.test(payoutCurrency)) throw new Error("Payout currency must be a three-letter currency code.");
+    if (paidAmount != null && paidAmount > 0 && !paidAt) throw new Error("Record when the payout was actually received.");
+    if (payoutStatus === "paid" && !(paidAmount > 0)) throw new Error("Enter the amount actually received before marking a payout paid.");
+    if (rewardApprovedAmount != null && paidAmount != null && paidAmount > rewardApprovedAmount) {
+      throw new Error("Paid amount cannot exceed the approved reward recorded for this campaign.");
+    }
     if (!name) throw new Error("Campaign name is required.");
     if (campaignUrl === null) throw new Error("Campaign URL must be a valid HTTPS link.");
     if (postUrl === null) throw new Error("Post URL must be a valid HTTPS link.");
@@ -155,6 +200,18 @@
       postPlatform,
       postedAt,
       submittedAt,
+      submissionReference: text(source.submissionReference, 120),
+      viewsCount,
+      viewsSource: text(source.viewsSource, 80),
+      viewsCheckedAt,
+      rewardApprovedAmount,
+      payoutCurrency,
+      payoutStatus,
+      paidAmount,
+      paidAt,
+      payoutReference: text(source.payoutReference, 120),
+      reviewedAt,
+      reviewNotes: text(source.reviewNotes, 1000),
       createdAt: text(source.createdAt, 40) || stamp,
       updatedAt: text(source.updatedAt, 40) || stamp
     };
@@ -268,7 +325,7 @@
     try { data = typeof raw === "string" ? JSON.parse(raw) : raw; }
     catch (_) { throw new Error("Backup is not valid JSON."); }
     if (!data || typeof data !== "object" || Array.isArray(data)) throw new Error("Backup must be a JSON object.");
-    if (data.app !== "ClipReward Studio" || data.version !== VERSION) throw new Error("This backup format is not supported.");
+    if (data.app !== "ClipReward Studio" || ![1, VERSION].includes(data.version)) throw new Error("This backup format is not supported.");
     if (!Array.isArray(data.campaigns) || !Array.isArray(data.timestamps)) throw new Error("Backup is missing campaigns or timestamps.");
     if (data.campaigns.length > MAX_CAMPAIGNS || data.timestamps.length > MAX_TIMESTAMPS) throw new Error("Backup exceeds the supported record limit.");
     const ids = new Set();
@@ -294,7 +351,7 @@
   }
 
   return Object.freeze({
-    VERSION, STATUSES, PLATFORMS, MAX_CAMPAIGNS, MAX_TIMESTAMPS, MAX_SOCIAL_ACCOUNTS, SOCIAL_PLATFORMS, ACCOUNT_CHECKS,
+    VERSION, STATUSES, PLATFORMS, PAYOUT_STATUSES, MAX_CAMPAIGNS, MAX_TIMESTAMPS, MAX_SOCIAL_ACCOUNTS, SOCIAL_PLATFORMS, ACCOUNT_CHECKS,
     MAX_SUBMISSION_WINDOW_MS, validDate, safeUrl, postUrlMatchesPlatform, validateTimestamp, validateSubmissionRecord, hasLegacySubmissionTiming, normalizeCampaign, normalizeTimestamp, normalizeAccount,
     stats, makeDraft, createBackup, parseBackup
   });

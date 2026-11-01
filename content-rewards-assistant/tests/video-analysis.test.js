@@ -127,7 +127,7 @@ test("scene map detects sampled cut candidates while suppressing cuts too close 
     { timeSeconds: 1, histogram: dark },
     { timeSeconds: 2, histogram: bright },
     { timeSeconds: 2.5, histogram: dark },
-    { timeSeconds: 4, histogram: dark }
+    { timeSeconds: 4, histogram: bright }
   ], 5, { threshold: 0.42, minSceneSeconds: 1.25 });
   assert.equal(result.sampleCount, 5);
   assert.deepEqual(result.cuts.map((cut) => cut.timeSeconds), [2, 4]);

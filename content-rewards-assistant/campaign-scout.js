@@ -144,7 +144,7 @@
 
     if (/\b(?:payout|reward|payment)\s*(?:model|type)?\s*[:=-]?\s*pool\b|\bpool[- ]based\s+(?:payout|reward)\b|\bpool\s+campaign\b|\bprize\s+pool\b/i.test(raw) ||
         (/\bsplit\s+by\b/i.test(raw) && /\bpaid\b/i.test(raw) && /(?:^|\n)\s*pool\s*(?:\n|$)/i.test(raw))) {
-      return { model: "Pool", amount: null, label: "Pool — shared allocation; the per-creator amount depends on the published pool rules" };
+      return { model: "Pool", amount: null, label: "Pool — variable allocation from a shared pool; the per-creator amount depends on the published split and eligible views" };
     }
     return null;
   }
@@ -467,7 +467,7 @@
     const minimumPayout = (selectedMinimumPayout && selectedMinimumPayout.amount) || extractPayoutBound(rawText, "minimum");
     const pool = extractPoolTerms(lines);
     const campaignRate = rate || (pool.amount || pool.splitBy || pool.paidWhen
-      ? { model: "Pool", amount: null, label: "Pool — shared allocation; the per-creator amount depends on the published pool rules" }
+      ? { model: "Pool", amount: null, label: "Pool — variable allocation from a shared pool; the per-creator amount depends on the published split and eligible views" }
       : null);
     const campaignType = extractCampaignType(rawText);
     const campaignStatus = extractCampaignStatus(rawText) === "Not stated" && budget && budget.remaining && budget.remaining.value === 0

@@ -514,3 +514,101 @@ test("backup keeps new submission evidence, rejects invalid new records, and imp
   assert.equal(legacyImport.campaigns[0].postPlatform, "Other");
   assert.equal(legacyImport.campaigns[0].submittedAt, "");
 });
+
+test("creator operations records validate views, confirmed rewards, review evidence and actual payouts", () => {
+  const campaign = Core.normalizeCampaign({
+    id: "ops-1",
+    name: "Creator operations campaign",
+    platform: "Content Rewards",
+    status: "approved",
+    viewsCount: "12,450",
+    viewsSource: "Content Rewards",
+    viewsCheckedAt: "2026-10-31T10:00:00.000Z",
+    rewardApprovedAmount: "25.50",
+    payoutCurrency: "USD",
+    payoutStatus: "partially-paid",
+    paidAmount: "10.00",
+    paidAt: "2026-10-31T12:00:00.000Z",
+    payoutReference: "PAY-123",
+    reviewedAt: "2026-10-30T12:00:00.000Z",
+    reviewNotes: "Official dashboard shows approved; part of the balance was received."
+  });
+  assert.equal(campaign.viewsCount, 12450);
+  assert.equal(campaign.rewardApprovedAmount, 25.5);
+  assert.equal(campaign.payoutCurrency, "USD");
+  assert.equal(campaign.payoutStatus, "partially-paid");
+  assert.equal(campaign.paidAmount, 10);
+  assert.equal(campaign.payoutReference, "PAY-123");
+  assert.equal(campaign.reviewNotes.includes("Official dashboard"), true);
+  assert.throws(() => Core.normalizeCampaign({ name: "Bad view count", viewsCount: "12.5" }), /whole number/);
+  assert.throws(() => Core.normalizeCampaign({ name: "Negative views", viewsCount: -1 }), /whole number/);
+  assert.throws(() => Core.normalizeCampaign({ name: "Bad reward", rewardApprovedAmount: "3.456" }), /two decimal places/);
+  assert.throws(() => Core.normalizeCampaign({ name: "Bad currency", payoutCurrency: "US" }), /three-letter currency/);
+  assert.throws(() => Core.normalizeCampaign({
+    name: "Paid without timestamp",
+    payoutStatus: "paid",
+    rewardApprovedAmount: 10,
+    paidAmount: 10
+  }), /actually received/);
+  assert.throws(() => Core.normalizeCampaign({
+    name: "Paid exceeds approval",
+    rewardApprovedAmount: 10,
+    paidAmount: 11,
+    paidAt: "2026-10-31T12:00:00.000Z"
+  }), /cannot exceed/);
+});
+
+test("version 2 backup preserves creator operations and migrates version 1 records", () => {
+  const current = Core.createBackup({
+    campaigns: [{
+      id: "ops-backup",
+      name: "Saved reward",
+      platform: "Content Rewards",
+      viewsCount: 9000,
+      viewsSource: "Content Rewards",
+      rewardApprovedAmount: 18.75,
+      payoutCurrency: "USD",
+      payoutStatus: "available"
+    }],
+    timestamps: []
+  });
+  assert.equal(current.version, 2);
+  const restored = Core.parseBackup(current);
+  assert.equal(restored.campaigns[0].viewsCount, 9000);
+  assert.equal(restored.campaigns[0].rewardApprovedAmount, 18.75);
+  assert.equal(restored.campaigns[0].payoutStatus, "available");
+
+  const v1 = Core.parseBackup({
+    app: "ClipReward Studio",
+    version: 1,
+    campaigns: [{ id: "old-v1", name: "Old campaign", platform: "Content Rewards" }],
+    timestamps: []
+  });
+  assert.equal(v1.campaigns[0].viewsCount, null);
+  assert.equal(v1.campaigns[0].rewardApprovedAmount, null);
+  assert.equal(v1.campaigns[0].payoutStatus, "unconfirmed");
+});
+
+test("creator operations UI is wired without claiming private account or payout sync", () => {
+  const root = path.join(__dirname, "..");
+  const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
+  const appSource = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  const worker = fs.readFileSync(path.join(root, "service-worker.js"), "utf8");
+  for (const id of [
+    "creator-operations",
+    "ops-form",
+    "ops-campaign",
+    "ops-views",
+    "ops-reward-approved",
+    "ops-payout-status",
+    "ops-paid-amount",
+    "ops-table",
+    "ops-empty"
+  ]) assert.ok(html.includes('id="' + id + '"'), "missing operations node " + id);
+  assert.match(appSource, /function renderOperations\(\)/);
+  assert.match(appSource, /function saveOperations\(event\)/);
+  assert.match(appSource, /URGENT: .*less than 1 minute remains/);
+  assert.match(appSource, /within 5 minutes/);
+  assert.match(appSource, /Live views, approval and payout were not queried/);
+  assert.match(worker, /clipreward-static-v25/);
+});

@@ -2,15 +2,15 @@
   "schemaVersion": 1,
   "country": "IN",
   "scope": "official-public-source-reachability-and-limited-rule-extraction",
-  "generatedAt": "",
-  "status": "pending",
+  "generatedAt": "2026-11-01T05:17:47.925Z",
+  "status": "success",
   "summary": {
     "sourcesAttempted": 4,
-    "sourcesAvailable": 0,
+    "sourcesAvailable": 4,
     "sourcesUnavailable": 0,
-    "accountEligibilityChecksRequired": 4,
-    "sourcesWithRuleEvidence": 0,
-    "ruleEvidenceCount": 0
+    "sourcesWithRuleEvidence": 4,
+    "ruleEvidenceCount": 11,
+    "accountEligibilityChecksRequired": 4
   },
   "limitations": [
     "This scan fetches allowlisted official public pages and extracts only selected rule snippets; extraction is a helper, not a complete or account-specific policy interpretation.",
@@ -28,11 +28,26 @@
       "accountCheck": "YouTube Studio → Earn",
       "indiaNote": "Use the India-specific help page, then confirm country, channel and feature eligibility in the channel's own Earn tab.",
       "limitation": "A public help page cannot inspect this channel's eligibility, policy status, thresholds or payout setup.",
-      "status": "not_checked",
-      "checkedAt": "",
-      "httpStatus": null,
-      "pageTitle": "",
+      "status": "available",
+      "checkedAt": "2026-11-01T05:17:47.925Z",
+      "httpStatus": 200,
+      "finalUrl": "https://support.google.com/youtube/answer/72851?hl=en-IN",
+      "pageTitle": "The YouTube Partner Programme overview and eligibility - Computer - YouTube Help",
       "pageDescription": "",
+      "ruleEvidence": [
+        {
+          "key": "standard-watch-hours",
+          "label": "Full YPP · long-form route",
+          "excerpt": "il once you've met either of the eligibility thresholds below. 1. Get 1,000 subscribers with 4,000 qualified watch hours in the past 12 months or 2. Get 1,000 subscribers with 10 million qualified Shorts views in the past 90 days. B",
+          "interpretation": "This is a public threshold route for the full YPP application; channel policy review and other account requirements still apply."
+        },
+        {
+          "key": "standard-shorts-views",
+          "label": "Full YPP · Shorts route",
+          "excerpt": "bers with 4,000 qualified watch hours in the past 12 months or 2. Get 1,000 subscribers with 10 million qualified Shorts views in the past 90 days. Bear in mind that any qualified watch hours from Shorts views in the Shorts feed won't c",
+          "interpretation": "This is an alternative public threshold route for the full YPP application; qualified views and channel review rules still apply."
+        }
+      ],
       "error": ""
     },
     {
@@ -45,30 +60,70 @@
       "accountCheck": "YouTube Studio → Earn",
       "indiaNote": "The expanded YPP guide lists country-specific availability and earlier access to selected fan-funding/Shopping features. Check India availability and this channel's exact feature status in Studio.",
       "limitation": "The lower expanded-YPP threshold is not the full ad-revenue threshold. A public guide cannot inspect this channel's country, policy status or feature access.",
-      "status": "not_checked",
-      "checkedAt": "",
-      "httpStatus": null,
-      "finalUrl": "",
-      "pageTitle": "",
-      "pageDescription": "",
-      "ruleEvidence": [],
+      "status": "available",
+      "checkedAt": "2026-11-01T05:17:47.925Z",
+      "httpStatus": 200,
+      "finalUrl": "https://support.google.com/youtube/answer/13429240?hl=en-IN",
+      "pageTitle": "Overview of the expanded YouTube Partner Programme - Computer - YouTube Help",
+      "pageDescription": "We've expanded the YouTube Partner Programme (YPP) to more creators with earlier access to fan funding and Shopping features.&nbsp;The expanded YouTube Partner Programme is available to eligible cr",
+      "ruleEvidence": [
+        {
+          "key": "expanded-ypp-watch-hours",
+          "label": "Expanded YPP · earlier access",
+          "excerpt": "ramme when they reach either of the below eligibility thresholds: Get 500 subscribers with 3 valid public uploads in the last 90 days, and 3,000 qualified watch hours in the last 12 months, or Get 500 subscribers with 3 valid public uploads in the past 90 days and 3 million qua",
+          "interpretation": "This lower threshold is for earlier access to selected YPP features in eligible countries; it is not the full ad-revenue threshold."
+        },
+        {
+          "key": "expanded-ypp-shorts-views",
+          "label": "Expanded YPP · Shorts route",
+          "excerpt": "0 days, and 3,000 qualified watch hours in the last 12 months, or Get 500 subscribers with 3 valid public uploads in the past 90 days and 3 million qualified Shorts views in the past 90 days If you'd like us to tell you when you're eligible, select Get notified in the Earn area o",
+          "interpretation": "This lower threshold is for earlier access to selected YPP features in eligible countries; it is not the full ad-revenue threshold."
+        }
+      ],
       "error": ""
     },
     {
       "id": "facebook-content-monetization",
       "platform": "Facebook",
-      "program": "Facebook Content Monetization",
-      "programType": "native-monetization",
+      "program": "Creator Fast Track and Facebook Content Monetization",
+      "programType": "invitation-based-native-monetization",
       "sourceUrl": "https://about.fb.com/news/2026/03/creator-fast-track-grow-your-audience-earn-money-on-facebook/",
       "sourceLabel": "Meta official 2026 creator monetization update",
       "accountCheck": "Facebook Professional dashboard → Monetization",
-      "indiaNote": "Check the exact account and country in Professional dashboard. Meta describes access as invite-based; public announcements do not establish this account's availability.",
-      "limitation": "A reachable announcement does not mean this profile or Page has an invitation, is eligible in India, or has an approved payout account.",
-      "status": "not_checked",
-      "checkedAt": "",
-      "httpStatus": null,
-      "pageTitle": "",
-      "pageDescription": "",
+      "indiaNote": "The 2026 Creator Fast Track announcement describes a distinct invitation-based route with follower-based tiers. It is not a general eligibility threshold for all Facebook monetization. Check the exact account in Professional dashboard.",
+      "limitation": "Public documentation does not reveal whether this profile/Page has an invitation, qualifies for Fast Track, has access to Content Monetization, or has an approved payout account.",
+      "status": "available",
+      "checkedAt": "2026-11-01T05:17:47.925Z",
+      "httpStatus": 200,
+      "finalUrl": "https://about.fb.com/news/2026/03/creator-fast-track-grow-your-audience-earn-money-on-facebook/",
+      "pageTitle": "Creator Fast Track: A New Way to Quickly Grow Your Audience and Earn Money on Facebook",
+      "pageDescription": "The program makes it easier than ever for established content creators to grow and succeed on Facebook.",
+      "ruleEvidence": [
+        {
+          "key": "facebook-invite-only",
+          "label": "Content Monetization access",
+          "excerpt": "breakdown showing why views don’t qualify for earnings While Facebook Content Monetization is invite-only, creators can express interest by going to their Professional Dashboard on the Facebook m",
+          "interpretation": "Meta describes Content Monetization as invite-only in this announcement. An interest form is not an invitation, approval or earnings confirmation. Check the account's Professional Dashboard for its real status."
+        },
+        {
+          "key": "facebook-interest-form",
+          "label": "Express interest",
+          "excerpt": "ation is invite-only, creators can express interest by going to their Professional Dashboard on the Facebook mobile app, selecting the Monetization tab, then Content Monetization, and completing the interest form. Category : Facebook Tags: Creators DOWNLOAD ALL IMAGES Share this article Recent News Me",
+          "interpretation": "The public announcement describes an in-product interest route. Sending interest is not an invitation, approval or earnings confirmation."
+        },
+        {
+          "key": "creator-fast-track-100k",
+          "label": "Creator Fast Track · 100K tier",
+          "excerpt": "sharing eligible reels on Facebook. Creators in the program can earn $1,000 per month if they have at least 100,000 followers on Instagram, TikTok, or YouTube, or $3,000 per month if they have more than one million",
+          "interpretation": "This amount is described for the separate Creator Fast Track route and a stated follower tier; it is not a general Facebook monetization rate or a promise to this account."
+        },
+        {
+          "key": "creator-fast-track-1m",
+          "label": "Creator Fast Track · 1M tier",
+          "excerpt": "have at least 100,000 followers on Instagram, TikTok, or YouTube, or $3,000 per month if they have more than one million followers on at least one of those platforms. The program also gives creators immediate access to F",
+          "interpretation": "This amount is described for the separate Creator Fast Track route and a stated follower tier; it is not a general Facebook monetization rate or a promise to this account."
+        }
+      ],
       "error": ""
     },
     {
@@ -81,11 +136,32 @@
       "accountCheck": "Instagram Professional dashboard → Creator Marketplace",
       "indiaNote": "Meta's announcement included India in the planned creator-marketplace rollout. Confirm present access and eligibility in this professional account.",
       "limitation": "Public documentation does not reveal account invitations, available projects, negotiated rates or creator eligibility.",
-      "status": "not_checked",
-      "checkedAt": "",
-      "httpStatus": null,
-      "pageTitle": "",
-      "pageDescription": "",
+      "status": "available",
+      "checkedAt": "2026-11-01T05:17:47.925Z",
+      "httpStatus": 200,
+      "finalUrl": "https://about.fb.com/news/2024/02/creator-marketplace-for-brands-and-creators-to-collaborate-on-instagram/",
+      "pageTitle": "Making it Easier for Brands and Creators to Collaborate on Instagram",
+      "pageDescription": "We’re expanding Instagram’s creator marketplace to help brands and creators work together on partnerships.",
+      "ruleEvidence": [
+        {
+          "key": "instagram-india-rollout",
+          "label": "India rollout reference",
+          "excerpt": "marketplace to eight new markets. Over the next few weeks, we plan to invite creators and brands based in Canada, Australia, New Zealand, United Kingdom, Japan, India and Brazil to join Instagram’s creator marketplace. Chinese export brands will also be in",
+          "interpretation": "Meta's 2024 announcement named India in its planned Creator Marketplace expansion. This historical rollout reference does not prove current access for a specific account."
+        },
+        {
+          "key": "instagram-professional-dashboard",
+          "label": "Creator entry point",
+          "excerpt": "e Brands join Instagram’s creator marketplace in Meta Business Suite. Creators join from their professional dashboard in the Instagram app. Creators can indicate brands and interests relevant to them. Creato",
+          "interpretation": "The public guide describes the Instagram Professional Dashboard as the creator entry point. Check whether Creator Marketplace appears in this account."
+        },
+        {
+          "key": "instagram-partnership-messages",
+          "label": "Brand partnership workflow",
+          "excerpt": "nnect and Collaborate Creators receive brand messages in a dedicated Partnership Messages folder at the top of the Primary tab. Brands can reach out to creators directly or create and se",
+          "interpretation": "The guide describes a dedicated partnership message route. Rates and project availability depend on the individual brand agreement."
+        }
+      ],
       "error": ""
     }
   ]

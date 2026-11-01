@@ -12,7 +12,7 @@
 <a class="brand" href="./" aria-label="ClipReward Studio home"><span class="brand-mark">CR</span><span><strong>ClipReward</strong><small>STUDIO</small></span></a>
 <div class="workspace-label">WORKSPACE</div>
 <nav class="side-nav" aria-label="Main navigation">
-<a class="nav-link active" href="#overview"><span>◫</span> Overview</a><a class="nav-link" href="#account-center"><span>◎</span> Account center</a><a class="nav-link" href="#campaigns"><span>▤</span> Campaigns</a><a class="nav-link" href="#clip-studio"><span>▶</span> Clip studio</a><a class="nav-link" href="#submissions"><span>↗</span> Submissions</a>
+<a class="nav-link active" href="#overview"><span>◫</span> Overview</a><a class="nav-link" href="#account-center"><span>◎</span> Account center</a><a class="nav-link" href="#campaigns"><span>▤</span> Campaigns</a><a class="nav-link" href="#clip-studio"><span>▶</span> Clip studio</a><a class="nav-link" href="#submissions"><span>↗</span> Submissions</a><a class="nav-link" href="#creator-operations"><span>＄</span> Creator ops</a>
 </nav>
 <div class="sidebar-bottom"><div class="privacy-card"><span class="privacy-dot"></span><div><strong>Private by default</strong><p>Your workspace stays in this browser.</p></div></div><div class="sidebar-foot">CLIPREWARD STUDIO <span>v0.1.0</span></div></div>
 </aside>
@@ -313,6 +313,46 @@
 <section id="submissions" class="panel submissions-panel"><div class="panel-header"><div><div class="section-kicker">EVIDENCE & FOLLOW-UP</div><h2>Submission log</h2><p class="muted">A saved record is not proof of platform approval or payout.</p></div><span class="panel-symbol">✓</span></div>
 <div class="table-wrap"><table><thead><tr><th>Campaign</th><th>Post URL</th><th>Link submitted at (local record)</th><th>Status</th><th>Action</th></tr></thead><tbody id="submission-table"></tbody></table></div><div id="submission-empty" class="table-empty">No submissions yet. Mark a campaign “Submitted” and add its public post URL.</div>
 </section>
+<section id="creator-operations" class="panel ops-panel">
+  <div class="panel-header"><div><div class="section-kicker">CREATOR OPERATIONS · EVIDENCE & PAYOUTS</div><h2>Views, approvals & payout tracker</h2><p class="muted">Keep a dated record of what the official platforms show. This is an evidence ledger, not a live account sync.</p></div><span class="panel-symbol">＄</span></div>
+  <div class="ops-metrics">
+    <article><small>Views recorded</small><strong id="ops-metric-views">0</strong></article>
+    <article><small>Approved rewards recorded</small><strong id="ops-metric-rewards">0</strong></article>
+    <article><small>Awaiting payout</small><strong id="ops-metric-pending">0</strong></article>
+    <article><small>Payment records</small><strong id="ops-metric-paid">0</strong></article>
+  </div>
+  <div class="ops-layout">
+    <form id="ops-form" class="ops-form">
+      <div class="ops-form-heading"><strong>Update campaign evidence</strong><span class="tiny-note">Select an existing campaign or use Update in the ledger.</span></div>
+      <label>Campaign<select id="ops-campaign" required><option value="">Choose a tracked campaign</option></select></label>
+      <div class="ops-form-grid">
+        <label>Views shown by source<input id="ops-views" type="number" min="0" max="1000000000000" step="1" inputmode="numeric" placeholder="e.g. 12500"></label>
+        <label>Where the views were checked<select id="ops-view-source"><option>Content Rewards</option><option>Instagram Insights</option><option>YouTube Analytics</option><option>Facebook Professional Dashboard</option><option>Other</option></select></label>
+        <label>Views checked at<input id="ops-views-checked" type="datetime-local"></label>
+        <label>Approved reward amount <span class="optional">(only an amount confirmed by the official campaign)</span><input id="ops-reward-approved" type="number" min="0" max="1000000000" step="0.01" inputmode="decimal" placeholder="e.g. 12.50"></label>
+        <label>Currency<select id="ops-currency"><option value="USD">USD</option><option value="INR">INR</option><option value="EUR">EUR</option><option value="GBP">GBP</option></select></label>
+        <label>Payout status<select id="ops-payout-status"><option value="unconfirmed">Not confirmed</option><option value="pending">Pending</option><option value="available">Available to withdraw</option><option value="partially-paid">Partially paid</option><option value="paid">Paid in full</option><option value="not-eligible">Not eligible / rejected</option></select></label>
+        <label>Amount actually received<input id="ops-paid-amount" type="number" min="0" max="1000000000" step="0.01" inputmode="decimal" placeholder="e.g. 10.00"></label>
+        <label>Payment received at<input id="ops-paid-at" type="datetime-local"></label>
+        <label>Payment / transaction reference<input id="ops-payout-reference" maxlength="120" placeholder="Optional reference"></label>
+        <label>Review decision checked at<input id="ops-reviewed-at" type="datetime-local"></label>
+      </div>
+      <label>Review / payout notes<textarea id="ops-review-notes" rows="3" maxlength="1000" placeholder="Record official dashboard wording, hold reason, or the next follow-up date. Do not enter private credentials."></textarea></label>
+      <button class="button button-primary" type="submit">Save evidence & payout record</button>
+    </form>
+    <div class="ops-ledger">
+      <div class="ops-ledger-heading"><strong>Campaign operations ledger</strong><span class="tiny-note">Updated locally on this device</span></div>
+      <div class="table-wrap"><table class="ops-table"><thead><tr><th>Campaign</th><th>Views</th><th>Approved reward</th><th>Payout state</th><th>Received</th><th></th></tr></thead><tbody id="ops-table"></tbody></table></div>
+      <div id="ops-empty" class="table-empty" hidden>No campaigns yet. Add a campaign, then record official views and payout evidence here.</div>
+    </div>
+  </div>
+  <p class="ops-boundary"><strong>Accuracy rule:</strong> views, approval amount, payout state and money received are separate facts. Enter only values visible in the relevant official dashboard. Raw Instagram / YouTube / Facebook views are not automatically eligible Content Rewards views. CPM, pool and retainer estimates are not added to confirmed earnings. This tracker does not query private accounts, submit clips, approve reviews, initiate withdrawals or sync bank / Whop balances.</p>
+  <div class="campaign-actions">
+    <a class="text-button" href="https://help.contentrewards.com/en/articles/15319801-approval-and-review" target="_blank" rel="noopener noreferrer">Official review timing ↗</a>
+    <a class="text-button" href="https://help.contentrewards.com/en/articles/15319815-payouts" target="_blank" rel="noopener noreferrer">Official payout terms ↗</a>
+    <a class="text-button" href="https://help.contentrewards.com/en/articles/15319814-submit-a-video" target="_blank" rel="noopener noreferrer">Official submission guide ↗</a>
+  </div>
+</section>
 <footer class="disclaimer"><span>◇</span><p><strong>Built for responsible creator workflows.</strong> This is a tracking and drafting assistant, not an official connection to Content Rewards or Whop. It does not guarantee campaign eligibility, approval, views, or earnings. Never bypass CAPTCHA, account restrictions or platform rules.</p></footer>
 </main></div>
 <div id="campaign-modal" class="modal-backdrop" hidden><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-header"><div><div class="section-kicker">CAMPAIGN DETAILS</div><h2 id="modal-title">Add campaign</h2></div><button class="icon-button" id="close-modal" type="button" aria-label="Close dialog">×</button></div>
@@ -320,6 +360,7 @@
 <label>Platform where you posted <span class="optional">(required for a Content Rewards submission)</span><select id="campaign-post-platform"><option value="">Choose platform</option><option>Instagram</option><option>YouTube</option><option>Facebook</option><option>X</option><option>Other</option></select></label>
 <label>Time you posted <span class="optional">(starts the Content Rewards 30-minute window)</span><input id="campaign-posted-at" type="datetime-local"></label>
 <label>Time you submitted the link inside Content Rewards <span class="optional">(actual submission time; required before marking Submitted)</span><input id="campaign-submitted-at" type="datetime-local"></label>
+<label>Submission receipt / reference <span class="optional">(optional local reference only; never paste a login code or token)</span><input id="campaign-submission-reference" maxlength="120" placeholder="e.g. submission ID or receipt note"></label>
 <p class="muted small-text deadline-help">To mark a Content Rewards record Submitted, select the platform, use its matching public post link, and record both times. The app checks that the link-submission time is not before the post and is strictly less than 30 minutes later. Enter the time you actually pressed Submit clip; this app still cannot submit or verify the receipt.</p><div class="modal-actions"><button class="button button-quiet" id="cancel-modal" type="button">Cancel</button><button class="button button-primary" type="submit">Save campaign</button></div></form>
 </section></div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>

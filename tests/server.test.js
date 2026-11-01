@@ -274,7 +274,7 @@ test("rejects non-GET methods", async () => {
   await withServer(async (base) => {
     const response = await fetch(base + "/health", { method: "POST" });
     assert.equal(response.status, 405);
-    assert.equal(response.headers.get("allow"), "GET");
+    assert.equal(response.headers.get("allow"), "GET, HEAD");
     assert.deepEqual(await response.json(), { error: "method_not_allowed" });
   });
 });

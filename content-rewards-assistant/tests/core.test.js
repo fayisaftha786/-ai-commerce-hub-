@@ -612,3 +612,122 @@ test("creator operations UI is wired without claiming private account or payout 
   assert.match(appSource, /Live views, approval and payout were not queried/);
   assert.match(worker, /clipreward-static-v25/);
 });
+
+
+test("Content Rewards credit, Whop transfer and final Whop payout are distinct validated stages", () => {
+  const campaign = Core.normalizeCampaign({
+    id: "settlement-stages",
+    name: "Three-stage settlement",
+    platform: "Content Rewards",
+    status: "approved",
+    rewardApprovedAmount: "40.00",
+    payoutCurrency: "USD",
+    payoutStatus: "paid",
+    paidAmount: "35.00",
+    paidAt: "2026-11-01T08:00:00.000Z",
+    expectedPayoutAt: "2026-11-02T12:00:00.000Z",
+    withdrawnToWhopAmount: "30.00",
+    withdrawnToWhopAt: "2026-11-03T08:00:00.000Z",
+    withdrawalReference: "CR-WHOP-123",
+    whopPayoutAmount: "30.00",
+    whopPayoutAt: "2026-11-04T08:00:00.000Z",
+    whopPayoutReference: "WHOP-BANK-456"
+  });
+  assert.equal(campaign.paidAmount, 35);
+  assert.equal(campaign.expectedPayoutAt, "2026-11-02T12:00:00.000Z");
+  assert.equal(campaign.withdrawnToWhopAmount, 30);
+  assert.equal(campaign.withdrawalReference, "CR-WHOP-123");
+  assert.equal(campaign.whopPayoutAmount, 30);
+  assert.equal(campaign.whopPayoutReference, "WHOP-BANK-456");
+
+  assert.throws(() => Core.normalizeCampaign({
+    name: "Transfer without CR credit",
+    withdrawnToWhopAmount: 5,
+    withdrawnToWhopAt: "2026-11-03T08:00:00.000Z"
+  }), /balance credit before recording a transfer/i);
+  assert.throws(() => Core.normalizeCampaign({
+    name: "Transfer missing time",
+    paidAmount: 10,
+    paidAt: "2026-11-01T08:00:00.000Z",
+    withdrawnToWhopAmount: 5
+  }), /Record when the funds were transferred/i);
+  assert.throws(() => Core.normalizeCampaign({
+    name: "Transfer too large",
+    paidAmount: 10,
+    paidAt: "2026-11-01T08:00:00.000Z",
+    withdrawnToWhopAmount: 11,
+    withdrawnToWhopAt: "2026-11-03T08:00:00.000Z"
+  }), /cannot exceed the recorded Content Rewards balance credit/i);
+  assert.throws(() => Core.normalizeCampaign({
+    name: "Whop payout without transfer",
+    whopPayoutAmount: 5,
+    whopPayoutAt: "2026-11-04T08:00:00.000Z"
+  }), /transfer to Whop Balance before recording the final Whop payout/i);
+  assert.throws(() => Core.normalizeCampaign({
+    name: "Whop payout missing time",
+    paidAmount: 10,
+    paidAt: "2026-11-01T08:00:00.000Z",
+    withdrawnToWhopAmount: 5,
+    withdrawnToWhopAt: "2026-11-03T08:00:00.000Z",
+    whopPayoutAmount: 5
+  }), /Record when Whop paid the amount/i);
+  assert.throws(() => Core.normalizeCampaign({
+    name: "Whop payout exceeds transfer",
+    paidAmount: 10,
+    paidAt: "2026-11-01T08:00:00.000Z",
+    withdrawnToWhopAmount: 5,
+    withdrawnToWhopAt: "2026-11-03T08:00:00.000Z",
+    whopPayoutAmount: 6,
+    whopPayoutAt: "2026-11-04T08:00:00.000Z"
+  }), /cannot exceed the amount recorded as transferred to Whop/i);
+});
+
+test("version 2 backups preserve the three distinct settlement stages", () => {
+  const backup = Core.createBackup({
+    campaigns: [{
+      id: "three-stages-backup",
+      name: "Wallet settlement",
+      paidAmount: 25,
+      paidAt: "2026-11-01T08:00:00.000Z",
+      expectedPayoutAt: "2026-11-02T08:00:00.000Z",
+      withdrawnToWhopAmount: 20,
+      withdrawnToWhopAt: "2026-11-03T08:00:00.000Z",
+      withdrawalReference: "CR-1",
+      whopPayoutAmount: 20,
+      whopPayoutAt: "2026-11-04T08:00:00.000Z",
+      whopPayoutReference: "WHOP-1"
+    }],
+    timestamps: []
+  });
+  const restored = Core.parseBackup(backup);
+  const record = restored.campaigns[0];
+  assert.equal(record.paidAmount, 25);
+  assert.equal(record.withdrawnToWhopAmount, 20);
+  assert.equal(record.whopPayoutAmount, 20);
+  assert.equal(record.expectedPayoutAt, "2026-11-02T08:00:00.000Z");
+  assert.equal(record.withdrawalReference, "CR-1");
+  assert.equal(record.whopPayoutReference, "WHOP-1");
+});
+
+test("Creator Operations UI distinguishes CR balance credit, Whop transfer and final payout", () => {
+  const root = path.join(__dirname, "..");
+  const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
+  const appSource = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  const worker = fs.readFileSync(path.join(root, "service-worker.js"), "utf8");
+  for (const id of [
+    "ops-metric-withdrawn",
+    "ops-expected-payout-at",
+    "ops-withdrawn-amount",
+    "ops-withdrawn-at",
+    "ops-withdrawal-reference",
+    "ops-whop-payout-amount",
+    "ops-whop-payout-at",
+    "ops-whop-payout-reference"
+  ]) assert.ok(html.includes('id="' + id + '"'), "missing staged payout node " + id);
+  assert.match(html, /Content Rewards Balance/);
+  assert.match(html, /Whop Balance/);
+  assert.match(appSource, /Available in CR balance/);
+  assert.match(appSource, /Credited to CR balance/);
+  assert.match(appSource, /function renderOperations\(\)/);
+  assert.match(worker, /clipreward-static-v26/);
+});

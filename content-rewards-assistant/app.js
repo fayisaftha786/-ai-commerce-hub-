@@ -274,7 +274,9 @@
       : scheduledSnapshot
         ? latest && latest.status === "failed"
           ? "GitHub Actions last scan failed · open the workflow to retry"
-          : "GitHub Actions snapshot active · refreshes about every 6 hours (UTC)"
+          : latest && latest.status === "partial"
+            ? "GitHub Actions scan partially complete · some public pages were unreadable"
+            : "GitHub Actions snapshot active · refreshes about every 6 hours (UTC)"
         : discoverySettings.enabled
           ? "First GitHub Actions scan pending · browser feed checks run only while this page is open"
           : "First GitHub Actions scan pending · browser fallback paused";
@@ -300,7 +302,7 @@
       ? [discoveryBackendStatus.lastScan]
       : discoveryStaticScans.length ? discoveryStaticScans : scans;
     $("discovery-history").textContent = history.length ? history.slice(0, 5).map((scan) =>
-      new Date(scan.completedAt || scan.at).toLocaleString() + " · " + (scan.checkedCount || 0) + " checked · " + (scan.newCount || 0) + " new" + (scan.error || scan.status === "failed" ? " · failed" : "")
+      new Date(scan.completedAt || scan.at).toLocaleString() + " · " + (scan.checkedCount || 0) + " checked · " + (scan.newCount || 0) + " new" + (scan.error || scan.status === "failed" ? " · failed" : scan.status === "partial" ? " · partial detail coverage" : "")
     ).join(" | ") : "No scan history yet.";
   }
 
@@ -364,10 +366,13 @@
       const pageDiagnostic = failedPages
         ? " · " + failedPages + " page(s) unreadable" + (samplePageError ? ": " + samplePageError.lastError.slice(0, 180) : "")
         : "";
+      const pageCoverage = " · " + fetchedPages + "/" + (lastScan.detailPagesAttempted == null ? pageDetails.length : lastScan.detailPagesAttempted) + " public campaign pages readable";
       const message = lastScan.status === "failed"
         ? "Latest scheduled scan failed · " + (lastScan.discoverRequestAttempts || 0) + " official Discover request(s), " + (lastScan.feedRequestAttempts || 0) + " fallback feed request(s): " + (lastScan.error || "source unavailable") + ". Previous campaign rows were preserved."
-        : "GitHub Actions snapshot loaded · " + result.campaigns.length + " campaigns · " + fetchedPages + "/" + pageDetails.length + " public campaign pages auto-read · source " + (lastScan.source || "not stated") + " · last scan " + new Date(lastScan.completedAt || lastScan.at).toLocaleString() + ".";
-      $("discovery-status").textContent = message;
+        : lastScan.status === "partial"
+          ? "Latest scheduled scan partially completed · " + result.campaigns.length + " campaigns saved · some public detail pages could not be read" + pageCoverage + " · source " + (lastScan.source || "not stated") + "."
+          : "GitHub Actions snapshot loaded · " + result.campaigns.length + " campaigns · " + fetchedPages + "/" + pageDetails.length + " public campaign pages auto-read · source " + (lastScan.source || "not stated") + " · last scan " + new Date(lastScan.completedAt || lastScan.at).toLocaleString() + ".";
+      $("discovery-status").textContent = message + (lastScan.status === "failed" ? "" : pageDiagnostic);
       $("discovery-backend-status").textContent = "GitHub Actions scheduled snapshot is active. No separate backend URL is needed for this public feed.";
       scheduleDiscovery();
       renderDiscovery();
@@ -622,7 +627,7 @@
       if (!detail) {
         const detailCount = (snapshot.campaignDetails || []).length;
         throw new Error(detailCount
-          ? "This URL is not in the latest public-page scan. Wait for the next scheduled scan, or open a campaign found in Discover."
+          ? "This URL is not in the latest public campaign scan. Open a campaign from official Discover or wait for the next scheduled scan; only listed and fetched public pages can be auto-read."
           : "No public campaign detail pages have been scanned yet. Run the GitHub Actions workflow “Scheduled Content Rewards discovery snapshot” once, then retry this URL.");
       }
       if (!detail.pageText || !["ok", "stale"].includes(detail.status)) {
@@ -635,7 +640,7 @@
         campaignScoutResult.pageFetchStatus = detail.status;
         if (detail.status === "stale") {
           const staleReason = detail.notInLatestFeed
-            ? "This URL is no longer present in the latest public lead feed; showing previously saved page content."
+            ? "This URL is no longer present in the latest public campaign listing; showing previously saved page content."
             : "The latest page fetch failed; showing previously saved public page content.";
           $("scout-source-note").textContent += " " + staleReason + " Last saved: " + (detail.fetchedAt || "an earlier scan") + ". " + (detail.lastError || "");
         } else {

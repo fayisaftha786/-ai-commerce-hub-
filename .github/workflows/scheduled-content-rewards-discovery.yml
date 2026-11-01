@@ -61,6 +61,33 @@ jobs:
             git push origin HEAD:main
           fi
 
+      - name: Report campaign scan coverage
+        if: ${{ always() && steps.scan.outcome == 'success' && steps.snapshot.outcome == 'success' }}
+        run: |
+          node - <<'NODE'
+          const fs = require("node:fs");
+          const snapshot = JSON.parse(fs.readFileSync("content-rewards-assistant/discovery-snapshot.json", "utf8"));
+          const scan = snapshot.lastScan || {};
+          const attempted = Number(scan.detailPagesAttempted || 0);
+          const readable = Number(scan.detailPagesAvailable || 0);
+          const failed = Number(scan.detailPagesFailed || 0);
+          const lines = [
+            "## Content Rewards public campaign scan",
+            "",
+            "- **Scan status:** " + (scan.status || "unknown"),
+            "- **Source:** " + (scan.source || "not stated"),
+            "- **Campaign links checked:** " + Number(scan.checkedCount || 0),
+            "- **Public detail pages:** " + readable + " readable / " + attempted + " attempted / " + failed + " failed",
+            "- **Saved campaign records:** " + ((snapshot.campaigns || []).length),
+            "- **Completed at:** " + (scan.completedAt || scan.at || "not recorded")
+          ];
+          if (scan.status === "partial") {
+            console.log("::warning::The campaign listing was read, but one or more public detail pages were unreadable.");
+            lines.push("", "Some public campaign pages could not be fetched or parsed. The app labels this scan as partial.");
+          }
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, lines.join("\n") + "\n");
+          NODE
+
       - name: Configure GitHub Pages
         id: pages
         if: ${{ always() && steps.snapshot.outcome == 'success' }}
@@ -86,7 +113,7 @@ jobs:
       - name: Warn when source scan fails; retained snapshot is still published
         if: ${{ always() && steps.scan.outcome == 'failure' }}
         run: |
-          echo "::warning::The third-party campaign feed is unavailable. Previous campaign rows were retained; the failed scan status is recorded in the published snapshot."
+          echo "::warning::Official Discover and the third-party fallback source were unavailable. Previous campaign rows were retained; the failed scan status is recorded in the published snapshot."
           node - <<'NODE'
           const fs = require("node:fs");
           const snapshot = JSON.parse(fs.readFileSync("content-rewards-assistant/discovery-snapshot.json", "utf8"));

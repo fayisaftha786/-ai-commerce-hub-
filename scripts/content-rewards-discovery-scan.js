@@ -425,7 +425,7 @@ async function fetchCampaignDetails(campaigns, options = {}) {
       ...row,
       status: "stale",
       notInLatestFeed: true,
-      lastError: "This campaign URL was not present in the latest public lead feed snapshot; verify its current status on Content Rewards."
+      lastError: "This campaign URL was not included in the latest public campaign scan; verify its current status on Content Rewards."
     });
   }
   let cursor = 0;
@@ -574,7 +574,7 @@ async function runScheduledScan(options = {}) {
     const record = {
       at: result.fetchedAt || startedAt,
       completedAt: new Date(now).toISOString(),
-      status: "success",
+      status: pageDetails.failed > 0 ? "partial" : "success",
       checkedCount: merged.checkedCount,
       newCount: merged.newCount,
       totalReceived: result.totalReceived,

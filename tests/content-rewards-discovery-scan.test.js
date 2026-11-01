@@ -330,6 +330,33 @@ test("scheduled scanner uses official Discover first and enriches campaigns from
   }
 });
 
+
+test("scheduled scan marks detail-page fetch failures as partial instead of a full success", async () => {
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), "clipreward-partial-scan-"));
+  const filePath = path.join(directory, "snapshot.json");
+  try {
+    const result = await runScheduledScan({
+      filePath,
+      now: Date.parse("2026-10-31T00:00:00Z"),
+      detailLimit: 2,
+      discoverRetryDelaysMs: [0, 0],
+      fetchDiscoverImpl: async (url) => ({
+        ok: true, status: 200, url,
+        headers: { get: () => "text/html" },
+        text: async () => DISCOVER_HTML
+      }),
+      fetchPageImpl: async () => { throw new Error("temporary public-page outage"); }
+    });
+    assert.equal(result.ok, true);
+    assert.equal(result.snapshot.lastScan.status, "partial");
+    assert.equal(result.snapshot.lastScan.detailPagesAttempted, 2);
+    assert.equal(result.snapshot.lastScan.detailPagesAvailable, 0);
+    assert.equal(result.snapshot.lastScan.detailPagesFailed, 2);
+  } finally {
+    await fs.rm(directory, { recursive: true, force: true });
+  }
+});
+
 test("HTML extraction falls back to visible body when main contains only an empty app shell", () => {
   const html = `<!doctype html><html><body>
     <nav>Private workspace navigation Analytics Settings</nav>
@@ -555,7 +582,7 @@ test("detail crawler marks previously saved pages missing from the latest feed a
   assert.equal(result.details.length, 1);
   assert.equal(result.details[0].status, "stale");
   assert.equal(result.details[0].notInLatestFeed, true);
-  assert.match(result.details[0].lastError, /not present in the latest public lead feed/i);
+  assert.match(result.details[0].lastError, /not included in the latest public campaign scan/i);
 });
 
 
@@ -575,7 +602,9 @@ test("scheduled discovery workflow publishes retained data and reports source ou
   const fs = require("node:fs");
   const workflow = fs.readFileSync(path.join(__dirname, "..", ".github", "workflows", "scheduled-content-rewards-discovery.yml"), "utf8");
   assert.match(workflow, /Warn when source scan fails; retained snapshot is still published/);
-  assert.match(workflow, /::warning::The third-party campaign feed is unavailable/);
+  assert.match(workflow, /::warning::Official Discover and the third-party fallback source were unavailable/);
+  assert.match(workflow, /Report campaign scan coverage/);
+  assert.match(workflow, /one or more public detail pages were unreadable/);
   assert.match(workflow, /Saved campaign leads retained/);
   assert.match(workflow, /A green deployment does not mean the upstream source is healthy/);
   assert.doesNotMatch(workflow, /echo "The public source scan failed[\s\S]*?exit 1/);

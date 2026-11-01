@@ -28,3 +28,27 @@ jobs:
 
       - name: Run tests
         run: npm test
+
+      - name: Build backend container
+        run: docker build --tag ai-commerce-hub:test .
+
+      - name: Smoke-test same-origin backend container
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --detach --name ai-commerce-hub-smoke --publish 127.0.0.1:3000:3000 ai-commerce-hub:test
+          cleanup() {
+            docker rm --force ai-commerce-hub-smoke >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+
+          for attempt in {1..20}; do
+            if curl --fail --silent http://127.0.0.1:3000/health > /tmp/ai-commerce-health.json; then
+              break
+            fi
+            sleep 1
+          done
+
+          grep -q '"staticAppServed":true' /tmp/ai-commerce-health.json
+          curl --fail --silent http://127.0.0.1:3000/ | grep -q 'AI Commerce Hub'
+          curl --fail --silent http://127.0.0.1:3000/api/social/providers | grep -q '"provider":"youtube"'

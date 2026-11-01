@@ -49,7 +49,7 @@ test("rejects invalid ports and host strings before listening", () => {
   }
 });
 
-test("health endpoint confirms service status without claiming OAuth works", async () => {
+test("health endpoint confirms API status and reports implemented OAuth routes", async () => {
   await withServer(async (base) => {
     const response = await fetch(base + "/health");
     assert.equal(response.status, 200);

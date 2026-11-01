@@ -333,8 +333,9 @@
         <label>Approved reward amount <span class="optional">(only an amount confirmed by the official campaign)</span><input id="ops-reward-approved" type="number" min="0" max="1000000000" step="0.01" inputmode="decimal" placeholder="e.g. 12.50"></label>
         <label>Currency<select id="ops-currency"><option value="USD">USD</option><option value="INR">INR</option><option value="EUR">EUR</option><option value="GBP">GBP</option></select></label>
         <label>Payout status<select id="ops-payout-status"><option value="unconfirmed">Not confirmed</option><option value="pending">Pending</option><option value="available">Available in Content Rewards balance</option><option value="partially-paid">Partially credited to CR balance</option><option value="paid">Credited to CR balance</option><option value="not-eligible">Not eligible / rejected</option></select></label>
-        <label>Amount credited to Content Rewards Balance<input id="ops-paid-amount" type="number" min="0" max="1000000000" step="0.01" inputmode="decimal" placeholder="e.g. 10.00"></label>
-        <label>Credited to Content Rewards Balance at<input id="ops-paid-at" type="datetime-local"></label>
+        <label>Amount recorded as received<input id="ops-paid-amount" type="number" min="0" max="1000000000" step="0.01" inputmode="decimal" placeholder="e.g. 10.00"></label>
+        <label>Where was this amount received?<select id="ops-paid-stage"><option value="unknown">Not verified / legacy record</option><option value="content-rewards-balance">Content Rewards Balance (verified in Earnings)</option></select></label>
+        <label>Received / credited at<input id="ops-paid-at" type="datetime-local"></label>
         <label>CR balance credit reference<input id="ops-payout-reference" maxlength="120" placeholder="Optional reference"></label>
         <label>Expected payout date <span class="optional">(only copy a date shown by the official earnings page)</span><input id="ops-expected-payout-at" type="datetime-local"></label>
         <label>Amount transferred from CR Balance to Whop Balance<input id="ops-withdrawn-amount" type="number" min="0" max="1000000000" step="0.01" inputmode="decimal" placeholder="e.g. 10.00"></label>

@@ -264,7 +264,7 @@ function createServer(options = {}) {
             getProviderReadiness("youtube", env)
           ],
           youtubeOAuth: socialOAuthService.getReadiness(),
-          note: "YouTube OAuth routes are implemented but remain unconfigured until server credentials, HTTPS callback, CORS origin, and encrypted token storage are supplied. Instagram and Facebook OAuth are not implemented yet."
+          note: "YouTube OAuth and a server-side resumable video upload route are implemented; they remain unavailable until upload-scope consent and backend credentials are configured. Instagram and Facebook OAuth/publishing are not implemented yet."
         });
       }
 

@@ -20,6 +20,64 @@ test("India provider registry excludes TikTok and lists the supported provider c
   assert.ok(!ids.includes("tiktok"));
 });
 
+
+test("imports an available official creator program as an unverified research task", () => {
+  const source = {
+    id: "youtube-ypp",
+    status: "available",
+    sourceUrl: "https://support.google.com/youtube/answer/72851?hl=en-IN",
+    pageTitle: "Official YPP eligibility guide",
+    accountCheck: "YouTube Studio → Earn",
+    limitation: "Channel eligibility must be checked in Studio.",
+    checkedAt: "2026-11-01T01:00:00.000Z",
+    ruleEvidence: [{
+      label: "Full YPP route",
+      excerpt: "1,000 subscribers and 4,000 qualified public watch hours",
+      interpretation: "Channel review and other requirements still apply."
+    }]
+  };
+  const result = engine.createOfficialProgramOpportunity(source);
+  assert.equal(result.valid, true);
+  assert.equal(result.opportunity.id, "official-youtube-ypp");
+  assert.equal(result.opportunity.platform, "youtube");
+  assert.equal(result.opportunity.eligibility, "unknown");
+  assert.equal(result.opportunity.payoutConfidence, "unknown");
+  assert.equal(result.opportunity.risk, "unknown");
+  assert.equal(result.opportunity.reward, null);
+  assert.equal(result.opportunity.effortHours, null);
+  assert.equal(result.opportunity.sourceCheckedAt, "2026-11-01");
+  assert.match(result.opportunity.description, /1,000 subscribers/);
+  assert.match(result.opportunity.notes, /Research task auto-imported/);
+  assert.equal(engine.analyzeOpportunity(result.opportunity).analysis.coverage, 15);
+});
+
+test("official source importer distinguishes full and expanded YPP and maps Meta programs", () => {
+  const cases = [
+    ["youtube-expanded-ypp", "youtube", "https://support.google.com/youtube/answer/13429240?hl=en-IN"],
+    ["facebook-content-monetization", "facebook", "https://about.fb.com/news/2026/03/creator-fast-track-grow-your-audience-earn-money-on-facebook/"],
+    ["instagram-creator-marketplace", "instagram", "https://about.fb.com/news/2024/02/creator-marketplace-for-brands-and-creators-to-collaborate-on-instagram/"]
+  ];
+  for (const [id, platform, sourceUrl] of cases) {
+    const result = engine.createOfficialProgramOpportunity({ id, status: "available", sourceUrl }, "2026-11-01T00:00:00.000Z");
+    assert.equal(result.valid, true, id);
+    assert.equal(result.opportunity.platform, platform);
+    assert.equal(result.opportunity.eligibility, "unknown");
+    assert.equal(result.opportunity.reward, null);
+  }
+});
+
+test("official source importer rejects unknown, unavailable and mismatched source records", () => {
+  const valid = {
+    id: "youtube-ypp",
+    status: "available",
+    sourceUrl: "https://support.google.com/youtube/answer/72851?hl=en-IN"
+  };
+  assert.equal(engine.createOfficialProgramOpportunity({ ...valid, id: "fake-program" }).valid, false);
+  assert.equal(engine.createOfficialProgramOpportunity({ ...valid, status: "unavailable" }).valid, false);
+  assert.equal(engine.createOfficialProgramOpportunity({ ...valid, sourceUrl: "https://support.google.com/evil" }).valid, false);
+  assert.equal(engine.createOfficialProgramOpportunity({ ...valid, sourceUrl: "http://support.google.com/youtube/answer/72851" }).valid, false);
+});
+
 test("validates required fields and rejects unsafe source links", () => {
   assert.equal(engine.validateOpportunity(base).valid, true);
   assert.equal(engine.validateOpportunity({ ...base, sourceUrl: "javascript:alert(1)" }).valid, false);

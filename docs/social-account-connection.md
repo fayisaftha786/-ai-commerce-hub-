@@ -28,7 +28,7 @@ The Social Media Desk is a browser-only helper. It previews selected image/video
 ### YouTube
 
 1. Create a Google Cloud project, enable the YouTube Data API, and configure OAuth consent.
-2. Register redirect URIs and request only the scopes required for channel/video operations.
+2. Register the exact redirect URI and initially request only read-only channel identification. Request upload permission separately only when an upload workflow and its review tests are ready.
 3. Upload through the official API from a backend, handle resumable uploads and processing status, and respect quota and visibility settings.
 4. Check current Google verification requirements and API project eligibility before promising production uploads.
 

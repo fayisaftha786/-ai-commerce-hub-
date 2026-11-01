@@ -236,3 +236,37 @@
 .deep-campaign-card .deep-missing{color:#aeb9cf}
 .deep-campaign-card .deep-stale-note{color:#ffd58a}
 @media(max-width:700px){.deep-analysis-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.deep-campaign-head{display:grid}.deep-state{justify-self:start}}
+
+
+/* Creator operations and payout evidence ledger */
+.ops-panel{margin-top:17px;border-color:#47416f}
+.ops-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:14px 0}
+.ops-metrics article{padding:13px;border:1px solid #33415e;border-radius:10px;background:#101a2c;min-width:0}
+.ops-metrics small,.ops-metrics strong{display:block}
+.ops-metrics small{font-size:9px;color:#9eacc4;line-height:1.4}
+.ops-metrics strong{font-size:21px;color:#f2f0ff;margin-top:5px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.ops-layout{display:grid;grid-template-columns:minmax(260px,.8fr) minmax(0,1.2fr);gap:14px;align-items:start}
+.ops-form{display:grid;gap:11px;padding:14px;border:1px solid #34415d;border-radius:12px;background:#0e1728}
+.ops-form-heading,.ops-ledger-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.ops-form-heading>strong,.ops-ledger-heading>strong{font-size:12px;color:#edf0ff}
+.ops-form label{display:grid;gap:5px;font-size:10px;font-weight:700;color:#bec8da;min-width:0}
+.ops-form label .optional{font-weight:400}
+.ops-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.ops-form input,.ops-form select,.ops-form textarea{font-size:11px;min-width:0}
+.ops-form button{width:100%}
+.ops-ledger{min-width:0;padding:13px;border:1px solid #34415d;border-radius:12px;background:#0e1728}
+.ops-ledger-heading{margin-bottom:9px}
+.ops-table{min-width:680px}
+.ops-table td{font-size:10px}
+.ops-table td strong,.ops-source{display:block}
+.ops-source{font-size:9px;line-height:1.4;color:#8190aa;margin-top:3px;overflow-wrap:anywhere}
+.ops-payout-status{display:inline-block;padding:4px 6px;border-radius:6px;background:#273143;color:#c3cde0;font-size:9px;font-weight:800;white-space:nowrap}
+.ops-payout-pending{background:#3b301f;color:#f0d18d}
+.ops-payout-available{background:#203450;color:#a9d0ff}
+.ops-payout-partially-paid{background:#382d4b;color:#d8c3ff}
+.ops-payout-paid{background:#16372f;color:#9ce7c7}
+.ops-payout-not-eligible{background:#48272d;color:#ffb5b5}
+.ops-boundary{font-size:10px;line-height:1.6;color:#9aa8c1;margin:13px 0 0}
+.ops-boundary strong{color:#d8def0}
+@media(max-width:900px){.ops-layout{grid-template-columns:1fr}}
+@media(max-width:650px){.ops-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.ops-form-grid{grid-template-columns:1fr}.ops-form-heading,.ops-ledger-heading{flex-direction:column}}

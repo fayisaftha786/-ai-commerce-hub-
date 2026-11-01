@@ -130,7 +130,7 @@ A Google OAuth project with an **External** audience and publishing status **Tes
 
 ## YouTube OAuth connection — first provider vertical slice
 
-The private backend now implements an authorization-code connection for YouTube with channel identification and `youtube.upload` permission, plus a server-side resumable upload endpoint (raw video body up to 64 MB). This is an API slice, not yet a complete UI publishing workflow; the frontend still needs a publish form/action and the user must explicitly confirm each upload. It is separate from GitHub Pages; the static site never receives a Google client secret, access token, or refresh token.
+The private backend now implements an authorization-code connection for YouTube with channel identification and `youtube.upload` permission, plus a server-side resumable upload endpoint (raw video body up to 64 MB). The Social Media Desk includes a publish action for one selected MP4/QuickTime/WebM file; each upload requires an explicit confirmation and defaults to Private. This is an implemented code path, not a live provider verification: backend hosting, Google OAuth configuration/consent and a real-account upload test are still required. It is separate from GitHub Pages; the static site never receives a Google client secret, access token, or refresh token.
 
 ### Google Cloud setup
 
@@ -141,7 +141,8 @@ The private backend now implements an authorization-code connection for YouTube 
 5. Copy the client ID and secret only into the backend host's private environment variables. Never commit them or enter them in the browser.
 
 The flow requests only:
-- https://www.googleapis.com/auth/youtube.readonly — identify the authorized channel. It does not request upload or publishing permission in this release.
+- https://www.googleapis.com/auth/youtube.readonly — identify the authorized channel.
+- https://www.googleapis.com/auth/youtube.upload — upload videos through the server-side resumable upload route.
 
 The flow uses a random, one-use state, PKCE S256, offline access, exact HTTPS redirect configuration and a browser-session cookie. Callback codes are exchanged server-side. The server reads the channel list with the returned bearer token and stores the access/refresh token only inside an AES-256-GCM encrypted vault. API responses return channel metadata and connection status only, never token values.
 

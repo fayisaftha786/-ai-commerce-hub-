@@ -317,7 +317,7 @@ test("ClipReward auto shortlist is wired into the radar and deep findings panel"
   assert.match(app, /analyzePublicCampaigns/);
   assert.match(app, /renderDeepCampaignAnalysis/);
   assert.match(app, /data-deep-open/);
-  assert.match(worker, /clipreward-static-v28/);
+  assert.match(worker, /clipreward-static-v29/);
   assert.match(worker, /discovery-engine\.js/);
 });
 

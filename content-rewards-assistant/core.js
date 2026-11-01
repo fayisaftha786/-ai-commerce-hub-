@@ -171,6 +171,7 @@
     const paidAmount = optionalAmount(source.paidAmount, "Paid amount");
     const payoutCurrency = text(source.payoutCurrency || "USD", 3).toUpperCase();
     const payoutStatus = PAYOUT_STATUSES.includes(source.payoutStatus) ? source.payoutStatus : "unconfirmed";
+    const paidAmountStage = source.paidAmountStage === "content-rewards-balance" ? "content-rewards-balance" : "unknown";
     const viewsCheckedAt = optionalDateTime(source.viewsCheckedAt, "Views checked time");
     const reviewedAt = optionalDateTime(source.reviewedAt, "Review decision time");
     const paidAt = optionalDateTime(source.paidAt, "Content Rewards balance credit time");
@@ -182,6 +183,9 @@
     if (!/^[A-Z]{3}$/.test(payoutCurrency)) throw new Error("Payout currency must be a three-letter currency code.");
     if (paidAmount != null && paidAmount > 0 && !paidAt) throw new Error("Record when the amount was credited to Content Rewards Balance.");
     if (payoutStatus === "paid" && !(paidAmount > 0)) throw new Error("Enter the amount actually credited to Content Rewards Balance before marking this stage paid.");
+    if (payoutStatus === "paid" && paidAmountStage !== "content-rewards-balance") {
+      throw new Error("Confirm that the amount was received in Content Rewards Balance before marking this stage credited.");
+    }
     if (rewardApprovedAmount != null && paidAmount != null && paidAmount > rewardApprovedAmount) {
       throw new Error("Content Rewards balance credit cannot exceed the approved reward recorded for this campaign.");
     }
@@ -190,6 +194,9 @@
     }
     if (withdrawnToWhopAmount != null && withdrawnToWhopAmount > 0 && !(paidAmount > 0)) {
       throw new Error("Record the Content Rewards balance credit before recording a transfer to Whop.");
+    }
+    if (withdrawnToWhopAmount != null && withdrawnToWhopAmount > 0 && paidAmountStage !== "content-rewards-balance") {
+      throw new Error("Confirm the previous amount was credited to Content Rewards Balance before transferring it to Whop.");
     }
     if (paidAmount != null && withdrawnToWhopAmount != null && withdrawnToWhopAmount > paidAmount) {
       throw new Error("Transferred amount cannot exceed the recorded Content Rewards balance credit.");
@@ -231,6 +238,7 @@
       payoutCurrency,
       payoutStatus,
       paidAmount,
+      paidAmountStage,
       paidAt,
       payoutReference: text(source.payoutReference, 120),
       expectedPayoutAt,

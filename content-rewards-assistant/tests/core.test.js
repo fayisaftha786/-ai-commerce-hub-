@@ -762,3 +762,28 @@ test("legacy receipt amounts keep unknown destination until user confirms the CR
   });
   assert.equal(confirmed.paidAmountStage, "content-rewards-balance");
 });
+
+
+test("legacy paid payout rows remain importable without inventing the destination", () => {
+  const legacy = Core.normalizeCampaign({
+    id: "legacy-paid",
+    name: "Old paid campaign",
+    platform: "Content Rewards",
+    payoutStatus: "paid",
+    paidAmount: 15,
+    paidAt: "2026-10-20T12:00:00.000Z"
+  });
+  assert.equal(legacy.payoutStatus, "paid");
+  assert.equal(legacy.paidAmount, 15);
+  assert.equal(legacy.paidAmountStage, "unknown");
+  assert.throws(() => Core.normalizeCampaign({
+    ...legacy,
+    withdrawnToWhopAmount: 5,
+    withdrawnToWhopAt: "2026-10-21T12:00:00.000Z"
+  }), /Confirm the previous amount was credited to Content Rewards Balance/i);
+});
+test("legacy paid status display does not claim a confirmed Content Rewards balance credit", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
+  assert.match(app, /Legacy receipt · destination unknown/);
+  assert.match(app, /payoutStatusLabel\(c\)/);
+});

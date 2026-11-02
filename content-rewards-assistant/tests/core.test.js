@@ -372,7 +372,7 @@ test("ClipReward keeps saved UI state when campaign, timestamp, account and back
 test("ClipReward service worker is registered, refreshes v6 assets and scopes offline caching", () => {
   const workerSource = fs.readFileSync(path.join(__dirname, "..", "service-worker.js"), "utf8");
   const htmlSource = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
-  assert.match(workerSource, /const CACHE = "clipreward-static-v33"/);
+  assert.match(workerSource, /const CACHE = "clipreward-static-v34"/);
   for (const asset of ["./index.html", "./style.css", "./campaign-scout.js", "./campaign-feed.js", "./discovery-engine.js", "./video-studio.js", "./video-studio-ui.js", "./video-analysis.js", "./video-analysis-ui.js", "./core.js", "./app.js", "./manifest.webmanifest", "./icon.svg"]) {
     assert.ok(workerSource.includes('"' + asset + '"'), "missing ClipReward offline asset " + asset);
   }
@@ -611,7 +611,7 @@ test("creator operations UI is wired without claiming private account or payout 
   assert.match(appSource, /URGENT: .*less than 1 minute remains/);
   assert.match(appSource, /within 5 minutes/);
   assert.match(appSource, /Live views, approval and payout were not queried/);
-  assert.match(worker, /clipreward-static-v33/);
+  assert.match(worker, /clipreward-static-v34/);
 });
 
 
@@ -738,7 +738,7 @@ test("Creator Operations UI distinguishes CR balance credit, Whop transfer and f
   assert.match(appSource, /Available in CR balance/);
   assert.match(appSource, /Credited to CR balance/);
   assert.match(appSource, /function renderOperations\(\)/);
-  assert.match(worker, /clipreward-static-v33/);
+  assert.match(worker, /clipreward-static-v34/);
 });
 
 

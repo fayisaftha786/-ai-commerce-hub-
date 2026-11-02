@@ -6,8 +6,8 @@ const { createEncryptedTokenVault } = require("./social-token-vault.js");
 const SESSION_ID_PATTERN = /^[A-Za-z0-9_-]{43}$/;
 const STATE_PATTERN = /^[A-Za-z0-9_-]{43}$/;
 const STATE_TTL_MS = 10 * 60 * 1000;
-// Keep the first account-link step read-only. Request upload permission only
-// when a provider-backed upload flow is implemented and reviewed.
+// Request read access to confirm processing/public visibility, plus upload
+// access only for the explicitly confirmed YouTube publishing feature.
 const REQUIRED_SCOPES = Object.freeze([
   "https://www.googleapis.com/auth/youtube.readonly",
   "https://www.googleapis.com/auth/youtube.upload"
@@ -15,6 +15,8 @@ const REQUIRED_SCOPES = Object.freeze([
 const AUTHORIZE_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
 const CHANNELS_URL = "https://youtube.googleapis.com/youtube/v3/channels";
+const VIDEOS_URL = "https://youtube.googleapis.com/youtube/v3/videos";
+const VIDEO_ID_PATTERN = /^[A-Za-z0-9_-]{6,32}$/;
 
 function sha256(value) {
   return crypto.createHash("sha256").update(String(value)).digest("hex");
@@ -347,11 +349,68 @@ function createYouTubeOAuthService(options = {}) {
         videoId: data.id,
         url: "https://www.youtube.com/watch?v=" + encodeURIComponent(data.id),
         privacyStatus,
-        publishedAt: new Date(now()).toISOString(),
+        uploadedAt: new Date(now()).toISOString(),
         channelId: connection.channelId
       };
     } catch (_) {
       return { ok: false, error: "youtube_upload_unavailable" };
+    }
+  }
+
+  async function getVideoStatus(sessionId, videoId) {
+    if (typeof sessionId !== "string" || !SESSION_ID_PATTERN.test(sessionId) || !tokenVault) {
+      return { ok: false, error: "not_connected" };
+    }
+    const id = String(videoId || "").trim();
+    if (!VIDEO_ID_PATTERN.test(id)) return { ok: false, error: "invalid_video_id" };
+
+    const connection = await getConnection(sessionId);
+    if (connection.status !== "connected") return { ok: false, error: "reconnect_required" };
+    const record = tokenVault.get(sha256(sessionId), "youtube");
+    if (!record || !record.scopes.includes("https://www.googleapis.com/auth/youtube.readonly")) {
+      return { ok: false, error: "video_status_permission_required" };
+    }
+
+    try {
+      const query = new URLSearchParams({ part: "processingDetails,status,snippet", id });
+      const response = await fetchImpl(VIDEOS_URL + "?" + query.toString(), {
+        method: "GET",
+        redirect: "error",
+        credentials: "omit",
+        cache: "no-store",
+        headers: { authorization: "Bearer " + record.accessToken, accept: "application/json" }
+      });
+      if (!response.ok) {
+        return { ok: false, error: response.status === 401 ? "reconnect_required" : "youtube_video_status_unavailable" };
+      }
+      const data = await readJson(response);
+      const item = Array.isArray(data.items) ? data.items.find((entry) => entry && entry.id === id) : null;
+      if (!item) return { ok: false, error: "youtube_video_not_found" };
+      const status = item.status && typeof item.status === "object" ? item.status : {};
+      const processing = item.processingDetails && typeof item.processingDetails === "object" ? item.processingDetails : {};
+      const uploadStatus = String(status.uploadStatus || "unknown");
+      const processingStatus = String(processing.processingStatus ||
+        (uploadStatus === "processed" ? "succeeded" : uploadStatus));
+      const privacyStatus = ["private", "unlisted", "public"].includes(status.privacyStatus)
+        ? status.privacyStatus : "unknown";
+      const rawPublishedAt = item.snippet && item.snippet.publishedAt;
+      const parsedPublishedAt = rawPublishedAt ? new Date(rawPublishedAt) : null;
+      const isProcessed = uploadStatus === "processed" && processingStatus === "succeeded";
+      const publishedAt = isProcessed && privacyStatus === "public" &&
+        parsedPublishedAt && !Number.isNaN(parsedPublishedAt.getTime())
+        ? parsedPublishedAt.toISOString() : "";
+      return {
+        ok: true,
+        provider: "youtube",
+        videoId: id,
+        url: "https://www.youtube.com/watch?v=" + encodeURIComponent(id),
+        uploadStatus,
+        processingStatus,
+        privacyStatus,
+        publishedAt
+      };
+    } catch (_) {
+      return { ok: false, error: "youtube_video_status_unavailable" };
     }
   }
 
@@ -376,6 +435,7 @@ function createYouTubeOAuthService(options = {}) {
     completeAuthorization,
     getConnection,
     uploadVideo,
+    getVideoStatus,
     disconnect,
     buildReturnUrl
   });
@@ -387,6 +447,8 @@ module.exports = {
   AUTHORIZE_URL,
   TOKEN_URL,
   CHANNELS_URL,
+  VIDEOS_URL,
+  VIDEO_ID_PATTERN,
   sha256,
   parseRedirectUri,
   parseReturnUrl,

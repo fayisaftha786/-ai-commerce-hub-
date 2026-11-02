@@ -41,6 +41,10 @@ After the official public snapshot loads, ClipReward Studio automatically analys
 The shortlist is a rules-and-evidence screen, not a probability of approval, earnings estimate or confirmation that a campaign is still accepting creators. Stale page text is forced into Verify even when its old rules otherwise look promising. No campaign is joined or applied for, and a tracker item is not created automatically.
 
 
+## Campaign analysis to Clip Studio handoff
+
+Each fresh, readable **Promising** result now has a **Prepare content draft** action. It carries the campaign title into the Clip Studio topic field and maps the analysed platform to the corresponding Reels / Shorts / X destination. If the campaign was already imported into the local Tracker, it also selects that local campaign so its saved rules can be included by the existing draft generator. It deliberately leaves the verified-benefit field blank: do not invent product claims, reward promises or campaign facts. Add only a benefit you can substantiate, generate the local-template draft, and review all campaign rules and disclosure requirements before publishing.
+
 ## Batch import from the deep-analysis shortlist
 
 After the latest public snapshot is loaded, the selected-platform deep analysis can add all **fresh, readable Promising** results to the local Campaign Tracker in one action. The import planner validates the official Content Rewards campaign URL, deduplicates against existing tracker links and within the batch, and skips Verify, Blocked, stale, historical, unreadable and invalid records. It carries over the detected title, deadline, payout/budget notes and captured rule summary. New records are always created as **Found / idea**; the tool never claims to Join, Apply, publish or submit a campaign. Re-open the official campaign, confirm current eligibility and complete the official Join / Apply steps yourself. Import is local to this browser and is included in the existing JSON backup.

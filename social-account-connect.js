@@ -232,6 +232,22 @@
           status("Choose one MP4, MOV or WebM video no larger than 64 MB and connect YouTube first.");
           return;
         }
+        const selectedPlatform = String(($("socialPlatform") && $("socialPlatform").value) || "").toLowerCase();
+        if (selectedPlatform !== "youtube" || (handoff && handoff.platform && handoff.platform !== "youtube")) {
+          status("The Social Desk target must be YouTube to use this YouTube upload action. Regenerate the package for YouTube if the campaign targets another platform.");
+          return;
+        }
+        if (handoff && handoff.mediaFingerprint) {
+          const fingerprint = handoff.mediaFingerprint;
+          const matchesHandoff = String(file.name || "").slice(0, 255) === fingerprint.name &&
+            file.size === fingerprint.size &&
+            String(file.type || "").toLowerCase() === fingerprint.type &&
+            (Number(file.lastModified) || 0) === fingerprint.lastModified;
+          if (!matchesHandoff) {
+            status("The selected media differs from the file sent with this campaign package. Return to Clip Studio and send the correct video again before publishing.");
+            return;
+          }
+        }
         if (handoff && handoff.requiresPreApproval === true && handoff.preApprovalConfirmed !== true) {
           status("This Content Rewards campaign requires draft pre-approval. Do not publish until the campaign team has approved the draft.");
           return;
@@ -249,8 +265,10 @@
         lastPublishContext = handoff ? {
           campaignId: String(handoff.campaignId || ""),
           campaignName: String(handoff.campaignName || ""),
+          platform: String(handoff.platform || ""),
           requiresPreApproval: handoff.requiresPreApproval === true,
-          preApprovalConfirmed: handoff.preApprovalConfirmed === true
+          preApprovalConfirmed: handoff.preApprovalConfirmed === true,
+          mediaFingerprint: handoff.mediaFingerprint || null
         } : null;
         status("Uploading video to YouTube as " + visibilityLabel + "… Keep this page open until the upload finishes.");
         try {

@@ -58,8 +58,7 @@
       }
 
       const brief = row.brief;
-      const rate = brief.rate && brief.rate.label ? brief.rate.label :
-        brief.rate && brief.rate.model ? brief.rate.model + " · verify full terms" : "Payout not recognised · verify";
+      const rate = brief.rate && brief.rate.model ? brief.rate.model + (brief.rate.label ? " · " + brief.rate.label : " · verify full terms") : "Payout not recognised · verify";
       const cap = amountLabel(brief.capPerClip);
       const minimum = amountLabel(brief.minimumPayout);
       const payoutTerms = [rate, cap ? "Max per clip " + cap : "", minimum ? "Minimum payout " + minimum : ""]

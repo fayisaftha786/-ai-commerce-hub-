@@ -88,13 +88,17 @@ test("Clip Studio wires local analysis, package download and Social Desk handoff
     "video-analysis-file", "video-analysis-run", "video-analysis-topic",
     "video-analysis-notes", "video-analysis-transcript", "video-analysis-generate",
     "video-analysis-caption", "video-analysis-download-text", "video-analysis-download-json",
-    "video-analysis-use-editor", "video-analysis-send-social"
+    "video-analysis-use-editor", "video-analysis-send-social", "video-analysis-preapproval-confirm"
   ]) assert.ok(html.includes('id="' + id + '"'), "missing video analysis control " + id);
   assert.match(html, /video-analysis\.js/);
   assert.match(html, /video-analysis-ui\.js/);
   assert.match(worker, /video-analysis\.js/);
   assert.match(worker, /video-analysis-ui\.js/);
   assert.match(ui, /AI_COMMERCE_CLIP_HANDOFF/);
+  assert.match(ui, /AI_COMMERCE_YOUTUBE_PUBLISH_RESULT/);
+  assert.match(ui, /campaignId: campaign.id/);
+  assert.match(ui, /clipreward:youtube-published/);
+  assert.match(ui, /preApprovalConfirmed/);
   assert.match(ui, /source file stays in this browser/i);
   assert.match(packageJson.scripts.check, /content-rewards-assistant\/video-analysis\.js/);
   assert.match(packageJson.scripts.check, /content-rewards-assistant\/video-analysis-ui\.js/);

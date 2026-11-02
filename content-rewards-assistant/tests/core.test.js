@@ -814,6 +814,14 @@ test("payout forecast evidence fields normalize, retain backup compatibility and
   }), /Retainer cycle end time/i);
 });
 
+test("campaign edit handler preserves payout timeline evidence when saving other campaign fields", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
+  const handler = app.slice(app.indexOf("function onCampaignSubmit"), app.indexOf("function deleteCampaign"));
+  for (const field of ["payoutModel", "payoutThresholdStatus", "payoutThresholdMetAt", "payoutCycleEndAt", "payoutPoolEndedAt", "payoutFlagOpen"]) {
+    assert.match(handler, new RegExp(field + ": old \\? old\\."));
+  }
+});
+
 test("legacy paid status display does not claim a confirmed Content Rewards balance credit", () => {
   const app = fs.readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
   assert.match(app, /Legacy receipt · destination unknown/);

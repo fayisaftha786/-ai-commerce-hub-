@@ -140,6 +140,7 @@ test("YouTube upload keeps Private as default and requires explicit public confi
   const publish = fixture.nodes.get("publishYouTubeVideo");
   fixture.windowObject.document.getElementById("socialMediaFiles").files = [{ name: "clip.mp4", type: "video/mp4", size: 2048 }];
   fixture.windowObject.document.getElementById("socialCaption").value = "A public creator video";
+  fixture.windowObject.document.getElementById("socialPlatform").value = "youtube";
   assert.equal(privacy.value, "private");
   privacy.value = "public";
   privacy.events.change();
@@ -162,13 +163,14 @@ test("YouTube publisher blocks a pre-approval campaign until its approval attest
   const fixture = makeWindow({ configured: true, connectionStatus: "connected" });
   fixture.windowObject.localStorage.setItem("ai-commerce-hub.social-backend-origin.v1", "https://api.example.com");
   fixture.windowObject.AICommerceSocialHandoff = {
-    campaignId: "campaign_1", campaignName: "Draft campaign",
+    campaignId: "campaign_1", campaignName: "Draft campaign", platform: "youtube",
     requiresPreApproval: true, preApprovalConfirmed: false
   };
   connector.init(fixture.windowObject);
   await new Promise((resolve) => setImmediate(resolve));
   fixture.windowObject.document.getElementById("socialMediaFiles").files = [{ name: "clip.mp4", type: "video/mp4", size: 2048 }];
   fixture.windowObject.document.getElementById("socialCaption").value = "Pre-approved campaign clip";
+  fixture.windowObject.document.getElementById("socialPlatform").value = "youtube";
   await fixture.nodes.get("publishYouTubeVideo").events.click();
   assert.equal(fixture.requests.some((item) => item.url.includes("/api/social/youtube/publish?")), false);
   assert.match(fixture.nodes.get("socialAccountConnectionStatus").textContent, /requires draft pre-approval/i);

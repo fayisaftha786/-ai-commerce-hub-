@@ -76,15 +76,58 @@ test("provider endpoint returns readiness without leaking credential values", as
     assert.equal(data.providers[0].provider, "instagram");
     assert.equal(data.providers[0].configured, false);
     assert.match(data.note, /YouTube OAuth and a server-side resumable video upload route are implemented/i);
+    assert.equal(data.metaOAuth.configured, false);
+    assert.match(data.note, /Meta OAuth can connect Facebook Pages/i);
     assert.equal(data.youtubeOAuth.configured, false);
     assert.ok(data.youtubeOAuth.missing.includes("GOOGLE_CLIENT_ID"));
     assert.equal(data.providers[0].configured, false);
     assert.equal(serialized.includes("sentinel-meta-secret-value"), false);
     assert.equal(serialized.includes("sentinel-google-secret-value"), false);
-    assert.match(data.note, /Instagram and Facebook OAuth\/publishing are not implemented yet/i);
   });
 });
 
+
+function fakeMetaSocialService() {
+  const calls = [];
+  const sessionId = "b".repeat(43);
+  return {
+    calls,
+    sessionId,
+    getReadiness() { return { provider: "meta", configured: true, facebookReady: true, instagramReady: true, missing: [], instagramMissing: [] }; },
+    createAuthorizationRequest(existing) {
+      calls.push({ action: "start", existing });
+      return { ok: true, url: "https://www.facebook.com/v26.0/dialog/oauth?state=fake", sessionId, setCookie: !existing };
+    },
+    async completeAuthorization(input) {
+      calls.push({ action: "callback", input });
+      return { ok: true, connection: { provider: "meta", status: "connected", pageCount: 1, pages: [{ id: "1234567890", name: "Creator Page", canPublishFacebook: true, canPublishInstagram: true }] } };
+    },
+    getConnection(id) {
+      calls.push({ action: "connection", id });
+      return id ? { provider: "meta", status: "connected", pageCount: 1, pages: [{ id: "1234567890", name: "Creator Page", canPublishFacebook: true, canPublishInstagram: true }] } : { provider: "meta", status: "not_connected", pages: [], pageCount: 0 };
+    },
+    async uploadFacebookReel(id, input) {
+      calls.push({ action: "facebook-publish", id, input });
+      return { ok: true, provider: "facebook", pageId: input.pageId, videoId: "9876543210", status: "processing", published: false };
+    },
+    async getFacebookReelStatus(id, input) {
+      calls.push({ action: "facebook-status", id, input });
+      return { ok: true, provider: "facebook", pageId: input.pageId, videoId: input.videoId, published: true, privacyStatus: "public", permalink: "https://www.facebook.com/reel/" + input.videoId + "/", publishedAt: "2026-11-02T00:01:00.000Z" };
+    },
+    async uploadInstagramReel(id, input) {
+      calls.push({ action: "instagram-publish", id, input });
+      return { ok: true, provider: "instagram", pageId: input.pageId, videoId: "1789000000", published: true, privacyStatus: "public", permalink: "https://www.instagram.com/reel/AbCd123/", publishedAt: "2026-11-02T00:02:00.000Z" };
+    },
+    disconnect(id) { calls.push({ action: "disconnect", id }); return Boolean(id); },
+    buildReturnUrl(outcome, reason) {
+      const url = new URL("https://app.example.com/");
+      url.searchParams.set("social_connect", outcome);
+      url.searchParams.set("social_provider", "meta");
+      if (reason) url.searchParams.set("social_reason", reason);
+      return url.href;
+    }
+  };
+}
 
 function fakeYouTubeOAuth() {
   const calls = [];
@@ -488,4 +531,161 @@ test("Docker deployment defaults to same-origin app/API serving and private pers
   assert.match(ignore, /^\.env\n\.env\.\*/m);
   assert.match(ignore, /^\.data$/m);
   assert.match(ignore, /^\.git$/m);
+});
+
+
+test("Meta connect starts an OAuth navigation and callback binds to the browser session", async () => {
+  const meta = fakeMetaSocialService();
+  await withServer(async (base) => {
+    const start = await fetch(base + "/api/social/meta/connect", {
+      headers: { Origin: "https://app.example.com" }, redirect: "manual"
+    });
+    assert.equal(start.status, 303);
+    assert.equal(start.headers.get("location"), "https://www.facebook.com/v26.0/dialog/oauth?state=fake");
+    assert.match(start.headers.get("set-cookie"), /HttpOnly/);
+    assert.match(start.headers.get("set-cookie"), /Secure/);
+    const callback = await fetch(base + "/api/social/meta/callback?code=meta-code&state=meta-state", {
+      headers: { Cookie: "__Host-aihub_session=" + meta.sessionId }, redirect: "manual"
+    });
+    assert.equal(callback.status, 303);
+    assert.equal(callback.headers.get("location"), "https://app.example.com/?social_connect=success&social_provider=meta");
+    assert.equal(meta.calls.find((item) => item.action === "callback").input.sessionId, meta.sessionId);
+  }, {
+    env: { NODE_ENV: "production", SOCIAL_CORS_ORIGINS: "https://app.example.com" },
+    metaSocialService: meta
+  });
+});
+
+test("social connections include Meta Page readiness without token material", async () => {
+  const meta = fakeMetaSocialService();
+  const youtube = fakeYouTubeOAuth();
+  await withServer(async (base) => {
+    const response = await fetch(base + "/api/social/connections", {
+      headers: { Origin: "https://app.example.com", Cookie: "__Host-aihub_session=" + meta.sessionId }
+    });
+    assert.equal(response.status, 200);
+    const data = await response.json();
+    assert.equal(data.connections[0].provider, "youtube");
+    assert.equal(data.connections[1].provider, "meta");
+    assert.equal(data.connections[1].pages[0].name, "Creator Page");
+    assert.equal(JSON.stringify(data).includes("page-access-secret"), false);
+  }, {
+    env: { NODE_ENV: "production", SOCIAL_CORS_ORIGINS: "https://app.example.com" },
+    socialOAuthService: youtube,
+    metaSocialService: meta
+  });
+});
+
+test("Meta Reel publish routes require an exact app origin, session cookie and action header", async () => {
+  const meta = fakeMetaSocialService();
+  await withServer(async (base) => {
+    const bytes = Buffer.from("mock-mp4");
+    const denied = await fetch(base + "/api/social/meta/facebook/publish?pageId=1234567890&durationSeconds=30", {
+      method: "POST",
+      headers: { Origin: "https://evil.example", Cookie: "__Host-aihub_session=" + meta.sessionId, "Content-Type": "video/mp4", "X-AI-Commerce-Action": "meta-publish" },
+      body: bytes
+    });
+    assert.equal(denied.status, 403);
+
+    const missingHeader = await fetch(base + "/api/social/meta/facebook/publish", {
+      method: "POST",
+      headers: { Origin: "https://app.example.com", Cookie: "__Host-aihub_session=" + meta.sessionId, "Content-Type": "video/mp4" },
+      body: bytes
+    });
+    assert.equal(missingHeader.status, 403);
+
+    const fb = await fetch(base + "/api/social/meta/facebook/publish?pageId=1234567890&durationSeconds=30&caption=Hello", {
+      method: "POST",
+      headers: {
+        Origin: "https://app.example.com",
+        Cookie: "__Host-aihub_session=" + meta.sessionId,
+        "Content-Type": "video/mp4",
+        "X-AI-Commerce-Action": "meta-publish"
+      },
+      body: bytes
+    });
+    assert.equal(fb.status, 201);
+    assert.equal((await fb.json()).videoId, "9876543210");
+    const fbCall = meta.calls.find((item) => item.action === "facebook-publish");
+    assert.equal(fbCall.input.pageId, "1234567890");
+    assert.equal(fbCall.input.durationSeconds, 30);
+    assert.equal(fbCall.input.video.length, bytes.length);
+
+    const ig = await fetch(base + "/api/social/meta/instagram/publish?pageId=1234567890&durationSeconds=30", {
+      method: "POST",
+      headers: {
+        Origin: "https://app.example.com",
+        Cookie: "__Host-aihub_session=" + meta.sessionId,
+        "Content-Type": "video/mp4",
+        "X-AI-Commerce-Action": "meta-publish"
+      },
+      body: bytes
+    });
+    assert.equal(ig.status, 201);
+    assert.equal((await ig.json()).published, true);
+  }, {
+    env: { NODE_ENV: "production", SOCIAL_CORS_ORIGINS: "https://app.example.com" },
+    metaSocialService: meta
+  });
+});
+
+test("Facebook Reel status route returns published permalink only for an authorized app session", async () => {
+  const meta = fakeMetaSocialService();
+  await withServer(async (base) => {
+    const denied = await fetch(base + "/api/social/meta/facebook/status?pageId=1234567890&videoId=9876543210", {
+      headers: { Origin: "https://evil.example", Cookie: "__Host-aihub_session=" + meta.sessionId }
+    });
+    assert.equal(denied.status, 403);
+    const response = await fetch(base + "/api/social/meta/facebook/status?pageId=1234567890&videoId=9876543210", {
+      headers: { Origin: "https://app.example.com", Cookie: "__Host-aihub_session=" + meta.sessionId }
+    });
+    assert.equal(response.status, 200);
+    const result = await response.json();
+    assert.equal(result.published, true);
+    assert.equal(result.permalink, "https://www.facebook.com/reel/9876543210/");
+  }, {
+    env: { NODE_ENV: "production", SOCIAL_CORS_ORIGINS: "https://app.example.com" },
+    metaSocialService: meta
+  });
+});
+
+test("temporary Instagram media endpoint serves only valid, short-lived opaque tokens", async () => {
+  const token = "a".repeat(64);
+  const buffer = Buffer.from("temporary-mp4");
+  const metaMediaStore = {
+    get(value) { return value === token ? { buffer, size: buffer.length, mimeType: "video/mp4" } : null; }
+  };
+  await withServer(async (base) => {
+    const response = await fetch(base + "/media/instagram/" + token);
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get("cache-control"), "private, no-store, max-age=0");
+    assert.equal(response.headers.get("content-type"), "video/mp4");
+    assert.deepEqual(Buffer.from(await response.arrayBuffer()), buffer);
+    const missing = await fetch(base + "/media/instagram/not-a-token");
+    assert.equal(missing.status, 404);
+  }, { metaMediaStore });
+});
+
+test("Meta disconnect requires the exact app origin and action header", async () => {
+  const meta = fakeMetaSocialService();
+  await withServer(async (base) => {
+    const denied = await fetch(base + "/api/social/meta/disconnect", {
+      method: "POST", headers: { Origin: "https://app.example.com", Cookie: "__Host-aihub_session=" + meta.sessionId }
+    });
+    assert.equal(denied.status, 403);
+    const response = await fetch(base + "/api/social/meta/disconnect", {
+      method: "POST",
+      headers: {
+        Origin: "https://app.example.com",
+        Cookie: "__Host-aihub_session=" + meta.sessionId,
+        "X-AI-Commerce-Action": "meta-disconnect"
+      }
+    });
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), { provider: "meta", status: "not_connected" });
+    assert.equal(meta.calls.filter((item) => item.action === "disconnect").length, 1);
+  }, {
+    env: { NODE_ENV: "production", SOCIAL_CORS_ORIGINS: "https://app.example.com" },
+    metaSocialService: meta
+  });
 });

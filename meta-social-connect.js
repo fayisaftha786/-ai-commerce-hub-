@@ -107,7 +107,8 @@
       const page = selectedPage();
       const handoff = getHandoff();
       const requiresContentRewardsAccount = Boolean(handoff && handoff.campaignId &&
-        String(handoff.campaignPlatform || "").toLowerCase() === "content rewards");
+        String(handoff.campaignPlatform || "").toLowerCase() === "content rewards" &&
+        ["facebook", "instagram"].includes(String(handoff.platform || "").toLowerCase()));
       if (contentRewardsAccountVerifiedLabel) contentRewardsAccountVerifiedLabel.hidden = !requiresContentRewardsAccount;
       const accountVerified = !requiresContentRewardsAccount ||
         Boolean(contentRewardsAccountVerified && contentRewardsAccountVerified.checked);
@@ -456,6 +457,7 @@
     });
 
     pageSelect.addEventListener("change", updateControls);
+    windowObject.addEventListener("ai-commerce:social-handoff", updateControls);
     if (publicConfirm) publicConfirm.addEventListener("change", updateControls);
     if (contentRewardsAccountVerified) contentRewardsAccountVerified.addEventListener("change", updateControls);
     if (fileInput) fileInput.addEventListener("change", updateControls);

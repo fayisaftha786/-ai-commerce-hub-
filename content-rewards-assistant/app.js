@@ -1,6 +1,7 @@
 (function () {
   "use strict";
   const Core = window.ClipRewardCore;
+  const PayoutForecast = window.ClipRewardPayoutForecast;
   const STORAGE_KEY = "clipreward-studio-v1";
   const SUBMISSION_ALERTS_ENABLED_KEY = "clipreward-submission-alerts-enabled-v1";
   const SUBMISSION_ALERTS_SENT_KEY = "clipreward-submission-alerts-sent-v1";
@@ -345,6 +346,28 @@
       "not-eligible": "Not eligible"
     })[status] || "Not confirmed";
   }
+  function renderPayoutForecast() {
+    const node = $("ops-payout-forecast");
+    if (!node || !PayoutForecast) return;
+    const timeValue = (id) => $(id).value ? new Date($(id).value).toISOString() : "";
+    const forecast = PayoutForecast.calculatePayoutForecast({
+      payoutModel: $("ops-payout-model").value,
+      payoutThresholdStatus: $("ops-payout-threshold-status").value,
+      payoutThresholdMetAt: timeValue("ops-payout-threshold-met-at"),
+      payoutCycleEndAt: timeValue("ops-payout-cycle-end-at"),
+      payoutPoolEndedAt: timeValue("ops-payout-pool-ended-at"),
+      payoutFlagOpen: $("ops-payout-flag-open").checked,
+      reviewedAt: timeValue("ops-reviewed-at"),
+      payoutStatus: $("ops-payout-status").value,
+      paidAmountStage: $("ops-paid-stage").value,
+      paidAmount: $("ops-paid-amount").value
+    });
+    node.dataset.status = forecast.status;
+    const estimate = forecast.estimateAt
+      ? new Date(forecast.estimateAt).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })
+      : "";
+    node.textContent = [forecast.title, estimate, forecast.detail, forecast.caveat].filter(Boolean).join(" · ");
+  }
   function populateOperationsForm() {
     const campaign = campaignById($("ops-campaign").value);
     if (!campaign) {
@@ -354,6 +377,13 @@
       $("ops-view-source").value = "Content Rewards";
       $("ops-currency").value = "USD";
       $("ops-payout-status").value = "unconfirmed";
+      $("ops-payout-model").value = "unknown";
+      $("ops-payout-threshold-status").value = "unknown";
+      $("ops-payout-threshold-met-at").value = "";
+      $("ops-payout-cycle-end-at").value = "";
+      $("ops-payout-pool-ended-at").value = "";
+      $("ops-payout-flag-open").checked = false;
+      renderPayoutForecast();
       return;
     }
     $("ops-views").value = campaign.viewsCount == null ? "" : String(campaign.viewsCount);
@@ -362,6 +392,12 @@
     $("ops-reward-approved").value = campaign.rewardApprovedAmount == null ? "" : String(campaign.rewardApprovedAmount);
     $("ops-currency").value = campaign.payoutCurrency || "USD";
     $("ops-payout-status").value = campaign.payoutStatus || "unconfirmed";
+    $("ops-payout-model").value = campaign.payoutModel || "unknown";
+    $("ops-payout-threshold-status").value = campaign.payoutThresholdStatus || "unknown";
+    $("ops-payout-threshold-met-at").value = localDateTimeValue(campaign.payoutThresholdMetAt);
+    $("ops-payout-cycle-end-at").value = localDateTimeValue(campaign.payoutCycleEndAt);
+    $("ops-payout-pool-ended-at").value = localDateTimeValue(campaign.payoutPoolEndedAt);
+    $("ops-payout-flag-open").checked = campaign.payoutFlagOpen === true;
     $("ops-paid-amount").value = campaign.paidAmount == null ? "" : String(campaign.paidAmount);
     $("ops-paid-stage").value = campaign.paidAmountStage || "unknown";
     $("ops-paid-at").value = localDateTimeValue(campaign.paidAt);
@@ -375,6 +411,7 @@
     $("ops-whop-payout-reference").value = campaign.whopPayoutReference || "";
     $("ops-reviewed-at").value = localDateTimeValue(campaign.reviewedAt);
     $("ops-review-notes").value = campaign.reviewNotes || "";
+    renderPayoutForecast();
   }
   function renderOperations() {
     const select = $("ops-campaign");
@@ -429,6 +466,12 @@
         rewardApprovedAmount: $("ops-reward-approved").value,
         payoutCurrency: $("ops-currency").value,
         payoutStatus: $("ops-payout-status").value,
+        payoutModel: $("ops-payout-model").value,
+        payoutThresholdStatus: $("ops-payout-threshold-status").value,
+        payoutThresholdMetAt: $("ops-payout-threshold-met-at").value ? new Date($("ops-payout-threshold-met-at").value).toISOString() : "",
+        payoutCycleEndAt: $("ops-payout-cycle-end-at").value ? new Date($("ops-payout-cycle-end-at").value).toISOString() : "",
+        payoutPoolEndedAt: $("ops-payout-pool-ended-at").value ? new Date($("ops-payout-pool-ended-at").value).toISOString() : "",
+        payoutFlagOpen: $("ops-payout-flag-open").checked,
         paidAmount: $("ops-paid-amount").value,
         paidAmountStage: $("ops-paid-stage").value,
         paidAt: $("ops-paid-at").value ? new Date($("ops-paid-at").value).toISOString() : "",
@@ -1398,6 +1441,8 @@
   $("campaign-form").addEventListener("submit", onCampaignSubmit);
   $("ops-form").addEventListener("submit", saveOperations);
   $("ops-campaign").addEventListener("change", populateOperationsForm);
+  $("ops-form").addEventListener("input", renderPayoutForecast);
+  $("ops-form").addEventListener("change", renderPayoutForecast);
   $("ops-table").addEventListener("click", (event) => {
     const button = event.target.closest("[data-ops-edit]");
     if (!button) return;

@@ -106,10 +106,13 @@
     function updateControls() {
       const page = selectedPage();
       const handoff = getHandoff();
-      const requiresContentRewardsAccount = Boolean(handoff && handoff.campaignId &&
-        String(handoff.campaignPlatform || "").toLowerCase() === "content rewards" &&
+      const metaHandoff = Boolean(handoff &&
         ["facebook", "instagram"].includes(String(handoff.platform || "").toLowerCase()));
-      if (contentRewardsAccountVerifiedLabel) contentRewardsAccountVerifiedLabel.hidden = !requiresContentRewardsAccount;
+      const requiresContentRewardsAccount = Boolean(metaHandoff && handoff.campaignId &&
+        String(handoff.campaignPlatform || "").toLowerCase() === "content rewards");
+      if (contentRewardsAccountVerifiedLabel && (!handoff || metaHandoff)) {
+        contentRewardsAccountVerifiedLabel.hidden = !requiresContentRewardsAccount;
+      }
       const accountVerified = !requiresContentRewardsAccount ||
         Boolean(contentRewardsAccountVerified && contentRewardsAccountVerified.checked);
       const publicApproved = !!(publicConfirm && publicConfirm.checked);

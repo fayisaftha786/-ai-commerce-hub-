@@ -2,6 +2,12 @@
   "use strict";
   const Core = window.ClipRewardCore;
   const STORAGE_KEY = "clipreward-studio-v1";
+  const SUBMISSION_ALERTS_ENABLED_KEY = "clipreward-submission-alerts-enabled-v1";
+  const SUBMISSION_ALERTS_SENT_KEY = "clipreward-submission-alerts-sent-v1";
+  const SubmissionAlerts = window.ClipRewardSubmissionAlerts;
+  let submissionAlertsEnabled = readSubmissionAlertsEnabled();
+  let sentSubmissionAlertKeys = new Set(readSentSubmissionAlertKeys());
+  const pendingSubmissionAlertKeys = new Set();
   const $ = (id) => document.getElementById(id);
   let state = { campaigns: [], timestamps: [], account: Core.normalizeAccount({}) };
   let toastTimer;
@@ -22,6 +28,128 @@
     node.classList.add("show");
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => node.classList.remove("show"), 2600);
+  }
+  function readSubmissionAlertsEnabled() {
+    try { return localStorage.getItem(SUBMISSION_ALERTS_ENABLED_KEY) === "1"; }
+    catch (_) { return false; }
+  }
+  function readSentSubmissionAlertKeys() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(SUBMISSION_ALERTS_SENT_KEY) || "[]");
+      return Array.isArray(saved) ? saved.filter((item) => typeof item === "string").slice(-250) : [];
+    } catch (_) { return []; }
+  }
+  function persistSentSubmissionAlertKeys() {
+    try { localStorage.setItem(SUBMISSION_ALERTS_SENT_KEY, JSON.stringify(Array.from(sentSubmissionAlertKeys).slice(-250))); }
+    catch (_) {}
+  }
+  function updateSubmissionAlertSettingsUi() {
+    const button = $("submission-alert-toggle");
+    const status = $("submission-alert-status");
+    if (!button || !status) return;
+    if (!("Notification" in window)) {
+      button.disabled = true;
+      button.textContent = "Notifications unavailable";
+      status.textContent = "This browser does not support notification reminders. The countdown remains available in the open app.";
+      return;
+    }
+    button.disabled = false;
+    const permission = Notification.permission;
+    if (permission === "denied") {
+      button.textContent = submissionAlertsEnabled ? "Turn off alerts" : "Notifications blocked";
+      status.textContent = "Notifications are blocked by the browser. Allow them in the browser/site settings, then reopen this page.";
+    } else if (submissionAlertsEnabled && permission === "granted") {
+      button.textContent = "Turn off 30-minute alerts";
+      status.textContent = "Enabled: final 15, 5 and 1-minute alerts. Keep ClipReward open; a closed or suspended page cannot be woken by this local timer.";
+    } else {
+      button.textContent = "Enable 30-minute alerts";
+      status.textContent = "Alerts are off. Enable them and allow browser notifications to receive reminders.";
+    }
+  }
+  function sendSubmissionDeadlineAlert(campaign, reminder) {
+    if (!submissionAlertsEnabled || !reminder || !("Notification" in window) ||
+        Notification.permission !== "granted" || sentSubmissionAlertKeys.has(reminder.key) ||
+        pendingSubmissionAlertKeys.has(reminder.key)) return;
+    pendingSubmissionAlertKeys.add(reminder.key);
+    const options = {
+      body: reminder.body,
+      icon: "./icon.svg",
+      badge: "./icon.svg",
+      tag: reminder.key,
+      renotify: false,
+      data: { url: "./#campaigns", campaignId: campaign.id }
+    };
+    (async () => {
+      let delivered = false;
+      if ("serviceWorker" in navigator) {
+        try {
+          const registration = await navigator.serviceWorker.ready;
+          if (registration && typeof registration.showNotification === "function") {
+            await registration.showNotification(reminder.title, options);
+            delivered = true;
+          }
+        } catch (_) {}
+      }
+      if (!delivered && typeof Notification === "function") {
+        try {
+          const notification = new Notification(reminder.title, options);
+          notification.onclick = () => {
+            window.focus();
+            location.hash = "#campaigns";
+            notification.close();
+          };
+          delivered = true;
+        } catch (_) {}
+      }
+      if (delivered) {
+        sentSubmissionAlertKeys.add(reminder.key);
+        persistSentSubmissionAlertKeys();
+      }
+      pendingSubmissionAlertKeys.delete(reminder.key);
+    })();
+  }
+  function configureSubmissionAlerts() {
+    $("submission-alert-toggle").addEventListener("click", async () => {
+      if (submissionAlertsEnabled) {
+        submissionAlertsEnabled = false;
+        try { localStorage.setItem(SUBMISSION_ALERTS_ENABLED_KEY, "0"); } catch (_) {}
+        updateSubmissionAlertSettingsUi();
+        showToast("30-minute submission alerts turned off.");
+        return;
+      }
+      if (!("Notification" in window)) {
+        showToast("Browser notifications are not supported here.");
+        return;
+      }
+      try {
+        const permission = Notification.permission === "granted"
+          ? "granted"
+          : await Notification.requestPermission();
+        if (permission !== "granted") {
+          submissionAlertsEnabled = false;
+          try { localStorage.setItem(SUBMISSION_ALERTS_ENABLED_KEY, "0"); } catch (_) {}
+          updateSubmissionAlertSettingsUi();
+          showToast("Notification permission was not granted. The on-screen timer still works.");
+          return;
+        }
+        submissionAlertsEnabled = true;
+        try { localStorage.setItem(SUBMISSION_ALERTS_ENABLED_KEY, "1"); } catch (_) {}
+        updateSubmissionAlertSettingsUi();
+        showToast("30-minute submission alerts enabled on this device.");
+        refreshDeadlineCountdowns();
+      } catch (_) {
+        showToast("Could not enable browser notifications. Check this site's notification permission.");
+      }
+    });
+    $("campaign-posted-now").addEventListener("click", () => {
+      $("campaign-posted-at").value = localDateTimeValue(new Date().toISOString());
+      showToast("Post time set to now. Save the campaign to start its 30-minute countdown.");
+    });
+    $("campaign-submitted-now").addEventListener("click", () => {
+      $("campaign-submitted-at").value = localDateTimeValue(new Date().toISOString());
+      showToast("Submission time set to now. Confirm this is when you actually pressed Submit clip.");
+    });
+    updateSubmissionAlertSettingsUi();
   }
   function save() {
     try {
@@ -119,6 +247,8 @@
       if (campaign.platform !== "Content Rewards" || !campaign.postedAt ||
           ["submitted", "approved", "rejected"].includes(campaign.status)) return;
       const remaining = new Date(campaign.postedAt).getTime() + Core.MAX_SUBMISSION_WINDOW_MS - Date.now();
+      const reminder = SubmissionAlerts && SubmissionAlerts.getReminder(campaign, Date.now());
+      if (reminder) sendSubmissionDeadlineAlert(campaign, reminder);
       const warningKey = campaign.id + "|" + campaign.postedAt;
       if (remaining > 0 && remaining <= 60000 && !deadlineWarnings.has(warningKey + "|1m")) {
         deadlineWarnings.add(warningKey + "|1m");
@@ -1429,6 +1559,7 @@
   $("import-file").addEventListener("change", (event) => importBackup(event.target.files && event.target.files[0]));
   load();
   render();
+  configureSubmissionAlerts();
   configureDiscovery();
   refreshDeadlineCountdowns();
   window.setInterval(refreshDeadlineCountdowns, 1000);

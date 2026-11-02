@@ -282,6 +282,7 @@
           platform: String(handoff.platform || ""),
           requiresPreApproval: handoff.requiresPreApproval === true,
           preApprovalConfirmed: handoff.preApprovalConfirmed === true,
+          contentRewardsAccountVerified: Boolean(contentRewardsAccountVerified && contentRewardsAccountVerified.checked),
           mediaFingerprint: handoff.mediaFingerprint || null
         } : null;
         status("Uploading video to YouTube as " + visibilityLabel + "… Keep this page open until the upload finishes.");

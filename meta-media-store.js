@@ -20,7 +20,7 @@ function createEphemeralMetaMediaStore(options = {}) {
   }
 
   function create(buffer, mimeType) {
-    if (!baseUrl || !/^https:\/\//.test(baseUrl)) throw new Error("meta_media_base_url_not_configured");
+    if (!baseUrl || !/^https:\/\//.test(baseUrl)) throw new Error("Meta media base URL is not configured");
     if (!Buffer.isBuffer(buffer) || !buffer.length || buffer.length > 50 * 1024 * 1024) {
       throw new Error("meta_media_size_invalid");
     }

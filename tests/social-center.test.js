@@ -81,6 +81,22 @@ test("Social Desk validates a same-origin Clip Studio video handoff before loadi
   assert.equal(campaignHandoff.valid, true);
   assert.equal(campaignHandoff.campaignId, "campaign_123");
   assert.equal(campaignHandoff.requiresPreApproval, true);
+  const metaHandoff = social.validatePostHandoff({
+    platform: "instagram",
+    caption: "Approved Reels package",
+    campaignId: "campaign_456",
+    campaignName: "Campaign with Page approval",
+    campaignPlatform: "Content Rewards",
+    campaignStatus: "ready",
+    rules: "Accepted platforms: Instagram",
+    durationSeconds: 30,
+    file: { name: "rendered.mp4", type: "video/mp4", size: 2048, lastModified: 123 }
+  });
+  assert.equal(metaHandoff.valid, true);
+  assert.equal(metaHandoff.campaignPlatform, "Content Rewards");
+  assert.equal(metaHandoff.campaignStatus, "ready");
+  assert.equal(metaHandoff.rules, "Accepted platforms: Instagram");
+  assert.equal(metaHandoff.durationSeconds, 30);
   assert.deepEqual(campaignHandoff.mediaFingerprint, {
     name: "clip.mp4", size: 2048, type: "video/mp4", lastModified: 0
   });

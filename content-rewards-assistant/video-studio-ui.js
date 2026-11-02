@@ -281,6 +281,52 @@
           resultTimeout = root.setTimeout(cleanup, 35 * 60 * 1000);
           return;
         }
+        if (acknowledged && event.data.type === "AI_COMMERCE_META_PUBLISH_RESULT") {
+          const result = event.data.payload && typeof event.data.payload === "object" ? event.data.payload : {};
+          const provider = String(result.provider || "").toLowerCase();
+          const expectedPlatform = provider === "instagram" ? "instagram" : provider === "facebook" ? "facebook" : "";
+          const videoId = String(result.videoId || "");
+          const publishedAt = new Date(result.publishedAt || "");
+          let url = "";
+          try {
+            const parsed = new URL(String(result.url || ""));
+            const hostnameAllowed = provider === "instagram"
+              ? ["instagram.com", "www.instagram.com"].includes(parsed.hostname)
+              : provider === "facebook"
+                ? ["facebook.com", "www.facebook.com", "fb.watch"].includes(parsed.hostname)
+                : false;
+            if (parsed.protocol === "https:" && hostnameAllowed && !parsed.username && !parsed.password) {
+              url = parsed.href;
+            }
+          } catch (_) {}
+          if (!expectedPlatform || expectedPlatform !== plan.payload.platform ||
+              String(result.campaignId || "") !== plan.payload.campaignId ||
+              !videoId || !url || result.published !== true ||
+              result.privacyStatus !== "public" || result.uploadStatus !== "processed" ||
+              result.processingStatus !== "succeeded" || Number.isNaN(publishedAt.getTime())) {
+            setStatus("Meta has not confirmed a public post matching this campaign and platform. No Content Rewards timer has started.", true);
+            return;
+          }
+          cleanup();
+          const handoffResult = {
+            ...result,
+            provider,
+            platform: expectedPlatform,
+            url,
+            videoId,
+            privacyStatus: "public",
+            uploadStatus: "processed",
+            processingStatus: "succeeded",
+            published: true,
+            publishedAt: publishedAt.toISOString(),
+            campaignId: plan.payload.campaignId
+          };
+          if (typeof root.CustomEvent === "function") {
+            root.dispatchEvent(new root.CustomEvent("clipreward:meta-published", { detail: handoffResult }));
+          }
+          setStatus("Meta confirms the finished video is public. Its real link/time was sent to the selected campaign tracker. Open Content Rewards and press Submit clip within 30 minutes; this app has not submitted it.", false);
+          return;
+        }
         if (acknowledged && event.data.type === "AI_COMMERCE_YOUTUBE_PUBLISH_RESULT") {
           const result = event.data.payload && typeof event.data.payload === "object" ? event.data.payload : {};
           const videoId = String(result.videoId || "");

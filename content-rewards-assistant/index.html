@@ -288,7 +288,7 @@
       <textarea id="video-analysis-scene-captions" rows="4" maxlength="5000" placeholder="Scene 1 subtitle&#10;Scene 2 subtitle&#10;Scene 3 subtitle"></textarea>
     </label>
     <button class="button button-quiet" type="button" id="video-analysis-download-srt" disabled>Build & download timed SRT subtitles</button>
-    <p class="tiny-note">Subtitle timings follow detected scene boundaries. This is not speech-to-text; review timing and wording before use.</p>
+    <p class="tiny-note">Subtitle timings follow detected scene boundaries. Voice typing can enter text, but cannot extract dialogue from the selected video's audio. Review timing and wording before use.</p>
   </div>
   <div class="video-analysis-copy-form">
     <label>What is the video about? <span class="optional">Required; describe the actual footage</span>
@@ -298,6 +298,35 @@
       <textarea id="video-analysis-notes" rows="3" maxlength="2500" placeholder="Write the real steps, demonstration or benefit shown in your video…"></textarea>
     </label>
     <details><summary>Paste a transcript (optional)</summary><textarea id="video-analysis-transcript" rows="4" maxlength="12000" placeholder="Paste spoken words if you already have a transcript…"></textarea></details>
+    <div class="video-dictation-panel">
+      <div class="video-export-heading"><div><strong>Voice typing · fill any field</strong><p class="tiny-note">Speak Malayalam, English or Hindi into your phone microphone. Final words are added to the selected field.</p></div></div>
+      <div class="video-export-grid">
+        <label>Send recognized words to
+          <select id="speech-dictation-target">
+            <option value="video-analysis-transcript">Transcript / spoken words</option>
+            <option value="video-analysis-notes">Key points / video details</option>
+            <option value="video-analysis-scene-captions">Detected scene subtitles</option>
+            <option value="video-captions">Rendered scene captions</option>
+            <option value="video-post-caption">Social post caption</option>
+            <option value="draft-topic">Video topic</option>
+          </select>
+        </label>
+        <label>Speech language
+          <select id="speech-dictation-language">
+            <option value="ml-IN" selected>Malayalam</option>
+            <option value="en-IN">English (India)</option>
+            <option value="hi-IN">Hindi (India)</option>
+          </select>
+        </label>
+      </div>
+      <div class="video-analysis-actions">
+        <button class="button button-primary" id="speech-dictation-start" type="button">Start voice typing</button>
+        <button class="button button-quiet" id="speech-dictation-stop" type="button" disabled>Stop</button>
+      </div>
+      <p id="speech-dictation-status" class="video-export-status" role="status" aria-live="polite">On-device recognition only by default. Browser and language support vary.</p>
+      <label class="tiny-note"><input id="speech-dictation-cloud-consent" type="checkbox"> I explicitly allow the browser's online speech service to process my microphone audio when on-device recognition is unavailable or I choose online mode.</label>
+      <p class="tiny-note">Privacy: voice typing starts only after you press Start and grant microphone permission. On-device mode is used where supported. Online mode may send audio to the browser provider and needs internet. Do not dictate passwords, OTPs or private information. The app does not save microphone audio. Check every word before publishing.</p>
+    </div>
     <label>Exact sponsorship / affiliate disclosure (when applicable)
       <input id="video-analysis-disclosure" maxlength="500" placeholder="e.g. Ad / Paid partnership / Affiliate link">
     </label>
@@ -317,7 +346,7 @@
       <button class="button button-primary" type="button" id="video-analysis-send-social">Send video + post to Social Media Desk</button>
     </div>
   </div>
-  <p class="video-analysis-privacy"><strong>Privacy & accuracy:</strong> the selected file is inspected in this browser and is not uploaded for analysis. The tool reads duration, dimensions, file size and selected frame previews. It does not automatically understand scenes or transcribe speech; add accurate notes/transcript yourself. The Social Media Desk handoff carries the selected campaign ID. A verified, processed, public YouTube post can automatically fill the public link and YouTube's actual publishedAt timestamp in that local campaign record. You must still open Content Rewards and manually press Submit clip before the 30-minute limit; this app never fabricates submission receipt or approval.</p>
+  <p class="video-analysis-privacy"><strong>Privacy & accuracy:</strong> the selected file is inspected in this browser and is not uploaded for analysis. The tool reads duration, dimensions, file size and selected frame previews. It does not semantically understand scenes or transcribe audio from the selected video. Optional microphone voice typing can help enter notes and transcripts; review all recognition before use. The Social Media Desk handoff carries the selected campaign ID. A verified, processed, public YouTube post can automatically fill the public link and YouTube's actual publishedAt timestamp in that local campaign record. You must still open Content Rewards and manually press Submit clip before the 30-minute limit; this app never fabricates submission receipt or approval.</p>
 </section>
 <section class="video-export-studio" id="real-video-export">
   <div class="video-export-heading"><div><div class="section-kicker">REAL VIDEO RENDERER · ON THIS DEVICE</div><h3>Make an MP4 / Reels video</h3><p class="muted small-text">Combine your own photos or video clips into a vertical video. Add scene captions and an optional voice-over or music file. No video is marked complete until the exported file passes a metadata check.</p></div><span class="video-export-icon">▶</span></div>
@@ -443,7 +472,7 @@
 <p class="muted small-text deadline-help">To mark a Content Rewards record Submitted, select the platform, use its matching public post link, and record both times. The app checks that the link-submission time is not before the post and is strictly less than 30 minutes later. Enter the time you actually pressed Submit clip; this app still cannot submit or verify the receipt.</p><div class="modal-actions"><button class="button button-quiet" id="cancel-modal" type="button">Cancel</button><button class="button button-primary" type="submit">Save campaign</button></div></form>
 </section></div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
-<script src="./campaign-scout.js"></script><script src="./campaign-feed.js"></script><script src="./discovery-engine.js"></script><script src="./rewards-intelligence.js"></script><script src="./core.js"></script><script src="./submission-alerts.js"></script><script src="./tracker-import.js"></script><script src="./payout-forecast.js"></script><script src="./app.js"></script><script src="./video-studio.js"></script><script src="./video-studio-ui.js"></script><script src="./video-analysis.js"></script><script src="./video-analysis-ui.js"></script>
+<script src="./campaign-scout.js"></script><script src="./campaign-feed.js"></script><script src="./discovery-engine.js"></script><script src="./rewards-intelligence.js"></script><script src="./core.js"></script><script src="./submission-alerts.js"></script><script src="./tracker-import.js"></script><script src="./payout-forecast.js"></script><script src="./app.js"></script><script src="./video-studio.js"></script><script src="./video-studio-ui.js"></script><script src="./video-analysis.js"></script><script src="./speech-dictation.js"></script><script src="./video-analysis-ui.js"></script><script src="./speech-dictation-ui.js"></script>
 <script data-register-service-worker>
   if ("serviceWorker" in navigator && location.protocol !== "file:") {
     window.addEventListener("load", () => {

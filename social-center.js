@@ -53,6 +53,12 @@
       campaignName: String(source.campaignName || "").trim().slice(0, 120),
       requiresPreApproval,
       preApprovalConfirmed,
+      mediaFingerprint: {
+        name: String(file.name || "").slice(0, 255),
+        size: file.size,
+        type: String(file.type || "").toLowerCase(),
+        lastModified: Number(file.lastModified) || 0
+      },
       file
     };
   }
@@ -184,8 +190,10 @@
       root.AICommerceSocialHandoff = {
         campaignId: checked.campaignId,
         campaignName: checked.campaignName,
+        platform: checked.platform,
         requiresPreApproval: checked.requiresPreApproval,
-        preApprovalConfirmed: checked.preApprovalConfirmed
+        preApprovalConfirmed: checked.preApprovalConfirmed,
+        mediaFingerprint: checked.mediaFingerprint
       };
       let mediaImported = false;
       try {

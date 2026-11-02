@@ -207,6 +207,15 @@
         setStatus("Create and verify the video export before sending it to Social Media Desk.", true);
         return;
       }
+      if (!$("video-rights-confirm").checked || !$("video-rules-confirm").checked) {
+        setStatus("Confirm media rights and your review of the live campaign rules before sending the export.", true);
+        return;
+      }
+      const campaignCheck = renderCampaignPreflight();
+      if (campaignCheck.status === "blocked") {
+        setStatus(campaignCheck.blockingReasons.join(" "), true);
+        return;
+      }
       const option = campaignSelect && campaignSelect.selectedOptions && campaignSelect.selectedOptions[0];
       const rules = option && option.dataset ? option.dataset.rules || "" : "";
       const plan = Studio.buildSocialHandoff({
@@ -333,6 +342,8 @@
       }
       if (outputUrl) root.URL.revokeObjectURL(outputUrl);
       outputUrl = "";
+      renderedFile = null;
+      shareButton.disabled = true;
       downloadLink.hidden = true;
       preview.hidden = true;
       preview.removeAttribute("src");
@@ -353,11 +364,13 @@
           }
         });
         outputUrl = root.URL.createObjectURL(output.blob);
+        const outputName = "clipreward-video-" + new Date().toISOString().replace(/[:.]/g, "-") + "." + output.extension;
+        const outputType = String(output.mimeType || output.blob.type || "video/webm").split(";")[0].trim().toLowerCase();
         try {
           renderedFile = new root.File(
             [output.blob],
-            "clipreward-video-" + new Date().toISOString().replace(/[:.]/g, "-") + "." + output.extension,
-            { type: output.mimeType || output.blob.type || "video/webm", lastModified: Date.now() }
+            outputName,
+            { type: outputType, lastModified: Date.now() }
           );
         } catch (_) {
           renderedFile = null;
@@ -369,9 +382,14 @@
         downloadLink.download = "clipreward-video-" + new Date().toISOString().replace(/[:.]/g, "-") + "." + output.extension;
         downloadLink.textContent = "Save " + output.formatLabel + " video";
         downloadLink.hidden = false;
+        const sizeLabel = (output.size / (1024 * 1024)).toFixed(2) + " MB";
         setStatus("Export verified: " + output.width + " × " + output.height + " · " +
-          output.duration.toFixed(1) + " sec · " + output.formatLabel + " · " +
-          (output.size / (1024 * 1024)).toFixed(2) + " MB. Preview it, then save the file.", false);
+          output.duration.toFixed(1) + " sec · " + output.formatLabel + " · " + sizeLabel +
+          (renderedFile && renderedFile.size <= Studio.MAX_SOCIAL_HANDOFF_BYTES
+            ? ". Preview it, save it or send this finished export to Social Media Desk."
+            : renderedFile
+              ? ". This export exceeds the 50 MB Social Desk handoff limit; save and compress a copy before upload."
+              : ". This browser cannot create a transferable File object; save the export and select it manually in Social Media Desk."), false);
       } catch (error) {
         if (error && error.name === "AbortError") setStatus("Export cancelled. No completed file was saved.", false);
         else setStatus((error && error.message) || "Video export failed. Try smaller files or another supported browser.", true);

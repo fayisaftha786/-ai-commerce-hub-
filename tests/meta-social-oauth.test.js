@@ -206,7 +206,7 @@ test("publishes a Facebook Page Reel through start, binary upload and finish pha
         assert.deepEqual(init.body, VIDEO);
         return jsonResponse({ success: true });
       }
-      if (parsed.hostname === "graph.facebook.com" && parsed.pathname.endsWith("/" + PAGE_ID + "/video_reels") &&
+      if (parsed.hostname === "graph.facebook.com" && parsed.pathname.endsWith("/me/video_reels") &&
           parsed.searchParams.get("upload_phase") === "finish") {
         assert.equal(parsed.searchParams.get("video_state"), "PUBLISHED");
         assert.equal(parsed.searchParams.get("description"), "Caption #Creator");
@@ -275,18 +275,18 @@ test("publishes an Instagram Reel only after the public media container is ready
       if (parsed.pathname.endsWith("/" + IG_ID + "/media")) {
         assert.equal(parsed.searchParams.get("media_type"), "REELS");
         assert.equal(parsed.searchParams.get("video_url"), "https://api.example.com/media/instagram/" + "b".repeat(64));
-        return jsonResponse({ id: "container12345" });
+        return jsonResponse({ id: "1234512345" });
       }
-      if (parsed.pathname.endsWith("/container12345")) {
-        return jsonResponse({ status_code: requests.filter((item) => item.pathname.endsWith("/container12345")).length > 1 ? "FINISHED" : "IN_PROGRESS" });
+      if (parsed.pathname.endsWith("/1234512345")) {
+        return jsonResponse({ status_code: requests.filter((item) => item.pathname.endsWith("/1234512345")).length > 1 ? "FINISHED" : "IN_PROGRESS" });
       }
       if (parsed.pathname.endsWith("/" + IG_ID + "/media_publish")) {
-        assert.equal(parsed.searchParams.get("creation_id"), "container12345");
-        return jsonResponse({ id: "media123456" });
+        assert.equal(parsed.searchParams.get("creation_id"), "1234512345");
+        return jsonResponse({ id: "123456789012345" });
       }
-      if (parsed.pathname.endsWith("/media123456")) {
+      if (parsed.pathname.endsWith("/123456789012345")) {
         return jsonResponse({
-          id: "media123456",
+          id: "123456789012345",
           permalink: "https://www.instagram.com/reel/AbCdEf123/",
           timestamp: "2026-11-02T00:06:00.000Z"
         });

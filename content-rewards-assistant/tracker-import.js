@@ -9,9 +9,9 @@
   function canonicalCampaignUrl(value) {
     try {
       const url = new URL(String(value || ""));
-      if (url.protocol !== "https:" || !/(^|\\.)contentrewards\\.com$/i.test(url.hostname) ||
-          !/^\\/c\\/campaigns\\/[^/]+$/.test(url.pathname) || url.username || url.password) return "";
-      return url.origin.toLowerCase() + url.pathname.replace(/\\/$/, "");
+      if (url.protocol !== "https:" || !/(^|\.)contentrewards\.com$/i.test(url.hostname) ||
+          !/^\/c\/campaigns\/[^/]+$/.test(url.pathname) || url.username || url.password) return "";
+      return url.origin.toLowerCase() + url.pathname.replace(/\/$/, "");
     } catch (_) { return ""; }
   }
 
@@ -73,7 +73,7 @@
         name: String(row.title || brief.title || "Content Rewards campaign").trim().slice(0, 120),
         platform: "Content Rewards",
         url,
-        deadline: /^\\d{4}-\\d{2}-\\d{2}$/.test(String(brief.deadline || "")) ? brief.deadline : "",
+        deadline: /^\d{4}-\d{2}-\d{2}$/.test(String(brief.deadline || "")) ? brief.deadline : "",
         payoutTerms,
         budgetTerms,
         rules: typeof buildNotes === "function" ? String(buildNotes(brief) || "").slice(0, 2000) : "",

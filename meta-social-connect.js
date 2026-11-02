@@ -306,6 +306,7 @@
           uploadStatus: "processed",
           processingStatus: "succeeded",
           published: true,
+          contentRewardsAccountVerified: Boolean(contentRewardsAccountVerified && contentRewardsAccountVerified.checked),
           pageId: page.id,
           pageName: page.name,
           campaignId: handoff ? String(handoff.campaignId || "") : "",

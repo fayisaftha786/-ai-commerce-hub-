@@ -22,10 +22,10 @@ function createEphemeralMetaMediaStore(options = {}) {
   function create(buffer, mimeType) {
     if (!baseUrl || !/^https:\/\//.test(baseUrl)) throw new Error("Meta media base URL is not configured");
     if (!Buffer.isBuffer(buffer) || !buffer.length || buffer.length > 50 * 1024 * 1024) {
-      throw new Error("meta_media_size_invalid");
+      throw new Error("Meta media size is invalid");
     }
     const type = String(mimeType || "").toLowerCase().split(";")[0].trim();
-    if (!["video/mp4", "video/quicktime"].includes(type)) throw new Error("meta_media_type_invalid");
+    if (!["video/mp4", "video/quicktime"].includes(type)) throw new Error("Meta media type is invalid");
     prune();
     const token = randomBytes(32).toString("hex");
     entries.set(token, { buffer, mimeType: type, expiresAt: now() + ttlMs });

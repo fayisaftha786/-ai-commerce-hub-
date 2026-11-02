@@ -306,6 +306,11 @@ test("Clip Studio exposes media upload, audio, preflight, progress, preview and 
   assert.match(uiSource, /campaignCheck\.status === "blocked"/);
   assert.match(uiSource, /buildSocialHandoff/);
   assert.match(uiSource, /AI_COMMERCE_CLIP_HANDOFF/);
+  assert.match(uiSource, /AI_COMMERCE_META_PUBLISH_RESULT/);
+  assert.match(uiSource, /clipreward:meta-published/);
+  assert.match(uiSource, /result\.published !== true/);
+  assert.match(uiSource, /contentRewardsAccountVerified !== true/);
+  assert.match(appSource, /payload\.contentRewardsAccountVerified !== true/);
   assert.match(uiSource, /clipreward:youtube-published/);
   assert.match(appSource, /data-platform=/);
   assert.match(appSource, /data-status=/);

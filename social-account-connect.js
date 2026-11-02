@@ -4,6 +4,29 @@
   const STORAGE_KEY = "ai-commerce-hub.social-backend-origin.v1";
   const ACTION_HEADER = "social-disconnect";
 
+  function validateYouTubePublishContext(input) {
+    const source = input && typeof input === "object" ? input : {};
+    const campaignId = String(source.campaignId || "").trim();
+    const campaignPlatform = String(source.campaignPlatform || "").trim().toLowerCase();
+    if (!campaignId || campaignPlatform !== "content rewards") return { valid: true };
+    const status = String(source.campaignStatus || "").trim().toLowerCase();
+    if (!["joined", "editing", "ready"].includes(status)) {
+      return { valid: false, error: "Complete Join / Apply in Content Rewards and update the local tracker to Joined, Editing or Ready before publishing." };
+    }
+    if (source.contentRewardsAccountVerified !== true) {
+      return { valid: false, error: "Connect and verify this exact YouTube channel in Content Rewards → Settings → Connected accounts before publishing." };
+    }
+    const rules = String(source.rules || "");
+    const acceptedLine = /^\s*Accepted platforms\s*:\s*(.+)$/im.exec(rules);
+    if (acceptedLine && !/^(?:not recognised|not stated|none detected|unknown|n\/a)$/i.test(acceptedLine[1].trim())) {
+      const accepted = acceptedLine[1].split(/[,;|]/).map((value) => value.trim().toLowerCase());
+      if (!accepted.some((value) => ["youtube", "youtube shorts", "shorts", "all"].includes(value))) {
+        return { valid: false, error: "YouTube is not listed in the saved Content Rewards platform requirements. Choose an allowed platform or recheck the official brief." };
+      }
+    }
+    return { valid: true };
+  }
+
   function normalizeBackendOrigin(value) {
     try {
       const url = new URL(String(value || "").trim());
@@ -29,6 +52,8 @@
     const privacySelect = $("youtube-video-privacy");
     const publicConfirmLabel = $("youtube-public-confirm-label");
     const publicConfirm = $("youtube-public-confirm");
+    const contentRewardsAccountVerified = $("content-rewards-account-verified");
+    const contentRewardsAccountVerifiedLabel = $("content-rewards-account-verified-label");
     const videoIdInput = $("youtube-video-id");
     const checkStatusButton = $("checkYouTubeVideoStatus");
     if (!originInput || !saveButton || !connectButton || !disconnectButton || !statusNode) return;
@@ -78,6 +103,14 @@
     function updatePublishControls() {
       const privacy = privacySelect && ["private", "unlisted", "public"].includes(privacySelect.value)
         ? privacySelect.value : "private";
+      const handoff = windowObject.AICommerceSocialHandoff && typeof windowObject.AICommerceSocialHandoff === "object"
+        ? windowObject.AICommerceSocialHandoff : null;
+      const youtubeHandoff = Boolean(handoff && String(handoff.platform || "").toLowerCase() === "youtube");
+      const requiresContentRewardsAccount = Boolean(youtubeHandoff && handoff.campaignId &&
+        String(handoff.campaignPlatform || "").toLowerCase() === "content rewards");
+      if (contentRewardsAccountVerifiedLabel && (!handoff || youtubeHandoff)) {
+        contentRewardsAccountVerifiedLabel.hidden = !requiresContentRewardsAccount;
+      }
       if (publicConfirmLabel) publicConfirmLabel.hidden = privacy !== "public";
       if (checkStatusButton) checkStatusButton.disabled = !String((videoIdInput && videoIdInput.value) || lastUploadedVideoId).trim() || statusCheckInFlight;
     }
@@ -191,7 +224,8 @@
               uploadStatus: result.uploadStatus,
               processingStatus: result.processingStatus,
               publishedAt: publishedAt.toISOString(),
-              ...(lastPublishContext || windowObject.AICommerceSocialHandoff || {})
+              ...(lastPublishContext || windowObject.AICommerceSocialHandoff || {}),
+              contentRewardsAccountVerified: Boolean(contentRewardsAccountVerified && contentRewardsAccountVerified.checked)
             }
           }, windowObject.location.origin);
           status("YouTube confirms the video is processed and public. Its actual public link/time was sent to Clip Studio. Open Content Rewards and press Submit clip within 30 minutes; this app has not submitted it.");
@@ -212,6 +246,8 @@
       updatePublishControls();
     }
     if (publicConfirm) publicConfirm.addEventListener("change", updatePublishControls);
+    if (contentRewardsAccountVerified) contentRewardsAccountVerified.addEventListener("change", updatePublishControls);
+    windowObject.addEventListener("ai-commerce:social-handoff", updatePublishControls);
     if (videoIdInput) {
       videoIdInput.addEventListener("input", updatePublishControls);
       videoIdInput.addEventListener("change", updatePublishControls);
@@ -252,6 +288,17 @@
           status("This Content Rewards campaign requires draft pre-approval. Do not publish until the campaign team has approved the draft.");
           return;
         }
+        const campaignContext = validateYouTubePublishContext({
+          campaignId: handoff && handoff.campaignId,
+          campaignPlatform: handoff && handoff.campaignPlatform,
+          campaignStatus: handoff && handoff.campaignStatus,
+          rules: handoff && handoff.rules,
+          contentRewardsAccountVerified: Boolean(contentRewardsAccountVerified && contentRewardsAccountVerified.checked)
+        });
+        if (!campaignContext.valid) {
+          status(campaignContext.error);
+          return;
+        }
         if (privacy === "public" && !(publicConfirm && publicConfirm.checked)) {
           status("Public visibility requires the separate confirmation checkbox. Content Rewards needs a public post; private remains the default.");
           return;
@@ -268,6 +315,7 @@
           platform: String(handoff.platform || ""),
           requiresPreApproval: handoff.requiresPreApproval === true,
           preApprovalConfirmed: handoff.preApprovalConfirmed === true,
+          contentRewardsAccountVerified: Boolean(contentRewardsAccountVerified && contentRewardsAccountVerified.checked),
           mediaFingerprint: handoff.mediaFingerprint || null
         } : null;
         status("Uploading video to YouTube as " + visibilityLabel + "… Keep this page open until the upload finishes.");
@@ -359,7 +407,7 @@
     refresh();
   }
 
-  const api = { normalizeBackendOrigin, init };
+  const api = { normalizeBackendOrigin, validateYouTubePublishContext, init };
   if (typeof module === "object" && module.exports) module.exports = api;
   if (root && root.document) init(root);
 })(typeof globalThis !== "undefined" ? globalThis : this);

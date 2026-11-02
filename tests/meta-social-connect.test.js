@@ -58,7 +58,7 @@ test("Social Desk exposes Meta connect, Page selection, public confirmation and 
   const root = path.join(__dirname, "..");
   const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
   const worker = fs.readFileSync(path.join(root, "service-worker.js"), "utf8");
-  const packageJson = JSON.parse(fs.readFileSync(path.join(root, "..", "package.json"), "utf8"));
+  const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json" ), "utf8"));
   for (const id of [
     "connectMetaAccount", "disconnectMetaAccount", "metaPageSelect",
     "metaAccountConnectionStatus", "meta-public-confirm",

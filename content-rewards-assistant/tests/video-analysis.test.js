@@ -97,6 +97,8 @@ test("Clip Studio wires local analysis, package download and Social Desk handoff
   assert.match(ui, /AI_COMMERCE_CLIP_HANDOFF/);
   assert.match(ui, /AI_COMMERCE_YOUTUBE_PUBLISH_RESULT/);
   assert.match(ui, /campaignId: campaign.id/);
+  assert.match(ui, /selected campaign changed after this post package/);
+  assert.match(ui, /cleanup\(\);\n          const handoffResult/);
   assert.match(ui, /clipreward:youtube-published/);
   assert.match(ui, /AI_COMMERCE_YOUTUBE_PUBLISH_RESULT/);
   assert.match(ui, /preApprovalConfirmed/);

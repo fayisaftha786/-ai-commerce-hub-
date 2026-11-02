@@ -1359,8 +1359,14 @@
       showToast("YouTube confirms a public video, but no matching Content Rewards campaign is selected. Add the link to the correct campaign manually.");
       return;
     }
-    if (payload.privacyStatus !== "public") {
+    if (payload.privacyStatus !== "public" ||
+        payload.uploadStatus !== "processed" ||
+        payload.processingStatus !== "succeeded") {
       showToast("Only a processed public YouTube video can start the Content Rewards timer.");
+      return;
+    }
+    if (!["joined", "editing", "ready"].includes(campaign.status)) {
+      showToast("Before publishing for Content Rewards, complete Join / Apply on the official campaign page and update this local tracker to Joined or Ready. This app cannot verify your eligibility.");
       return;
     }
     const postUrl = Core.safeUrl(payload.url);

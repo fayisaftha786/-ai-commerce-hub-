@@ -106,6 +106,9 @@
       );
     }
 
+    if (threshold === "not-met") {
+      return result("blocked", "Pool minimum not met", "The campaign's qualifying minimum is recorded as not met. This record should not expect a Pool share.");
+    }
     return result(
       "needs-input",
       "Pool payout timing not forecast",

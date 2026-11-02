@@ -227,10 +227,94 @@ test("uploads a video through the official resumable API and returns its verifie
   assert.equal(result.videoId, "video-987");
   assert.equal(result.url, "https://www.youtube.com/watch?v=video-987");
   assert.equal(result.privacyStatus, "private");
+  assert.ok(result.uploadedAt);
+  assert.equal("publishedAt" in result, false);
   assert.equal(calls.length, 2);
   assert.equal(calls[1].request.method, "PUT");
   assert.equal(calls[1].request.body.length, 2048);
   assert.equal(JSON.stringify(result).includes("valid-access"), false);
+});
+
+test("video status reports processed public visibility and the provider's actual publishedAt", async () => {
+  const store = makeStore();
+  const sessionId = "1234567890123456789012345678901234567890123";
+  store.set(sha256(sessionId), "youtube", {
+    accessToken: "valid-access", refreshToken: "valid-refresh",
+    expiresAt: Date.now() + 3600000,
+    scopes: [...REQUIRED_SCOPES],
+    channelId: "channel-upload", channelTitle: "Upload channel",
+    connectedAt: new Date().toISOString()
+  });
+  let requested = "";
+  const service = createYouTubeOAuthService({
+    env: ENV, tokenVault: store,
+    fetchImpl: async (url, request) => {
+      requested = url;
+      assert.equal(request.method, "GET");
+      assert.equal(request.headers.authorization, "Bearer valid-access");
+      return jsonResponse({
+        items: [{
+          id: "video-987",
+          snippet: { publishedAt: "2026-11-02T00:02:00.000Z" },
+          status: { uploadStatus: "processed", privacyStatus: "public" },
+          processingDetails: { processingStatus: "succeeded" }
+        }]
+      });
+    }
+  });
+  const result = await service.getVideoStatus(sessionId, "video-987");
+  assert.equal(result.ok, true);
+  assert.equal(result.processingStatus, "succeeded");
+  assert.equal(result.privacyStatus, "public");
+  assert.equal(result.publishedAt, "2026-11-02T00:02:00.000Z");
+  assert.match(requested, /part=processingDetails%2Cstatus%2Csnippet/);
+  assert.match(requested, /id=video-987/);
+});
+
+test("a processed private or still-processing video never reports a public timestamp", async () => {
+  const store = makeStore();
+  const sessionId = "1234567890123456789012345678901234567890123";
+  store.set(sha256(sessionId), "youtube", {
+    accessToken: "valid-access", refreshToken: "valid-refresh",
+    expiresAt: Date.now() + 3600000,
+    scopes: [...REQUIRED_SCOPES],
+    channelId: "channel-upload", channelTitle: "Upload channel",
+    connectedAt: new Date().toISOString()
+  });
+  const responses = [
+    { items: [{ id: "video-987", snippet: { publishedAt: "2026-11-02T00:02:00.000Z" }, status: { uploadStatus: "processed", privacyStatus: "private" }, processingDetails: { processingStatus: "succeeded" } }] },
+    { items: [{ id: "video-987", status: { uploadStatus: "uploaded", privacyStatus: "public" }, processingDetails: { processingStatus: "processing" } }] }
+  ];
+  const service = createYouTubeOAuthService({
+    env: ENV, tokenVault: store,
+    fetchImpl: async () => jsonResponse(responses.shift())
+  });
+  const privateResult = await service.getVideoStatus(sessionId, "video-987");
+  assert.equal(privateResult.privacyStatus, "private");
+  assert.equal(privateResult.publishedAt, "");
+  const processingResult = await service.getVideoStatus(sessionId, "video-987");
+  assert.equal(processingResult.processingStatus, "processing");
+  assert.equal(processingResult.publishedAt, "");
+});
+
+test("video status validates YouTube video IDs and requires the readonly scope", async () => {
+  const store = makeStore();
+  const sessionId = "1234567890123456789012345678901234567890123";
+  store.set(sha256(sessionId), "youtube", {
+    accessToken: "valid-access", refreshToken: "valid-refresh",
+    expiresAt: Date.now() + 3600000,
+    scopes: ["https://www.googleapis.com/auth/youtube.upload"],
+    channelId: "channel-upload", channelTitle: "Upload channel",
+    connectedAt: new Date().toISOString()
+  });
+  let calls = 0;
+  const service = createYouTubeOAuthService({
+    env: ENV, tokenVault: store,
+    fetchImpl: async () => { calls += 1; return jsonResponse({ items: [] }); }
+  });
+  assert.deepEqual(await service.getVideoStatus(sessionId, "bad id"), { ok: false, error: "invalid_video_id" });
+  assert.deepEqual(await service.getVideoStatus(sessionId, "video-987"), { ok: false, error: "video_status_permission_required" });
+  assert.equal(calls, 0);
 });
 
 test("does not publish when upload scope is missing", async () => {

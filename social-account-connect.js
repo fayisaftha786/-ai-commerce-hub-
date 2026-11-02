@@ -4,6 +4,29 @@
   const STORAGE_KEY = "ai-commerce-hub.social-backend-origin.v1";
   const ACTION_HEADER = "social-disconnect";
 
+  function validateYouTubePublishContext(input) {
+    const source = input && typeof input === "object" ? input : {};
+    const campaignId = String(source.campaignId || "").trim();
+    const campaignPlatform = String(source.campaignPlatform || "").trim().toLowerCase();
+    if (!campaignId || campaignPlatform !== "content rewards") return { valid: true };
+    const status = String(source.campaignStatus || "").trim().toLowerCase();
+    if (!["joined", "editing", "ready"].includes(status)) {
+      return { valid: false, error: "Complete Join / Apply in Content Rewards and update the local tracker to Joined, Editing or Ready before publishing." };
+    }
+    if (source.contentRewardsAccountVerified !== true) {
+      return { valid: false, error: "Connect and verify this exact YouTube channel in Content Rewards → Settings → Connected accounts before publishing." };
+    }
+    const rules = String(source.rules || "");
+    const acceptedLine = /^\s*Accepted platforms\s*:\s*(.+)$/im.exec(rules);
+    if (acceptedLine && !/^(?:not recognised|not stated|none detected|unknown|n\/a)$/i.test(acceptedLine[1].trim())) {
+      const accepted = acceptedLine[1].split(/[,;|]/).map((value) => value.trim().toLowerCase());
+      if (!accepted.some((value) => ["youtube", "youtube shorts", "shorts", "all"].includes(value))) {
+        return { valid: false, error: "YouTube is not listed in the saved Content Rewards platform requirements. Choose an allowed platform or recheck the official brief." };
+      }
+    }
+    return { valid: true };
+  }
+
   function normalizeBackendOrigin(value) {
     try {
       const url = new URL(String(value || "").trim());
@@ -201,7 +224,8 @@
               uploadStatus: result.uploadStatus,
               processingStatus: result.processingStatus,
               publishedAt: publishedAt.toISOString(),
-              ...(lastPublishContext || windowObject.AICommerceSocialHandoff || {})
+              ...(lastPublishContext || windowObject.AICommerceSocialHandoff || {}),
+              contentRewardsAccountVerified: Boolean(contentRewardsAccountVerified && contentRewardsAccountVerified.checked)
             }
           }, windowObject.location.origin);
           status("YouTube confirms the video is processed and public. Its actual public link/time was sent to Clip Studio. Open Content Rewards and press Submit clip within 30 minutes; this app has not submitted it.");
@@ -264,10 +288,15 @@
           status("This Content Rewards campaign requires draft pre-approval. Do not publish until the campaign team has approved the draft.");
           return;
         }
-        if (handoff && handoff.campaignId &&
-            String(handoff.campaignPlatform || "").toLowerCase() === "content rewards" &&
-            !(contentRewardsAccountVerified && contentRewardsAccountVerified.checked)) {
-          status("Connect and verify this exact YouTube channel in Content Rewards → Settings → Connected accounts before publishing.");
+        const campaignContext = validateYouTubePublishContext({
+          campaignId: handoff && handoff.campaignId,
+          campaignPlatform: handoff && handoff.campaignPlatform,
+          campaignStatus: handoff && handoff.campaignStatus,
+          rules: handoff && handoff.rules,
+          contentRewardsAccountVerified: Boolean(contentRewardsAccountVerified && contentRewardsAccountVerified.checked)
+        });
+        if (!campaignContext.valid) {
+          status(campaignContext.error);
           return;
         }
         if (privacy === "public" && !(publicConfirm && publicConfirm.checked)) {
@@ -378,7 +407,7 @@
     refresh();
   }
 
-  const api = { normalizeBackendOrigin, init };
+  const api = { normalizeBackendOrigin, validateYouTubePublishContext, init };
   if (typeof module === "object" && module.exports) module.exports = api;
   if (root && root.document) init(root);
 })(typeof globalThis !== "undefined" ? globalThis : this);

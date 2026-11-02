@@ -226,7 +226,7 @@ test("YouTube status polling requires a browser session and exact allowlisted or
     const missingSession = await fetch(base + "/api/social/youtube/status?videoId=test-video", {
       headers: { Origin: "https://app.example.com" }
     });
-    assert.equal(missingSession.status, 401);
+    assert.equal(missingSession.status, 403);
 
     const response = await fetch(base + "/api/social/youtube/status?videoId=test-video", {
       headers: { Origin: "https://app.example.com", Cookie: "aihub_session=" + oauth.sessionId }

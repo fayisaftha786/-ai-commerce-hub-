@@ -156,7 +156,7 @@ The public host key must be verified from the VM/OCI console before saving it. D
 
 The workflow connects to `/opt/ai-commerce-hub`, fetches the latest `main`, rebuilds the Docker image and restarts Compose. This means a successful scheduled Content Rewards snapshot commit on `main` can also refresh the app's bundled public snapshot on the VM.
 
-After adding the secrets, run **Deploy Oracle Cloud backend** once from GitHub → Actions → workflow_dispatch. Later relevant pushes to `main` deploy automatically. The workflow never reads or uploads the VM's `.env` file.
+After adding the secrets, run **Deploy Oracle Cloud backend** once from GitHub → Actions → workflow_dispatch. For automatic deployment after relevant pushes to `main`, also add the repository Actions variable `OCI_DEPLOY_ENABLED=true`. Without that variable, push-triggered deployment is safely skipped. The workflow never reads or uploads the VM's `.env` file.
 
 ## 8. Backups and operations
 

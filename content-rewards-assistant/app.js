@@ -363,8 +363,14 @@
       paidAmount: $("ops-paid-amount").value
     });
     node.dataset.status = forecast.status;
-    const estimate = forecast.estimateAt
+    const estimateStart = forecast.estimateAt
       ? new Date(forecast.estimateAt).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })
+      : "";
+    const estimateEnd = forecast.estimateEndAt
+      ? new Date(forecast.estimateEndAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+      : "";
+    const estimate = estimateStart
+      ? (estimateEnd ? estimateStart + " – " + estimateEnd : estimateStart)
       : "";
     node.textContent = [forecast.title, estimate, forecast.detail, forecast.caveat].filter(Boolean).join(" · ");
   }
@@ -1314,6 +1320,12 @@
         rewardApprovedAmount: old ? old.rewardApprovedAmount : null,
         payoutCurrency: old ? old.payoutCurrency : "USD",
         payoutStatus: old ? old.payoutStatus : "unconfirmed",
+        payoutModel: old ? old.payoutModel : "unknown",
+        payoutThresholdStatus: old ? old.payoutThresholdStatus : "unknown",
+        payoutThresholdMetAt: old ? old.payoutThresholdMetAt : "",
+        payoutCycleEndAt: old ? old.payoutCycleEndAt : "",
+        payoutPoolEndedAt: old ? old.payoutPoolEndedAt : "",
+        payoutFlagOpen: old ? old.payoutFlagOpen : false,
         paidAmount: old ? old.paidAmount : null,
         paidAmountStage: old ? old.paidAmountStage : "unknown",
         paidAt: old ? old.paidAt : "",

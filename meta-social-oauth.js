@@ -385,20 +385,23 @@ function createMetaSocialService(options = {}) {
         token: found.page.accessToken
       });
       const status = data.status && typeof data.status === "object" ? data.status : {};
-      const videoStatus = String(status.video_status || "");
-      const processingStatus = String(status.processing_phase && status.processing_phase.status || "");
-      const publishingStatus = String(status.publishing_phase && status.publishing_phase.status || "");
+      const videoStatus = String(status.video_status || "").toLowerCase();
+      const uploadingStatus = String(status.uploading_phase && status.uploading_phase.status || "").toLowerCase();
+      const processingStatus = String(status.processing_phase && status.processing_phase.status || "").toLowerCase();
+      const publishingStatus = String(status.publishing_phase && status.publishing_phase.status || "").toLowerCase();
       const url = safePermalink(data.permalink_url, ["www.facebook.com", "facebook.com", "fb.watch"]);
       const publishedAt = new Date(data.created_time || "");
+      const phasesComplete = uploadingStatus === "complete" &&
+        processingStatus === "complete" && publishingStatus === "complete";
       const published = Boolean(url && !Number.isNaN(publishedAt.getTime()) &&
-        (videoStatus === "ready" || videoStatus === "published") &&
-        (!publishingStatus || ["complete", "published", "complete_publish"].includes(publishingStatus.toLowerCase())));
+        (videoStatus === "ready" || videoStatus === "published") && phasesComplete);
       return {
         ok: true,
         provider: "facebook",
         pageId: found.page.id,
         videoId,
         videoStatus: videoStatus || "unknown",
+        uploadingStatus: uploadingStatus || "unknown",
         processingStatus: processingStatus || "unknown",
         publishingStatus: publishingStatus || "unknown",
         published,

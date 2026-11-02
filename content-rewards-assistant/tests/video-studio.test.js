@@ -128,6 +128,67 @@ test("verifies exported duration and 9:16 dimensions instead of trusting the rec
 });
 
 
+test("builds a validated handoff from the finished rendered video", () => {
+  const file = video("finished.webm", 4_000_000, "video/webm");
+  const result = Studio.buildSocialHandoff({
+    file,
+    caption: "A useful Malayalam clip\n#Creator",
+    platform: "YouTube Shorts",
+    campaignId: "campaign_123",
+    campaignName: "Creator campaign",
+    campaignPlatform: "Content Rewards",
+    campaignStatus: "ready",
+    rules: "Accepted platforms: YouTube"
+  });
+  assert.equal(result.valid, true);
+  assert.equal(result.payload.file, file);
+  assert.equal(result.payload.platform, "youtube");
+  assert.equal(result.payload.campaignId, "campaign_123");
+  assert.equal(result.payload.title, "A useful Malayalam clip");
+});
+
+test("requires joined or ready Content Rewards status before creating a publish handoff", () => {
+  const input = {
+    file: video("finished.mp4", 1000, "video/mp4"),
+    caption: "A real caption",
+    platform: "Instagram",
+    campaignId: "campaign_1",
+    campaignPlatform: "Content Rewards",
+    campaignStatus: "idea"
+  };
+  const blocked = Studio.buildSocialHandoff(input);
+  assert.equal(blocked.valid, false);
+  assert.match(blocked.error, /Join/);
+  const allowed = Studio.buildSocialHandoff({ ...input, campaignStatus: "joined" });
+  assert.equal(allowed.valid, true);
+});
+
+test("requires an approval attestation when saved campaign rules require draft pre-approval", () => {
+  const input = {
+    file: video("finished.mp4", 1000, "video/mp4"),
+    caption: "A real caption",
+    platform: "YouTube",
+    campaignId: "campaign_1",
+    campaignPlatform: "Content Rewards",
+    campaignStatus: "ready",
+    rules: "This campaign requires pre-approval of each draft."
+  };
+  const blocked = Studio.buildSocialHandoff(input);
+  assert.equal(blocked.valid, false);
+  assert.match(blocked.error, /wait for approval/i);
+  const allowed = Studio.buildSocialHandoff({ ...input, preApprovalConfirmed: true });
+  assert.equal(allowed.valid, true);
+  assert.equal(allowed.payload.preApprovalConfirmed, true);
+});
+
+test("rejects oversized, non-video, unsupported-platform and empty-caption handoffs", () => {
+  const base = { file: video("finished.mp4", 1000, "video/mp4"), caption: "Caption", platform: "Instagram" };
+  assert.match(Studio.buildSocialHandoff({ ...base, file: video("large.mp4", Studio.MAX_SOCIAL_HANDOFF_BYTES + 1, "video/mp4") }).error, /50 MB/i);
+  assert.match(Studio.buildSocialHandoff({ ...base, file: video("poster.png", 1000, "image/png") }).error, /readable video/i);
+  assert.match(Studio.buildSocialHandoff({ ...base, platform: "TikTok" }).error, /Choose Instagram/i);
+  assert.match(Studio.buildSocialHandoff({ ...base, caption: " " }).error, /caption/i);
+});
+
 test("campaign preflight matches selected platform, duration, deadline, hashtags and mentions", () => {
   const result = Studio.inspectCampaignRules({
     selectedCampaign: true,
@@ -236,13 +297,18 @@ test("Clip Studio exposes media upload, audio, preflight, progress, preview and 
     "video-rights-confirm", "video-rules-confirm", "video-create-button",
     "video-cancel-button", "video-export-progress", "video-output-preview", "video-download-link",
     "video-target-platform", "video-post-caption", "video-add-campaign-tags", "video-campaign-preflight",
-    "video-device-test-button"
+    "video-device-test-button", "video-send-social-button", "video-render-preapproval-label", "video-render-preapproval-confirm"
   ]) assert.ok(html.includes('id="' + id + '"'), "missing video studio UI control " + id);
   assert.match(html, /video-studio\.js/);
   assert.match(appSource, /data-rules=/);
   assert.match(appSource, /data-deadline=/);
   assert.match(uiSource, /inspectCampaignRules/);
   assert.match(uiSource, /campaignCheck\.status === "blocked"/);
+  assert.match(uiSource, /buildSocialHandoff/);
+  assert.match(uiSource, /AI_COMMERCE_CLIP_HANDOFF/);
+  assert.match(uiSource, /clipreward:youtube-published/);
+  assert.match(appSource, /data-platform=/);
+  assert.match(appSource, /data-status=/);
   assert.match(html, /video-studio-ui\.js/);
   assert.ok(html.includes('id="video-device-test-button"'));
   assert.equal(typeof Studio.renderDeviceTest, "function");

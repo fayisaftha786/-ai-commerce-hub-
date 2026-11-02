@@ -391,18 +391,25 @@
         <label>Approved reward amount <span class="optional">(only an amount confirmed by the official campaign)</span><input id="ops-reward-approved" type="number" min="0" max="1000000000" step="0.01" inputmode="decimal" placeholder="e.g. 12.50"></label>
         <label>Currency<select id="ops-currency"><option value="USD">USD</option><option value="INR">INR</option><option value="EUR">EUR</option><option value="GBP">GBP</option></select></label>
         <label>Payout status<select id="ops-payout-status"><option value="unconfirmed">Not confirmed</option><option value="pending">Pending</option><option value="available">Available in Content Rewards balance</option><option value="partially-paid">Partially credited to CR balance</option><option value="paid">Credited to CR balance</option><option value="not-eligible">Not eligible / rejected</option></select></label>
+        <label>Official campaign payout model<select id="ops-payout-model"><option value="unknown">Choose from campaign brief</option><option value="CPM">CPM</option><option value="Per post">Per post</option><option value="Retainer">Retainer</option><option value="Pool">Pool</option></select></label>
+        <label>Minimum payout / views requirement<select id="ops-payout-threshold-status"><option value="unknown">Not checked</option><option value="not-required">No minimum requirement</option><option value="pending">Still tracking / not reached</option><option value="met">Reached (record time below)</option><option value="not-met">Not met / not eligible</option></select></label>
+        <label>When the CPM / Per-post minimum was reached<input id="ops-payout-threshold-met-at" type="datetime-local"></label>
+        <label>Retainer cycle ends at<input id="ops-payout-cycle-end-at" type="datetime-local"></label>
+        <label>Pool actually ended at<input id="ops-payout-pool-ended-at" type="datetime-local"></label>
+        <label class="ops-flag-check"><input id="ops-payout-flag-open" type="checkbox"><span>An official payout / fraud flag is currently open</span></label>
+        <div id="ops-payout-forecast" class="ops-payout-forecast" data-status="needs-input" role="status" aria-live="polite">Choose the official payout model and record the dates / minimum requirements above to calculate a conditional estimate.</div>
         <label>Amount recorded as received<input id="ops-paid-amount" type="number" min="0" max="1000000000" step="0.01" inputmode="decimal" placeholder="e.g. 10.00"></label>
         <label>Where was this amount received?<select id="ops-paid-stage"><option value="unknown">Not verified / legacy record</option><option value="content-rewards-balance">Content Rewards Balance (verified in Earnings)</option></select></label>
         <label>Received / credited at<input id="ops-paid-at" type="datetime-local"></label>
         <label>CR balance credit reference<input id="ops-payout-reference" maxlength="120" placeholder="Optional reference"></label>
-        <label>Expected payout date <span class="optional">(only copy a date shown by the official earnings page)</span><input id="ops-expected-payout-at" type="datetime-local"></label>
+        <label>Date shown in official Earnings page <span class="optional">(manual confirmation; keep separate from the estimate)</span><input id="ops-expected-payout-at" type="datetime-local"></label>
         <label>Amount transferred from CR Balance to Whop Balance<input id="ops-withdrawn-amount" type="number" min="0" max="1000000000" step="0.01" inputmode="decimal" placeholder="e.g. 10.00"></label>
         <label>Transferred to Whop at<input id="ops-withdrawn-at" type="datetime-local"></label>
         <label>CR → Whop transfer reference<input id="ops-withdrawal-reference" maxlength="120" placeholder="Optional reference"></label>
         <label>Amount paid by Whop to bank / selected method<input id="ops-whop-payout-amount" type="number" min="0" max="1000000000" step="0.01" inputmode="decimal" placeholder="e.g. 10.00"></label>
         <label>Whop payout received at<input id="ops-whop-payout-at" type="datetime-local"></label>
         <label>Whop payout / bank reference<input id="ops-whop-payout-reference" maxlength="120" placeholder="Optional reference"></label>
-        <label>Review decision checked at<input id="ops-reviewed-at" type="datetime-local"></label>
+        <label>Approval timestamp <span class="optional">(record the actual approval time, not the submission time)</span><input id="ops-reviewed-at" type="datetime-local"></label>
       </div>
       <label>Review / payout notes<textarea id="ops-review-notes" rows="3" maxlength="1000" placeholder="Record official dashboard wording, hold reason, or the next follow-up date. Do not enter private credentials."></textarea></label>
       <button class="button button-primary" type="submit">Save evidence & payout record</button>
@@ -434,7 +441,7 @@
 <p class="muted small-text deadline-help">To mark a Content Rewards record Submitted, select the platform, use its matching public post link, and record both times. The app checks that the link-submission time is not before the post and is strictly less than 30 minutes later. Enter the time you actually pressed Submit clip; this app still cannot submit or verify the receipt.</p><div class="modal-actions"><button class="button button-quiet" id="cancel-modal" type="button">Cancel</button><button class="button button-primary" type="submit">Save campaign</button></div></form>
 </section></div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
-<script src="./campaign-scout.js"></script><script src="./campaign-feed.js"></script><script src="./discovery-engine.js"></script><script src="./rewards-intelligence.js"></script><script src="./core.js"></script><script src="./submission-alerts.js"></script><script src="./app.js"></script><script src="./video-studio.js"></script><script src="./video-studio-ui.js"></script><script src="./video-analysis.js"></script><script src="./video-analysis-ui.js"></script>
+<script src="./campaign-scout.js"></script><script src="./campaign-feed.js"></script><script src="./discovery-engine.js"></script><script src="./rewards-intelligence.js"></script><script src="./core.js"></script><script src="./submission-alerts.js"></script><script src="./payout-forecast.js"></script><script src="./app.js"></script><script src="./video-studio.js"></script><script src="./video-studio-ui.js"></script><script src="./video-analysis.js"></script><script src="./video-analysis-ui.js"></script>
 <script data-register-service-worker>
   if ("serviceWorker" in navigator && location.protocol !== "file:") {
     window.addEventListener("load", () => {

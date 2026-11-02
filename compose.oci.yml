@@ -40,6 +40,7 @@ services:
         condition: service_healthy
     environment:
       SITE_HOST: ${SITE_HOST:?Set SITE_HOST in .env}
+      ACME_EMAIL: ${ACME_EMAIL:?Set ACME_EMAIL in .env}
     ports:
       - "80:80"
       - "443:443"

@@ -75,7 +75,7 @@ test("provider endpoint returns readiness without leaking credential values", as
     assert.equal(data.providers.length, 3);
     assert.equal(data.providers[0].provider, "instagram");
     assert.equal(data.providers[0].configured, false);
-    assert.match(data.note, /YouTube OAuth and a server-side resumable video upload route are implemented/i);
+    assert.match(data.note, /YouTube OAuth\/upload is available after Google backend setup/i);
     assert.equal(data.metaOAuth.configured, false);
     assert.match(data.note, /Meta OAuth can connect Facebook Pages/i);
     assert.equal(data.youtubeOAuth.configured, false);

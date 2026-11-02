@@ -823,6 +823,15 @@ test("campaign edit handler preserves payout timeline evidence when saving other
   }
 });
 
+test("verified YouTube post tracking requires a joined local campaign and processed-public provider status", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
+  const handler = app.slice(app.indexOf("function recordVerifiedYouTubePost"), app.indexOf("function deleteCampaign"));
+  assert.match(handler, /Before publishing for Content Rewards/);
+  assert.match(handler, /payload\\.uploadStatus !== "processed"/);
+  assert.match(handler, /payload\\.processingStatus !== "succeeded"/);
+  assert.match(handler, /\["joined", "editing", "ready"\]\.includes\(campaign\.status\)/);
+});
+
 test("legacy paid status display does not claim a confirmed Content Rewards balance credit", () => {
   const app = fs.readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
   assert.match(app, /Legacy receipt · destination unknown/);

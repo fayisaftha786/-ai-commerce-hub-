@@ -394,7 +394,7 @@
       <p>Prepare a post, preview authorised media, open the platform, and analyze metrics you enter from its official insights. The private backend supports official YouTube OAuth and server-side video uploads; Instagram and Facebook publishing still require their Meta integrations.</p>
       <div class="social-status notice">
         <strong>Social account connection</strong>
-        <p>Use the private HTTPS backend for Google OAuth. Your Google password is entered only on Google's consent screen. OAuth tokens are stored encrypted on the backend, never in this browser or GitHub Pages. Instagram and Facebook OAuth/publishing are not enabled yet. YouTube requires the private backend and Google upload permission.</p>
+        <p>Use the private HTTPS backend for Google OAuth. Your Google password is entered only on Google's consent screen. OAuth tokens are stored encrypted on the backend, never in this browser or GitHub Pages. Meta can publish Facebook Page Reels and linked Instagram Professional Reels after its app permissions and backend are configured. YouTube requires the private backend and Google upload permission.</p>
         <label for="socialBackendOrigin">Private backend HTTPS origin (optional when hosted together)
           <input id="socialBackendOrigin" type="url" maxlength="300" inputmode="url" placeholder="Auto-detected on same-origin hosting">
         </label>
@@ -406,6 +406,29 @@
         </div>
         <p id="socialAccountConnectionStatus" role="status" aria-live="polite">Checking for a secure same-origin backend…</p>
         <p class="hint">This connection requests YouTube channel identification and video-upload permission. The publish action below requires a separate explicit confirmation for each upload. For reliable browser sessions, host the app and API on the same site or use a custom domain; some browsers block third-party cookies across GitHub Pages and a separate backend host.</p>
+        <div class="meta-social-connection">
+          <strong>Instagram & Facebook Reels · Meta API</strong>
+          <p class="hint">Connect the Facebook login that manages the Page. Instagram publishing is available only for an Instagram Professional account linked to a Page. Meta API publishing permissions and app review may be required.</p>
+          <div class="form-grid">
+            <button id="connectMetaAccount" type="button" class="secondary" disabled>Connect Facebook / Instagram</button>
+            <button id="disconnectMetaAccount" type="button" class="secondary" disabled>Disconnect Meta</button>
+          </div>
+          <label for="metaPageSelect">Publishing Page / linked Instagram account
+            <select id="metaPageSelect" disabled><option value="">Connect Meta to load Pages</option></select>
+          </label>
+          <p id="metaAccountConnectionStatus" role="status" aria-live="polite">Meta publishing is not connected.</p>
+          <label id="meta-public-confirm-label"><input id="meta-public-confirm" type="checkbox"> I explicitly confirm that this finished video and caption should be published publicly to the selected Page / linked Instagram account, and I have checked media rights and campaign rules.</label>
+          <div class="form-grid">
+            <button id="publishFacebookReel" type="button" disabled>Publish Facebook Reel</button>
+            <button id="checkFacebookReelStatus" type="button" class="secondary" disabled>Check Facebook publish status</button>
+            <button id="publishInstagramReel" type="button" disabled>Publish Instagram Reel</button>
+          </div>
+          <label for="facebook-reel-id">Facebook Reel video ID
+            <input id="facebook-reel-id" type="text" maxlength="80" placeholder="Filled after Meta accepts the Reel upload">
+          </label>
+          <p id="metaPublishStatus" role="status" aria-live="polite"></p>
+          <p class="hint">Facebook Reels publish to a managed Page, not a personal profile. Instagram needs a linked Professional account and a public temporary media URL on your HTTPS backend. The app removes that temporary file after publishing/expiry. Content Rewards still has its own separate account-verification process—connect and verify the same account inside Content Rewards too.</p>
+        </div>
       </div>
       <div class="form-grid">
         <label for="socialPlatform">Target platform
@@ -439,7 +462,7 @@
       <button id="copySocialCaption" type="button">Copy caption</button>
       <button id="openSocialPlatform" type="button" class="secondary">Open official platform</button>
       <p id="socialPostStatus" role="status" aria-live="polite"></p>
-      <p class="hint">Posting workflow: copy the caption, open the official platform, select/upload the media there, review the preview and publish yourself. Actual automatic posting requires approved API access and account permissions.</p>
+      <p class="hint">YouTube and Meta Reels have explicit API upload actions when their private backend connections are configured. X and WhatsApp remain manual. Review platform visibility and campaign rules before every public post.</p>
       <h3>Social Media Analytics</h3>
       <p>Enter numbers from the platform's official insights for one post and one consistent reporting period.</p>
       <form id="socialAnalyticsForm">
@@ -545,6 +568,7 @@
   <script src="video-maker.js"></script>
   <script src="social-center.js"></script>
   <script src="social-account-connect.js"></script>
+  <script src="meta-social-connect.js"></script>
   <script src="app.js"></script>
   <script src="pwa-install.js"></script>
   <script src="app-health.js"></script>

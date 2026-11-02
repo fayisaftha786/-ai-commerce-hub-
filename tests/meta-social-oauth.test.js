@@ -215,7 +215,7 @@ test("publishes a Facebook Page Reel through start, binary upload and finish pha
       if (parsed.pathname.endsWith("/" + VIDEO_ID)) {
         return jsonResponse({
           id: VIDEO_ID,
-          status: { video_status: "ready", publishing_phase: { status: "complete" }, processing_phase: { status: "complete" } },
+          status: { video_status: "ready", uploading_phase: { status: "complete" }, publishing_phase: { status: "complete" }, processing_phase: { status: "complete" } },
           permalink_url: "https://www.facebook.com/reel/" + VIDEO_ID + "/",
           created_time: "2026-11-02T00:05:00.000Z"
         });

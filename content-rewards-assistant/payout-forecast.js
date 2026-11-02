@@ -106,6 +106,9 @@
       );
     }
 
+    if (threshold === "unknown" || threshold === "pending") {
+      return result("waiting", "Pool eligibility needs confirmation", "Check the campaign's minimum qualifying views on the official page. Do not forecast an individual Pool payout before eligibility is known.");
+    }
     if (threshold === "not-met") {
       return result("blocked", "Pool minimum not met", "The campaign's qualifying minimum is recorded as not met. This record should not expect a Pool share.");
     }

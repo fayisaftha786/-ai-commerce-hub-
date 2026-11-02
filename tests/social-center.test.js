@@ -69,6 +69,32 @@ test("Social Desk validates a same-origin Clip Studio video handoff before loadi
   assert.equal(valid.platform, "youtube");
   assert.equal(valid.caption, "Original caption #Shorts");
   assert.equal(valid.file.name, "clip.mp4");
+  const campaignHandoff = social.validatePostHandoff({
+    platform: "youtube",
+    caption: "Campaign clip",
+    campaignId: "campaign_123",
+    campaignName: "Campaign test",
+    requiresPreApproval: true,
+    preApprovalConfirmed: true,
+    file: { name: "clip.mp4", type: "video/mp4", size: 2048 }
+  });
+  assert.equal(campaignHandoff.valid, true);
+  assert.equal(campaignHandoff.campaignId, "campaign_123");
+  assert.equal(campaignHandoff.requiresPreApproval, true);
+  assert.equal(social.validatePostHandoff({
+    platform: "youtube",
+    caption: "No confirmation",
+    campaignId: "campaign_123",
+    requiresPreApproval: true,
+    preApprovalConfirmed: false,
+    file: { name: "clip.mp4", type: "video/mp4", size: 2048 }
+  }).valid, false);
+  assert.equal(social.validatePostHandoff({
+    platform: "youtube",
+    caption: "Bad ID",
+    campaignId: "invalid id",
+    file: { name: "clip.mp4", type: "video/mp4", size: 2048 }
+  }).valid, false);
 
   assert.equal(social.validatePostHandoff({
     platform: "instagram",
@@ -99,4 +125,6 @@ test("Social Desk includes X destination and checks the opener origin during Cli
   assert.match(source, /event\.source !== root\.opener/);
   assert.match(source, /AI_COMMERCE_SOCIAL_DESK_READY/);
   assert.match(source, /AI_COMMERCE_CLIP_HANDOFF_ACK/);
+  assert.match(source, /AICommerceSocialHandoff/);
+  assert.match(source, /campaignId/);
 });

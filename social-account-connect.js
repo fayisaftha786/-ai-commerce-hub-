@@ -29,6 +29,8 @@
     const privacySelect = $("youtube-video-privacy");
     const publicConfirmLabel = $("youtube-public-confirm-label");
     const publicConfirm = $("youtube-public-confirm");
+    const contentRewardsAccountVerified = $("content-rewards-account-verified");
+    const contentRewardsAccountVerifiedLabel = $("content-rewards-account-verified-label");
     const videoIdInput = $("youtube-video-id");
     const checkStatusButton = $("checkYouTubeVideoStatus");
     if (!originInput || !saveButton || !connectButton || !disconnectButton || !statusNode) return;
@@ -78,6 +80,11 @@
     function updatePublishControls() {
       const privacy = privacySelect && ["private", "unlisted", "public"].includes(privacySelect.value)
         ? privacySelect.value : "private";
+      const handoff = windowObject.AICommerceSocialHandoff && typeof windowObject.AICommerceSocialHandoff === "object"
+        ? windowObject.AICommerceSocialHandoff : null;
+      const requiresContentRewardsAccount = Boolean(handoff && handoff.campaignId &&
+        String(handoff.campaignPlatform || "").toLowerCase() === "content rewards");
+      if (contentRewardsAccountVerifiedLabel) contentRewardsAccountVerifiedLabel.hidden = !requiresContentRewardsAccount;
       if (publicConfirmLabel) publicConfirmLabel.hidden = privacy !== "public";
       if (checkStatusButton) checkStatusButton.disabled = !String((videoIdInput && videoIdInput.value) || lastUploadedVideoId).trim() || statusCheckInFlight;
     }
@@ -212,6 +219,7 @@
       updatePublishControls();
     }
     if (publicConfirm) publicConfirm.addEventListener("change", updatePublishControls);
+    if (contentRewardsAccountVerified) contentRewardsAccountVerified.addEventListener("change", updatePublishControls);
     if (videoIdInput) {
       videoIdInput.addEventListener("input", updatePublishControls);
       videoIdInput.addEventListener("change", updatePublishControls);
@@ -250,6 +258,12 @@
         }
         if (handoff && handoff.requiresPreApproval === true && handoff.preApprovalConfirmed !== true) {
           status("This Content Rewards campaign requires draft pre-approval. Do not publish until the campaign team has approved the draft.");
+          return;
+        }
+        if (handoff && handoff.campaignId &&
+            String(handoff.campaignPlatform || "").toLowerCase() === "content rewards" &&
+            !(contentRewardsAccountVerified && contentRewardsAccountVerified.checked)) {
+          status("Connect and verify this exact YouTube channel in Content Rewards → Settings → Connected accounts before publishing.");
           return;
         }
         if (privacy === "public" && !(publicConfirm && publicConfirm.checked)) {

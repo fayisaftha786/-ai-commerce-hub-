@@ -18,7 +18,7 @@ A lightweight affiliate workspace prototype for evaluating offer details, shortl
 - Generate Malayalam, English or bilingual product captions
 - Generate a short vertical-video plan with hook, shot guidance, voice-over, CTA and affiliate disclosure
 - AI-assisted Reels & Shorts Studio: create editable Malayalam, English or bilingual 4–6 scene scripts and captions; render animated 9:16 WebM locally from up to 8 authorised images; record or upload voice-over and optionally mix licensed background music
-- Social Desk: preview up to 5 selected image/video files locally (50 MB each), copy captions, open official social platforms for manual publishing, and calculate metrics from manually entered insights
+- Social Desk: local media preview and caption prep; official YouTube upload plus Meta Facebook Page / linked Instagram Professional Reel API handoffs when private backend credentials and provider approvals are configured; X/WhatsApp remain manual
 - Generate three distinct hook options and three CTA options for simple creative testing; compare results manually because the prototype does not track conversions
 - Save a local campaign register with a unique ID per content variant and export campaign metadata as CSV
 - Import authorised campaign-performance CSVs, group by exact campaign ID and reporting period, detect exact duplicate rows and overlapping date windows, and calculate conversion only when click/order counts are plausible
@@ -64,7 +64,7 @@ npm test
 
 Open `index.html` in a modern browser to try the frontend. Clipboard access depends on browser security settings.
 
-The public Content Rewards snapshot is refreshed by the scheduled GitHub Actions workflow without a separate server host. The optional private Node.js backend includes secure YouTube OAuth routes and can serve the same static app on the same HTTPS origin (`SERVE_STATIC_APP=true`) so browser session cookies remain first-party. A root `Dockerfile` is provided for a single-origin deployment; attach persistent storage before connecting accounts. GitHub Pages remains available as the public static version. See [docs/BACKEND.md](docs/BACKEND.md) for deployment and Google Cloud setup.
+The public Content Rewards snapshot is refreshed by scheduled GitHub Actions without a separate server host. The optional private Node.js backend includes secure YouTube and Meta OAuth/publishing routes and can serve the same static app on the same HTTPS origin (`SERVE_STATIC_APP=true`) so browser session cookies remain first-party. Meta requires a developer app, approved permissions, a managed Facebook Page, and (for Instagram) a linked Professional account plus public HTTPS media hosting. A root `Dockerfile` is provided for a single-origin deployment; attach persistent storage before connecting accounts. GitHub Pages remains available as the public static version. See [docs/BACKEND.md](docs/BACKEND.md) for backend, Google and Meta setup.
 
 ## CSV import validation
 
@@ -101,7 +101,7 @@ Live marketplace access will be enabled only after account eligibility, current 
 - The click counter records link-click events in the current page session. It does not confirm successful page loads, purchases, conversions or commissions.
 - Campaign IDs are organisational labels only. The registry does not track external clicks or sales and does not modify affiliate URLs with tracking parameters. Use programme-approved campaign/sub-ID fields only if available, then compare authorised performance reports.
 - Content is template-generated; no live AI API is connected.
-- Live product feeds, automated affiliate-link creation, live commission/payout data, generative AI video creation, and automatic social publishing are not connected. The local WebM Video Maker and manual Social Desk are separate browser features.
+- Live marketplace product feeds, automated affiliate-link creation, live commission/payout data and generative AI video creation are not connected. YouTube and Meta publishing code paths require private backend/provider setup and real account approval; X and WhatsApp remain manual.
 - CSV imports are user-supplied only; the app does not authenticate to marketplace dashboards or fetch current sales data.
 - The app cannot verify that a URL is an official marketplace listing or that the user is approved for an affiliate programme.
 

@@ -26,7 +26,7 @@
     if (!Number.isFinite(postedAt) || !Number.isFinite(currentTime)) return null;
 
     const remainingMs = postedAt + WINDOW_MS - currentTime;
-    if (remainingMs <= 0 || remainingMs > REMINDER_THRESHOLDS[0].thresholdMs) return null;
+    if (remainingMs <= 0 || remainingMs > REMINDER_THRESHOLDS[REMINDER_THRESHOLDS.length - 1].thresholdMs) return null;
     const threshold = REMINDER_THRESHOLDS.find((item) => remainingMs <= item.thresholdMs);
     if (!threshold) return null;
 

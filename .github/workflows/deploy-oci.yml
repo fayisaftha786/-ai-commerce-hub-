@@ -1,0 +1,107 @@
+name: Deploy Oracle Cloud backend
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "Dockerfile"
+      - "compose.oci.yml"
+      - "ops/oci/**"
+      - "server.js"
+      - "static-site.js"
+      - "scripts/**"
+      - "app-health.js"
+      - "app.js"
+      - "campaign-report.js"
+      - "catalog-import.js"
+      - "creator-program-directory.js"
+      - "creator-programs-snapshot.json"
+      - "discovery-engine.js"
+      - "discovery-service.js"
+      - "discovery-store.js"
+      - "earning-engine.js"
+      - "earning-hub.js"
+      - "index.html"
+      - "marketplace-search.js"
+      - "meta-media-store.js"
+      - "meta-social-connect.js"
+      - "meta-social-oauth.js"
+      - "offer-engine.js"
+      - "package.json"
+      - "product-utils.js"
+      - "pwa-install.js"
+      - "social-account-connect.js"
+      - "social-center.js"
+      - "social-oauth-state.js"
+      - "social-provider-readiness.js"
+      - "social-token-vault.js"
+      - "style.css"
+      - "video-maker.js"
+      - "workflow-guide.js"
+      - "youtube-oauth.js"
+      - "content-rewards-assistant/**"
+      - ".github/workflows/deploy-oci.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: oci-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'workflow_dispatch' || vars.OCI_DEPLOY_ENABLED == 'true')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate required deployment secrets
+        env:
+          OCI_HOST: ${{ secrets.OCI_HOST }}
+          OCI_USER: ${{ secrets.OCI_USER }}
+          OCI_SSH_PRIVATE_KEY: ${{ secrets.OCI_SSH_PRIVATE_KEY }}
+          OCI_KNOWN_HOSTS: ${{ secrets.OCI_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          for name in OCI_HOST OCI_USER OCI_SSH_PRIVATE_KEY OCI_KNOWN_HOSTS; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Missing GitHub Actions secret: $name"
+              exit 1
+            fi
+          done
+          if [[ ! "$OCI_HOST" =~ ^[A-Za-z0-9.-]+$ ]]; then
+            echo "::error::OCI_HOST must be a hostname or IPv4 address."
+            exit 1
+          fi
+          if [[ ! "$OCI_USER" =~ ^[A-Za-z_][A-Za-z0-9_-]*$ ]]; then
+            echo "::error::OCI_USER has an invalid format."
+            exit 1
+          fi
+
+      - name: Install verified SSH credentials
+        env:
+          OCI_HOST: ${{ secrets.OCI_HOST }}
+          OCI_SSH_PRIVATE_KEY: ${{ secrets.OCI_SSH_PRIVATE_KEY }}
+          OCI_KNOWN_HOSTS: ${{ secrets.OCI_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$OCI_SSH_PRIVATE_KEY" > "$HOME/.ssh/oci_deploy_key"
+          chmod 600 "$HOME/.ssh/oci_deploy_key"
+          printf '%s\n' "$OCI_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/known_hosts"
+          ssh-keygen -F "$OCI_HOST" -f "$HOME/.ssh/known_hosts" >/dev/null
+
+      - name: Deploy latest main to OCI
+        env:
+          OCI_HOST: ${{ secrets.OCI_HOST }}
+          OCI_USER: ${{ secrets.OCI_USER }}
+        run: |
+          set -euo pipefail
+          ssh -i "$HOME/.ssh/oci_deploy_key" \
+            -o IdentitiesOnly=yes \
+            -o BatchMode=yes \
+            -o StrictHostKeyChecking=yes \
+            "$OCI_USER@$OCI_HOST" \
+            "cd /opt/ai-commerce-hub && git fetch origin main && git reset --hard origin/main && sudo docker compose -f compose.oci.yml up -d --build --remove-orphans && sudo docker compose -f compose.oci.yml ps"

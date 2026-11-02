@@ -138,8 +138,8 @@ test("YouTube upload keeps Private as default and requires explicit public confi
   const privacy = fixture.nodes.get("youtube-video-privacy");
   const publicCheck = fixture.nodes.get("youtube-public-confirm");
   const publish = fixture.nodes.get("publishYouTubeVideo");
-  fixture.nodes.get("socialMediaFiles").files = [{ name: "clip.mp4", type: "video/mp4", size: 2048 }];
-  fixture.nodes.get("socialCaption").value = "A public creator video";
+  fixture.windowObject.document.getElementById("socialMediaFiles").files = [{ name: "clip.mp4", type: "video/mp4", size: 2048 }];
+  fixture.windowObject.document.getElementById("socialCaption").value = "A public creator video";
   assert.equal(privacy.value, "private");
   privacy.value = "public";
   privacy.events.change();
@@ -167,8 +167,8 @@ test("YouTube publisher blocks a pre-approval campaign until its approval attest
   };
   connector.init(fixture.windowObject);
   await new Promise((resolve) => setImmediate(resolve));
-  fixture.nodes.get("socialMediaFiles").files = [{ name: "clip.mp4", type: "video/mp4", size: 2048 }];
-  fixture.nodes.get("socialCaption").value = "Pre-approved campaign clip";
+  fixture.windowObject.document.getElementById("socialMediaFiles").files = [{ name: "clip.mp4", type: "video/mp4", size: 2048 }];
+  fixture.windowObject.document.getElementById("socialCaption").value = "Pre-approved campaign clip";
   await fixture.nodes.get("publishYouTubeVideo").events.click();
   assert.equal(fixture.requests.some((item) => item.url.includes("/api/social/youtube/publish?")), false);
   assert.match(fixture.nodes.get("socialAccountConnectionStatus").textContent, /requires draft pre-approval/i);

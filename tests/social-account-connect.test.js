@@ -87,6 +87,21 @@ test("accepts only HTTPS backend origins, except localhost development", () => {
   ]) assert.equal(connector.normalizeBackendOrigin(value), "");
 });
 
+test("YouTube campaign publishing requires joined status, verified account and accepted-platform match", () => {
+  assert.equal(connector.validateYouTubePublishContext({}).valid, true);
+  const base = {
+    campaignId: "campaign_1",
+    campaignPlatform: "Content Rewards",
+    campaignStatus: "ready",
+    contentRewardsAccountVerified: true,
+    rules: "Accepted platforms: YouTube, Instagram"
+  };
+  assert.equal(connector.validateYouTubePublishContext(base).valid, true);
+  assert.match(connector.validateYouTubePublishContext({ ...base, campaignStatus: "idea" }).error, /Join \/ Apply/i);
+  assert.match(connector.validateYouTubePublishContext({ ...base, contentRewardsAccountVerified: false }).error, /verify this exact YouTube channel/i);
+  assert.match(connector.validateYouTubePublishContext({ ...base, rules: "Accepted platforms: Instagram, Facebook" }).error, /not listed/i);
+});
+
 test("keeps YouTube connect disabled until the private backend confirms OAuth readiness", async () => {
   const fixture = makeWindow({ configured: false, missing: ["GOOGLE_CLIENT_ID", "SOCIAL_TOKEN_ENCRYPTION_KEY"] });
   fixture.windowObject.localStorage.setItem("ai-commerce-hub.social-backend-origin.v1", "https://api.example.com");
@@ -207,11 +222,14 @@ test("YouTube processing check reports the actual public timestamp to Clip Studi
   fixture.windowObject.localStorage.setItem("ai-commerce-hub.social-backend-origin.v1", "https://api.example.com");
   fixture.windowObject.AICommerceSocialHandoff = {
     campaignId: "campaign_1", campaignName: "Ready campaign",
+    campaignPlatform: "Content Rewards", campaignStatus: "ready",
+    rules: "Accepted platforms: YouTube",
     requiresPreApproval: false, preApprovalConfirmed: false
   };
   connector.init(fixture.windowObject);
   await new Promise((resolve) => setImmediate(resolve));
   fixture.nodes.get("youtube-video-id").value = "test-video";
+  fixture.nodes.get("content-rewards-account-verified").checked = true;
   await fixture.nodes.get("checkYouTubeVideoStatus").events.click();
   const request = fixture.requests.find((item) => item.url.includes("/api/social/youtube/status?"));
   assert.equal(request.init.method, "GET");
@@ -221,6 +239,7 @@ test("YouTube processing check reports the actual public timestamp to Clip Studi
   assert.equal(fixture.postedMessages[0].message.type, "AI_COMMERCE_YOUTUBE_PUBLISH_RESULT");
   assert.equal(fixture.postedMessages[0].message.payload.privacyStatus, "public");
   assert.equal(fixture.postedMessages[0].message.payload.campaignId, "campaign_1");
+  assert.equal(fixture.postedMessages[0].message.payload.contentRewardsAccountVerified, true);
   assert.equal(fixture.postedMessages[0].message.payload.publishedAt, "2026-11-02T05:02:00.000Z");
 });
 

@@ -28,7 +28,7 @@
     const rules = String(source.rules || "");
     const acceptedLine = /^\\s*Accepted platforms\\s*:\\s*(.+)$/im.exec(rules);
     if (campaignId && campaignPlatform === "content rewards" && acceptedLine &&
-        !/^(?:not recognised|not stated|none detected|unknown|n\\/a)$/i.test(acceptedLine[1].trim())) {
+        !/^(?:not recognised|not stated|none detected|unknown|n\/a)$/i.test(acceptedLine[1].trim())) {
       const accepted = acceptedLine[1].split(/[,;|]/).map((value) => value.trim().toLowerCase());
       const aliases = provider === "instagram"
         ? ["instagram", "instagram reels", "reels"]

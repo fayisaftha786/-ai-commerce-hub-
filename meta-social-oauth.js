@@ -128,7 +128,7 @@ function createMetaSocialService(options = {}) {
   const tokenVault = options.tokenVault || (env.SOCIAL_TOKEN_ENCRYPTION_KEY
     ? createEncryptedTokenVault({
       encryptionKey: env.SOCIAL_TOKEN_ENCRYPTION_KEY,
-      filePath: env.SOCIAL_TOKEN_VAULT_PATH
+      filePath: env.SOCIAL_TOKEN_STORE_PATH
     }) : null);
   const pendingStates = new Map();
   const stateTtlMs = 10 * 60 * 1000;

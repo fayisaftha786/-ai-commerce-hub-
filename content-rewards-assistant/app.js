@@ -13,7 +13,7 @@
   let state = { campaigns: [], timestamps: [], account: Core.normalizeAccount({}) };
   let toastTimer;
   const deadlineWarnings = new Set();
-  const statusNames = { idea: "Found / idea", applied: "Applied · waiting", joined: "Joined", editing: "Editing", ready: "Ready to post", submitted: "Awaiting review", approved: "Approved", rejected: "Rejected" };
+  const statusNames = { idea: "Found / idea", applied: "Applied · waiting", joined: "Joined", editing: "Editing", ready: "Ready to post", published: "Published · submit clip now", submitted: "Awaiting review", approved: "Approved", rejected: "Rejected" };
 
   function escapeHtml(value) {
     return String(value == null ? "" : value).replace(/[&<>"']/g, (ch) => ({
@@ -319,12 +319,12 @@
     ).join("");
   }
   function renderSubmissions() {
-    const entries = state.campaigns.filter((c) => ["submitted", "approved", "rejected"].includes(c.status)).sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
+    const entries = state.campaigns.filter((c) => ["published", "submitted", "approved", "rejected"].includes(c.status)).sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
     $("submission-table").innerHTML = entries.map((c) => {
       const post = safeExternalUrl(c.postUrl);
       return "<tr><td>" + escapeHtml(c.name) + '<br><span class="mini-tag">' + escapeHtml(c.platform) + "</span></td><td>" +
         (post ? '<a class="table-link" href="' + escapeHtml(post) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(post) + "</a>" : '<span class="muted">Not added</span>') +
-        "</td><td>" + escapeHtml(c.submittedAt ? new Date(c.submittedAt).toLocaleString() : "Legacy / not recorded") + "</td><td>" + statusBadge(c.status) + '</td><td><button type="button" class="text-button edit-campaign" data-id="' + escapeHtml(c.id) + '">Update</button></td></tr>';
+        "</td><td>" + escapeHtml(c.submittedAt ? new Date(c.submittedAt).toLocaleString() : c.status === "published" ? "Not submitted yet — open Content Rewards" : "Legacy / not recorded") + "</td><td>" + statusBadge(c.status) + '</td><td><button type="button" class="text-button edit-campaign" data-id="' + escapeHtml(c.id) + '">Update</button></td></tr>';
     }).join("");
     $("submission-empty").hidden = entries.length > 0;
   }
@@ -1373,7 +1373,7 @@
       showToast("YouTube public time is missing or ahead of this device clock; the campaign was not changed.");
       return;
     }
-    if (["submitted", "approved", "rejected"].includes(campaign.status)) {
+    if (["published", "submitted", "approved", "rejected"].includes(campaign.status)) {
       showToast("This campaign record already has a submission status. Create a separate tracker entry for a new YouTube post.");
       return;
     }
@@ -1386,7 +1386,7 @@
       return;
     }
     try {
-      const nextStatus = ["joined", "editing", "ready"].includes(campaign.status) ? "ready" : campaign.status;
+      const nextStatus = "published";
       const updated = Core.normalizeCampaign({
         ...campaign,
         postUrl,

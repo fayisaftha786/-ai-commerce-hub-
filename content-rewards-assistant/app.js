@@ -621,16 +621,23 @@
         ? "No matching public campaign details are ready for batch analysis."
         : "Waiting for the latest official public campaign-page snapshot.";
       summaryNode.innerHTML = "";
+      $("discovery-import-promising").disabled = true;
+      $("discovery-import-status").textContent = "Waiting for a fresh public campaign analysis.";
       listNode.innerHTML = '<p class="muted small-text">When the scheduled public snapshot is available, every readable campaign page is analysed automatically for the selected platform.</p>';
       return;
     }
     if (result.error) {
       statusNode.textContent = result.error;
       summaryNode.innerHTML = "";
+      $("discovery-import-promising").disabled = true;
+      $("discovery-import-status").textContent = "Import unavailable because batch analysis failed.";
       listNode.innerHTML = "";
       return;
     }
     const summary = result.summary;
+    const importableCount = result.campaigns.filter((row) => row.state === "promising" && row.pageStatus === "ok" && row.notSeenInLatestScan !== true && row.url && row.brief).length;
+    $("discovery-import-promising").disabled = importableCount === 0 || state.campaigns.length >= Core.MAX_CAMPAIGNS;
+    $("discovery-import-status").textContent = importableCount + " fresh Promising result(s) available. Imports are saved locally as Found / idea for your review.";
     statusNode.textContent = summary.analysed + " / " + summary.totalCampaigns + " campaign records deeply analysed for " +
       summary.platform + " · checked " + new Date(summary.checkedAt).toLocaleTimeString() +
       (lastScan.source ? " · source: " + lastScan.source : "");
@@ -690,6 +697,44 @@
       }
       $("scout-results").scrollIntoView({ behavior: "smooth", block: "start" });
     }));
+  }
+
+  function importPromisingCampaignsToTracker() {
+    const result = getDiscoveryDeepAnalysis();
+    const status = $("discovery-import-status");
+    if (!result || result.error || !Array.isArray(result.campaigns)) {
+      status.textContent = "No completed public analysis is available to import.";
+      return;
+    }
+    const remaining = Math.max(0, Core.MAX_CAMPAIGNS - state.campaigns.length);
+    if (!remaining) {
+      status.textContent = "Tracker is at its record limit. Export a backup before adding campaigns.";
+      return;
+    }
+    const plan = window.ClipRewardTrackerImport.buildTrackerImportPlan(
+      result.campaigns,
+      state.campaigns,
+      (brief) => window.ClipRewardScout.buildTrackerNotes(brief),
+      remaining
+    );
+    if (!plan.records.length) {
+      status.textContent = "Nothing new to import. Duplicate, stale, blocked and unverified results were skipped.";
+      showToast("No new fresh Promising campaigns were available to add.");
+      return;
+    }
+    try {
+      const imported = plan.records.map((draft) => Core.normalizeCampaign(draft));
+      const previous = snapshotState();
+      state.campaigns = [...imported, ...state.campaigns];
+      if (!saveOrRestore(previous)) return;
+      render();
+      status.textContent = imported.length + " campaign(s) added as Found / idea. Review each official page and complete Join / Apply yourself.";
+      showToast(imported.length + " fresh Promising campaign(s) added to your Tracker.");
+      $("campaigns").scrollIntoView({ behavior: "smooth", block: "start" });
+    } catch (error) {
+      status.textContent = "Import stopped safely: " + (error && error.message ? error.message : "campaign data validation failed.");
+      showToast("Batch import stopped. No unverified campaign was marked as joined.");
+    }
   }
 
   function renderDiscovery() {
@@ -1673,6 +1718,7 @@
     });
   });
   $("scout-autofill-button").addEventListener("click", autofillCampaignTracker);
+  $("discovery-import-promising").addEventListener("click", importPromisingCampaignsToTracker);
   $("scout-clear-button").addEventListener("click", clearCampaignScout);
   $("draft-form").addEventListener("submit", generateDraft);
   $("copy-draft").addEventListener("click", copyDraft);

@@ -8,9 +8,9 @@
 
   const WINDOW_MS = 30 * 60 * 1000;
   const REMINDER_THRESHOLDS = Object.freeze([
-    { stage: "15m", thresholdMs: 15 * 60 * 1000, message: "The post is in its final 15 minutes. Submit its public link inside Content Rewards." },
+    { stage: "1m", thresholdMs: 60 * 1000, message: "Less than 1 minute remains. Submit the public link inside Content Rewards immediately." },
     { stage: "5m", thresholdMs: 5 * 60 * 1000, message: "The post is in its final 5 minutes. Submit its public link inside Content Rewards now." },
-    { stage: "1m", thresholdMs: 60 * 1000, message: "Less than 1 minute remains. Submit the public link inside Content Rewards immediately." }
+    { stage: "15m", thresholdMs: 15 * 60 * 1000, message: "The post is in its final 15 minutes. Submit its public link inside Content Rewards." }
   ]);
 
   function getAlertKey(campaign, stage) {

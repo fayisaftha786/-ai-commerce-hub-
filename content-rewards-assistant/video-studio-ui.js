@@ -301,6 +301,7 @@
           } catch (_) {}
           if (!expectedPlatform || expectedPlatform !== plan.payload.platform ||
               String(result.campaignId || "") !== plan.payload.campaignId ||
+              (plan.payload.campaignPlatform.toLowerCase() === "content rewards" && result.contentRewardsAccountVerified !== true) ||
               !videoId || !url || result.published !== true ||
               result.privacyStatus !== "public" || result.uploadStatus !== "processed" ||
               result.processingStatus !== "succeeded" || Number.isNaN(publishedAt.getTime())) {
@@ -318,6 +319,7 @@
             uploadStatus: "processed",
             processingStatus: "succeeded",
             published: true,
+            contentRewardsAccountVerified: result.contentRewardsAccountVerified === true,
             publishedAt: publishedAt.toISOString(),
             campaignId: plan.payload.campaignId
           };
@@ -343,6 +345,7 @@
           } catch (_) {}
           if (!url || !videoId || result.privacyStatus !== "public" ||
               result.uploadStatus !== "processed" || result.processingStatus !== "succeeded" ||
+              (plan.payload.campaignPlatform.toLowerCase() === "content rewards" && result.contentRewardsAccountVerified !== true) ||
               Number.isNaN(publishedAt.getTime())) {
             setStatus("YouTube has not confirmed a processed public video. No Content Rewards timer has started. Check status again after processing.", true);
             return;

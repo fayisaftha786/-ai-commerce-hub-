@@ -281,14 +281,19 @@
       const budget = campaign.budgetTerms ? '<span class="mini-tag">' + escapeHtml(campaign.budgetTerms) + '</span>' : "";
       const legacySubmission = Core.hasLegacySubmissionTiming(campaign) ? '<span class="mini-tag">Legacy · submission time not recorded</span>' : "";
       const rules = campaign.rules ? '<p class="campaign-rules">' + escapeHtml(campaign.rules) + '</p>' : "";
-      const campaignLink = campaignUrl ? '<a class="text-button" href="' + escapeHtml(campaignUrl) + '" target="_blank" rel="noopener noreferrer">View campaign ↗</a>' : "";
+      const needsSubmit = campaign.platform === "Content Rewards" && campaign.status === "published" && Boolean(campaign.postUrl);
+      const campaignLink = campaignUrl
+        ? '<a class="text-button" href="' + escapeHtml(campaignUrl) + '" target="_blank" rel="noopener noreferrer">' +
+          (needsSubmit ? "Open campaign to Submit clip ↗" : "View campaign ↗") + '</a>' : "";
       const postLink = campaign.postUrl ? '<a class="text-button" href="' + escapeHtml(campaign.postUrl) + '" target="_blank" rel="noopener noreferrer">View post ↗</a>' : "";
+      const copyPostLink = needsSubmit && safeExternalUrl(campaign.postUrl)
+        ? '<button class="text-button copy-post-link" type="button" data-id="' + escapeHtml(campaign.id) + '">Copy post link</button>' : "";
       return '<article class="campaign-card" data-id="' + escapeHtml(campaign.id) + '">' +
         '<div class="campaign-card-top"><div><h3>' + escapeHtml(campaign.name) + '</h3><div class="campaign-meta"><span class="mini-tag">' + escapeHtml(campaign.platform) + '</span>' +
         (campaign.deadline && campaign.deadline < new Date().toISOString().slice(0, 10) && campaign.status !== "approved" ? '<span class="mini-tag" style="color:#ffaaaa">Deadline passed</span>' : "") +
         (campaign.postPlatform && campaign.postPlatform !== "Other" ? '<span class="mini-tag">Posted on ' + escapeHtml(campaign.postPlatform) + '</span>' : '') + legacySubmission + payout + budget +
         '</div></div>' + statusBadge(campaign.status) + '</div>' + rules + deadline + submissionDeadlineMarkup(campaign) +
-        '<div class="campaign-actions">' + campaignLink + postLink +
+        '<div class="campaign-actions">' + campaignLink + postLink + copyPostLink +
         '<button class="text-button edit-campaign" type="button" data-id="' + escapeHtml(campaign.id) + '">Edit</button>' +
         '<button class="text-button danger-button delete-campaign" type="button" data-id="' + escapeHtml(campaign.id) + '">Delete</button></div></article>';
     }).join("");
@@ -1662,11 +1667,30 @@
   });
   $("campaign-search").addEventListener("input", renderCampaigns);
   $("status-filter").addEventListener("change", renderCampaigns);
-  $("campaign-list").addEventListener("click", (event) => {
+  $("campaign-list").addEventListener("click", async (event) => {
     const edit = event.target.closest(".edit-campaign");
     const remove = event.target.closest(".delete-campaign");
+    const copy = event.target.closest(".copy-post-link");
     if (edit) editById(edit.dataset.id);
     if (remove) deleteCampaign(remove.dataset.id);
+    if (copy) {
+      const campaign = state.campaigns.find((item) => item.id === copy.dataset.id);
+      const postUrl = campaign && campaign.platform === "Content Rewards" &&
+        campaign.status === "published" ? safeExternalUrl(campaign.postUrl) : "";
+      if (!postUrl) {
+        showToast("No safe public post link is saved for this pending submission.");
+        return;
+      }
+      try {
+        if (!navigator.clipboard || typeof navigator.clipboard.writeText !== "function") {
+          throw new Error("Clipboard unavailable");
+        }
+        await navigator.clipboard.writeText(postUrl);
+        showToast("Public post link copied. Open the campaign and press Submit clip before the 30-minute window closes.");
+      } catch (_) {
+        showToast("Copy this public post link from the View post link, then paste it into Content Rewards: " + postUrl);
+      }
+    }
   });
   $("submission-table").addEventListener("click", (event) => {
     const edit = event.target.closest(".edit-campaign");

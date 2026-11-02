@@ -94,6 +94,14 @@ On-device recognition is the default and is required unless the creator explicit
 
 This is live microphone dictation only. It does **not** extract or transcribe speech from an uploaded video/audio file, and it is not a fully local offline Whisper engine. The app does not save microphone recordings. Do not dictate credentials or private information. Always check Malayalam spelling, names, amounts, campaign claims and subtitle timing before publishing.
 
+## Send the finished video export to Social Media Desk
+
+After the local renderer verifies the exported 720 × 1280 video, **Send finished video + caption to Social Desk** hands the actual rendered file—not the original source clip—to the main app's Social Media Desk. The caption, target platform and selected local campaign reference travel with the file through the same-origin, opener-checked message handshake. The browser must allow the pop-up and support transferring a File object. The Social Desk import limit is 50 MB; larger exports can still be saved locally but must be reduced before handoff.
+
+For Content Rewards campaigns, the handoff blocks records that are still Found / idea or Applied; the local tracker must be Joined, Editing or Ready. This is a local-state guard, not proof of a real Join / Apply action. If the saved brief requires draft pre-approval, the creator must first submit the draft through Content Rewards and explicitly attest that approval was received before the handoff is allowed.
+
+A successful handoff only fills the Social Desk. YouTube upload still requires a configured private backend, Google OAuth consent, a connected channel, a supported video file, and a separate upload confirmation. Instagram, Facebook and X remain manual platform handoffs until their official publishing integrations are implemented. When YouTube reports a processed **public** video with its real URL and publication timestamp, the existing tracker listener records that evidence for the selected Content Rewards campaign and starts the local 30-minute reminder. The creator must still submit the public link inside Content Rewards; this app does not press Submit clip, confirm receipt, approve content or sync payout.
+
 ## Campaign-aware video export preflight
 
 The video studio reads the saved campaign selected in the Clip Studio campaign dropdown and compares its stored rule notes with the selected output platform, selected video duration, saved deadline, hashtags and @mentions typed into the social post caption. A platform mismatch, out-of-range duration or expired saved deadline blocks export. Missing/unknown rules, disclosure wording and requirements locked until Join are presented for manual review. The creator can append hashtags and mentions detected in the saved brief to the post caption.

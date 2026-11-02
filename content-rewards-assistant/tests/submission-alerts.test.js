@@ -62,6 +62,6 @@ test("ClipReward wires opt-in deadline alerts, timestamp shortcuts and notificat
   assert.match(app, /SubmissionAlerts\.getReminder/);
   assert.match(app, /function configureSubmissionAlerts\(\)/);
   assert.match(worker, /notificationclick/);
-  assert.match(worker, /clipreward-static-v35/);
+  assert.match(worker, /clipreward-static-v36/);
   assert.match(worker, /submission-alerts\.js/);
 });

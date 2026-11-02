@@ -196,6 +196,10 @@
         platform,
         campaignId,
         campaignName: String(source.campaignName || "").trim().slice(0, 120),
+        campaignPlatform: String(source.campaignPlatform || "").trim().slice(0, 80),
+        campaignStatus,
+        rules: rules.slice(0, 12000),
+        durationSeconds: Number.isFinite(Number(source.durationSeconds)) ? Number(source.durationSeconds) : 0,
         requiresPreApproval,
         preApprovalConfirmed
       }

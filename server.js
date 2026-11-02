@@ -204,6 +204,23 @@ function createServer(options = {}) {
         }
       }
 
+      if (pathname === "/api/social/youtube/status") {
+        if (request.method !== "GET") {
+          response.setHeader("allow", "GET, OPTIONS");
+          return sendJson(response, 405, { error: "method_not_allowed" });
+        }
+        if (!sessionId || !request.headers.origin || !allowedSocialOrigins(env).includes(request.headers.origin)) {
+          return sendJson(response, 403, { error: "social_request_not_authorized" });
+        }
+        const url = new URL(request.url ?? "/", "http://localhost");
+        try {
+          const result = await socialOAuthService.getVideoStatus(sessionId, url.searchParams.get("videoId") || "");
+          return sendJson(response, result.ok ? 200 : (result.error === "not_connected" || result.error === "reconnect_required" ? 401 : 400), result);
+        } catch (_) {
+          return sendJson(response, 503, { ok: false, error: "youtube_video_status_unavailable" });
+        }
+      }
+
       if (pathname === "/api/social/youtube/publish") {
         if (request.method !== "POST") {
           response.setHeader("allow", "POST, OPTIONS");

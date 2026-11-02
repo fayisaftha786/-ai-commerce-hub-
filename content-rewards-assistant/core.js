@@ -6,7 +6,7 @@
   "use strict";
 
   const VERSION = 2;
-  const STATUSES = Object.freeze(["idea", "applied", "joined", "editing", "ready", "submitted", "approved", "rejected"]);
+  const STATUSES = Object.freeze(["idea", "applied", "joined", "editing", "ready", "published", "submitted", "approved", "rejected"]);
   const PAYOUT_STATUSES = Object.freeze(["unconfirmed", "pending", "available", "partially-paid", "paid", "not-eligible"]);
   const PAYOUT_MODELS = Object.freeze(["unknown", "CPM", "Per post", "Retainer", "Pool"]);
   const PAYOUT_THRESHOLD_STATUSES = Object.freeze(["unknown", "not-required", "pending", "met", "not-met"]);
@@ -329,7 +329,7 @@
     const safe = Array.isArray(campaigns) ? campaigns : [];
     return {
       total: safe.length,
-      progress: safe.filter((item) => ["applied", "joined", "editing", "ready"].includes(item.status)).length,
+      progress: safe.filter((item) => ["applied", "joined", "editing", "ready", "published"].includes(item.status)).length,
       review: safe.filter((item) => item.status === "submitted").length,
       approved: safe.filter((item) => item.status === "approved").length
     };

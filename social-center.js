@@ -35,11 +35,30 @@
     if (!caption || caption.length > 5000) {
       return { valid: false, error: "The handoff caption is empty or exceeds 5,000 characters." };
     }
+    const campaignId = String(source.campaignId || "").trim();
+    if (campaignId && !/^[A-Za-z0-9_-]{1,80}$/.test(campaignId)) {
+      return { valid: false, error: "The campaign handoff reference is invalid." };
+    }
+    const requiresPreApproval = source.requiresPreApproval === true;
+    const preApprovalConfirmed = source.preApprovalConfirmed === true;
+    if (requiresPreApproval && !preApprovalConfirmed) {
+      return { valid: false, error: "This campaign requires draft pre-approval. Do not publish until the campaign team has approved it." };
+    }
     return {
       valid: true,
       platform,
       caption,
       title: String(source.title || "").trim().slice(0, 100),
+      campaignId,
+      campaignName: String(source.campaignName || "").trim().slice(0, 120),
+      requiresPreApproval,
+      preApprovalConfirmed,
+      mediaFingerprint: {
+        name: String(file.name || "").slice(0, 255),
+        size: file.size,
+        type: String(file.type || "").toLowerCase(),
+        lastModified: Number(file.lastModified) || 0
+      },
       file
     };
   }
@@ -168,6 +187,14 @@
       }
       $("socialPlatform").value = checked.platform;
       $("socialCaption").value = checked.caption;
+      root.AICommerceSocialHandoff = {
+        campaignId: checked.campaignId,
+        campaignName: checked.campaignName,
+        platform: checked.platform,
+        requiresPreApproval: checked.requiresPreApproval,
+        preApprovalConfirmed: checked.preApprovalConfirmed,
+        mediaFingerprint: checked.mediaFingerprint
+      };
       let mediaImported = false;
       try {
         if (!root.DataTransfer) throw new Error("DataTransfer is unavailable.");
@@ -180,7 +207,7 @@
         uploadStatus.textContent = "Caption imported. Select the source video manually; this browser does not support file handoff.";
       }
       postStatus.textContent = mediaImported
-        ? "Video and caption imported from Clip Studio. Review the target account and confirm any publish action yourself."
+        ? "Video and caption imported from Clip Studio" + (checked.campaignName ? " for " + checked.campaignName : "") + ". Choose visibility, review the target channel and confirm any upload yourself."
         : "Caption imported from Clip Studio. The video still needs to be selected manually.";
       root.opener.postMessage({
         type: "AI_COMMERCE_CLIP_HANDOFF_ACK",

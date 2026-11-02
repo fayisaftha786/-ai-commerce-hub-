@@ -22,8 +22,8 @@ test("CPM forecast starts only after approval and the minimum payout threshold",
     payoutThresholdMetAt: "2026-11-03T10:00:00.000Z",
     reviewedAt: approvedAt
   });
-  assert.equal(metLater.estimateAt, "2026-11-13T10:00:00.000Z");
-  assert.match(metLater.caveat, /First-round estimate/);
+  assert.equal(metLater.estimateAt, "2026-11-11T10:00:00.000Z");
+  assert.match(metLater.caveat, /First approved round/);
 });
 
 test("CPM and Per-post do not invent a date while approval or required threshold is unknown", () => {
@@ -53,6 +53,16 @@ test("Per-post, Retainer and Pool forecasts use their own payout rules", () => {
     payoutThresholdStatus: "not-required"
   });
   assert.equal(perPost.estimateAt, "2026-11-01T10:15:00.000Z");
+  assert.equal(perPost.estimateEndAt, "2026-11-01T10:30:00.000Z");
+
+  const thresholdLater = Forecast.calculatePayoutForecast({
+    payoutModel: "Per post",
+    reviewedAt: "2026-11-01T10:00:00.000Z",
+    payoutThresholdStatus: "met",
+    payoutThresholdMetAt: "2026-11-02T10:00:00.000Z"
+  });
+  assert.equal(thresholdLater.estimateAt, "2026-11-02T10:15:00.000Z");
+  assert.equal(thresholdLater.estimateEndAt, "2026-11-02T10:30:00.000Z");
 
   const retainer = Forecast.calculatePayoutForecast({
     payoutModel: "Retainer",
@@ -65,8 +75,9 @@ test("Per-post, Retainer and Pool forecasts use their own payout rules", () => {
     payoutThresholdStatus: "met",
     payoutPoolEndedAt: "2026-11-30T12:00:00.000Z"
   });
-  assert.equal(pool.estimateAt, "2026-12-03T12:00:00.000Z");
-  assert.match(pool.caveat, /not guaranteed/);
+  assert.equal(pool.status, "needs-input");
+  assert.equal(pool.estimateAt, "");
+  assert.match(pool.detail, /does not give a universal Pool settlement schedule/);
 });
 
 test("flags, ineligible records, and missing Pool eligibility suppress payout dates", () => {
@@ -118,6 +129,9 @@ test("ClipReward payout forecast UI and offline cache are wired", () => {
   for (const field of ["payoutModel", "payoutThresholdStatus", "payoutThresholdMetAt", "payoutCycleEndAt", "payoutPoolEndedAt", "payoutFlagOpen"]) {
     assert.ok(core.includes(field), "missing normalized field " + field);
   }
-  assert.match(worker, /clipreward-static-v31/);
+  assert.match(worker, /clipreward-static-v32/);
   assert.match(worker, /payout-forecast\.js/);
+  assert.match(app, /payoutModel: old \? old\.payoutModel/);
+  assert.match(app, /payoutThresholdMetAt: old \? old\.payoutThresholdMetAt/);
+  assert.match(app, /payoutFlagOpen: old \? old\.payoutFlagOpen/);
 });

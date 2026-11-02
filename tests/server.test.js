@@ -105,7 +105,11 @@ function fakeYouTubeOAuth() {
       calls.push({ action: "status", id });
       return id ? { provider: "youtube", status: "connected", channelTitle: "Test channel" } : { provider: "youtube", status: "not_connected" };
     },
-    async uploadVideo(id, input) { calls.push({ action: "publish", id, input }); return { ok: true, provider: "youtube", videoId: "test-video", url: "https://www.youtube.com/watch?v=test-video", privacyStatus: "private" }; },
+    async uploadVideo(id, input) { calls.push({ action: "publish", id, input }); return { ok: true, provider: "youtube", videoId: "test-video", url: "https://www.youtube.com/watch?v=test-video", privacyStatus: "private", uploadedAt: "2026-11-02T00:00:00.000Z" }; },
+    async getVideoStatus(id, videoId) {
+      calls.push({ action: "video-status", id, videoId });
+      return { ok: true, provider: "youtube", videoId, url: "https://www.youtube.com/watch?v=" + videoId, uploadStatus: "processed", processingStatus: "succeeded", privacyStatus: "public", publishedAt: "2026-11-02T00:01:00.000Z" };
+    },
     disconnect(id) {
       calls.push({ action: "disconnect", id });
       return Boolean(id);
@@ -205,6 +209,36 @@ test("YouTube publish endpoint requires the browser session, exact origin and ex
     assert.equal(call.input.title, "Test video");
     assert.equal(call.input.privacyStatus, "private");
     assert.equal(call.input.video.length, 2048);
+  }, {
+    env: { SOCIAL_CORS_ORIGINS: "https://app.example.com" },
+    socialOAuthService: oauth
+  });
+});
+
+test("YouTube status polling requires a browser session and exact allowlisted origin", async () => {
+  const oauth = fakeYouTubeOAuth();
+  await withServer(async (base) => {
+    const denied = await fetch(base + "/api/social/youtube/status?videoId=test-video", {
+      headers: { Origin: "https://evil.example", Cookie: "aihub_session=" + oauth.sessionId }
+    });
+    assert.equal(denied.status, 403);
+
+    const missingSession = await fetch(base + "/api/social/youtube/status?videoId=test-video", {
+      headers: { Origin: "https://app.example.com" }
+    });
+    assert.equal(missingSession.status, 403);
+
+    const response = await fetch(base + "/api/social/youtube/status?videoId=test-video", {
+      headers: { Origin: "https://app.example.com", Cookie: "aihub_session=" + oauth.sessionId }
+    });
+    assert.equal(response.status, 200);
+    const result = await response.json();
+    assert.equal(result.processingStatus, "succeeded");
+    assert.equal(result.privacyStatus, "public");
+    assert.equal(result.publishedAt, "2026-11-02T00:01:00.000Z");
+    const call = oauth.calls.find((item) => item.action === "video-status");
+    assert.equal(call.id, oauth.sessionId);
+    assert.equal(call.videoId, "test-video");
   }, {
     env: { SOCIAL_CORS_ORIGINS: "https://app.example.com" },
     socialOAuthService: oauth

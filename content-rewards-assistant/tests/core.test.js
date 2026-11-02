@@ -32,11 +32,12 @@ test("timestamp parser accepts mm:ss and hh:mm:ss and rejects malformed values",
 test("stats count only explicit campaign statuses", () => {
   assert.deepEqual(Core.stats([
     { status: "idea" }, { status: "applied" }, { status: "joined" },
-    { status: "editing" }, { status: "ready" }, { status: "submitted" },
+    { status: "editing" }, { status: "ready" }, { status: "published" }, { status: "submitted" },
     { status: "approved" }, { status: "rejected" }
-  ]), { total: 8, progress: 4, review: 1, approved: 1 });
+  ]), { total: 9, progress: 5, review: 1, approved: 1 });
   assert.equal(Core.normalizeCampaign({ name: "Applied offer", status: "applied" }).status, "applied");
   assert.equal(Core.normalizeCampaign({ name: "Joined offer", status: "joined" }).status, "joined");
+  assert.equal(Core.normalizeCampaign({ name: "Public clip", status: "published" }).status, "published");
 });
 
 test("draft generator uses requested language and safe disclosure guidance", () => {
@@ -371,7 +372,7 @@ test("ClipReward keeps saved UI state when campaign, timestamp, account and back
 test("ClipReward service worker is registered, refreshes v6 assets and scopes offline caching", () => {
   const workerSource = fs.readFileSync(path.join(__dirname, "..", "service-worker.js"), "utf8");
   const htmlSource = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
-  assert.match(workerSource, /const CACHE = "clipreward-static-v31"/);
+  assert.match(workerSource, /const CACHE = "clipreward-static-v32"/);
   for (const asset of ["./index.html", "./style.css", "./campaign-scout.js", "./campaign-feed.js", "./discovery-engine.js", "./video-studio.js", "./video-studio-ui.js", "./video-analysis.js", "./video-analysis-ui.js", "./core.js", "./app.js", "./manifest.webmanifest", "./icon.svg"]) {
     assert.ok(workerSource.includes('"' + asset + '"'), "missing ClipReward offline asset " + asset);
   }
@@ -610,7 +611,7 @@ test("creator operations UI is wired without claiming private account or payout 
   assert.match(appSource, /URGENT: .*less than 1 minute remains/);
   assert.match(appSource, /within 5 minutes/);
   assert.match(appSource, /Live views, approval and payout were not queried/);
-  assert.match(worker, /clipreward-static-v31/);
+  assert.match(worker, /clipreward-static-v32/);
 });
 
 
@@ -737,7 +738,7 @@ test("Creator Operations UI distinguishes CR balance credit, Whop transfer and f
   assert.match(appSource, /Available in CR balance/);
   assert.match(appSource, /Credited to CR balance/);
   assert.match(appSource, /function renderOperations\(\)/);
-  assert.match(worker, /clipreward-static-v31/);
+  assert.match(worker, /clipreward-static-v32/);
 });
 
 
@@ -812,6 +813,23 @@ test("payout forecast evidence fields normalize, retain backup compatibility and
     payoutModel: "Retainer",
     payoutCycleEndAt: "not-a-date"
   }), /Retainer cycle end time/i);
+});
+
+test("campaign edit handler preserves payout timeline evidence when saving other campaign fields", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
+  const handler = app.slice(app.indexOf("function onCampaignSubmit"), app.indexOf("function deleteCampaign"));
+  for (const field of ["payoutModel", "payoutThresholdStatus", "payoutThresholdMetAt", "payoutCycleEndAt", "payoutPoolEndedAt", "payoutFlagOpen"]) {
+    assert.match(handler, new RegExp(field + ": old \\? old\\."));
+  }
+});
+
+test("verified YouTube post tracking requires a joined local campaign and processed-public provider status", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
+  const handler = app.slice(app.indexOf("function recordVerifiedYouTubePost"), app.indexOf("function deleteCampaign"));
+  assert.match(handler, /Before publishing for Content Rewards/);
+  assert.match(handler, /payload\.uploadStatus !== "processed"/);
+  assert.match(handler, /payload\.processingStatus !== "succeeded"/);
+  assert.match(handler, /\["joined", "editing", "ready"\]\.includes\(campaign\.status\)/);
 });
 
 test("legacy paid status display does not claim a confirmed Content Rewards balance credit", () => {

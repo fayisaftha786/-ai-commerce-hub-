@@ -13,7 +13,7 @@
   let state = { campaigns: [], timestamps: [], account: Core.normalizeAccount({}) };
   let toastTimer;
   const deadlineWarnings = new Set();
-  const statusNames = { idea: "Found / idea", applied: "Applied · waiting", joined: "Joined", editing: "Editing", ready: "Ready to post", submitted: "Awaiting review", approved: "Approved", rejected: "Rejected" };
+  const statusNames = { idea: "Found / idea", applied: "Applied · waiting", joined: "Joined", editing: "Editing", ready: "Ready to post", published: "Published · submit clip now", submitted: "Awaiting review", approved: "Approved", rejected: "Rejected" };
 
   function escapeHtml(value) {
     return String(value == null ? "" : value).replace(/[&<>"']/g, (ch) => ({
@@ -319,12 +319,12 @@
     ).join("");
   }
   function renderSubmissions() {
-    const entries = state.campaigns.filter((c) => ["submitted", "approved", "rejected"].includes(c.status)).sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
+    const entries = state.campaigns.filter((c) => ["published", "submitted", "approved", "rejected"].includes(c.status)).sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
     $("submission-table").innerHTML = entries.map((c) => {
       const post = safeExternalUrl(c.postUrl);
       return "<tr><td>" + escapeHtml(c.name) + '<br><span class="mini-tag">' + escapeHtml(c.platform) + "</span></td><td>" +
         (post ? '<a class="table-link" href="' + escapeHtml(post) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(post) + "</a>" : '<span class="muted">Not added</span>') +
-        "</td><td>" + escapeHtml(c.submittedAt ? new Date(c.submittedAt).toLocaleString() : "Legacy / not recorded") + "</td><td>" + statusBadge(c.status) + '</td><td><button type="button" class="text-button edit-campaign" data-id="' + escapeHtml(c.id) + '">Update</button></td></tr>';
+        "</td><td>" + escapeHtml(c.submittedAt ? new Date(c.submittedAt).toLocaleString() : c.status === "published" ? "Not submitted yet — open Content Rewards" : "Legacy / not recorded") + "</td><td>" + statusBadge(c.status) + '</td><td><button type="button" class="text-button edit-campaign" data-id="' + escapeHtml(c.id) + '">Update</button></td></tr>';
     }).join("");
     $("submission-empty").hidden = entries.length > 0;
   }
@@ -363,8 +363,14 @@
       paidAmount: $("ops-paid-amount").value
     });
     node.dataset.status = forecast.status;
-    const estimate = forecast.estimateAt
+    const estimateStart = forecast.estimateAt
       ? new Date(forecast.estimateAt).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })
+      : "";
+    const estimateEnd = forecast.estimateEndAt
+      ? new Date(forecast.estimateEndAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+      : "";
+    const estimate = estimateStart
+      ? (estimateEnd ? estimateStart + " – " + estimateEnd : estimateStart)
       : "";
     node.textContent = [forecast.title, estimate, forecast.detail, forecast.caveat].filter(Boolean).join(" · ");
   }
@@ -1314,6 +1320,12 @@
         rewardApprovedAmount: old ? old.rewardApprovedAmount : null,
         payoutCurrency: old ? old.payoutCurrency : "USD",
         payoutStatus: old ? old.payoutStatus : "unconfirmed",
+        payoutModel: old ? old.payoutModel : "unknown",
+        payoutThresholdStatus: old ? old.payoutThresholdStatus : "unknown",
+        payoutThresholdMetAt: old ? old.payoutThresholdMetAt : "",
+        payoutCycleEndAt: old ? old.payoutCycleEndAt : "",
+        payoutPoolEndedAt: old ? old.payoutPoolEndedAt : "",
+        payoutFlagOpen: old ? old.payoutFlagOpen : false,
         paidAmount: old ? old.paidAmount : null,
         paidAmountStage: old ? old.paidAmountStage : "unknown",
         paidAt: old ? old.paidAt : "",
@@ -1340,6 +1352,71 @@
       if (persisted) showToast(record.status === "submitted" ? "Submission recorded locally. Approval is not yet confirmed." : "Campaign saved on this device.");
     } catch (error) { showToast(error.message || "Could not save campaign."); }
   }
+  function recordVerifiedYouTubePost(payload) {
+    const campaignId = String(payload && payload.campaignId || "");
+    const campaign = campaignById(campaignId);
+    if (!campaign || campaign.platform !== "Content Rewards") {
+      showToast("YouTube confirms a public video, but no matching Content Rewards campaign is selected. Add the link to the correct campaign manually.");
+      return;
+    }
+    if (payload.privacyStatus !== "public" ||
+        payload.uploadStatus !== "processed" ||
+        payload.processingStatus !== "succeeded") {
+      showToast("Only a processed public YouTube video can start the Content Rewards timer.");
+      return;
+    }
+    if (!["joined", "editing", "ready"].includes(campaign.status)) {
+      showToast("Before publishing for Content Rewards, complete Join / Apply on the official campaign page and update this local tracker to Joined or Ready. This app cannot verify your eligibility.");
+      return;
+    }
+    const postUrl = Core.safeUrl(payload.url);
+    if (!postUrl || !Core.postUrlMatchesPlatform(postUrl, "YouTube")) {
+      showToast("The YouTube provider returned an invalid public link; the campaign was not changed.");
+      return;
+    }
+    const publishedAt = new Date(payload.publishedAt || "");
+    if (Number.isNaN(publishedAt.getTime()) || publishedAt.getTime() > Date.now() + 5 * 60 * 1000) {
+      showToast("YouTube public time is missing or ahead of this device clock; the campaign was not changed.");
+      return;
+    }
+    if (["published", "submitted", "approved", "rejected"].includes(campaign.status)) {
+      showToast("This campaign record already has a submission status. Create a separate tracker entry for a new YouTube post.");
+      return;
+    }
+    if (campaign.postUrl && campaign.postUrl !== postUrl) {
+      showToast("This campaign record already contains a different post link. A second post must use a separate campaign tracker entry.");
+      return;
+    }
+    if (campaign.postUrl === postUrl && campaign.postedAt === publishedAt.toISOString()) {
+      showToast("This verified YouTube post is already recorded. Submit its link in Content Rewards before the deadline.");
+      return;
+    }
+    try {
+      const nextStatus = "published";
+      const updated = Core.normalizeCampaign({
+        ...campaign,
+        postUrl,
+        postPlatform: "YouTube",
+        postedAt: publishedAt.toISOString(),
+        submittedAt: "",
+        status: nextStatus,
+        updatedAt: new Date().toISOString()
+      });
+      const previous = snapshotState();
+      state.campaigns = state.campaigns.map((item) => item.id === campaign.id ? updated : item);
+      if (!saveOrRestore(previous)) return;
+      render();
+      refreshDeadlineCountdowns();
+      showToast("YouTube public post link/time saved locally. Open Content Rewards and press Submit clip within 30 minutes—submission is not automatic.");
+    } catch (error) {
+      showToast(error.message || "Could not record the verified YouTube post.");
+    }
+  }
+
+  window.addEventListener("clipreward:youtube-published", (event) => {
+    recordVerifiedYouTubePost(event.detail || {});
+  });
+
   function deleteCampaign(id) {
     const campaign = campaignById(id);
     if (!campaign) return;

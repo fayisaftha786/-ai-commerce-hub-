@@ -26,7 +26,7 @@
       return { valid: false, error: "Connect and verify this exact posting account in Content Rewards → Settings → Connected accounts before publishing." };
     }
     const rules = String(source.rules || "");
-    const acceptedLine = /^\\s*Accepted platforms\\s*:\\s*(.+)$/im.exec(rules);
+    const acceptedLine = /^\s*Accepted platforms\s*:\s*(.+)$/im.exec(rules);
     if (campaignId && campaignPlatform === "content rewards" && acceptedLine &&
         !/^(?:not recognised|not stated|none detected|unknown|n\/a)$/i.test(acceptedLine[1].trim())) {
       const accepted = acceptedLine[1].split(/[,;|]/).map((value) => value.trim().toLowerCase());

@@ -25,6 +25,7 @@
     let busy = false;
     let outputUrl = "";
     let renderedFile = null;
+    let renderedDuration = 0;
     let activeShareCleanup = null;
     const campaignSelect = $("draft-campaign");
     const targetPlatform = $("video-target-platform");
@@ -102,6 +103,7 @@
       if (outputUrl) root.URL.revokeObjectURL(outputUrl);
       outputUrl = "";
       renderedFile = null;
+      renderedDuration = 0;
       shareButton.disabled = true;
       if (activeShareCleanup) activeShareCleanup();
       downloadLink.hidden = true;
@@ -227,7 +229,8 @@
         campaignPlatform: option && option.dataset ? option.dataset.platform || "" : "",
         campaignStatus: option && option.dataset ? option.dataset.status || "" : "",
         rules,
-        preApprovalConfirmed: !!(preApprovalConfirm && preApprovalConfirm.checked)
+        preApprovalConfirmed: !!(preApprovalConfirm && preApprovalConfirm.checked),
+        durationSeconds: renderedDuration
       });
       if (!plan.valid) {
         setStatus(plan.error, true);
@@ -343,6 +346,7 @@
       if (outputUrl) root.URL.revokeObjectURL(outputUrl);
       outputUrl = "";
       renderedFile = null;
+      renderedDuration = 0;
       shareButton.disabled = true;
       downloadLink.hidden = true;
       preview.hidden = true;
@@ -364,6 +368,7 @@
           }
         });
         outputUrl = root.URL.createObjectURL(output.blob);
+        renderedDuration = output.duration;
         const outputName = "clipreward-video-" + new Date().toISOString().replace(/[:.]/g, "-") + "." + output.extension;
         const outputType = String(output.mimeType || output.blob.type || "video/webm").split(";")[0].trim().toLowerCase();
         try {

@@ -1483,6 +1483,71 @@
     recordVerifiedYouTubePost(event.detail || {});
   });
 
+  function recordVerifiedMetaPost(payload) {
+    const provider = String(payload && payload.provider || "").toLowerCase();
+    const platform = provider === "instagram" ? "Instagram" : provider === "facebook" ? "Facebook" : "";
+    const campaignId = String(payload && payload.campaignId || "");
+    const campaign = campaignById(campaignId);
+    if (!platform || !campaign || campaign.platform !== "Content Rewards") {
+      showToast("Meta confirms a post, but no matching Content Rewards campaign was selected. Add the public link to the correct tracker entry manually.");
+      return;
+    }
+    if (payload.published !== true || payload.privacyStatus !== "public" ||
+        payload.uploadStatus !== "processed" || payload.processingStatus !== "succeeded") {
+      showToast("Only a confirmed public Meta post can start the Content Rewards timer.");
+      return;
+    }
+    if (!["joined", "editing", "ready"].includes(campaign.status)) {
+      showToast("Complete Join / Apply on the official campaign page and update this local tracker to Joined or Ready before publishing. This app cannot verify your Content Rewards eligibility.");
+      return;
+    }
+    const postUrl = Core.safeUrl(payload.url);
+    if (!postUrl || !Core.postUrlMatchesPlatform(postUrl, platform)) {
+      showToast("Meta returned an invalid " + platform + " permalink; the campaign was not changed.");
+      return;
+    }
+    const publishedAt = new Date(payload.publishedAt || "");
+    if (Number.isNaN(publishedAt.getTime()) || publishedAt.getTime() > Date.now() + 5 * 60 * 1000) {
+      showToast("Meta public time is missing or ahead of this device clock; the campaign was not changed.");
+      return;
+    }
+    if (["published", "submitted", "approved", "rejected"].includes(campaign.status)) {
+      showToast("This campaign already has a post/submission status. Create a separate tracker entry for a new clip.");
+      return;
+    }
+    if (campaign.postUrl && campaign.postUrl !== postUrl) {
+      showToast("This campaign record already contains a different post link. Use a separate campaign tracker entry for another clip.");
+      return;
+    }
+    if (campaign.postUrl === postUrl && campaign.postedAt === publishedAt.toISOString()) {
+      showToast("This verified Meta post is already recorded. Submit its link in Content Rewards before the deadline.");
+      return;
+    }
+    try {
+      const updated = Core.normalizeCampaign({
+        ...campaign,
+        postUrl,
+        postPlatform: platform,
+        postedAt: publishedAt.toISOString(),
+        submittedAt: "",
+        status: "published",
+        updatedAt: new Date().toISOString()
+      });
+      const previous = snapshotState();
+      state.campaigns = state.campaigns.map((item) => item.id === campaign.id ? updated : item);
+      if (!saveOrRestore(previous)) return;
+      render();
+      refreshDeadlineCountdowns();
+      showToast(platform + " public post link/time saved locally. Open Content Rewards and press Submit clip within 30 minutes—submission is not automatic.");
+    } catch (error) {
+      showToast(error.message || "Could not record the verified Meta post.");
+    }
+  }
+
+  window.addEventListener("clipreward:meta-published", (event) => {
+    recordVerifiedMetaPost(event.detail || {});
+  });
+
   function deleteCampaign(id) {
     const campaign = campaignById(id);
     if (!campaign) return;

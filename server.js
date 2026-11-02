@@ -5,6 +5,9 @@ const { getProviderReadiness } = require("./social-provider-readiness.js");
 const { createFileStore } = require("./discovery-store.js");
 const { createDiscoveryService } = require("./discovery-service.js");
 const { createYouTubeOAuthService } = require("./youtube-oauth.js");
+const { createEncryptedTokenVault } = require("./social-token-vault.js");
+const { createMetaSocialService } = require("./meta-social-oauth.js");
+const { createEphemeralMetaMediaStore } = require("./meta-media-store.js");
 const { createStaticSite } = require("./static-site.js");
 
 function sendJson(response, statusCode, payload, extraHeaders = {}) {
@@ -111,6 +114,17 @@ async function readRawBody(request, maxBytes) {
 
 function createServer(options = {}) {
   const env = options.env ?? process.env;
+  const sharedSocialTokenVault = options.socialTokenVault ||
+    (env.SOCIAL_TOKEN_ENCRYPTION_KEY
+      ? createEncryptedTokenVault({
+        encryptionKey: env.SOCIAL_TOKEN_ENCRYPTION_KEY,
+        filePath: env.SOCIAL_TOKEN_STORE_PATH
+      })
+      : null);
+  const metaMediaStore = options.metaMediaStore || createEphemeralMetaMediaStore({
+    publicBaseUrl: env.META_MEDIA_BASE_URL,
+    now: options.now
+  });
   const discoveryService = options.discoveryService || createDiscoveryService({
     store: options.discoveryStore || createFileStore({ filePath: env.DISCOVERY_STORE_PATH }),
     feed: options.discoveryFeed,
@@ -124,9 +138,19 @@ function createServer(options = {}) {
   const ownsDiscoveryService = !options.discoveryService;
   const socialOAuthService = options.socialOAuthService || createYouTubeOAuthService({
     env,
-    tokenVault: options.socialTokenVault,
+    tokenVault: sharedSocialTokenVault,
     fetchImpl: options.socialFetchImpl || options.fetchImpl,
     now: options.now
+  });
+  const metaSocialService = options.metaSocialService || createMetaSocialService({
+    env,
+    tokenVault: sharedSocialTokenVault,
+    mediaStore: metaMediaStore,
+    fetchImpl: options.socialFetchImpl || options.fetchImpl,
+    now: options.now,
+    sleep: options.metaSleep,
+    pollAttempts: options.metaPollAttempts,
+    pollIntervalMs: options.metaPollIntervalMs
   });
   const ownsStaticSite = !options.staticSite && env.SERVE_STATIC_APP === "true";
   const staticSite = options.staticSite || (ownsStaticSite
@@ -138,9 +162,27 @@ function createServer(options = {}) {
   const server = http.createServer(async (request, response) => {
     const pathname = new URL(request.url ?? "/", "http://localhost").pathname;
 
+    if (pathname.startsWith("/media/instagram/")) {
+      if (request.method !== "GET" && request.method !== "HEAD") {
+        response.setHeader("allow", "GET, HEAD");
+        return sendJson(response, 405, { error: "method_not_allowed" });
+      }
+      const token = pathname.slice("/media/instagram/".length);
+      const media = metaMediaStore.get(token);
+      if (!media) return sendJson(response, 404, { error: "media_not_found_or_expired" });
+      response.writeHead(200, {
+        "content-type": media.mimeType,
+        "content-length": String(media.size),
+        "cache-control": "private, no-store, max-age=0",
+        "x-content-type-options": "nosniff",
+        "content-disposition": "inline"
+      });
+      return response.end(request.method === "HEAD" ? undefined : media.buffer);
+    }
+
     if (pathname.startsWith("/api/social/")) {
       const sessionId = parseCookie(request, socialSessionCookieName(env));
-      const isNavigationRoute = pathname === "/api/social/youtube/connect" || pathname === "/api/social/youtube/callback";
+      const isNavigationRoute = pathname === "/api/social/youtube/connect" || pathname === "/api/social/youtube/callback" || pathname === "/api/social/meta/connect" || pathname === "/api/social/meta/callback";
 
       if (isNavigationRoute && request.headers.origin && !allowedSocialOrigins(env).includes(request.headers.origin)) {
         return sendJson(response, 403, { error: "origin_not_allowed" });
@@ -191,6 +233,109 @@ function createServer(options = {}) {
         return socialRedirect(response, destination);
       }
 
+      if (pathname === "/api/social/meta/connect") {
+        if (request.method !== "GET") {
+          response.setHeader("allow", "GET");
+          return sendJson(response, 405, { error: "method_not_allowed" });
+        }
+        const started = metaSocialService.createAuthorizationRequest(sessionId);
+        if (!started.ok) return sendJson(response, 503, {
+          error: started.error || "meta_oauth_not_configured",
+          missing: started.missing || []
+        });
+        return socialRedirect(response, started.url, started.setCookie ? buildSessionCookie(started.sessionId, env) : "");
+      }
+
+      if (pathname === "/api/social/meta/callback") {
+        if (request.method !== "GET") {
+          response.setHeader("allow", "GET");
+          return sendJson(response, 405, { error: "method_not_allowed" });
+        }
+        const url = new URL(request.url ?? "/", "http://localhost");
+        const result = await metaSocialService.completeAuthorization({
+          state: url.searchParams.get("state") || "",
+          code: url.searchParams.get("code") || "",
+          providerError: url.searchParams.get("error") || "",
+          sessionId
+        });
+        const destination = metaSocialService.buildReturnUrl(
+          result.ok ? "success" : "error",
+          result.ok ? "" : result.error
+        );
+        if (!destination) return sendJson(response, 503, { error: "social_return_url_not_configured" });
+        return socialRedirect(response, destination);
+      }
+
+      if (pathname === "/api/social/meta/disconnect") {
+        if (request.method !== "POST") {
+          response.setHeader("allow", "POST, OPTIONS");
+          return sendJson(response, 405, { error: "method_not_allowed" });
+        }
+        if (!sessionId || !request.headers.origin || !allowedSocialOrigins(env).includes(request.headers.origin) ||
+            request.headers["x-ai-commerce-action"] !== "meta-disconnect") {
+          return sendJson(response, 403, { error: "social_request_not_authorized" });
+        }
+        try {
+          metaSocialService.disconnect(sessionId);
+          return sendJson(response, 200, { provider: "meta", status: "not_connected" });
+        } catch (_) {
+          return sendJson(response, 503, { error: "social_disconnect_failed" });
+        }
+      }
+
+      if (pathname === "/api/social/meta/facebook/publish" || pathname === "/api/social/meta/instagram/publish") {
+        if (request.method !== "POST") {
+          response.setHeader("allow", "POST, OPTIONS");
+          return sendJson(response, 405, { error: "method_not_allowed" });
+        }
+        if (!sessionId || !request.headers.origin || !allowedSocialOrigins(env).includes(request.headers.origin) ||
+            request.headers["x-ai-commerce-action"] !== "meta-publish" ||
+            !String(request.headers["content-type"] || "").toLowerCase().startsWith("video/")) {
+          return sendJson(response, 403, { error: "social_request_not_authorized" });
+        }
+        const url = new URL(request.url ?? "/", "http://localhost");
+        const provider = pathname.includes("/instagram/") ? "instagram" : "facebook";
+        try {
+          const video = await readRawBody(request, 50 * 1024 * 1024);
+          const input = {
+            video,
+            mimeType: String(request.headers["content-type"]).split(";")[0].trim(),
+            pageId: url.searchParams.get("pageId") || "",
+            title: url.searchParams.get("title") || "",
+            caption: url.searchParams.get("caption") || "",
+            durationSeconds: Number(url.searchParams.get("durationSeconds"))
+          };
+          const result = provider === "instagram"
+            ? await metaSocialService.uploadInstagramReel(sessionId, input)
+            : await metaSocialService.uploadFacebookReel(sessionId, input);
+          return sendJson(response, result.ok ? 201 : 400, result);
+        } catch (error) {
+          return sendJson(response, String(error && error.message) === "request_body_too_large" ? 413 : 400, {
+            error: String(error && error.message) === "request_body_too_large" ? "video_too_large_max_50mb" : "meta_video_upload_request_failed"
+          });
+        }
+      }
+
+      if (pathname === "/api/social/meta/facebook/status") {
+        if (request.method !== "GET") {
+          response.setHeader("allow", "GET, OPTIONS");
+          return sendJson(response, 405, { error: "method_not_allowed" });
+        }
+        if (!sessionId || !request.headers.origin || !allowedSocialOrigins(env).includes(request.headers.origin)) {
+          return sendJson(response, 403, { error: "social_request_not_authorized" });
+        }
+        const url = new URL(request.url ?? "/", "http://localhost");
+        try {
+          const result = await metaSocialService.getFacebookReelStatus(sessionId, {
+            pageId: url.searchParams.get("pageId") || "",
+            videoId: url.searchParams.get("videoId") || ""
+          });
+          return sendJson(response, result.ok ? 200 : (result.error === "reconnect_required" ? 401 : 400), result);
+        } catch (_) {
+          return sendJson(response, 503, { ok: false, error: "facebook_video_status_unavailable" });
+        }
+      }
+
       if (pathname === "/api/social/connections") {
         if (request.method !== "GET") {
           response.setHeader("allow", "GET, OPTIONS");
@@ -198,7 +343,8 @@ function createServer(options = {}) {
         }
         try {
           const youtube = await socialOAuthService.getConnection(sessionId);
-          return sendJson(response, 200, { connections: [youtube] });
+          const meta = metaSocialService.getConnection(sessionId);
+          return sendJson(response, 200, { connections: [youtube, meta] });
         } catch (_) {
           return sendJson(response, 503, { error: "social_connection_status_unavailable" });
         }
@@ -281,7 +427,8 @@ function createServer(options = {}) {
             getProviderReadiness("youtube", env)
           ],
           youtubeOAuth: socialOAuthService.getReadiness(),
-          note: "YouTube OAuth and a server-side resumable video upload route are implemented; they remain unavailable until upload-scope consent and backend credentials are configured. Instagram and Facebook OAuth/publishing are not implemented yet."
+          metaOAuth: metaSocialService.getReadiness(),
+          note: "YouTube OAuth/upload is available after Google backend setup. Meta OAuth can connect Facebook Pages and linked Instagram Professional accounts; publishing is available after Meta app review/permissions and backend credentials are configured. Content Rewards account verification and Submit Clip remain in Content Rewards."
         });
       }
 

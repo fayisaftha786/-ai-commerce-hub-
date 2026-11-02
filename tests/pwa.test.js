@@ -24,7 +24,7 @@ test("PWA manifest is installable and uses relative scope for project subpaths",
 });
 
 test("service worker precaches the local app shell and uses offline fallback", () => {
-  assert.match(serviceWorker, /ai-commerce-hub-pwa-v13/);
+  assert.match(serviceWorker, /ai-commerce-hub-pwa-v14/);
   for (const asset of [
     "./index.html",
     "./content-rewards-assistant/core.js",

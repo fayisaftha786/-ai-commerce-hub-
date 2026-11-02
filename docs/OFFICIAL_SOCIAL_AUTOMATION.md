@@ -28,8 +28,7 @@ This document is the implementation contract. A provider is not "connected", "pu
 ### YouTube
 
 - Keep the existing authorization-code flow with PKCE and browser-bound, single-use state.
-- The current scope is `https://www.googleapis.com/auth/youtube.readonly`. Do not call this publishing access.
-- Publishing requires adding `https://www.googleapis.com/auth/youtube.upload`, updating granted-scope validation and connection metadata, and implementing a server-side resumable upload flow against YouTube Data API v3.
+- The app uses `https://www.googleapis.com/auth/youtube.readonly` for channel/video status reads and `https://www.googleapis.com/auth/youtube.upload` for the explicitly confirmed upload. Both grants are validated before their respective operations.
 - Request the narrowest scopes possible. Do not place client secrets or refresh tokens in browser code, GitHub, localStorage, logs or chat.
 - Google may require OAuth verification for public use of sensitive/restricted scopes. Test-mode refresh tokens can expire; do not treat test-mode setup as production-ready.
 
@@ -62,7 +61,7 @@ No public, supported creator API contract for join/apply, submission, private cr
 
 1. The app may discover public campaigns and show the official campaign URL.
 2. The app may prepare a video, caption, hashtags and a platform-specific publish package.
-3. After a user-confirmed successful social publish, the app may store the returned public post URL and exact server publish time, then start the 30-minute deadline.
+3. For YouTube, after a user-confirmed upload, the app must wait until the official YouTube status API reports the upload as processed and the visibility as Public. It then stores the provider's actual `snippet.publishedAt` timestamp and public URL in the selected local campaign record, with a distinct “Published · submit clip now” state, then starts the 30-minute deadline.
 4. The app must open the official Content Rewards campaign/submission page and guide the creator to submit the URL there. It must not fabricate a submission receipt or mark a local click as an accepted submission.
 5. A submission becomes "verified" only when a supported official response or user-provided receipt/evidence confirms it.
 6. Views, review status, approved reward, Content Rewards balance, transfer to Whop and final payout must remain separate evidence-backed fields. Do not infer approval or earnings from public view counts.
@@ -134,7 +133,7 @@ The Clip Studio branch adds a local-first workflow for a creator's own downloade
 - Warn when the saved campaign notes indicate disclosure or pre-approval requirements, and warn when the source is not vertical.
 - Add the selected source file to the existing local editor, or hand the video and prepared caption to the same-origin Social Media Desk using an origin- and opener-checked postMessage handshake.
 
-The analysis file is not uploaded to a third-party AI service. Speech transcription and semantic scene/object recognition are not included; the creator must provide accurate notes or a transcript. The Social Media Desk handoff is preparation only. It does not silently publish. YouTube publishing uses the existing official OAuth/backend path and still requires a connected channel, correct upload permission, a supported file, and an explicit confirmation. Instagram, Facebook and X remain manual until their approved official publishing integrations are implemented. Content Rewards campaign submission, review, credited views and payout remain outside this handoff and must not be marked complete without official evidence.
+The analysis file is not uploaded to a third-party AI service. Speech transcription and semantic scene/object recognition are not included; the creator must provide accurate notes or a transcript. The Social Media Desk handoff is preparation only. It does not silently publish. YouTube publishing uses the official OAuth/backend path and still requires a connected channel, approved upload/read scopes, a supported file and an explicit visibility choice. Private is the default; selecting Public requires a separate confirmation. An upload response alone does not start the Content Rewards timer: the server must query the official YouTube video resource and see `uploadStatus=processed`, `processingDetails.processingStatus=succeeded` and `status.privacyStatus=public`, then return YouTube's actual public `snippet.publishedAt` timestamp. If the video is still processing, private or unlisted, no public timestamp is recorded and the tracker timer stays off. The same-origin handoff stores a distinct **Published · submit clip now** tracker status; it does not mark the CR clip Submitted. Instagram, Facebook and X remain manual until their approved official publishing integrations are implemented. Content Rewards link submission, review, credited views and payout remain outside this handoff and must not be marked complete without official evidence.
 
 
 ## Clip Studio: scene-change map and SRT subtitle timing

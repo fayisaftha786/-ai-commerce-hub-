@@ -315,3 +315,22 @@
 .video-srt-panel textarea{width:100%;min-width:0;padding:10px;border:1px solid #35435e;border-radius:8px;background:#0a1322;color:#edf1fb}
 .video-srt-panel button{justify-self:start}
 @media(max-width:520px){.video-scene-map-heading{align-items:flex-start;flex-direction:column}.video-scene-list{grid-template-columns:1fr}.video-srt-panel button{width:100%}}
+
+
+.submission-alert-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+.submission-alert-settings .campaign-actions {
+  margin-top: 0;
+}
+.submission-alert-settings .tiny-note {
+  margin: 0;
+}
+.date-time-quick-action {
+  align-self: flex-start;
+  margin: -4px 0 8px;
+  text-align: left;
+}

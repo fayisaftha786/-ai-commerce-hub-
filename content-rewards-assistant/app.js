@@ -310,7 +310,8 @@
     select.innerHTML = '<option value="">Select a campaign (optional)</option>' + state.campaigns
       .slice().sort((a, b) => a.name.localeCompare(b.name))
       .map((c) => '<option value="' + escapeHtml(c.id) + '" data-rules="' + escapeHtml(c.rules || "") +
-        '" data-deadline="' + escapeHtml(c.deadline || "") + '">' + escapeHtml(c.name) + '</option>').join("");
+        '" data-deadline="' + escapeHtml(c.deadline || "") + '" data-platform="' + escapeHtml(c.platform || "") +
+        '" data-status="' + escapeHtml(c.status || "") + '">' + escapeHtml(c.name) + '</option>').join("");
     if (state.campaigns.some((c) => c.id === current)) select.value = current;
   }
   function renderTimestamps() {

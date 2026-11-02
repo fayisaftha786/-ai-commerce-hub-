@@ -151,6 +151,57 @@
     return minSeconds === null && maxSeconds === null ? null : { minSeconds, maxSeconds };
   }
 
+  const MAX_SOCIAL_HANDOFF_BYTES = 50 * 1024 * 1024;
+
+  function buildSocialHandoff(input) {
+    const source = input && typeof input === "object" ? input : {};
+    const file = source.file;
+    if (!file || typeof file.size !== "number" || !Number.isFinite(file.size) ||
+        file.size <= 0 || !String(file.type || "").toLowerCase().startsWith("video/")) {
+      return { valid: false, error: "The finished export is not a readable video file." };
+    }
+    if (file.size > MAX_SOCIAL_HANDOFF_BYTES) {
+      return { valid: false, error: "The Social Media Desk accepts videos up to 50 MB. Save this export and make a smaller copy before sending it." };
+    }
+    const platform = normalizeTargetPlatform(source.platform).toLowerCase();
+    if (!["instagram", "facebook", "youtube", "x"].includes(platform)) {
+      return { valid: false, error: "Choose Instagram, Facebook, YouTube or X before sending the finished video." };
+    }
+    const caption = String(source.caption || "").trim();
+    if (!caption || caption.length > 5000) {
+      return { valid: false, error: "Add a social caption of 1–5,000 characters before sending the video." };
+    }
+    const campaignId = String(source.campaignId || "").trim();
+    if (campaignId && !/^[A-Za-z0-9_-]{1,80}$/.test(campaignId)) {
+      return { valid: false, error: "The selected campaign reference is invalid. Refresh the campaign list and try again." };
+    }
+    const campaignPlatform = String(source.campaignPlatform || "").trim().toLowerCase();
+    const campaignStatus = String(source.campaignStatus || "").trim().toLowerCase();
+    if (campaignId && campaignPlatform === "content rewards" &&
+        !["joined", "editing", "ready"].includes(campaignStatus)) {
+      return { valid: false, error: "Complete Join / Apply on the official Content Rewards campaign and update its tracker to Joined or Ready before publishing." };
+    }
+    const rules = String(source.rules || "");
+    const requiresPreApproval = /(pre.?approval|approve.*draft|draft.*approval)/i.test(rules);
+    const preApprovalConfirmed = source.preApprovalConfirmed === true;
+    if (requiresPreApproval && !preApprovalConfirmed) {
+      return { valid: false, error: "This campaign requires draft pre-approval. Submit the draft through Content Rewards and wait for approval before public publishing." };
+    }
+    return {
+      valid: true,
+      payload: {
+        file,
+        caption,
+        title: String(source.title || caption.split(/\r?\n/)[0] || file.name || "Creator video").trim().slice(0, 100),
+        platform,
+        campaignId,
+        campaignName: String(source.campaignName || "").trim().slice(0, 120),
+        requiresPreApproval,
+        preApprovalConfirmed
+      }
+    };
+  }
+
   function inspectCampaignRules(options) {
     const source = options && typeof options === "object" ? options : {};
     const selected = !!source.selectedCampaign;
@@ -654,7 +705,7 @@
   }
 
   return Object.freeze({
-    MAX_MEDIA_FILES, MAX_MEDIA_BYTES, MAX_AUDIO_BYTES, WIDTH, HEIGHT, FPS, MIME_CANDIDATES,
-    chooseMimeType, createMediaRecorder, getCapabilities, fileKind, validateFiles, splitCaptions, validateRenderedMetadata, verifyBlob, inspectCampaignRules, render, renderDeviceTest
+    MAX_MEDIA_FILES, MAX_MEDIA_BYTES, MAX_AUDIO_BYTES, MAX_SOCIAL_HANDOFF_BYTES, WIDTH, HEIGHT, FPS, MIME_CANDIDATES,
+    chooseMimeType, createMediaRecorder, getCapabilities, fileKind, validateFiles, splitCaptions, validateRenderedMetadata, verifyBlob, buildSocialHandoff, inspectCampaignRules, render, renderDeviceTest
   });
 });

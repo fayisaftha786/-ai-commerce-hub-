@@ -9,9 +9,10 @@
   function canonicalCampaignUrl(value) {
     try {
       const url = new URL(String(value || ""));
+      const pathname = url.pathname.replace(/\/$/, "");
       if (url.protocol !== "https:" || !/(^|\.)contentrewards\.com$/i.test(url.hostname) ||
-          !/^\/c\/campaigns\/[^/]+$/.test(url.pathname) || url.username || url.password) return "";
-      return url.origin.toLowerCase() + url.pathname.replace(/\/$/, "");
+          !/^\/c\/campaigns\/[^/]+$/.test(pathname) || url.username || url.password) return "";
+      return url.origin.toLowerCase() + pathname;
     } catch (_) { return ""; }
   }
 

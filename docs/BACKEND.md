@@ -27,12 +27,18 @@ npm start
 By default the server binds to `127.0.0.1:3000` and the discovery scheduler is disabled. The API exposes:
 
 - `GET /health` — process health only; does not claim OAuth.
-- `GET /api/social/providers` — provider configuration readiness; exposes no secret values. YouTube OAuth readiness is reported separately, including the `youtube.upload` scope needed for publishing.
+- `GET /api/social/providers` — provider configuration readiness; exposes no secret values. YouTube and Meta OAuth readiness are reported separately, including missing Meta app settings and the Instagram media-host requirement.
 - `GET /api/social/connections` — current browser session's safe connection metadata (never tokens).
 - `GET /api/social/youtube/connect` — starts the Google authorization-code flow with PKCE and browser-bound OAuth state.
 - `GET /api/social/youtube/callback` — validates state, exchanges the code server-side, resolves the authorised channel and stores tokens encrypted.
 - `POST /api/social/youtube/publish?title=<title>&description=<description>&privacy=private|unlisted|public` — accepts a raw MP4/QuickTime/WebM video body (maximum 64 MB), requires the browser-bound session, exact allowlisted Origin and explicit `youtube-publish` action header, then uploads through YouTube resumable upload and returns the provider video ID/permalink. Default privacy is private.
 - `POST /api/social/youtube/disconnect` — removes the current browser session's YouTube token record; requires the exact allowlisted Origin and action header.
+- `GET /api/social/meta/connect` and `GET /api/social/meta/callback` — session-bound Facebook Login OAuth; resolves managed Pages and linked Instagram Professional accounts and stores their tokens encrypted.
+- `POST /api/social/meta/facebook/publish?pageId=<page>&durationSeconds=<seconds>&title=<title>&caption=<caption>` — accepts one MP4/MOV Reel up to 50 MB and 4–60 seconds; performs Meta's start/upload/finish workflow.
+- `GET /api/social/meta/facebook/status?pageId=<page>&videoId=<id>` — reports a published permalink only after upload, processing and publishing phases are complete.
+- `POST /api/social/meta/instagram/publish?pageId=<page>&durationSeconds=<seconds>&title=<title>&caption=<caption>` — accepts one MP4/MOV up to 50 MB and 3–900 seconds; creates a Reel container from an expiring public media URL, waits for Meta's container to finish, publishes and returns its permalink/time.
+- `POST /api/social/meta/disconnect` — removes the current session's Meta Page connection; requires the exact allowlisted Origin and `meta-disconnect` action header.
+- `GET /media/instagram/<opaque-token>` — serves a short-lived public video URL for Meta to fetch; the token is random, expires after 15 minutes by default, and is removed after publishing.
 - `GET /api/discovery/status` — scheduler state, latest scan, saved lead count and source registry.
 - `GET /api/discovery/campaigns` — read-only saved public campaign snapshots. Optional query parameters: `platform`, `search`, and `limit` (1–100).
 - `GET /api/discovery/sources` — source modes and scheduler configuration.
@@ -54,6 +60,11 @@ DISCOVERY_CORS_ORIGINS=https://fayisaftha786.github.io
 GOOGLE_CLIENT_ID=<Google OAuth web client ID>
 GOOGLE_CLIENT_SECRET=<Google OAuth web client secret>
 GOOGLE_REDIRECT_URI=https://<backend-host>/api/social/youtube/callback
+META_APP_ID=<Meta developer app ID>
+META_APP_SECRET=<Meta developer app secret>
+META_REDIRECT_URI=https://<backend-host>/api/social/meta/callback
+META_GRAPH_API_VERSION=v26.0
+META_MEDIA_BASE_URL=https://<backend-host>
 SOCIAL_TOKEN_ENCRYPTION_KEY=<base64-encoded 32-byte key>
 SOCIAL_TOKEN_STORE_PATH=/var/data/social-token-vault.json
 SOCIAL_CORS_ORIGINS=https://fayisaftha786.github.io
@@ -168,12 +179,36 @@ In the same-origin Docker deployment, the API uses an HttpOnly, Secure, SameSite
 
 ### Current boundaries
 
-- This is a YouTube connection slice only. Instagram Login and Facebook Pages OAuth are not implemented in this release; configuration readiness for those providers is not a connection.
+- YouTube and Meta OAuth routes are implemented, but configuration readiness is not a connection. Meta still requires a developer app, permission access, linked Page/Professional account and a tested backend deployment.
 - A successful connection confirms Google consent and an authorized YouTube channel. It does not grant YouTube Partner Program eligibility or confirm monetization/payout status.
-- YouTube upload permission is not requested and this release does not upload or publish videos. A future upload feature must add a dedicated endpoint, explicit consent for the extra scope, content review/approval, format checks, resumable upload handling and real platform-response tests.
+- YouTube upload, Facebook Page Reel and linked Instagram Professional Reel routes exist; none is live until its private backend is deployed, provider app permissions are approved, and a real account test succeeds.
 - The connection is attached to an opaque browser session, not an app user account. Clearing cookies, using another browser/device, or losing the session means the connection will not be visible there. No cloud account sync exists.
 - Access and refresh tokens are encrypted at rest. The server must remain HTTPS, the host disk and environment variables must be private, and backups must protect both the encrypted file and the encryption key separately.
-- Google can revoke tokens or require re-consent. Expired tokens are refreshed when possible; otherwise the app shows reconnect_required.
+- Google or Meta can revoke tokens or require re-consent. Expired provider connections require reconnecting.
+
+## Meta Facebook Pages and Instagram Reels
+
+The backend includes a Facebook Login OAuth flow for a managed Facebook Page and an Instagram Professional account linked to that Page. It stores the user/Page tokens inside the same AES-256-GCM encrypted vault used by YouTube. The Social Media Desk lists each returned Page and exposes only the publish capabilities the Page's `CREATE_CONTENT` task indicates.
+
+### Meta developer setup
+
+1. Create a Meta developer app and configure Facebook Login for the Web. Add the exact redirect URI `https://<backend-host>/api/social/meta/callback`.
+2. Add the Facebook Login and Instagram API products required for your app configuration. Set up a test Page and a linked Instagram Business or Creator account; an ordinary personal Instagram account is not supported by the Facebook Login Instagram API.
+3. Request the permissions used by this integration: `pages_show_list`, `pages_read_engagement`, `pages_manage_posts`, `instagram_basic`, and `instagram_content_publish`. App roles/testers can be used during development. Before serving other people's Pages/accounts, complete Meta App Review and obtain the applicable Advanced Access for the permissions your app uses.
+4. Add `META_APP_ID`, `META_APP_SECRET`, and the exact `META_REDIRECT_URI` to the private backend environment. Set `META_GRAPH_API_VERSION` to a version currently supported for your Meta app. The code default is `v26.0`; review Meta's current changelog before upgrading or changing it.
+5. Set `META_MEDIA_BASE_URL` to the backend's public HTTPS origin. This is required for Instagram Reels because Meta fetches the source video from a public `video_url`. The temporary `/media/instagram/<token>` endpoint serves a random, expiring token URL without exposing the user's original local file path.
+6. Use the same-origin Docker deployment or a custom app/backend domain so the browser's HttpOnly session cookie is first-party. Keep `SOCIAL_CORS_ORIGINS` exact—no wildcard, no path. Attach a persistent private volume at `/data` for the shared token vault.
+7. Open Social Media Desk, connect Meta through the Facebook consent screen, and select the managed Page or linked Instagram account. Connect and verify the same social account independently inside Content Rewards before publishing for a campaign.
+
+### Publishing workflow and restrictions
+
+- Facebook Reels use Meta's Page-token `/me/video_reels` three-step flow: start, binary upload to the exact `rupload.facebook.com` URL returned by Meta, then finish with `video_state=PUBLISHED`. The app accepts MP4/MOV up to 50 MB and 4–60 seconds for this route. Facebook publishing is for managed Pages, not personal profiles or Groups.
+- Instagram Reels use a linked Instagram Professional account. The app sends Meta a public video URL, polls the container until `FINISHED`, calls `media_publish`, and then reads the returned permalink/timestamp. The current integration accepts MP4/MOV up to 50 MB and 3–900 seconds; Meta's current media encoding requirements still apply (H.264/HEVC, AAC audio, 23–60 fps and supported bitrate/dimensions). The Social Desk must be reachable from Meta's servers at `META_MEDIA_BASE_URL`.
+- The Instagram media store is in-memory and expires its opaque URLs after 15 minutes by default (or sooner after publishing). Run one backend instance with sticky routing; horizontal scaling requires a shared expiring object store, not the current in-memory media store. Pending Meta OAuth state is also held in process memory.
+- Public publishing always requires an explicit per-post confirmation in the Social Desk. A provider upload response alone is not treated as public. The Facebook status check requires upload, processing and publishing phases complete plus a safe public permalink/time. Instagram is recorded only after Meta returns a media ID and public permalink/time.
+- A verified public Meta URL/time can be copied into the matching local Content Rewards campaign record and start the local 30-minute reminder. The app does not perform Content Rewards account linking/verification, Join/Apply, Submit Clip, review, approval, views ingestion or payout/withdrawal.
+
+Official reference workflows: [Meta Facebook Reels publishing](https://www.postman.com/meta/facebook/documentation/r56bjfd/facebook-api) · [Meta Instagram API and Reels publishing](https://www.postman.com/meta/instagram/documentation/6yqw8pt/instagram-api).
 
 ## Hosting and operational notes
 
@@ -183,6 +218,6 @@ A continuously scheduled process needs a host that stays awake. Some low-cost/fr
 
 - Public campaign endpoints are read-only. There is no unauthenticated POST route that can trigger scans or alter stored rows.
 - CORS is an origin policy for browsers, not authentication; the API only publishes the currently public third-party campaign snapshot. Never add private account data to these responses.
-- YouTube now has an OAuth authorization/callback, PKCE/state validation, encrypted token vault, browser-session connection status and disconnect route. Instagram/Facebook OAuth, social publishing, campaign join/apply, submission API, views ingestion and payout sync remain unimplemented.
+- YouTube and Meta have server-side OAuth, encrypted token storage, browser-session connection status and disconnect routes. YouTube, Facebook Page and linked Instagram Reels publishing require provider setup/review and live validation. Content Rewards Join/Apply, account verification, Submit Clip API, views ingestion, review and payout sync remain unavailable.
 - Do not put Meta/Google secrets, access tokens, passwords, OTPs, cookies or third-party credentials in GitHub Pages or local browser storage.
 - The `/api/social/providers` route reports readiness only and returns no secret values; `/api/social/connections` returns metadata for the current browser session only.

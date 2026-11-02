@@ -194,7 +194,7 @@ test("publishes a Facebook Page Reel through start, binary upload and finish pha
     fetchImpl: async (url, init = {}) => {
       requests.push({ url: String(url), init });
       const parsed = new URL(url);
-      if (parsed.hostname === "graph.facebook.com" && parsed.pathname.endsWith("/" + PAGE_ID + "/video_reels") &&
+      if (parsed.hostname === "graph.facebook.com" && parsed.pathname.endsWith("/me/video_reels") &&
           parsed.searchParams.get("upload_phase") === "start") {
         assert.equal(parsed.searchParams.get("appsecret_proof"), crypto.createHmac("sha256", ENV.META_APP_SECRET).update("page-access-secret").digest("hex"));
         return jsonResponse({ video_id: VIDEO_ID, upload_url: "https://rupload.facebook.com/video-upload/v26.0/" + VIDEO_ID });

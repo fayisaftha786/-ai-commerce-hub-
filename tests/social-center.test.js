@@ -145,5 +145,6 @@ test("Social Desk includes X destination and checks the opener origin during Cli
   assert.match(source, /AI_COMMERCE_SOCIAL_DESK_READY/);
   assert.match(source, /AI_COMMERCE_CLIP_HANDOFF_ACK/);
   assert.match(source, /AICommerceSocialHandoff/);
+  assert.match(source, /ai-commerce:social-handoff/);
   assert.match(source, /campaignId/);
 });

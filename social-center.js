@@ -207,6 +207,11 @@
         durationSeconds: checked.durationSeconds,
         mediaFingerprint: checked.mediaFingerprint
       };
+      if (typeof root.CustomEvent === "function") {
+        root.dispatchEvent(new root.CustomEvent("ai-commerce:social-handoff", {
+          detail: root.AICommerceSocialHandoff
+        }));
+      }
       let mediaImported = false;
       try {
         if (!root.DataTransfer) throw new Error("DataTransfer is unavailable.");

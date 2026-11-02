@@ -40,6 +40,11 @@ After the official public snapshot loads, ClipReward Studio automatically analys
 
 The shortlist is a rules-and-evidence screen, not a probability of approval, earnings estimate or confirmation that a campaign is still accepting creators. Stale page text is forced into Verify even when its old rules otherwise look promising. No campaign is joined or applied for, and a tracker item is not created automatically.
 
+
+## Batch import from the deep-analysis shortlist
+
+After the latest public snapshot is loaded, the selected-platform deep analysis can add all **fresh, readable Promising** results to the local Campaign Tracker in one action. The import planner validates the official Content Rewards campaign URL, deduplicates against existing tracker links and within the batch, and skips Verify, Blocked, stale, historical, unreadable and invalid records. It carries over the detected title, deadline, payout/budget notes and captured rule summary. New records are always created as **Found / idea**; the tool never claims to Join, Apply, publish or submit a campaign. Re-open the official campaign, confirm current eligibility and complete the official Join / Apply steps yourself. Import is local to this browser and is included in the existing JSON backup.
+
 ## Campaign finder and autofill
 
 The Finder opens the official [Content Rewards Discover page](https://contentrewards.com/c/discover) for Instagram, Facebook, YouTube and X campaigns. TikTok may appear in international briefs but is not offered as an India posting destination. Choose the platform, find the public campaign and enter its URL under Site Analyze; press **Analyse website automatically** to load the public page text from the latest scheduled snapshot. Review the detected fields and missing requirements, then press **Autofill campaign tracker**. Copy/paste remains an optional fallback for pages the scheduled scanner could not fetch. The native creator dashboards do not expose one public cross-platform campaign feed to this app.

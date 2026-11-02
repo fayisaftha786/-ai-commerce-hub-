@@ -1,6 +1,6 @@
 "use strict";
-const CACHE = "clipreward-static-v33";
-const ASSETS = ["./", "./index.html", "./style.css", "./campaign-scout.js", "./campaign-feed.js", "./discovery-engine.js", "./video-studio.js", "./video-studio-ui.js", "./video-analysis.js", "./video-analysis-ui.js", "./rewards-intelligence.js", "./core.js", "./submission-alerts.js", "./tracker-import.js", "./payout-forecast.js", "./app.js", "./manifest.webmanifest", "./icon.svg"];
+const CACHE = "clipreward-static-v34";
+const ASSETS = ["./", "./index.html", "./style.css", "./campaign-scout.js", "./campaign-feed.js", "./discovery-engine.js", "./video-studio.js", "./video-studio-ui.js", "./video-analysis.js", "./video-analysis-ui.js", "./speech-dictation.js", "./speech-dictation-ui.js", "./rewards-intelligence.js", "./core.js", "./submission-alerts.js", "./tracker-import.js", "./payout-forecast.js", "./app.js", "./manifest.webmanifest", "./icon.svg"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(ASSETS)).then(() => self.skipWaiting()));

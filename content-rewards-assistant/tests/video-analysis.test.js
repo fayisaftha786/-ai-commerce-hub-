@@ -179,5 +179,5 @@ test("Clip Studio exposes scene map, timed SRT and explanatory accuracy boundary
   ]) assert.ok(html.includes('id="' + id + '"'), "missing scene/subtitle control " + id);
   assert.match(ui, /renderSceneMap/);
   assert.match(ui, /Analysis\.buildSrt/);
-  assert.match(html, /not speech-to-text/i);
+  assert.match(html, /does not .*transcribe audio from the selected video/i);
 });

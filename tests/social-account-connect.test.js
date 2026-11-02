@@ -159,6 +159,32 @@ test("YouTube upload keeps Private as default and requires explicit public confi
   assert.equal(fixture.postedMessages.length, 0, "upload receipt alone must not start the timer");
 });
 
+test("YouTube campaign publisher requires the same account to be verified in Content Rewards", async () => {
+  const fixture = makeWindow({ configured: true, connectionStatus: "connected" });
+  fixture.windowObject.localStorage.setItem("ai-commerce-hub.social-backend-origin.v1", "https://api.example.com");
+  fixture.windowObject.AICommerceSocialHandoff = {
+    campaignId: "campaign_1",
+    campaignName: "Ready campaign",
+    campaignPlatform: "Content Rewards",
+    campaignStatus: "ready",
+    platform: "youtube",
+    requiresPreApproval: false
+  };
+  connector.init(fixture.windowObject);
+  await new Promise((resolve) => setImmediate(resolve));
+  fixture.nodes.get("socialMediaFiles").files = [{ name: "clip.mp4", type: "video/mp4", size: 2048 }];
+  fixture.nodes.get("socialCaption").value = "A campaign clip";
+  fixture.nodes.get("socialPlatform").value = "youtube";
+  fixture.nodes.get("youtube-video-privacy").value = "public";
+  fixture.nodes.get("youtube-public-confirm").checked = true;
+  await fixture.nodes.get("publishYouTubeVideo").events.click();
+  assert.equal(fixture.requests.some((item) => item.url.includes("/api/social/youtube/publish?")), false);
+  assert.match(fixture.nodes.get("socialAccountConnectionStatus").textContent, /verify this exact YouTube channel in Content Rewards/i);
+  fixture.nodes.get("content-rewards-account-verified").checked = true;
+  await fixture.nodes.get("publishYouTubeVideo").events.click();
+  assert.ok(fixture.requests.some((item) => item.url.includes("/api/social/youtube/publish?")));
+});
+
 test("YouTube publisher blocks a pre-approval campaign until its approval attestation is supplied", async () => {
   const fixture = makeWindow({ configured: true, connectionStatus: "connected" });
   fixture.windowObject.localStorage.setItem("ai-commerce-hub.social-backend-origin.v1", "https://api.example.com");

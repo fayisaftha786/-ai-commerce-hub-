@@ -1,76 +1,108 @@
-# Social account connection and publishing: safe implementation plan
+# Social account connection and publishing
 
-## Current behavior
+## Current implementation
 
-The Social Media Desk is a browser-only helper. It previews selected image/video files locally, copies captions, opens official platform sites, and calculates analytics from values the user enters. It does not authenticate accounts, upload media to a platform, publish posts, or fetch analytics automatically.
+The Social Media Desk is no longer browser-only. The repository includes server-side official publishing paths for:
+- YouTube channel connection and video upload through Google OAuth and the YouTube Data API.
+- Facebook Page Reels and linked Instagram Professional Reels through Meta OAuth and the Meta Graph API.
 
-## Security requirements before real account connection
+The Social Desk still supports manual handoff to X and WhatsApp; those platforms do not have publisher integrations here. Local analytics calculations use metrics entered by the creator. The app does not automatically fetch general social insights or private Content Rewards credited views.
 
-- Use each platform's official OAuth flow and API. Never collect a platform password in this app.
-- Run OAuth token exchange on a trusted HTTPS backend. Never put client secrets, access tokens, or refresh tokens in browser JavaScript, static HTML, or the public repository.
-- Generate and validate a one-time state value for each OAuth attempt; use PKCE wherever the provider supports it.
-- Match the callback to an exact registered redirect URI. Validate scopes and provider/account identity.
-- Encrypt tokens at rest, restrict server-side access, redact tokens from logs, and implement disconnect/revoke and token-expiry handling.
-- Request only the minimum scopes needed. Platform review, business-account eligibility, and permissions may be required before publishing or insights endpoints work.
-- Do not tell users a post was published or analytics fetched unless the provider API confirms success.
+These are implemented code paths, not proof of a live service. A private HTTPS backend, provider app credentials, persistent encrypted storage, permissions/review and successful real-account tests are required before calling publishing live.
 
-## Provider readiness checklist
+## Security requirements
 
-### Meta: Facebook Pages and Instagram
+- Use only each platform's official OAuth flow and API. Never collect or request a platform password.
+- Run OAuth token exchange and publishing on a trusted HTTPS backend. Never put client secrets, access tokens or refresh tokens in browser JavaScript, static HTML, the public repository, browser localStorage or chat.
+- Validate one-time OAuth state, browser session binding, exact HTTPS redirect URI, allowed origins and granted scopes.
+- Encrypt provider tokens at rest, persist the encrypted vault on a private volume, redact secrets from logs, and support disconnect/revocation and reconnect after token expiry.
+- Request only the permissions needed. Provider app review, business verification, account eligibility or Advanced Access may be required.
+- Require explicit user confirmation before publishing. Do not report a post as public until the provider's API confirms processing/public visibility and returns a valid public permalink/timestamp.
+- Do not treat a YouTube/Meta OAuth connection as proof that the same account is linked/verified in Content Rewards. The creator must complete that separate official account-verification flow.
 
-1. Create a Meta developer app and configure the relevant Facebook Login / Instagram API product.
-2. Register the exact HTTPS OAuth redirect URI and complete the required app settings.
-3. Determine whether the target is a Facebook Page or an eligible Instagram professional account; personal-account posting is not generally available through the same publishing APIs.
-4. Request only the permissions needed for account identity, publishing, and insights. Complete app review/business verification where required.
-5. Implement server-side OAuth callback, token storage, account selection, publishing job, status polling, and insights retrieval.
-6. Test with app roles/test accounts before requesting production access.
+## Meta: Facebook Pages and Instagram Reels
 
-### YouTube
+The backend implements Facebook Login for managed Pages and linked Instagram Professional accounts.
 
-1. Create a Google Cloud project, enable the YouTube Data API, and configure OAuth consent.
-2. Register the exact redirect URI and initially request only read-only channel identification. Request upload permission separately only when an upload workflow and its review tests are ready.
-3. Upload through the official API from a backend, handle resumable uploads and processing status, and respect quota and visibility settings.
-4. Check current Google verification requirements and API project eligibility before promising production uploads.
+1. Create a Meta developer app and enable the product/login configuration required by the selected Graph API flow.
+2. Register the exact HTTPS callback URI: /api/social/meta/callback on the deployed backend host.
+3. Configure the Meta app ID, app secret and redirect URI as private backend environment variables.
+4. Confirm the Facebook login can access the intended managed Page. Instagram publishing additionally needs an eligible Professional Instagram account linked to the selected Page and a publicly fetchable temporary media URL.
+5. Complete the required Meta app review / permission access before connecting accounts outside permitted app roles.
+6. Connect from Social Desk, select the correct managed Page/linked Instagram account, review the destination and caption, and explicitly confirm each publish.
+7. Verify the returned public permalink and timestamp; for Facebook, use the provider status path to confirm publish/processing before recording the post.
 
-### WhatsApp
+Current API limits and exact endpoints are documented in [BACKEND.md](./BACKEND.md). The integration does not publish to a personal Instagram account or an arbitrary Facebook profile.
 
-WhatsApp messaging APIs are not the same as publishing a public social feed. If WhatsApp sharing is needed, begin with a user-initiated share link or the official WhatsApp Business Platform for eligible business messaging; do not label this as feed auto-posting.
+## YouTube
 
-## Suggested backend contract
+The backend implements a Google OAuth authorization-code flow with PKCE and YouTube Data API upload/status calls.
 
-These are proposed endpoints, not implemented or live yet:
+1. Create a Google Cloud project and enable YouTube Data API v3.
+2. Configure the OAuth consent screen and required app review/testing rules.
+3. Register the exact HTTPS callback URI: /api/social/youtube/callback on the deployed backend host.
+4. Set the Google client ID, secret and redirect URI only in the backend host's private environment.
+5. Connect the channel from Social Desk and confirm that it is the channel that owns the intended upload.
+6. Select the video, review title/description/visibility and explicitly confirm upload. Public is not the default.
+7. Wait for processing and public visibility; only then is a public permalink/timestamp eligible for the Content Rewards handoff.
 
-- GET /api/social/:provider/connect — start OAuth, validate provider and create state.
-- GET /api/social/:provider/callback — validate state, exchange code server-side, persist encrypted tokens.
-- GET /api/social/accounts — return only safe account metadata for the signed-in user.
-- POST /api/social/posts — validate account, media type/size, disclosure, and platform constraints; enqueue publishing.
-- GET /api/social/posts/:id — return confirmed provider status, including failures.
-- GET /api/social/insights?accountId=...&postId=... — fetch only metrics the connected provider exposes.
-- DELETE /api/social/connections/:id — disconnect and revoke tokens when supported.
+Google test-mode tokens and verification restrictions can affect durability. See [BACKEND.md](./BACKEND.md) before deployment.
 
-Every endpoint must enforce user authentication, authorization, CSRF protection where applicable, rate limits, upload limits, and audit-safe logging. Media should be stored privately with short-lived access URLs when a provider requires fetchable media URLs.
+## Implemented backend routes
 
-## Configuration placeholders
+These are implemented server routes; availability still depends on deployment and configuration.
 
-Keep real values in the deployment platform's secret manager, never commit them:
+| Method | Path | Purpose |
+|---|---|---|
+| GET | /api/social/providers | Safe configuration/OAuth readiness; no secret values |
+| GET | /api/social/connections | Safe connection metadata for the current browser session |
+| GET | /api/social/youtube/connect | Start Google OAuth |
+| GET | /api/social/youtube/callback | Complete Google OAuth |
+| POST | /api/social/youtube/publish | Explicitly confirmed YouTube upload |
+| GET | /api/social/youtube/status | Read provider processing/public status |
+| POST | /api/social/youtube/disconnect | Disconnect the current session's YouTube connection |
+| GET | /api/social/meta/connect | Start Meta OAuth |
+| GET | /api/social/meta/callback | Complete Meta OAuth and resolve managed Pages/linked Instagram |
+| POST | /api/social/meta/facebook/publish | Publish a Facebook Page Reel |
+| GET | /api/social/meta/facebook/status | Check Facebook Reel processing/publish status |
+| POST | /api/social/meta/instagram/publish | Publish an Instagram Professional Reel |
+| POST | /api/social/meta/disconnect | Disconnect the current session's Meta connection |
 
-- META_APP_ID
-- META_APP_SECRET
-- META_REDIRECT_URI
-- GOOGLE_CLIENT_ID
-- GOOGLE_CLIENT_SECRET
-- GOOGLE_REDIRECT_URI
-- TOKEN_ENCRYPTION_KEY
-- APP_BASE_URL
+The service also serves a short-lived temporary media URL for Meta to fetch Instagram video. Do not expose it as a permanent file URL.
 
-These are documentation placeholders only; the app does not read them yet.
+## Private backend configuration
 
-## Acceptance criteria for a production connection
+Use the exact variable names in the repository's [.env.example](../.env.example) and [BACKEND.md](./BACKEND.md):
 
-- OAuth can be completed and cancelled without exposing secrets.
-- Invalid/missing state, wrong redirect URI, expired code, and denied permissions fail safely.
-- Tokens never appear in frontend responses, local storage, logs, or Git history.
-- Posting returns a provider-backed job/status, supports retry without duplicate publication where possible, and reports failures honestly.
-- Analytics display source, time range, and metric definitions; unavailable metrics are shown as unavailable, not as zero.
-- Disconnect revokes tokens where supported and removes local connection metadata.
-- Automated tests cover OAuth state/PKCE, authorization checks, token redaction, provider errors, and publishing status transitions.
+- Meta: META_APP_ID, META_APP_SECRET, META_REDIRECT_URI, META_MEDIA_BASE_URL.
+- Google: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI.
+- Shared session/token security: SOCIAL_TOKEN_ENCRYPTION_KEY, SOCIAL_TOKEN_STORE_PATH, SOCIAL_CORS_ORIGINS, SOCIAL_RETURN_URL, SOCIAL_COOKIE_SAMESITE.
+
+SOCIAL_TOKEN_ENCRYPTION_KEY must contain 32 bytes for AES-256-GCM. Store it in the hosting provider's private environment manager and mount the encrypted token vault on persistent private storage. Never commit real values. For separate GitHub Pages and API origins, configure exact CORS origins and the required cookie settings; browser third-party-cookie policies may still prevent reliable sessions. A same-origin HTTPS deployment is preferred. Do not run multiple backend replicas until pending OAuth state uses a shared expiring store.
+
+A /health success means only that the server process responds. GET /api/social/providers reports whether configuration is complete; it does not say a user has authorized a provider. GET /api/social/connections reports the current browser session's connection metadata, not Content Rewards verification.
+
+## Content Rewards remains a separate account and workflow
+
+Content Rewards verification is not the same as connecting a Google or Meta account to this publisher. The exact account used for a post must separately show Connected/verified inside Content Rewards. The app's local attestation gate records the creator's confirmation; it cannot query Content Rewards or independently validate the account.
+
+The publisher can return a public social post URL/time and the ClipReward tracker can start its local 30-minute reminder. The creator must manually submit that URL to the official Content Rewards campaign while the post is strictly less than 30 minutes old. Join/Apply, Submit Clip, private credited views, review/approval, Content Rewards balance and payout sync are not integrated through a supported Content Rewards creator API.
+
+## Analytics boundary
+
+The Social Desk can calculate engagement/click/order rates from numbers entered by the creator. These are labelled as manually entered and not independently verified. There is no implemented automatic insights ingestion route in this backend, and no Content Rewards private-view counter integration. Never treat public-platform views as credited campaign views.
+
+## Deployment validation checklist
+
+- [ ] Backend deployed on HTTPS with private persistent storage.
+- [ ] Required environment variables configured without exposing secret values.
+- [ ] /health returns process health and /api/social/providers shows the expected readiness.
+- [ ] Google OAuth connect/disconnect tested with the intended YouTube channel.
+- [ ] YouTube test upload reaches processed + public, returning the actual permalink and timestamp.
+- [ ] Meta OAuth resolves the intended managed Page and linked Instagram Professional account.
+- [ ] Facebook and Instagram test Reels each return confirmed public permalinks/timestamps.
+- [ ] Content Rewards separately shows the exact posting account as connected/verified.
+- [ ] The Content Rewards tracker only starts its timer from a verified public provider receipt.
+- [ ] The actual Content Rewards Submit Clip action is completed manually and its receipt is captured as evidence.
+
+See [OFFICIAL_SOCIAL_AUTOMATION.md](./OFFICIAL_SOCIAL_AUTOMATION.md) for the complete workflow, capability matrix and release gates.

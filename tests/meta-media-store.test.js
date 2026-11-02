@@ -42,7 +42,7 @@ test("rejects unsafe media bases, empty files, oversized files and unsupported m
   const noBase = createEphemeralMetaMediaStore({ publicBaseUrl: "http://api.example.com" });
   assert.throws(() => noBase.create(Buffer.from("mp4"), "video/mp4"), /not configured/i);
   const store = createEphemeralMetaMediaStore({ publicBaseUrl: "https://api.example.com" });
-  assert.throws(() => store.create(Buffer.alloc(0), "video/mp4"), /size invalid/i);
-  assert.throws(() => store.create(Buffer.alloc(50 * 1024 * 1024 + 1), "video/mp4"), /size invalid/i);
-  assert.throws(() => store.create(Buffer.from("pdf"), "application/pdf"), /type invalid/i);
+  assert.throws(() => store.create(Buffer.alloc(0), "video/mp4"), /size.*invalid/i);
+  assert.throws(() => store.create(Buffer.alloc(50 * 1024 * 1024 + 1), "video/mp4"), /size.*invalid/i);
+  assert.throws(() => store.create(Buffer.from("pdf"), "application/pdf"), /type.*invalid/i);
 });

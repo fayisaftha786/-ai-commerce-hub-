@@ -41,6 +41,10 @@
     }
     const requiresPreApproval = source.requiresPreApproval === true;
     const preApprovalConfirmed = source.preApprovalConfirmed === true;
+    const campaignPlatform = String(source.campaignPlatform || "").trim().slice(0, 80);
+    const campaignStatus = String(source.campaignStatus || "").trim().toLowerCase().slice(0, 40);
+    const rules = String(source.rules || "").slice(0, 12000);
+    const durationSeconds = Number(source.durationSeconds);
     if (requiresPreApproval && !preApprovalConfirmed) {
       return { valid: false, error: "This campaign requires draft pre-approval. Do not publish until the campaign team has approved it." };
     }
@@ -51,6 +55,10 @@
       title: String(source.title || "").trim().slice(0, 100),
       campaignId,
       campaignName: String(source.campaignName || "").trim().slice(0, 120),
+      campaignPlatform,
+      campaignStatus,
+      rules,
+      durationSeconds: Number.isFinite(durationSeconds) && durationSeconds > 0 ? durationSeconds : 0,
       requiresPreApproval,
       preApprovalConfirmed,
       mediaFingerprint: {
@@ -193,6 +201,10 @@
         platform: checked.platform,
         requiresPreApproval: checked.requiresPreApproval,
         preApprovalConfirmed: checked.preApprovalConfirmed,
+        campaignPlatform: checked.campaignPlatform,
+        campaignStatus: checked.campaignStatus,
+        rules: checked.rules,
+        durationSeconds: checked.durationSeconds,
         mediaFingerprint: checked.mediaFingerprint
       };
       let mediaImported = false;

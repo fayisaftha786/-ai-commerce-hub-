@@ -165,6 +165,7 @@
           campaignRules: campaign.rules,
           video: analysis
         });
+        postPackage.campaignId = campaign.id;
         titleOutput.value = postPackage.title;
         captionOutput.value = postPackage.caption;
         tagsOutput.value = postPackage.hashtags.join(" ");
@@ -267,6 +268,10 @@
     let activeHandoffCleanup = null;
     $("video-analysis-send-social").addEventListener("click", () => {
       const campaign = selectedCampaign();
+      if (!postPackage || campaign.id !== postPackage.campaignId) {
+        setStatus("The selected campaign changed after this post package was generated. Select the correct campaign and generate the package again before handoff.", true);
+        return;
+      }
       const requiresPreApproval = /(pre.?approval|approve.*draft|draft.*approval)/i.test(campaign.rules);
       if (activeHandoffCleanup) activeHandoffCleanup();
       if (requiresPreApproval && !$("video-analysis-preapproval-confirm").checked) {
@@ -347,13 +352,13 @@
               parsed.hostname === "youtu.be" && parsed.pathname.replace(/^\//, "") === videoId;
             if (validWatch || validShort) url = parsed.href;
           } catch (_) {}
-          cleanup();
           if (!url || !videoId || privacyStatus !== "public" || Number.isNaN(publishedAt.getTime())) {
             setStatus(privacyStatus === "private" || privacyStatus === "unlisted"
               ? "YouTube video is uploaded but not public. Content Rewards requires a public post; no 30-minute timer has started. Make it public in YouTube Studio, then check status again."
-              : "YouTube has not confirmed a processed public video. No Content Rewards timer has started.", true);
+              : "YouTube has not confirmed a processed public video. No Content Rewards timer has started. Check status again after YouTube finishes processing.", true);
             return;
           }
+          cleanup();
           const handoffResult = { ...result, url, videoId, privacyStatus, publishedAt: publishedAt.toISOString(), campaignId: campaign.id };
           if (typeof root.CustomEvent === "function") {
             root.dispatchEvent(new root.CustomEvent("clipreward:youtube-published", { detail: handoffResult }));

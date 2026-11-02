@@ -93,4 +93,6 @@ test("Social Desk exposes Meta connect, Page selection, public confirmation and 
   assert.match(worker, /meta-social-connect\.js/);
   assert.match(packageJson.scripts.check, /meta-social-oauth\.js/);
   assert.match(packageJson.scripts.check, /meta-media-store\.js/);
+  assert.match(source, /ai-commerce:social-handoff/);
+  assert.match(source, /contentRewardsAccountVerified/);
 });

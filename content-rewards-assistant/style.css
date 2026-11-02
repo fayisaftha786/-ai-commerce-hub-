@@ -334,3 +334,57 @@
   margin: -4px 0 8px;
   text-align: left;
 }
+
+
+.ops-payout-forecast {
+  display: block;
+  margin: 10px 0 12px;
+  padding: 12px;
+  border: 1px solid #3b4a66;
+  border-radius: 10px;
+  background: #101a2b;
+  color: #bec9dd;
+  font-size: 10px;
+  line-height: 1.6;
+}
+.ops-payout-forecast::before {
+  content: "PAYOUT TIMELINE · GUIDE-BASED ESTIMATE";
+  display: block;
+  margin-bottom: 5px;
+  color: #aebcdb;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .08em;
+}
+.ops-payout-forecast[data-status="estimate"] {
+  border-color: #3b6b58;
+  color: #c6e9d8;
+}
+.ops-payout-forecast[data-status="paused"],
+.ops-payout-forecast[data-status="blocked"] {
+  border-color: #79514b;
+  color: #f1c4b8;
+}
+.ops-payout-forecast[data-status="waiting"],
+.ops-payout-forecast[data-status="needs-input"] {
+  border-color: #5a536f;
+  color: #d3c8ef;
+}
+.ops-form-grid .ops-flag-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid #39465e;
+  border-radius: 8px;
+  background: #101a2b;
+}
+.ops-form-grid .ops-flag-check input {
+  width: auto;
+  accent-color: #a68cff;
+}
+.ops-form-grid .ops-flag-check span {
+  color: #c7d0e1;
+  font-size: 10px;
+}

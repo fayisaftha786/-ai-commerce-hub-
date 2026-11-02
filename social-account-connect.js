@@ -82,10 +82,12 @@
         ? privacySelect.value : "private";
       const handoff = windowObject.AICommerceSocialHandoff && typeof windowObject.AICommerceSocialHandoff === "object"
         ? windowObject.AICommerceSocialHandoff : null;
-      const requiresContentRewardsAccount = Boolean(handoff && handoff.campaignId &&
-        String(handoff.campaignPlatform || "").toLowerCase() === "content rewards" &&
-        String(handoff.platform || "").toLowerCase() === "youtube");
-      if (contentRewardsAccountVerifiedLabel) contentRewardsAccountVerifiedLabel.hidden = !requiresContentRewardsAccount;
+      const youtubeHandoff = Boolean(handoff && String(handoff.platform || "").toLowerCase() === "youtube");
+      const requiresContentRewardsAccount = Boolean(youtubeHandoff && handoff.campaignId &&
+        String(handoff.campaignPlatform || "").toLowerCase() === "content rewards");
+      if (contentRewardsAccountVerifiedLabel && (!handoff || youtubeHandoff)) {
+        contentRewardsAccountVerifiedLabel.hidden = !requiresContentRewardsAccount;
+      }
       if (publicConfirmLabel) publicConfirmLabel.hidden = privacy !== "public";
       if (checkStatusButton) checkStatusButton.disabled = !String((videoIdInput && videoIdInput.value) || lastUploadedVideoId).trim() || statusCheckInFlight;
     }

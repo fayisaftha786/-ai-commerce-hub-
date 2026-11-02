@@ -35,6 +35,10 @@ function makeWindow(options = {}) {
       assigned: "",
       assign(value) { this.assigned = value; }
     },
+    addEventListener(name, callback) {
+      windowObject.events = windowObject.events || {};
+      windowObject.events[name] = callback;
+    },
     history: { replaceState() {} },
     URL,
     confirm(message) { windowObject.lastConfirmMessage = message; return confirmResult; },

@@ -426,8 +426,16 @@
       <label for="socialCaption">Post caption / description
         <textarea id="socialCaption" rows="6" maxlength="5000" placeholder="Write your post caption. Include a clear affiliate disclosure when relevant."></textarea>
       </label>
-      <button id="publishYouTubeVideo" type="button" disabled>Publish selected video to YouTube</button>
-      <p class="hint">YouTube upload accepts one MP4/QuickTime/WebM file up to 64 MB in this first API slice. New uploads default to Private. Publishing requires a connected YouTube channel and explicit confirmation.</p>
+      <label for="youtube-video-privacy">YouTube visibility
+        <select id="youtube-video-privacy"><option value="private">Private (default)</option><option value="unlisted">Unlisted</option><option value="public">Public</option></select>
+      </label>
+      <label id="youtube-public-confirm-label" hidden><input id="youtube-public-confirm" type="checkbox"> I confirm this video should be publicly visible on the connected channel, and I have checked the selected campaign's permissions, rights and rules.</label>
+      <button id="publishYouTubeVideo" type="button" disabled>Upload selected video to YouTube</button>
+      <p class="hint">One MP4/QuickTime/WebM file up to 64 MB. Private is the safe default. Content Rewards requires a public video; choose Public only when intended and confirm it separately. The tracker starts only after YouTube confirms processing is complete and public visibility.</p>
+      <div class="form-grid">
+        <label for="youtube-video-id">Last YouTube video ID<input id="youtube-video-id" type="text" maxlength="64" placeholder="Filled after a successful upload"></label>
+        <button id="checkYouTubeVideoStatus" type="button" class="secondary" disabled>Check processing & public status</button>
+      </div>
       <button id="copySocialCaption" type="button">Copy caption</button>
       <button id="openSocialPlatform" type="button" class="secondary">Open official platform</button>
       <p id="socialPostStatus" role="status" aria-live="polite"></p>

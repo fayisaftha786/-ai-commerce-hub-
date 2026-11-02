@@ -329,7 +329,7 @@ function createMetaSocialService(options = {}) {
     if (!found.ok) return found;
     const { page } = found;
     try {
-      const started = await graphRequest(page.id + "/video_reels", {
+      const started = await graphRequest("me/video_reels", {
         method: "POST",
         params: { upload_phase: "start" },
         token: page.accessToken
@@ -355,7 +355,7 @@ function createMetaSocialService(options = {}) {
       if (!uploaded.ok || uploadedData.success !== true) return { ok: false, error: "facebook_reel_upload_failed" };
       const title = String(input.title || "").trim().slice(0, 100);
       const description = String(input.caption || "").trim().slice(0, 5000);
-      const finished = await graphRequest(page.id + "/video_reels", {
+      const finished = await graphRequest("me/video_reels", {
         method: "POST",
         params: {
           video_id: videoId,

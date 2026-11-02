@@ -8,6 +8,8 @@
   const VERSION = 2;
   const STATUSES = Object.freeze(["idea", "applied", "joined", "editing", "ready", "submitted", "approved", "rejected"]);
   const PAYOUT_STATUSES = Object.freeze(["unconfirmed", "pending", "available", "partially-paid", "paid", "not-eligible"]);
+  const PAYOUT_MODELS = Object.freeze(["unknown", "CPM", "Per post", "Retainer", "Pool"]);
+  const PAYOUT_THRESHOLD_STATUSES = Object.freeze(["unknown", "not-required", "pending", "met", "not-met"]);
   const PLATFORMS = Object.freeze(["Content Rewards", "Whop", "TikTok campaign", "Instagram campaign", "YouTube campaign", "Other"]);
   const MAX_CAMPAIGNS = 500;
   const MAX_TIMESTAMPS = 1000;
@@ -171,6 +173,13 @@
     const paidAmount = optionalAmount(source.paidAmount, "Paid amount");
     const payoutCurrency = text(source.payoutCurrency || "USD", 3).toUpperCase();
     const payoutStatus = PAYOUT_STATUSES.includes(source.payoutStatus) ? source.payoutStatus : "unconfirmed";
+    const payoutModel = PAYOUT_MODELS.includes(source.payoutModel) ? source.payoutModel : "unknown";
+    const payoutThresholdStatus = PAYOUT_THRESHOLD_STATUSES.includes(source.payoutThresholdStatus)
+      ? source.payoutThresholdStatus : "unknown";
+    const payoutThresholdMetAt = optionalDateTime(source.payoutThresholdMetAt, "Payout minimum reached time");
+    const payoutCycleEndAt = optionalDateTime(source.payoutCycleEndAt, "Retainer cycle end time");
+    const payoutPoolEndedAt = optionalDateTime(source.payoutPoolEndedAt, "Pool end time");
+    const payoutFlagOpen = source.payoutFlagOpen === true;
     const paidAmountStage = source.paidAmountStage === "content-rewards-balance" ? "content-rewards-balance" : "unknown";
     const viewsCheckedAt = optionalDateTime(source.viewsCheckedAt, "Views checked time");
     const reviewedAt = optionalDateTime(source.reviewedAt, "Review decision time");
@@ -181,6 +190,9 @@
     const whopPayoutAmount = optionalAmount(source.whopPayoutAmount, "Final Whop payout");
     const whopPayoutAt = optionalDateTime(source.whopPayoutAt, "Whop payout time");
     if (!/^[A-Z]{3}$/.test(payoutCurrency)) throw new Error("Payout currency must be a three-letter currency code.");
+    if (payoutThresholdStatus === "met" && ["CPM", "Per post"].includes(payoutModel) && !payoutThresholdMetAt) {
+      throw new Error("Record when the CPM payout / Per-post views minimum was actually reached.");
+    }
     if (paidAmount != null && paidAmount > 0 && !paidAt) throw new Error("Record when the amount was actually received in Content Rewards Balance.");
     if (payoutStatus === "paid" && !(paidAmount > 0)) throw new Error("Enter the amount actually credited to Content Rewards Balance before marking this stage paid.");
     if (rewardApprovedAmount != null && paidAmount != null && paidAmount > rewardApprovedAmount) {
@@ -234,6 +246,12 @@
       rewardApprovedAmount,
       payoutCurrency,
       payoutStatus,
+      payoutModel,
+      payoutThresholdStatus,
+      payoutThresholdMetAt,
+      payoutCycleEndAt,
+      payoutPoolEndedAt,
+      payoutFlagOpen,
       paidAmount,
       paidAmountStage,
       paidAt,
@@ -386,7 +404,7 @@
   }
 
   return Object.freeze({
-    VERSION, STATUSES, PLATFORMS, PAYOUT_STATUSES, MAX_CAMPAIGNS, MAX_TIMESTAMPS, MAX_SOCIAL_ACCOUNTS, SOCIAL_PLATFORMS, ACCOUNT_CHECKS,
+    VERSION, STATUSES, PLATFORMS, PAYOUT_STATUSES, PAYOUT_MODELS, PAYOUT_THRESHOLD_STATUSES, MAX_CAMPAIGNS, MAX_TIMESTAMPS, MAX_SOCIAL_ACCOUNTS, SOCIAL_PLATFORMS, ACCOUNT_CHECKS,
     MAX_SUBMISSION_WINDOW_MS, validDate, safeUrl, postUrlMatchesPlatform, validateTimestamp, validateSubmissionRecord, hasLegacySubmissionTiming, normalizeCampaign, normalizeTimestamp, normalizeAccount,
     stats, makeDraft, createBackup, parseBackup
   });

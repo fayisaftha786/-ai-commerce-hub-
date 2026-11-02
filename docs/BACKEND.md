@@ -102,6 +102,10 @@ The default GitHub Actions scheduled snapshot does not require this optional bac
 
 The backend can serve the same tested static asset bundle and API on one HTTPS origin. This avoids relying on third-party cookies between GitHub Pages and a separate API host. GitHub Pages remains the public static deployment; the single-origin Docker service is the recommended path for a persistent browser-bound YouTube OAuth session.
 
+### Deploy on Oracle Cloud Always Free
+
+For a persistent VM deployment alternative, see [Oracle Always Free backend deployment](ORACLE_ALWAYS_FREE_BACKEND.md). This path includes Docker Compose, Caddy HTTPS and an optional SSH deploy workflow. Always Free capacity and idle-reclamation limits still apply.
+
 ### Deploy the repository on Railway
 
 1. Create a Railway project and add a service connected to this GitHub repository's `main` branch. The root `Dockerfile` is auto-detected and starts `node server.js`.

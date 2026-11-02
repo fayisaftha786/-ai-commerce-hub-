@@ -31,7 +31,7 @@ test("social desk clearly labels manual posting and includes upload and analytic
   assert.ok(html.includes('id="socialCaption"'));
   assert.ok(html.includes('id="openSocialPlatform"'));
   assert.ok(html.includes('id="socialAnalyticsForm"'));
-  assert.ok(html.includes("private backend supports official YouTube OAuth and Meta OAuth/publishing"));
+  assert.ok(html.includes("Social Desk supports YouTube uploads, Facebook Page Reels and linked Instagram Professional Reels"));
   assert.ok(html.includes('id="publishYouTubeVideo"'));
   assert.ok(html.includes('src="social-center.js"'));
 });

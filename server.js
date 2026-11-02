@@ -118,7 +118,7 @@ function createServer(options = {}) {
     (env.SOCIAL_TOKEN_ENCRYPTION_KEY
       ? createEncryptedTokenVault({
         encryptionKey: env.SOCIAL_TOKEN_ENCRYPTION_KEY,
-        filePath: env.SOCIAL_TOKEN_VAULT_PATH
+        filePath: env.SOCIAL_TOKEN_STORE_PATH
       })
       : null);
   const metaMediaStore = options.metaMediaStore || createEphemeralMetaMediaStore({

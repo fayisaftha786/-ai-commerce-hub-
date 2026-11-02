@@ -83,7 +83,8 @@
       const handoff = windowObject.AICommerceSocialHandoff && typeof windowObject.AICommerceSocialHandoff === "object"
         ? windowObject.AICommerceSocialHandoff : null;
       const requiresContentRewardsAccount = Boolean(handoff && handoff.campaignId &&
-        String(handoff.campaignPlatform || "").toLowerCase() === "content rewards");
+        String(handoff.campaignPlatform || "").toLowerCase() === "content rewards" &&
+        String(handoff.platform || "").toLowerCase() === "youtube");
       if (contentRewardsAccountVerifiedLabel) contentRewardsAccountVerifiedLabel.hidden = !requiresContentRewardsAccount;
       if (publicConfirmLabel) publicConfirmLabel.hidden = privacy !== "public";
       if (checkStatusButton) checkStatusButton.disabled = !String((videoIdInput && videoIdInput.value) || lastUploadedVideoId).trim() || statusCheckInFlight;
@@ -220,6 +221,7 @@
     }
     if (publicConfirm) publicConfirm.addEventListener("change", updatePublishControls);
     if (contentRewardsAccountVerified) contentRewardsAccountVerified.addEventListener("change", updatePublishControls);
+    windowObject.addEventListener("ai-commerce:social-handoff", updatePublishControls);
     if (videoIdInput) {
       videoIdInput.addEventListener("input", updatePublishControls);
       videoIdInput.addEventListener("change", updatePublishControls);

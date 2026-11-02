@@ -827,8 +827,8 @@ test("verified YouTube post tracking requires a joined local campaign and proces
   const app = fs.readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
   const handler = app.slice(app.indexOf("function recordVerifiedYouTubePost"), app.indexOf("function deleteCampaign"));
   assert.match(handler, /Before publishing for Content Rewards/);
-  assert.match(handler, /payload\\.uploadStatus !== "processed"/);
-  assert.match(handler, /payload\\.processingStatus !== "succeeded"/);
+  assert.match(handler, /payload\.uploadStatus !== "processed"/);
+  assert.match(handler, /payload\.processingStatus !== "succeeded"/);
   assert.match(handler, /\["joined", "editing", "ready"\]\.includes\(campaign\.status\)/);
 });
 

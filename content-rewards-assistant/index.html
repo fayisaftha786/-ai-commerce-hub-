@@ -303,6 +303,7 @@
     <button class="button button-primary full-width" type="button" id="video-analysis-generate" disabled>Generate platform post package</button>
   </div>
   <div id="video-analysis-package" class="video-analysis-package" hidden>
+    <label id="video-analysis-preapproval-label" hidden><input id="video-analysis-preapproval-confirm" type="checkbox"> I confirm the campaign team has already approved this draft for the account I will publish from. Do not tick this before official approval.</label>
     <label>Post title <input id="video-analysis-title" readonly></label>
     <label>Caption / description <textarea id="video-analysis-caption" rows="7"></textarea></label>
     <label>Hashtags <textarea id="video-analysis-tags" rows="2" readonly></textarea></label>
@@ -315,7 +316,7 @@
       <button class="button button-primary" type="button" id="video-analysis-send-social">Send video + post to Social Media Desk</button>
     </div>
   </div>
-  <p class="video-analysis-privacy"><strong>Privacy & accuracy:</strong> the selected file is inspected in this browser and is not uploaded for analysis. The tool reads duration, dimensions, file size and selected frame previews. It does not automatically understand scenes or transcribe speech; add accurate notes/transcript yourself. The Social Media Desk handoff only prepares the post. You must review it and explicitly confirm any supported upload.</p>
+  <p class="video-analysis-privacy"><strong>Privacy & accuracy:</strong> the selected file is inspected in this browser and is not uploaded for analysis. The tool reads duration, dimensions, file size and selected frame previews. It does not automatically understand scenes or transcribe speech; add accurate notes/transcript yourself. The Social Media Desk handoff carries the selected campaign ID. A verified, processed, public YouTube post can automatically fill the public link and YouTube's actual publishedAt timestamp in that local campaign record. You must still open Content Rewards and manually press Submit clip before the 30-minute limit; this app never fabricates submission receipt or approval.</p>
 </section>
 <section class="video-export-studio" id="real-video-export">
   <div class="video-export-heading"><div><div class="section-kicker">REAL VIDEO RENDERER · ON THIS DEVICE</div><h3>Make an MP4 / Reels video</h3><p class="muted small-text">Combine your own photos or video clips into a vertical video. Add scene captions and an optional voice-over or music file. No video is marked complete until the exported file passes a metadata check.</p></div><span class="video-export-icon">▶</span></div>

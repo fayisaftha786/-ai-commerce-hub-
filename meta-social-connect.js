@@ -22,6 +22,21 @@
         !["joined", "editing", "ready"].includes(campaignStatus)) {
       return { valid: false, error: "Complete Join / Apply in Content Rewards first, then update this local tracker to Joined, Editing or Ready." };
     }
+    if (campaignId && campaignPlatform === "content rewards" && source.contentRewardsAccountVerified !== true) {
+      return { valid: false, error: "Connect and verify this exact posting account in Content Rewards → Settings → Connected accounts before publishing." };
+    }
+    const rules = String(source.rules || "");
+    const acceptedLine = /^\\s*Accepted platforms\\s*:\\s*(.+)$/im.exec(rules);
+    if (campaignId && campaignPlatform === "content rewards" && acceptedLine &&
+        !/^(?:not recognised|not stated|none detected|unknown|n\\/a)$/i.test(acceptedLine[1].trim())) {
+      const accepted = acceptedLine[1].split(/[,;|]/).map((value) => value.trim().toLowerCase());
+      const aliases = provider === "instagram"
+        ? ["instagram", "instagram reels", "reels"]
+        : ["facebook", "facebook reels", "reels"];
+      if (!accepted.some((value) => aliases.includes(value) || value === "all")) {
+        return { valid: false, error: "This platform is not listed in the saved Content Rewards campaign requirements. Recheck the official brief before publishing." };
+      }
+    }
     if (source.requiresPreApproval === true && source.preApprovalConfirmed !== true) {
       return { valid: false, error: "This campaign requires the team's draft approval. Do not publish until the exact draft and posting account are approved." };
     }
@@ -50,6 +65,8 @@
     const statusNode = $("metaAccountConnectionStatus");
     const publishStatus = $("metaPublishStatus");
     const publicConfirm = $("meta-public-confirm");
+    const contentRewardsAccountVerified = $("content-rewards-account-verified");
+    const contentRewardsAccountVerifiedLabel = $("content-rewards-account-verified-label");
     const facebookPublishButton = $("publishFacebookReel");
     const instagramPublishButton = $("publishInstagramReel");
     const facebookCheckButton = $("checkFacebookReelStatus");
@@ -89,12 +106,17 @@
     function updateControls() {
       const page = selectedPage();
       const handoff = getHandoff();
+      const requiresContentRewardsAccount = Boolean(handoff && handoff.campaignId &&
+        String(handoff.campaignPlatform || "").toLowerCase() === "content rewards");
+      if (contentRewardsAccountVerifiedLabel) contentRewardsAccountVerifiedLabel.hidden = !requiresContentRewardsAccount;
+      const accountVerified = !requiresContentRewardsAccount ||
+        Boolean(contentRewardsAccountVerified && contentRewardsAccountVerified.checked);
       const publicApproved = !!(publicConfirm && publicConfirm.checked);
       const selectedPlatform = String(($("socialPlatform") && $("socialPlatform").value) || "").toLowerCase();
       const handoffPlatform = handoff && String(handoff.platform || "").toLowerCase();
       const hasVideo = Boolean(fileInput.files && fileInput.files.length === 1);
       const enabled = Boolean(backendOrigin && metaConfigured && page && !publishInFlight &&
-        publicApproved && hasVideo);
+        publicApproved && accountVerified && hasVideo);
       facebookPublishButton.disabled = !enabled || !page.canPublishFacebook ||
         selectedPlatform !== "facebook" || (handoffPlatform && handoffPlatform !== "facebook");
       instagramPublishButton.disabled = !enabled || !instagramConfigured || !page.canPublishInstagram ||
@@ -212,6 +234,8 @@
         campaignId: handoff && handoff.campaignId,
         campaignPlatform: handoff && handoff.campaignPlatform,
         campaignStatus: handoff && handoff.campaignStatus,
+        contentRewardsAccountVerified: Boolean(contentRewardsAccountVerified && contentRewardsAccountVerified.checked),
+        rules: handoff && handoff.rules,
         requiresPreApproval: handoff && handoff.requiresPreApproval,
         preApprovalConfirmed: handoff && handoff.preApprovalConfirmed
       });
@@ -432,6 +456,7 @@
 
     pageSelect.addEventListener("change", updateControls);
     if (publicConfirm) publicConfirm.addEventListener("change", updateControls);
+    if (contentRewardsAccountVerified) contentRewardsAccountVerified.addEventListener("change", updateControls);
     if (fileInput) fileInput.addEventListener("change", updateControls);
     if ($("socialPlatform")) $("socialPlatform").addEventListener("change", updateControls);
     if (facebookVideoIdInput) facebookVideoIdInput.addEventListener("input", updateControls);

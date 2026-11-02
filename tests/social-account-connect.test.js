@@ -191,9 +191,9 @@ test("YouTube campaign publisher requires the same account to be verified in Con
   };
   connector.init(fixture.windowObject);
   await new Promise((resolve) => setImmediate(resolve));
-  fixture.nodes.get("socialMediaFiles").files = [{ name: "clip.mp4", type: "video/mp4", size: 2048 }];
-  fixture.nodes.get("socialCaption").value = "A campaign clip";
-  fixture.nodes.get("socialPlatform").value = "youtube";
+  fixture.windowObject.document.getElementById("socialMediaFiles").files = [{ name: "clip.mp4", type: "video/mp4", size: 2048 }];
+  fixture.windowObject.document.getElementById("socialCaption").value = "A campaign clip";
+  fixture.windowObject.document.getElementById("socialPlatform").value = "youtube";
   fixture.nodes.get("youtube-video-privacy").value = "public";
   fixture.nodes.get("youtube-public-confirm").checked = true;
   await fixture.nodes.get("publishYouTubeVideo").events.click();

@@ -8,7 +8,7 @@ const VAULT_VERSION = 1;
 const MAX_VAULT_BYTES = 5 * 1024 * 1024;
 const MAX_SESSIONS = 500;
 const AAD = Buffer.from("ai-commerce-hub-social-token-vault:v1", "utf8");
-const ALLOWED_PROVIDERS = new Set(["youtube", "instagram", "facebook"]);
+const ALLOWED_PROVIDERS = new Set(["youtube", "instagram", "facebook", "meta"]);
 
 function parseEncryptionKey(value) {
   const raw = String(value || "").trim();

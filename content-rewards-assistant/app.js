@@ -1427,7 +1427,8 @@
     }
     if (payload.privacyStatus !== "public" ||
         payload.uploadStatus !== "processed" ||
-        payload.processingStatus !== "succeeded") {
+        payload.processingStatus !== "succeeded" ||
+        (campaign.platform === "Content Rewards" && payload.contentRewardsAccountVerified !== true)) {
       showToast("Only a processed public YouTube video can start the Content Rewards timer.");
       return;
     }
@@ -1493,7 +1494,8 @@
       return;
     }
     if (payload.published !== true || payload.privacyStatus !== "public" ||
-        payload.uploadStatus !== "processed" || payload.processingStatus !== "succeeded") {
+        payload.uploadStatus !== "processed" || payload.processingStatus !== "succeeded" ||
+        payload.contentRewardsAccountVerified !== true) {
       showToast("Only a confirmed public Meta post can start the Content Rewards timer.");
       return;
     }

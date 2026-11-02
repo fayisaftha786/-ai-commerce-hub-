@@ -340,10 +340,12 @@
           let url = "";
           try {
             const parsed = new URL(String(result.url || ""));
-            if (parsed.protocol === "https:" && ["youtube.com", "www.youtube.com", "youtu.be"].includes(parsed.hostname) &&
-                parsed.searchParams.get("v") === videoId || (parsed.hostname === "youtu.be" && parsed.pathname.slice(1) === videoId)) {
-              url = parsed.href;
-            }
+            const validWatch = parsed.protocol === "https:" &&
+              (parsed.hostname === "www.youtube.com" || parsed.hostname === "youtube.com") &&
+              parsed.pathname === "/watch" && parsed.searchParams.get("v") === videoId;
+            const validShort = parsed.protocol === "https:" &&
+              parsed.hostname === "youtu.be" && parsed.pathname.replace(/^\//, "") === videoId;
+            if (validWatch || validShort) url = parsed.href;
           } catch (_) {}
           cleanup();
           if (!url || !videoId || privacyStatus !== "public" || Number.isNaN(publishedAt.getTime())) {

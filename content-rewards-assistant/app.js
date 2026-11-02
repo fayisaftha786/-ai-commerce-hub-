@@ -1352,6 +1352,65 @@
       if (persisted) showToast(record.status === "submitted" ? "Submission recorded locally. Approval is not yet confirmed." : "Campaign saved on this device.");
     } catch (error) { showToast(error.message || "Could not save campaign."); }
   }
+  function recordVerifiedYouTubePost(payload) {
+    const campaignId = String(payload && payload.campaignId || "");
+    const campaign = campaignById(campaignId);
+    if (!campaign || campaign.platform !== "Content Rewards") {
+      showToast("YouTube confirms a public video, but no matching Content Rewards campaign is selected. Add the link to the correct campaign manually.");
+      return;
+    }
+    if (payload.privacyStatus !== "public") {
+      showToast("Only a processed public YouTube video can start the Content Rewards timer.");
+      return;
+    }
+    const postUrl = Core.safeUrl(payload.url);
+    if (!postUrl || !Core.postUrlMatchesPlatform(postUrl, "YouTube")) {
+      showToast("The YouTube provider returned an invalid public link; the campaign was not changed.");
+      return;
+    }
+    const publishedAt = new Date(payload.publishedAt || "");
+    if (Number.isNaN(publishedAt.getTime()) || publishedAt.getTime() > Date.now() + 5 * 60 * 1000) {
+      showToast("YouTube public time is missing or ahead of this device clock; the campaign was not changed.");
+      return;
+    }
+    if (["submitted", "approved", "rejected"].includes(campaign.status)) {
+      showToast("This campaign record already has a submission status. Create a separate tracker entry for a new YouTube post.");
+      return;
+    }
+    if (campaign.postUrl && campaign.postUrl !== postUrl) {
+      showToast("This campaign record already contains a different post link. A second post must use a separate campaign tracker entry.");
+      return;
+    }
+    if (campaign.postUrl === postUrl && campaign.postedAt === publishedAt.toISOString()) {
+      showToast("This verified YouTube post is already recorded. Submit its link in Content Rewards before the deadline.");
+      return;
+    }
+    try {
+      const nextStatus = ["joined", "editing", "ready"].includes(campaign.status) ? "ready" : campaign.status;
+      const updated = Core.normalizeCampaign({
+        ...campaign,
+        postUrl,
+        postPlatform: "YouTube",
+        postedAt: publishedAt.toISOString(),
+        submittedAt: "",
+        status: nextStatus,
+        updatedAt: new Date().toISOString()
+      });
+      const previous = snapshotState();
+      state.campaigns = state.campaigns.map((item) => item.id === campaign.id ? updated : item);
+      if (!saveOrRestore(previous)) return;
+      render();
+      refreshDeadlineCountdowns();
+      showToast("YouTube public post link/time saved locally. Open Content Rewards and press Submit clip within 30 minutes—submission is not automatic.");
+    } catch (error) {
+      showToast(error.message || "Could not record the verified YouTube post.");
+    }
+  }
+
+  window.addEventListener("clipreward:youtube-published", (event) => {
+    recordVerifiedYouTubePost(event.detail || {});
+  });
+
   function deleteCampaign(id) {
     const campaign = campaignById(id);
     if (!campaign) return;

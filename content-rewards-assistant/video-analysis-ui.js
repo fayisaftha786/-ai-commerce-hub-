@@ -107,9 +107,10 @@
       const select = $("draft-campaign");
       const option = select && select.selectedOptions && select.selectedOptions[0];
       return option && select.value ? {
+        id: select.value,
         name: option.textContent.trim(),
         rules: option.dataset ? option.dataset.rules || "" : ""
-      } : { name: "", rules: "" };
+      } : { id: "", name: "", rules: "" };
     }
 
     analyzeButton.addEventListener("click", async () => {
@@ -174,6 +175,9 @@
           warnings.append(item);
         });
         packagePanel.hidden = false;
+        const preApprovalRequired = /(pre.?approval|approve.*draft|draft.*approval)/i.test(campaign.rules);
+        $("video-analysis-preapproval-label").hidden = !preApprovalRequired;
+        $("video-analysis-preapproval-confirm").checked = false;
         postCaption.value = postPackage.caption;
         postCaption.dispatchEvent(new root.Event("input", { bubbles: true }));
         $("video-captions").value = [postPackage.title, $("video-analysis-notes").value.trim()].filter(Boolean).slice(0, 8).join("\n");
@@ -260,7 +264,15 @@
       }
     });
 
+    let activeHandoffCleanup = null;
     $("video-analysis-send-social").addEventListener("click", () => {
+      const campaign = selectedCampaign();
+      const requiresPreApproval = /(pre.?approval|approve.*draft|draft.*approval)/i.test(campaign.rules);
+      if (activeHandoffCleanup) activeHandoffCleanup();
+      if (requiresPreApproval && !$("video-analysis-preapproval-confirm").checked) {
+        setStatus("This campaign requires draft pre-approval. Upload the draft in Content Rewards and wait for the team's approval before sending it for public publishing. Tick the confirmation only after approval.", true);
+        return;
+      }
       const file = fileInput.files && fileInput.files[0];
       if (!file || !analysis || !postPackage) {
         setStatus("Analyse the video and generate its post package first.", true);
@@ -274,13 +286,20 @@
       targetUrl.hash = "socialDeskHeading";
       let child = null;
       let sent = false;
+      let acknowledged = false;
+      let timeout = 0;
+      let closeAfterAckTimeout = 0;
       const cleanup = () => {
         root.removeEventListener("message", onMessage);
-        root.clearTimeout(timeout);
+        root.removeEventListener("pagehide", cleanup);
+        if (timeout) root.clearTimeout(timeout);
+        if (closeAfterAckTimeout) root.clearTimeout(closeAfterAckTimeout);
+        if (activeHandoffCleanup === cleanup) activeHandoffCleanup = null;
       };
-      const timeout = root.setTimeout(() => {
+      activeHandoffCleanup = cleanup;
+      timeout = root.setTimeout(() => {
         cleanup();
-        setStatus("The Social Media Desk did not respond. Allow pop-ups for this site and try again.", true);
+        setStatus("The Social Media Desk did not respond. Allow pop-ups and try again.", true);
       }, 15000);
       function onMessage(event) {
         if (event.origin !== root.location.origin || event.source !== child || !event.data) return;
@@ -292,20 +311,58 @@
               file,
               caption: postPackage.caption,
               title: postPackage.title,
-              platform: postPackage.platform
+              platform: postPackage.platform,
+              campaignId: campaign.id,
+              campaignName: campaign.name,
+              requiresPreApproval,
+              preApprovalConfirmed: $("video-analysis-preapproval-confirm").checked
             }
           }, root.location.origin);
-          setStatus("Sending the video and caption to Social Media Desk…", false);
+          setStatus("Sending the video, campaign reference and caption to Social Media Desk…", false);
         } else if (event.data.type === "AI_COMMERCE_CLIP_HANDOFF_ACK") {
+          if (!event.data.ok) {
+            cleanup();
+            setStatus(event.data.error || "Social Media Desk could not import this post package.", true);
+            return;
+          }
+          acknowledged = true;
+          if (timeout) root.clearTimeout(timeout);
+          timeout = 0;
+          setStatus(event.data.mediaImported
+            ? "Video and caption loaded in Social Media Desk. Select visibility and explicitly confirm before uploading."
+            : "Caption loaded, but this browser could not attach the video automatically. Select the video again in Social Media Desk.", !event.data.mediaImported);
+          closeAfterAckTimeout = root.setTimeout(cleanup, 35 * 60 * 1000);
+        } else if (acknowledged && event.data.type === "AI_COMMERCE_YOUTUBE_PUBLISH_RESULT") {
+          const result = event.data.payload && typeof event.data.payload === "object" ? event.data.payload : {};
+          const videoId = String(result.videoId || "");
+          const privacyStatus = String(result.privacyStatus || "");
+          const publishedAt = new Date(result.publishedAt || "");
+          let url = "";
+          try {
+            const parsed = new URL(String(result.url || ""));
+            if (parsed.protocol === "https:" && ["youtube.com", "www.youtube.com", "youtu.be"].includes(parsed.hostname) &&
+                parsed.searchParams.get("v") === videoId || (parsed.hostname === "youtu.be" && parsed.pathname.slice(1) === videoId)) {
+              url = parsed.href;
+            }
+          } catch (_) {}
           cleanup();
-          if (event.data.ok) {
-            setStatus(event.data.mediaImported
-              ? "Video and caption loaded in Social Media Desk. Review them and use the official publish action; nothing has been posted yet."
-              : "Caption loaded, but this browser could not attach the video automatically. Select the video again in Social Media Desk.", !event.data.mediaImported);
-          } else setStatus(event.data.error || "Social Media Desk could not import this post package.", true);
+          if (!url || !videoId || privacyStatus !== "public" || Number.isNaN(publishedAt.getTime())) {
+            setStatus(privacyStatus === "private" || privacyStatus === "unlisted"
+              ? "YouTube video is uploaded but not public. Content Rewards requires a public post; no 30-minute timer has started. Make it public in YouTube Studio, then check status again."
+              : "YouTube has not confirmed a processed public video. No Content Rewards timer has started.", true);
+            return;
+          }
+          const handoffResult = { ...result, url, videoId, privacyStatus, publishedAt: publishedAt.toISOString(), campaignId: campaign.id };
+          if (typeof root.CustomEvent === "function") {
+            root.dispatchEvent(new root.CustomEvent("clipreward:youtube-published", { detail: handoffResult }));
+          }
+          setStatus(campaign.id
+            ? "YouTube confirms the video is processed and public. Its exact public link/time was sent to this campaign's local tracker. Submit clip in Content Rewards now—this app has not submitted it."
+            : "YouTube confirms the video is processed and public, but no Content Rewards campaign was selected. Add the link and public time to the correct tracker entry now.", false);
         }
       }
       root.addEventListener("message", onMessage);
+      root.addEventListener("pagehide", cleanup, { once: true });
       child = root.open(targetUrl.href, "_blank");
       if (!child) {
         cleanup();
@@ -316,6 +373,7 @@
     fileInput.addEventListener("change", () => {
       analysis = null;
       postPackage = null;
+      if (activeHandoffCleanup) activeHandoffCleanup();
       metadata.replaceChildren();
       frames.replaceChildren();
       scenes.textContent = "Analyse a video to detect possible scene changes.";

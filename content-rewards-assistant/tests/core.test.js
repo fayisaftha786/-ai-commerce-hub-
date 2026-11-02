@@ -32,11 +32,12 @@ test("timestamp parser accepts mm:ss and hh:mm:ss and rejects malformed values",
 test("stats count only explicit campaign statuses", () => {
   assert.deepEqual(Core.stats([
     { status: "idea" }, { status: "applied" }, { status: "joined" },
-    { status: "editing" }, { status: "ready" }, { status: "submitted" },
+    { status: "editing" }, { status: "ready" }, { status: "published" }, { status: "submitted" },
     { status: "approved" }, { status: "rejected" }
-  ]), { total: 8, progress: 4, review: 1, approved: 1 });
+  ]), { total: 9, progress: 5, review: 1, approved: 1 });
   assert.equal(Core.normalizeCampaign({ name: "Applied offer", status: "applied" }).status, "applied");
   assert.equal(Core.normalizeCampaign({ name: "Joined offer", status: "joined" }).status, "joined");
+  assert.equal(Core.normalizeCampaign({ name: "Public clip", status: "published" }).status, "published");
 });
 
 test("draft generator uses requested language and safe disclosure guidance", () => {

@@ -67,6 +67,7 @@ test("blocks Meta publishing until platform, Content Rewards join state and pre-
     campaignId: "campaign_1",
     campaignPlatform: "Content Rewards",
     campaignStatus: "ready",
+    contentRewardsAccountVerified: true,
     requiresPreApproval: true,
     preApprovalConfirmed: true
   });

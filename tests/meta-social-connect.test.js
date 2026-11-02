@@ -29,12 +29,34 @@ test("blocks Meta publishing until platform, Content Rewards join state and pre-
   });
   assert.equal(notJoined.valid, false);
   assert.match(notJoined.error, /Join/);
+  const accountNotVerified = MetaConnect.validateMetaPublishContext({
+    provider: "instagram",
+    platform: "instagram",
+    campaignId: "campaign_1",
+    campaignPlatform: "Content Rewards",
+    campaignStatus: "ready",
+    contentRewardsAccountVerified: false
+  });
+  assert.equal(accountNotVerified.valid, false);
+  assert.match(accountNotVerified.error, /verify this exact posting account/i);
+  const notAllowedPlatform = MetaConnect.validateMetaPublishContext({
+    provider: "facebook",
+    platform: "facebook",
+    campaignId: "campaign_1",
+    campaignPlatform: "Content Rewards",
+    campaignStatus: "ready",
+    contentRewardsAccountVerified: true,
+    rules: "Accepted platforms: Instagram, YouTube"
+  });
+  assert.equal(notAllowedPlatform.valid, false);
+  assert.match(notAllowedPlatform.error, /not listed/i);
   const needsApproval = MetaConnect.validateMetaPublishContext({
     provider: "facebook",
     platform: "facebook",
     campaignId: "campaign_1",
     campaignPlatform: "Content Rewards",
     campaignStatus: "ready",
+    contentRewardsAccountVerified: true,
     requiresPreApproval: true,
     preApprovalConfirmed: false
   });
@@ -45,6 +67,7 @@ test("blocks Meta publishing until platform, Content Rewards join state and pre-
     campaignId: "campaign_1",
     campaignPlatform: "Content Rewards",
     campaignStatus: "ready",
+    contentRewardsAccountVerified: true,
     requiresPreApproval: true,
     preApprovalConfirmed: true
   });
@@ -61,7 +84,7 @@ test("Social Desk exposes Meta connect, Page selection, public confirmation and 
   const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json" ), "utf8"));
   for (const id of [
     "connectMetaAccount", "disconnectMetaAccount", "metaPageSelect",
-    "metaAccountConnectionStatus", "meta-public-confirm",
+    "metaAccountConnectionStatus", "meta-public-confirm", "content-rewards-account-verified",
     "publishFacebookReel", "publishInstagramReel", "checkFacebookReelStatus",
     "facebook-reel-id", "metaPublishStatus"
   ]) assert.ok(html.includes('id="' + id + '"'), "missing Meta control " + id);
@@ -70,4 +93,6 @@ test("Social Desk exposes Meta connect, Page selection, public confirmation and 
   assert.match(worker, /meta-social-connect\.js/);
   assert.match(packageJson.scripts.check, /meta-social-oauth\.js/);
   assert.match(packageJson.scripts.check, /meta-media-store\.js/);
+  assert.match(source, /ai-commerce:social-handoff/);
+  assert.match(source, /contentRewardsAccountVerified/);
 });

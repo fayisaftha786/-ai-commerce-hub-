@@ -81,6 +81,9 @@ test("Social Desk validates a same-origin Clip Studio video handoff before loadi
   assert.equal(campaignHandoff.valid, true);
   assert.equal(campaignHandoff.campaignId, "campaign_123");
   assert.equal(campaignHandoff.requiresPreApproval, true);
+  assert.deepEqual(campaignHandoff.mediaFingerprint, {
+    name: "clip.mp4", size: 2048, type: "video/mp4", lastModified: 0
+  });
   assert.equal(social.validatePostHandoff({
     platform: "youtube",
     caption: "No confirmation",

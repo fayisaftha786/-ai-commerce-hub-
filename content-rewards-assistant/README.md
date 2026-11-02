@@ -14,14 +14,14 @@ Or run the existing root project as usual and open \`content-rewards-assistant/i
 
 - Create, edit, search, filter, and delete campaign records for Content Rewards, Whop and other creator programs.
 - Account Center with official Content Rewards/Whop/help links, a local creator label, saved social handles and a six-step manual workflow-readiness checklist, including an 18+ self-confirmation (no date of birth collected and no age verification).
-- A 30-minute Content Rewards submission countdown, plus a preflight check that the selected posting platform matches the HTTPS post-link host and that the recorded link-submission time is within 30 minutes of posting.
+- A 30-minute Content Rewards submission countdown, opt-in browser reminders at the final 15/5/1 minutes, and one-tap “set time to now” controls for the actual post and link-submission timestamps. Alerts require browser permission and are best-effort while the app page is running; they cannot wake a closed/suspended page.
 - A legacy-safe submission log with the actual link-submission time stored separately from the post-publication time.
 - Record deadlines, campaign rules, public post links, and manual review status.
 - Generate English, Malayalam, or bilingual caption/script scaffolds from local templates.
 - Save and sort mm:ss or hh:mm:ss editing notes.
 - Export and validate a versioned JSON backup, with duplicate-ID, date, timestamp, URL-scheme, size and record-count checks; account-center records are included, and older backups without them still import.
 - Responsive dark dashboard, mobile navigation and local-first browser storage.
-- On HTTPS/localhost, the page registers its own scoped service worker and refreshes a versioned v18 asset cache using network-first requests with an offline fallback. Open the page online at least once after an update before relying on the new files offline; `file://` usage does not install the worker.
+- On HTTPS/localhost, the page registers its own scoped service worker and refreshes a versioned asset cache using network-first requests with an offline fallback. Open the page online at least once after an update before relying on the new files offline; `file://` usage does not install the worker.
 - Node.js regression tests for the core data validation and backup format.
 
 ## Direct public campaign-page analysis (no copy/paste required)
@@ -85,7 +85,7 @@ This is a local check of the campaign notes stored by the creator, not a live ca
 
 ## Content Rewards submission workflow
 
-The in-app submission guide now separates the two official routes: standard campaigns (publish a public clip, then submit its link while the post is less than 30 minutes old) and pre-approval campaigns (upload a draft first, wait for approval, publish from an approved connected account, then submit the live link while the post is less than 30 minutes old). The local reminder timer applies only to Content Rewards campaigns; it does not impose Content Rewards' 30-minute rule on other programmes.
+The in-app submission guide now separates the two official routes: standard campaigns (publish a public clip, then submit its link while the post is less than 30 minutes old) and pre-approval campaigns (upload a draft first, wait for approval, publish from an approved connected account, then submit the live link while the post is less than 30 minutes old). The local reminder timer applies only to Content Rewards campaigns; it does not impose Content Rewards' 30-minute rule on other programmes. The Account Center can enable browser notifications for the final 15/5/1 minutes. Keep the workspace open and the browser notification permission enabled; a local web timer is not a push service and cannot wake a closed or suspended page. “I just published” and “I just pressed Submit clip” shortcuts record the current device time, but the creator must confirm that the action actually happened.
 
 When a Content Rewards campaign is marked Submitted in the local tracker, select the actual posting platform, provide a matching public HTTPS post link, record when the post went live, and record when you actually submitted the link inside Content Rewards. The preflight rejects platform/link mismatches, submission times before posting, submissions at or beyond 30 minutes, and future timestamps. This checks the information entered in this browser only; it cannot prove that the link was actually submitted or accepted on Content Rewards. Rejected is labelled as Rejected, not as a request for changes.
 

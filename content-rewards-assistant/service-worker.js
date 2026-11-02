@@ -1,6 +1,6 @@
 "use strict";
-const CACHE = "clipreward-static-v29";
-const ASSETS = ["./", "./index.html", "./style.css", "./campaign-scout.js", "./campaign-feed.js", "./discovery-engine.js", "./video-studio.js", "./video-studio-ui.js", "./video-analysis.js", "./video-analysis-ui.js", "./rewards-intelligence.js", "./core.js", "./app.js", "./manifest.webmanifest", "./icon.svg"];
+const CACHE = "clipreward-static-v30";
+const ASSETS = ["./", "./index.html", "./style.css", "./campaign-scout.js", "./campaign-feed.js", "./discovery-engine.js", "./video-studio.js", "./video-studio-ui.js", "./video-analysis.js", "./video-analysis-ui.js", "./rewards-intelligence.js", "./core.js", "./submission-alerts.js", "./app.js", "./manifest.webmanifest", "./icon.svg"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(ASSETS)).then(() => self.skipWaiting()));
@@ -14,6 +14,23 @@ self.addEventListener("activate", (event) => {
           .map((key) => caches.delete(key))
       ))
       .then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const target = new URL("./#campaigns", self.registration.scope).href;
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((windowClients) => {
+      const existing = windowClients.find((client) => "focus" in client);
+      if (existing) {
+        if ("navigate" in existing) {
+          return existing.navigate(target).then(() => existing.focus());
+        }
+        return existing.focus();
+      }
+      return self.clients.openWindow(target);
+    })
   );
 });
 

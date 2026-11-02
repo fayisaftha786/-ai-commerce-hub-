@@ -12,18 +12,36 @@ on:
       - "server.js"
       - "static-site.js"
       - "scripts/**"
+      - "app-health.js"
       - "app.js"
-      - "index.html"
-      - "style.css"
-      - "content-rewards-assistant/**"
+      - "campaign-report.js"
+      - "catalog-import.js"
+      - "creator-program-directory.js"
       - "creator-programs-snapshot.json"
-      - "youtube-oauth.js"
-      - "meta-social-oauth.js"
+      - "discovery-engine.js"
+      - "discovery-service.js"
+      - "discovery-store.js"
+      - "earning-engine.js"
+      - "earning-hub.js"
+      - "index.html"
+      - "marketplace-search.js"
+      - "meta-media-store.js"
       - "meta-social-connect.js"
-      - "social-token-vault.js"
-      - "social-provider-readiness.js"
+      - "meta-social-oauth.js"
+      - "offer-engine.js"
+      - "package.json"
+      - "product-utils.js"
+      - "pwa-install.js"
       - "social-account-connect.js"
       - "social-center.js"
+      - "social-oauth-state.js"
+      - "social-provider-readiness.js"
+      - "social-token-vault.js"
+      - "style.css"
+      - "video-maker.js"
+      - "workflow-guide.js"
+      - "youtube-oauth.js"
+      - "content-rewards-assistant/**"
       - ".github/workflows/deploy-oci.yml"
 
 permissions:
@@ -35,7 +53,7 @@ concurrency:
 
 jobs:
   deploy:
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'workflow_dispatch' || vars.OCI_DEPLOY_ENABLED == 'true')
     runs-on: ubuntu-latest
     steps:
       - name: Validate required deployment secrets

@@ -16,12 +16,13 @@
     return Number.isFinite(time) ? time : null;
   }
 
-  function result(status, title, detail, estimateAt, caveat) {
+  function result(status, title, detail, estimateAt, caveat, estimateEndAt) {
     return {
       status,
       title,
       detail,
       estimateAt: estimateAt == null ? "" : new Date(estimateAt).toISOString(),
+      estimateEndAt: estimateEndAt == null ? "" : new Date(estimateEndAt).toISOString(),
       caveat: caveat || ""
     };
   }
@@ -63,30 +64,31 @@
         return result("blocked", "Minimum requirement not met", "The campaign's minimum payout/views requirement is recorded as not met. Check its monitoring period and the official campaign decision.");
       }
 
-      let startAt = approvedAt;
+      let thresholdMetAt = null;
       if (threshold === "met") {
-        const metAt = validTime(source.payoutThresholdMetAt);
-        if (metAt == null) {
+        thresholdMetAt = validTime(source.payoutThresholdMetAt);
+        if (thresholdMetAt == null) {
           return result("needs-input", "Threshold time needed", "Record when the official Content Rewards page showed the minimum payout/views requirement was met.");
         }
-        startAt = Math.max(startAt, metAt);
       }
 
       if (model === "CPM") {
         return result(
           "estimate",
           "Estimated first CPM balance-credit date",
-          "The first round opens after approval and any minimum payout threshold are both satisfied; it then normally runs for 7 earning days plus a 3-day hold.",
-          startAt + 10 * DAY_MS,
-          "First-round estimate only. Recurring rounds, funding, view validation, flags and payment runs can change timing."
+          "After approval, CPM keeps earning for 7 more days, then the amount is held for 3 days and pays on day 10. The minimum-view requirement must already be met for the clip to earn.",
+          approvedAt + 10 * DAY_MS,
+          "First approved round only. This estimate assumes the clip is eligible and its minimum was met; a flag, rejection, returned payout, funding issue or later approval change can alter the result."
         );
       }
+      const perPostStart = Math.max(approvedAt, thresholdMetAt == null ? approvedAt : thresholdMetAt);
       return result(
         "estimate",
-        "Estimated Per-post balance-credit time",
-        "Per-post payouts are normally credited about 15 minutes after approval when any campaign minimum views requirement is already met.",
-        startAt + 15 * 60 * 1000,
-        "Conditional on reaching the minimum views within the campaign's monitoring period, funding and validation."
+        "Estimated Per-post balance-credit window",
+        "Per-post is set aside when the minimum views are reached and normally settles about 15–30 minutes after approval. This window starts after both approval and the recorded minimum-view milestone.",
+        perPostStart + 15 * 60 * 1000,
+        "Conditional on the minimum being met within the campaign's monitoring period, continued eligibility, funding and the next payment run.",
+        perPostStart + 30 * 60 * 1000
       );
     }
 
@@ -104,22 +106,12 @@
       );
     }
 
-    const poolEnd = validTime(source.payoutPoolEndedAt);
-    if (poolEnd == null) {
-      return result("needs-input", "Pool end time needed", "A Pool does not end when your clip's tracking ends. Record the actual campaign Pool end shown by Content Rewards.");
-    }
-    if (threshold === "unknown" || threshold === "pending") {
-      return result("waiting", "Pool eligibility needs confirmation", "Check whether you met the Pool's minimum qualifying views. The final share is not known before allocation.");
-    }
-    if (threshold === "not-met") {
-      return result("blocked", "Pool minimum not met", "The campaign's qualifying minimum is recorded as not met, so this record should not expect a Pool share.");
-    }
     return result(
-      "estimate",
-      "Estimated Pool balance-credit date",
-      "Eligible Pool shares are calculated when the Pool ends and ordinarily settle after a 3-day hold.",
-      poolEnd + 3 * DAY_MS,
-      "The allocation and individual amount are not guaranteed; this depends on eligible views, other creators, fees, validation and funding."
+      "needs-input",
+      "Pool payout timing not forecast",
+      "The current official creator payout guide documents CPM, Per post and Retainer timing, but does not give a universal Pool settlement schedule. Record only a date actually shown in the official Earnings page or written campaign terms.",
+      null,
+      "Do not apply the CPM / Per-post / Retainer hold rules to a Pool by assumption."
     );
   }
 

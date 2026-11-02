@@ -371,7 +371,7 @@ test("ClipReward keeps saved UI state when campaign, timestamp, account and back
 test("ClipReward service worker is registered, refreshes v6 assets and scopes offline caching", () => {
   const workerSource = fs.readFileSync(path.join(__dirname, "..", "service-worker.js"), "utf8");
   const htmlSource = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
-  assert.match(workerSource, /const CACHE = "clipreward-static-v30"/);
+  assert.match(workerSource, /const CACHE = "clipreward-static-v31"/);
   for (const asset of ["./index.html", "./style.css", "./campaign-scout.js", "./campaign-feed.js", "./discovery-engine.js", "./video-studio.js", "./video-studio-ui.js", "./video-analysis.js", "./video-analysis-ui.js", "./core.js", "./app.js", "./manifest.webmanifest", "./icon.svg"]) {
     assert.ok(workerSource.includes('"' + asset + '"'), "missing ClipReward offline asset " + asset);
   }
@@ -610,7 +610,7 @@ test("creator operations UI is wired without claiming private account or payout 
   assert.match(appSource, /URGENT: .*less than 1 minute remains/);
   assert.match(appSource, /within 5 minutes/);
   assert.match(appSource, /Live views, approval and payout were not queried/);
-  assert.match(worker, /clipreward-static-v30/);
+  assert.match(worker, /clipreward-static-v31/);
 });
 
 
@@ -737,7 +737,7 @@ test("Creator Operations UI distinguishes CR balance credit, Whop transfer and f
   assert.match(appSource, /Available in CR balance/);
   assert.match(appSource, /Credited to CR balance/);
   assert.match(appSource, /function renderOperations\(\)/);
-  assert.match(worker, /clipreward-static-v30/);
+  assert.match(worker, /clipreward-static-v31/);
 });
 
 
@@ -782,6 +782,38 @@ test("legacy paid payout rows remain importable without inventing the destinatio
     withdrawnToWhopAt: "2026-10-21T12:00:00.000Z"
   }), /Confirm the previous amount was credited to Content Rewards Balance/i);
 });
+test("payout forecast evidence fields normalize, retain backup compatibility and validate timestamps", () => {
+  const campaign = Core.normalizeCampaign({
+    name: "CPM payout forecast",
+    payoutModel: "CPM",
+    payoutThresholdStatus: "met",
+    payoutThresholdMetAt: "2026-11-03T10:00:00.000Z",
+    reviewedAt: "2026-11-01T10:00:00.000Z",
+    payoutFlagOpen: true
+  });
+  assert.equal(campaign.payoutModel, "CPM");
+  assert.equal(campaign.payoutThresholdStatus, "met");
+  assert.equal(campaign.payoutThresholdMetAt, "2026-11-03T10:00:00.000Z");
+  assert.equal(campaign.payoutFlagOpen, true);
+
+  const restored = Core.parseBackup(Core.createBackup({ campaigns: [campaign], timestamps: [] }));
+  assert.equal(restored.campaigns[0].payoutModel, "CPM");
+  assert.equal(restored.campaigns[0].payoutThresholdStatus, "met");
+  assert.equal(restored.campaigns[0].payoutFlagOpen, true);
+
+  assert.equal(Core.normalizeCampaign({ name: "Old payout entry" }).payoutModel, "unknown");
+  assert.throws(() => Core.normalizeCampaign({
+    name: "Missing threshold timestamp",
+    payoutModel: "Per post",
+    payoutThresholdStatus: "met"
+  }), /Record when the CPM payout \/ Per-post views minimum/i);
+  assert.throws(() => Core.normalizeCampaign({
+    name: "Bad cycle date",
+    payoutModel: "Retainer",
+    payoutCycleEndAt: "not-a-date"
+  }), /Retainer cycle end time/i);
+});
+
 test("legacy paid status display does not claim a confirmed Content Rewards balance credit", () => {
   const app = fs.readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
   assert.match(app, /Legacy receipt · destination unknown/);

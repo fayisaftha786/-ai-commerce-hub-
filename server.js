@@ -162,6 +162,24 @@ function createServer(options = {}) {
   const server = http.createServer(async (request, response) => {
     const pathname = new URL(request.url ?? "/", "http://localhost").pathname;
 
+    if (pathname.startsWith("/media/instagram/")) {
+      if (request.method !== "GET" && request.method !== "HEAD") {
+        response.setHeader("allow", "GET, HEAD");
+        return sendJson(response, 405, { error: "method_not_allowed" });
+      }
+      const token = pathname.slice("/media/instagram/".length);
+      const media = metaMediaStore.get(token);
+      if (!media) return sendJson(response, 404, { error: "media_not_found_or_expired" });
+      response.writeHead(200, {
+        "content-type": media.mimeType,
+        "content-length": String(media.size),
+        "cache-control": "private, no-store, max-age=0",
+        "x-content-type-options": "nosniff",
+        "content-disposition": "inline"
+      });
+      return response.end(request.method === "HEAD" ? undefined : media.buffer);
+    }
+
     if (pathname.startsWith("/api/social/")) {
       const sessionId = parseCookie(request, socialSessionCookieName(env));
       const isNavigationRoute = pathname === "/api/social/youtube/connect" || pathname === "/api/social/youtube/callback" || pathname === "/api/social/meta/connect" || pathname === "/api/social/meta/callback";

@@ -773,12 +773,17 @@
       discoveryStaticStatus && discoveryStaticStatus.lastScan || scans[0];
     const backendConfigured = Boolean(discoverySettings.backendUrl);
     const scheduledSnapshot = Boolean(discoveryStaticStatus && discoveryStaticStatus.lastScan);
+    const historicalCount = campaigns.filter((row) => window.ClipRewardDiscovery.listingStatus(row).kind === "historical").length;
+    const latestScanCount = campaigns.filter((row) => row.notSeenInLatestScan === false).length;
+    const unclassifiedCount = Math.max(0, campaigns.length - historicalCount - latestScanCount);
     $("discovery-total").textContent = campaigns.length;
     $("discovery-high").textContent = campaigns.filter((row) =>
       row.notSeenInLatestScan !== true && row.opportunity && row.opportunity.tier === "high"
     ).length;
     $("discovery-new").textContent = latest ? latest.newCount : "—";
-    $("discovery-last-scan").textContent = latest ? new Date(latest.completedAt || latest.at).toLocaleString() : "Not scanned yet";
+    const scanTimestamp = latest ? new Date(latest.completedAt || latest.at).toLocaleString() : "Not scanned yet";
+    $("discovery-last-scan").textContent = scanTimestamp + " · " + latestScanCount + " seen in latest scan · " +
+      historicalCount + " historical · " + unclassifiedCount + " unclassified";
     $("discovery-mode").textContent = backendConfigured
       ? discoveryBackendStatus
         ? discoveryBackendStatus.enabled ? "Server-side scheduler active · " + discoveryBackendStatus.intervalMinutes + " minute interval" : "Backend reachable · server scheduler disabled"
@@ -813,7 +818,8 @@
       const poolTerms = row.pool ? [row.pool.splitBy ? "Split by " + row.pool.splitBy : "", row.pool.paidWhen ? "Paid " + row.pool.paidWhen : ""].filter(Boolean).join(" · ") : "";
       const tier = row.opportunity ? row.opportunity.tier.toUpperCase() : "UNRATED";
       const freshness = row.opportunity ? row.opportunity.status.replace(/-/g, " ") : "unknown";
-      return '<article class="discovery-card"><div class="discovery-card-head"><strong>' + escapeHtml(row.title) + '</strong><span class="discovery-tier discovery-tier-' + escapeHtml(tier.toLowerCase()) + '">' + escapeHtml(tier) + ' · ' + escapeHtml(row.opportunity ? row.opportunity.score : 0) + '/100</span></div><p>' + escapeHtml(row.brand || "Brand not stated") + ' · ' + escapeHtml((row.platforms || []).join(", ") || "Platform unknown") + '</p><div class="feed-metrics"><span>' + escapeHtml(rate) + '</span><span>' + escapeHtml(minimum || freshness) + '</span></div>' + (poolTerms ? '<small>' + escapeHtml(poolTerms) + '</small>' : '') + '<small>' + escapeHtml(row.opportunity ? row.opportunity.explanation : "Verify source details.") + '</small><div class="feed-card-actions"><button class="button button-secondary" type="button" data-discovery-import="' + index + '">Analyse campaign</button>' + (row.officialUrl ? '<a class="text-button" href="' + escapeHtml(row.officialUrl) + '" target="_blank" rel="noopener noreferrer">Verify official page ↗</a>' : '') + '</div></article>';
+      const availability = window.ClipRewardDiscovery.listingStatus(row);
+      return '<article class="discovery-card"><div class="discovery-card-head"><strong>' + escapeHtml(row.title) + '</strong><span class="discovery-tier discovery-tier-' + escapeHtml(tier.toLowerCase()) + '">' + escapeHtml(tier) + ' · ' + escapeHtml(row.opportunity ? row.opportunity.score : 0) + '/100</span></div><p>' + escapeHtml(row.brand || "Brand not stated") + ' · ' + escapeHtml((row.platforms || []).join(", ") || "Platform unknown") + '</p><div class="feed-metrics"><span>' + escapeHtml(rate) + '</span><span>' + escapeHtml(minimum || freshness) + '</span></div><small class="discovery-listing-status discovery-listing-status-' + escapeHtml(availability.kind) + '"><strong>' + escapeHtml(availability.label) + '</strong> · ' + escapeHtml(availability.detail) + '</small>' + (poolTerms ? '<small>' + escapeHtml(poolTerms) + '</small>' : '') + '<small>' + escapeHtml(row.opportunity ? row.opportunity.explanation : "Verify source details.") + '</small><div class="feed-card-actions"><button class="button button-secondary" type="button" data-discovery-import="' + index + '">Analyse campaign</button>' + (row.officialUrl ? '<a class="text-button" href="' + escapeHtml(row.officialUrl) + '" target="_blank" rel="noopener noreferrer">Verify official page ↗</a>' : '') + '</div></article>';
     }).join("") : '<p class="muted small-text">No saved discoveries yet. Run the GitHub page-scan workflow for background campaign-page analysis. “Test feed in browser” checks only the public lead feed while this page is open.</p>';
     $("discovery-list").querySelectorAll("[data-discovery-import]").forEach((button) => button.addEventListener("click", () => {
       campaignFeedRows = rows;

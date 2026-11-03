@@ -74,6 +74,45 @@
             "Insufficient or stale information. Verify the source and fill missing details before prioritising."
     };
   }
+  function listingStatus(campaign) {
+    const row = campaign && typeof campaign === "object" ? campaign : {};
+    const opportunity = row.opportunity && typeof row.opportunity === "object" ? row.opportunity : {};
+    const status = clean(opportunity.status, 80);
+    if (row.notSeenInLatestScan === true || status === "not-seen-in-latest-scan") {
+      return {
+        kind: "historical",
+        label: "Historical lead",
+        detail: "Absent from the latest official Discover scan. Recheck the live campaign page before applying."
+      };
+    }
+    if (opportunity.expired === true || status === "expired") {
+      return {
+        kind: "expired",
+        label: "Deadline appears passed",
+        detail: "Verify the official campaign page before spending time or applying."
+      };
+    }
+    if (row.freshness === "stale" || status === "stale") {
+      return {
+        kind: "stale",
+        label: "Saved data is stale",
+        detail: "Reopen the current official campaign page; saved details may no longer be accurate."
+      };
+    }
+    if (row.notSeenInLatestScan === false) {
+      return {
+        kind: "latest",
+        label: "Seen in latest scan",
+        detail: "Listing presence does not prove the campaign is still open or that your account is eligible."
+      };
+    }
+    return {
+      kind: "unknown",
+      label: "Latest listing not confirmed",
+      detail: "No explicit latest-scan confirmation is available. Verify the current official page before applying."
+    };
+  }
+
   function enrich(campaign, now) {
     const row = Object.assign({}, campaign || {});
     row.discoveryKey = keyFor(row);
@@ -487,5 +526,5 @@
       }
     };
   }
-  return { STORAGE_KEY, SETTINGS_KEY, DEFAULT_INTERVAL_HOURS, SOURCES, keyFor, assessOpportunity, enrich, deduplicate, readState, writeState, readSettings, writeSettings, normalizeBackendUrl, detectSameOriginBackend, fetchBackendSnapshot, fetchBackendCampaignPage, fetchStaticSnapshot, mergeHistory, canonicalPublicCampaignUrl, analyzePublicCampaigns, scan };
+  return { STORAGE_KEY, SETTINGS_KEY, DEFAULT_INTERVAL_HOURS, SOURCES, keyFor, assessOpportunity, listingStatus, enrich, deduplicate, readState, writeState, readSettings, writeSettings, normalizeBackendUrl, detectSameOriginBackend, fetchBackendSnapshot, fetchBackendCampaignPage, fetchStaticSnapshot, mergeHistory, canonicalPublicCampaignUrl, analyzePublicCampaigns, scan };
 });

@@ -7,6 +7,19 @@ const Discovery = require("../discovery-engine.js");
 function sample(id, overrides) {
   return Object.assign({ id, title: "Creator campaign " + id, brand: "Sample brand", payouts: [{ platform: "Instagram", ratePerKViews: 2.5, minViewsRequired: 1000, maxPayoutPerSubmission: 50 }], officialUrl: "https://contentrewards.com/c/discover", snapshotDate: "2026-10-30", ageDays: 1, freshness: "recent", source: "Third-party scraped snapshot" }, overrides || {});
 }
+test("labels latest-scan, historical, stale and unknown campaign records without claiming they are open", () => {
+  assert.deepEqual(Discovery.listingStatus(sample("current", { notSeenInLatestScan: false })), {
+    kind: "latest",
+    label: "Seen in latest scan",
+    detail: "Listing presence does not prove the campaign is still open or that your account is eligible."
+  });
+  assert.equal(Discovery.listingStatus(sample("history", { notSeenInLatestScan: true })).kind, "historical");
+  assert.equal(Discovery.listingStatus(sample("history-status", { opportunity: { status: "not-seen-in-latest-scan" } })).kind, "historical");
+  assert.equal(Discovery.listingStatus(sample("stale", { freshness: "stale" })).kind, "stale");
+  assert.equal(Discovery.listingStatus(sample("expired", { opportunity: { expired: true } })).kind, "expired");
+  assert.equal(Discovery.listingStatus(sample("unknown")).kind, "unknown");
+});
+
 test("scores field coverage and freshness without claiming eligibility", () => {
   const result = Discovery.assessOpportunity(sample("a"), Date.parse("2026-10-31T00:00:00Z"));
   assert.equal(result.tier, "high");

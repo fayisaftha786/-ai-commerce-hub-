@@ -56,17 +56,19 @@ function validateOciEnvironment(env = process.env) {
 
   function oauthGroup(label, names, callbackPath) {
     const entries = names.map(value);
-    const configured = entries.some(Boolean);
-    if (!configured) {
-      warning(label, "OAuth credentials are not configured yet; social publishing stays disabled.");
+    const credentialsStarted = Boolean(entries[0] || entries[1]);
+    const expectedCallback = origin + callbackPath;
+    if (entries[2]) {
+      check(label + " callback", Boolean(origin) && entries[2] === expectedCallback,
+        "Register the exact HTTPS callback URL " + (origin ? expectedCallback : "for SITE_HOST") + " in the provider developer console.");
+    }
+    if (!credentialsStarted) {
+      warning(label, "OAuth client ID/secret are not configured yet; social publishing stays disabled.");
       return;
     }
-    const complete = entries.every(Boolean);
-    check(label + " credentials", complete, "Provide every credential in this group or leave the entire group blank.");
-    if (complete) {
-      check(label + " callback", entries[2] === origin + callbackPath,
-        "Register the exact HTTPS callback URL " + origin + callbackPath + " in the provider developer console.");
-    }
+    const completeCredentials = Boolean(entries[0] && entries[1] && entries[2]);
+    check(label + " credentials", completeCredentials,
+      "Provide the client ID, client secret and exact callback URL together, or leave both credentials blank.");
   }
 
   oauthGroup("Google OAuth", ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "GOOGLE_REDIRECT_URI"],

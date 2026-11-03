@@ -166,7 +166,7 @@ test("Clip Studio wires local analysis, package download and Social Desk handoff
   assert.match(ui, /clipreward:youtube-published/);
   assert.match(ui, /AI_COMMERCE_YOUTUBE_PUBLISH_RESULT/);
   assert.match(ui, /preApprovalConfirmed/);
-  assert.match(ui, /Analysis\\.validateContentRewardsDisclosure/);
+  assert.ok(ui.includes("Analysis.validateContentRewardsDisclosure"));
   assert.match(ui, /source file stays in this browser/i);
   assert.match(packageJson.scripts.check, /content-rewards-assistant\/video-analysis\.js/);
   assert.match(packageJson.scripts.check, /content-rewards-assistant\/video-analysis-ui\.js/);

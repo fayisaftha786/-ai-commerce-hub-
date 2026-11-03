@@ -1010,7 +1010,7 @@
       scheduleDiscovery();
       syncDiscoveryBackend();
     } else {
-      window.ClipRewardDiscovery.detectSameOriginBackend({ origin: window.location.origin }).then(async (backendUrl) => {
+      window.ClipRewardDiscovery.detectSameOriginBackend({ origin: window.location && window.location.origin || "" }).then(async (backendUrl) => {
         if (backendUrl && !discoverySettings.backendUrl) {
           discoverySettings.backendUrl = backendUrl;
           window.ClipRewardDiscovery.writeSettings(discoverySettings);

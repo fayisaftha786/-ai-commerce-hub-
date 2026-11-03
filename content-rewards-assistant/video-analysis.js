@@ -363,7 +363,7 @@
     const platformTags = platform === "YouTube" ? ["#Shorts"] :
       platform === "Instagram" || platform === "Facebook" ? ["#Reels"] : [];
     const hashtags = unique(requiredHashtags.concat(topicHashtags(topic), platformTags)).slice(0, 12);
-    const captionBody = topic + "\n\n" + detail + "\n\n" + cta + disclosureText;
+    const captionBody = disclosureText + topic + "\n\n" + detail + "\n\n" + cta;
     const caption = [captionBody, hashtags.join(" "), mentions.join(" ")].filter(Boolean).join("\n\n");
     const title = topic.length > 95 ? topic.slice(0, 92).trimEnd() + "..." : topic;
     const warnings = [];

@@ -491,6 +491,7 @@
       b.discoveryScore - a.discoveryScore ||
       a.title.localeCompare(b.title)
     );
+    const currentAnalysed = analysed.filter((item) => item.notSeenInLatestScan !== true);
     const summary = {
       totalCampaigns: rows.length,
       analysed: analysed.length,
@@ -503,6 +504,9 @@
       notSeenInLatestScanCount: rows.filter((row) => row && (row.notSeenInLatestScan === true ||
         (row.opportunity && row.opportunity.status === "not-seen-in-latest-scan"))).length,
       staleDetailCount: pages.filter((page) => page && page.status === "stale").length,
+      // Counts refer only to latest-listing campaigns; historical pages remain a separate group.
+      lockedBriefCount: currentAnalysed.filter((item) => item.brief.hiddenRequirements && item.brief.hiddenRequirements.locked === true).length,
+      missingDeadlineCount: currentAnalysed.filter((item) => !item.deadline).length,
       platform: target,
       checkedAt: new Date().toISOString()
     };

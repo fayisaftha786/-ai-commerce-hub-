@@ -645,8 +645,15 @@
     }
     const summary = result.summary;
     const importableCount = result.campaigns.filter((row) => row.state === "promising" && row.pageStatus === "ok" && row.notSeenInLatestScan !== true && row.url && row.brief).length;
+    const lockedBriefCount = Number(summary.lockedBriefCount || 0);
+    const missingDeadlineCount = Number(summary.missingDeadlineCount || 0);
     $("discovery-import-promising").disabled = importableCount === 0 || state.campaigns.length >= Core.MAX_CAMPAIGNS;
-    $("discovery-import-status").textContent = importableCount + " fresh Promising result(s) available. Imports are saved locally as Found / idea for your review.";
+    $("discovery-import-status").textContent = importableCount > 0
+      ? importableCount + " fresh Promising result(s) available. Imports are saved locally as Found / idea for your review."
+      : lockedBriefCount > 0
+        ? lockedBriefCount + " current brief(s) hide creator requirements until Join; automatic import is blocked. " +
+          missingDeadlineCount + " current campaign(s) also have no detected deadline. Open the official page and verify the full brief after joining."
+        : "No fresh, fully assessable Promising campaign is available for automatic import. Review Verify / Blocked findings and the official campaign pages.";
     statusNode.textContent = summary.analysed + " / " + summary.totalCampaigns + " campaign records deeply analysed for " +
       summary.platform + " · checked " + new Date(summary.checkedAt).toLocaleTimeString() +
       (lastScan.source ? " · source: " + lastScan.source : "");
@@ -655,6 +662,8 @@
       ["Verify", summary.verify, "verify"],
       ["Blocked", summary.blocked, "blocked"],
       ["Historical / recheck", summary.notSeenInLatestScanCount || 0, "unknown"],
+      ["Brief locked · join required", summary.lockedBriefCount || 0, "unknown"],
+      ["No deadline found", summary.missingDeadlineCount || 0, "unknown"],
       ["Detail missing", summary.missingDetailCount + summary.unreadableDetailCount, "unknown"]
     ].map((item) => '<span class="deep-summary-chip deep-summary-' + item[2] + '"><strong>' + item[1] + '</strong><small>' + item[0] + '</small></span>').join("");
     const amountLabel = (amount) => amount && Number.isFinite(amount.value)

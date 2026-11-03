@@ -14,8 +14,11 @@ function validateOciEnvironment(env = process.env) {
   const value = (name) => String(env[name] || "").trim();
 
   const host = value("SITE_HOST").toLowerCase();
-  const validHost = /^[a-z0-9](?:[a-z0-9.-]{0,251}[a-z0-9])?$/.test(host) &&
-    !host.includes("..") && host.includes(".") && !host.startsWith("your-");
+  const hostLabels = host.split(".");
+  const validHost = host.length <= 253 && hostLabels.length >= 2 &&
+    hostLabels.every((label) => label.length >= 1 && label.length <= 63 &&
+      /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/.test(label)) &&
+    !/^\d+(?:\.\d+){3}$/.test(host) && !host.startsWith("your-");
   check("SITE_HOST", validHost, "Set a real DNS hostname; do not leave the example placeholder.");
   check("ACME_EMAIL", /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value("ACME_EMAIL")),
     "Set a valid contact email for HTTPS certificate issuance.");
@@ -39,7 +42,10 @@ function validateOciEnvironment(env = process.env) {
     "Store backend discovery data on the persistent /data volume.");
 
   const socialOrigins = value("SOCIAL_CORS_ORIGINS").split(",").map((item) => item.trim()).filter(Boolean);
-  check("SOCIAL_CORS_ORIGINS", Boolean(origin) && socialOrigins.includes(origin),
+  check("SOCIAL_CORS_ORIGINS", Boolean(origin) && socialOrigins.includes(origin) && !socialOrigins.includes("*"),
+    "Include the exact HTTPS site origin, without a path or wildcard.");
+  const discoveryOrigins = value("DISCOVERY_CORS_ORIGINS").split(",").map((item) => item.trim()).filter(Boolean);
+  check("DISCOVERY_CORS_ORIGINS", Boolean(origin) && discoveryOrigins.includes(origin) && !discoveryOrigins.includes("*"),
     "Include the exact HTTPS site origin, without a path or wildcard.");
   check("SOCIAL_RETURN_URL", Boolean(origin) && value("SOCIAL_RETURN_URL") === origin + "/",
     "Set the same-origin return URL to " + (origin ? origin + "/" : "https://YOUR_HOSTNAME/") + ".");

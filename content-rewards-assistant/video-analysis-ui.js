@@ -274,6 +274,11 @@
         setStatus("The selected campaign changed after this post package was generated. Select the correct campaign and generate the package again before handoff.", true);
         return;
       }
+      const disclosureCheck = Analysis.validateContentRewardsDisclosure(campaign, postPackage);
+      if (!disclosureCheck.ok) {
+        setStatus(disclosureCheck.error, true);
+        return;
+      }
       const requiresPreApproval = /(pre.?approval|approve.*draft|draft.*approval)/i.test(campaign.rules);
       if (activeHandoffCleanup) activeHandoffCleanup();
       if (requiresPreApproval && !$("video-analysis-preapproval-confirm").checked) {

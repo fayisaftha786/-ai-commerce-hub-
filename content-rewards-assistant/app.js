@@ -1010,7 +1010,19 @@
       scheduleDiscovery();
       syncDiscoveryBackend();
     } else {
-      syncScheduledSnapshot().then((snapshot) => {
+      window.ClipRewardDiscovery.detectSameOriginBackend({ origin: window.location.origin }).then(async (backendUrl) => {
+        if (backendUrl && !discoverySettings.backendUrl) {
+          discoverySettings.backendUrl = backendUrl;
+          window.ClipRewardDiscovery.writeSettings(discoverySettings);
+          discoveryBackendStatus = null;
+          scheduleDiscovery();
+          renderDiscovery();
+          $("discovery-backend-status").textContent = "Auto-detected the same-origin HTTPS backend. Connecting…";
+          showToast("Auto-detected the same-origin discovery backend.");
+          await syncDiscoveryBackend();
+          return;
+        }
+        const snapshot = await syncScheduledSnapshot();
         if (!snapshot && discoverySettings.enabled && !discoverySettings.backendUrl) {
           scheduleDiscovery();
           const latest = discoveryState.scans[0];

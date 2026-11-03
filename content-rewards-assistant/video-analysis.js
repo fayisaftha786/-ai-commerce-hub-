@@ -296,6 +296,43 @@
       .filter((word) => !stopWords.has(word.toLowerCase()))
       .slice(0, 3).map((word) => "#" + word.replace(/[^\p{L}\p{N}_]/gu, "")));
   }
+  function buildVideoScript(options) {
+    const source = options && typeof options === "object" ? options : {};
+    const language = ["ml", "both"].includes(source.language) ? source.language : "en";
+    const topic = clean(source.topic, 180);
+    const notes = clean(source.notes || source.transcript, MAX_NOTES_CHARS);
+    const campaignName = clean(source.campaignName, 180);
+    const duration = Number(source.durationSeconds) || 30;
+    if (topic.length < 3) throw new Error("Add the real video topic before generating a script.");
+    if (notes.length < 5) throw new Error("Add real video details or a transcript. The script will not invent product features or footage.");
+    const chunks = notes.split(/(?<=[.!?。！？])\\s+/).filter(Boolean);
+    const detail = chunks.length > 1 ? chunks.slice(0, 3).join(" ") : notes;
+    const ml = [
+      "ആരംഭം: " + topic + " — ഈ വിഷയം ശ്രദ്ധിക്കൂ.",
+      "സന്ദർഭം: " + (campaignName ? campaignName + " ക്യാമ്പെയ്‌നിനായി " : "") + "ഈ വീഡിയോയിൽ കാണിക്കുന്ന കാര്യം ചുരുക്കത്തിൽ പരിചയപ്പെടുത്താം.",
+      "പ്രധാന ഭാഗം: " + detail,
+      "അവസാനം: കൂടുതൽ വിവരങ്ങൾ അറിയാൻ ഔദ്യോഗിക വിവരങ്ങൾ പരിശോധിക്കുക; നിങ്ങളുടെ അഭിപ്രായം കമന്റിൽ പങ്കുവെക്കൂ."
+    ];
+    const en = [
+      "HOOK: " + topic + " — here is what to know.",
+      "CONTEXT: " + (campaignName ? "For the " + campaignName + " campaign, " : "") + "let’s look at what this video actually shows.",
+      "KEY POINTS: " + detail,
+      "CTA: Check the official details for more information and share your experience in the comments."
+    ];
+    const scenes = language === "ml" ? ml : language === "both"
+      ? ml.map((line, index) => line + "\\n" + en[index]) : en;
+    const labels = language === "ml" ? ["ഹുക്ക്", "സന്ദർഭം", "പ്രധാന ഭാഗം", "അവസാനം"]
+      : ["Hook", "Context", "Key points", "Call to action"];
+    const sceneCaptions = scenes.map((line, index) => labels[index] + ": " + line.replace(/^(?:ആരംഭം|സന്ദർഭം|പ്രധാന ഭാഗം|അവസാനം|HOOK|CONTEXT|KEY POINTS|CTA):?\\s*/i, ""));
+    return {
+      language, durationSeconds: Math.max(15, Math.min(60, duration)),
+      scenes: scenes.map((text, index) => ({ number: index + 1, label: labels[index], text })),
+      sceneCaptions,
+      script: scenes.join("\\n\\n"),
+      note: "Template-generated from your supplied topic and notes; not AI footage understanding or a factual verification. Edit every line and verify campaign rules before publishing."
+    };
+  }
+
   function buildPostPackage(options) {
     const source = options && typeof options === "object" ? options : {};
     const platform = normalizePlatform(source.platform);
@@ -337,6 +374,10 @@
     if (!transcript) warnings.push("No spoken-word transcript was supplied. Captions and copy are based only on your written notes.");
     warnings.push("Frame previews show selected moments only. This tool does not identify objects/scenes or transcribe audio automatically.");
     const video = source.video || null;
+    const videoScript = buildVideoScript({
+      language, topic, notes, transcript, campaignName,
+      durationSeconds: video && video.durationSeconds
+    });
     const videoInfo = video ? {
       durationSeconds: video.durationSeconds, width: video.width, height: video.height,
       aspectRatio: video.aspectRatio, aspect: video.aspect, sizeBytes: video.sizeBytes
@@ -346,7 +387,7 @@
       version: 1, createdAt: new Date().toISOString(), platform, campaignName,
       sourceFile: video && video.file ? video.file.name : "",
       video: videoInfo, title, caption, hashtags, mentions, disclosure,
-      notes, transcriptProvided: Boolean(transcript), warnings
+      notes, transcriptProvided: Boolean(transcript), videoScript, sceneCaptions: videoScript.sceneCaptions, warnings
     };
   }
 
@@ -354,6 +395,6 @@
     MAX_SOURCE_BYTES, MAX_NOTES_CHARS, MAX_TRANSCRIPT_CHARS, MAX_SCENE_SAMPLES,
     validateSourceVideo, formatDuration, classifyAspect, colorHistogram, histogramDistance,
     buildSceneMap, sampleSceneChanges, srtTimestamp, buildSrt, analyzeVideoFile,
-    normalizePlatform, buildPostPackage
+    normalizePlatform, buildVideoScript, buildPostPackage
   });
 });

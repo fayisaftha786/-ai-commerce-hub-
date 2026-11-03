@@ -285,7 +285,7 @@
     throw new Error("Choose Instagram, Facebook, YouTube or X as the target platform.");
   }
   function tagsFromRules(rules, label) {
-    const match = new RegExp("^\\s*" + label + "\\s*:\\s*(.*)$", "im").exec(String(rules || ""));
+    const match = new RegExp("^\s*" + label + "\s*:\s*(.*)$", "im").exec(String(rules || ""));
     if (!match) return [];
     const pattern = label.toLowerCase() === "mentions" ? /@[a-z0-9._]{2,}/gi : /#[\p{L}\p{N}_]+/gu;
     return unique((match[1].match(pattern) || []).map((item) => item.trim()));
@@ -305,7 +305,7 @@
     const duration = Number(source.durationSeconds) || 30;
     if (topic.length < 3) throw new Error("Add the real video topic before generating a script.");
     if (notes.length < 5) throw new Error("Add real video details or a transcript. The script will not invent product features or footage.");
-    const chunks = notes.split(/(?<=[.!?。！？])\\s+/).filter(Boolean);
+    const chunks = notes.split(/(?<=[.!?。！？])\s+/).filter(Boolean);
     const detail = chunks.length > 1 ? chunks.slice(0, 3).join(" ") : notes;
     const ml = [
       "ആരംഭം: " + topic + " — ഈ വിഷയം ശ്രദ്ധിക്കൂ.",
@@ -320,15 +320,15 @@
       "CTA: Check the official details for more information and share your experience in the comments."
     ];
     const scenes = language === "ml" ? ml : language === "both"
-      ? ml.map((line, index) => line + "\\n" + en[index]) : en;
+      ? ml.map((line, index) => line + "\n" + en[index]) : en;
     const labels = language === "ml" ? ["ഹുക്ക്", "സന്ദർഭം", "പ്രധാന ഭാഗം", "അവസാനം"]
       : ["Hook", "Context", "Key points", "Call to action"];
-    const sceneCaptions = scenes.map((line, index) => labels[index] + ": " + line.replace(/^(?:ആരംഭം|സന്ദർഭം|പ്രധാന ഭാഗം|അവസാനം|HOOK|CONTEXT|KEY POINTS|CTA):?\\s*/i, ""));
+    const sceneCaptions = scenes.map((line, index) => labels[index] + ": " + line.replace(/^(?:ആരംഭം|സന്ദർഭം|പ്രധാന ഭാഗം|അവസാനം|HOOK|CONTEXT|KEY POINTS|CTA):?\s*/i, ""));
     return {
       language, durationSeconds: Math.max(15, Math.min(60, duration)),
       scenes: scenes.map((text, index) => ({ number: index + 1, label: labels[index], text })),
       sceneCaptions,
-      script: scenes.join("\\n\\n"),
+      script: scenes.join("\n\n"),
       note: "Template-generated from your supplied topic and notes; not AI footage understanding or a factual verification. Edit every line and verify campaign rules before publishing."
     };
   }

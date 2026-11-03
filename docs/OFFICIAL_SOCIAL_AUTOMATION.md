@@ -14,11 +14,17 @@ Merged implementation:
 
 The integrations are **code implemented, deployment and real-account verification pending** unless a live deployment and test receipt have separately been confirmed. Passing CI validates repository code/tests; it does not configure provider apps or prove a real upload.
 
+### Live public campaign-page analysis (optional backend)
+
+When ClipReward Studio has an HTTPS backend origin configured, Analyse website automatically first calls the read-only endpoint POST /api/discovery/analyze-public-campaign with one canonical public campaign URL. The backend reuses the bounded public-page fetcher: HTTPS only, contentrewards.com or its subdomains, /c/campaigns/{id} only, redirects revalidated against the same allowlist, no cookies or credentials, HTML-only responses, a 1.5 MB page cap, a 20,000-character visible-text cap and a 10-second fetch timeout. The endpoint limits scan rate per connection and concurrent fetches. The browser validates the returned official-source label, exact URL and readable text before analysis. If a configured live scan fails, the app reports the error and does not silently replace it with historical snapshot data.
+
+Without a configured HTTPS backend, the app continues to use the public GitHub Actions snapshot and its explicit on-demand workflow. That snapshot can be delayed; it is not a live per-click scan. Both routes read public campaign HTML only. They do not use Content Rewards account cookies, sign in, unlock joined requirements or inspect private campaigns. The backend is optional for this function and still needs provisioning and an exact DISCOVERY_CORS_ORIGINS entry for the published ClipReward origin.
+
 ## Capability matrix
 
 | Workflow | Current implementation | Boundary / required creator action |
 |---|---|---|
-| Discover public Content Rewards campaigns | Scheduled GitHub Actions scan, official public Discover first, third-party public-feed fallback, saved snapshot and up to 100 public details | Snapshot is best-effort and may be stale; private/invitation-only/join-only details stay hidden |
+| Discover public Content Rewards campaigns | Scheduled GitHub Actions scan, official public Discover first, third-party public-feed fallback, plus a live single-URL scan when the optional HTTPS backend is configured | Scheduled snapshot is best-effort and may be stale; live scan reads public HTML only; private/invitation-only/join-only details stay hidden |
 | Analyze rules and reward terms | Platform matching, visible rule extraction, payout model/budget evidence, missing fields, Promising / Verify / Blocked ranking | Evidence aid only; re-open live brief and verify deadline, budget, eligibility and acceptance |
 | Import campaigns to local tracker | Batch import of fresh/readable Promising rows with deduplication and stale/blocked filtering | Imports as Found / idea; it does not Join or Apply |
 | Prepare video and post package | Browser-local media analysis, sampled frames/scene-cut heuristic, creator-supplied transcript/notes, SRT scaffolding, local 720×1280 renderer, captions and hashtags | Not text-to-video AI; no semantic scene recognition or automatic transcription of uploaded files; check device codec support |

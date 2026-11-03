@@ -18,7 +18,8 @@
     const packagePanel = $("video-analysis-package");
     const titleOutput = $("video-analysis-title");
     const captionOutput = $("video-analysis-caption");
-    const tagsOutput = $("video-analysis-tags");\n    const scriptOutput = $("video-analysis-script");
+    const tagsOutput = $("video-analysis-tags");
+    const scriptOutput = $("video-analysis-script");
     const warnings = $("video-analysis-warnings");
     const mediaInput = $("video-media-files");
     const postCaption = $("video-post-caption");
@@ -168,7 +169,8 @@
         postPackage.campaignId = campaign.id;
         titleOutput.value = postPackage.title;
         captionOutput.value = postPackage.caption;
-        tagsOutput.value = postPackage.hashtags.join(" ");\n        scriptOutput.value = postPackage.videoScript.script;
+        tagsOutput.value = postPackage.hashtags.join(" ");
+        scriptOutput.value = postPackage.videoScript.script;
         warnings.replaceChildren();
         postPackage.warnings.forEach((warningText) => {
           const item = root.document.createElement("li");

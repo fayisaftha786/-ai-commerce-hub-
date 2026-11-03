@@ -20,10 +20,10 @@ function validEnvironment(overrides = {}) {
     META_MEDIA_BASE_URL: "https://hub.example.com",
     GOOGLE_CLIENT_ID: "",
     GOOGLE_CLIENT_SECRET: "",
-    GOOGLE_REDIRECT_URI: "",
+    GOOGLE_REDIRECT_URI: "https://hub.example.com/api/social/youtube/callback",
     META_APP_ID: "",
     META_APP_SECRET: "",
-    META_REDIRECT_URI: "",
+    META_REDIRECT_URI: "https://hub.example.com/api/social/meta/callback",
     DISCOVERY_SCHEDULER_ENABLED: "false",
     ...overrides
   };
@@ -68,6 +68,16 @@ test("rejects placeholder hosts, invalid email, wrong origin and unsafe storage 
   assert.ok(result.errors.some((item) => item.startsWith("SOCIAL_RETURN_URL:")));
   assert.ok(result.errors.some((item) => item.startsWith("SOCIAL_TOKEN_STORE_PATH:")));
   assert.ok(result.errors.some((item) => item.startsWith("DISCOVERY_STORE_PATH:")));
+});
+
+test("permits callback URLs to be prepared before OAuth client credentials are created", () => {
+  const result = validateOciEnvironment(validEnvironment({
+    GOOGLE_REDIRECT_URI: "https://hub.example.com/api/social/youtube/callback",
+    META_REDIRECT_URI: "https://hub.example.com/api/social/meta/callback"
+  }));
+  assert.equal(result.ok, true, result.errors.join("\\n"));
+  assert.ok(result.warnings.some((item) => /Google OAuth/.test(item)));
+  assert.ok(result.warnings.some((item) => /Meta OAuth/.test(item)));
 });
 
 test("rejects an invalid token encryption key without revealing its value", () => {

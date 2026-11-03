@@ -116,6 +116,20 @@ test("requires a real topic and user-supplied description instead of guessing vi
   }), /key points or a transcript/i);
 });
 
+test("enforces an opening disclosure before Content Rewards publishing handoff", () => {
+  const campaign = { platform: "Content Rewards" };
+  assert.deepEqual(Analysis.validateContentRewardsDisclosure(campaign, {
+    disclosure: "", disclosurePlacement: "missing"
+  }), {
+    ok: false,
+    error: "Content Rewards requires a clear disclosure at the beginning of the clip. Add the exact opening disclosure in Clip Studio and regenerate the post package before publishing."
+  });
+  assert.deepEqual(Analysis.validateContentRewardsDisclosure(campaign, {
+    disclosure: "Paid partnership with Brand", disclosurePlacement: "opening"
+  }), { ok: true });
+  assert.deepEqual(Analysis.validateContentRewardsDisclosure({ platform: "YouTube campaign" }, {}), { ok: true });
+});
+
 test("warns about missing disclosures and pre-approval rules", () => {
   const result = Analysis.buildPostPackage({
     platform: "YouTube Shorts",
@@ -152,6 +166,7 @@ test("Clip Studio wires local analysis, package download and Social Desk handoff
   assert.match(ui, /clipreward:youtube-published/);
   assert.match(ui, /AI_COMMERCE_YOUTUBE_PUBLISH_RESULT/);
   assert.match(ui, /preApprovalConfirmed/);
+  assert.match(ui, /Analysis\\.validateContentRewardsDisclosure/);
   assert.match(ui, /source file stays in this browser/i);
   assert.match(packageJson.scripts.check, /content-rewards-assistant\/video-analysis\.js/);
   assert.match(packageJson.scripts.check, /content-rewards-assistant\/video-analysis-ui\.js/);

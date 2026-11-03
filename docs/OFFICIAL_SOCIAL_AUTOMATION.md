@@ -76,7 +76,7 @@ A backend /health response confirms process health only. Use GET /api/social/pro
 
 The public scanner sends no Content Rewards cookies or login credentials and does not scrape private/signed-in pages, bypass CAPTCHA or access locked content. A public campaign page may omit join-only requirements, and the latest snapshot can be stale or incomplete. The tracker stores user-maintained progress; statuses do not prove that Content Rewards has changed state.
 
-The current official Help Center page **What you can target, and what you can measure** explicitly lists an API as “Not available today”. The current Creator Terms §14.2 describe Content Rewards-linked social account access as read-only and state that Content Rewards does not post on the creator’s behalf. For that reason, this project does not call undocumented private endpoints, replay browser cookies or automate private Join/Apply, Submit Clip, review, views, balance or payout actions. The creator completes those steps in the official account. The app’s separate YouTube/Meta publishing integrations use the provider’s own OAuth/API permissions and are independent of Content Rewards’ read-only connection.
+The current official Help Center page **What you can target, and what you can measure** explicitly lists an API as “Not available today”. The current Creator Terms §12.2 and §13.2 prohibit buying/generating non-genuine engagement and state that this can result in a permanent ban; §12.6 prohibits Instagram Collab/equivalent co-posting unless the live campaign requirements or description permit it; §12.9 requires a clear, conspicuous disclosure at the beginning of the video; and §14.2 says connected social access is read-only and Content Rewards does not post on the creator’s behalf. For that reason, this project does not call undocumented private endpoints, replay browser cookies or automate private Join/Apply, Submit Clip, review, views, balance or payout actions. The creator completes those steps in the official account. The app’s separate YouTube/Meta publishing integrations use the provider’s own OAuth/API permissions and are independent of Content Rewards’ read-only connection.
 
 Do not automate private account actions without an official documented API and permission. Do not fabricate account verification, receipts, views, approval, balances or earnings. Do not create fake engagement or use media/accounts without permission. Keep required disclosure and licensing terms.
 
@@ -84,6 +84,8 @@ Official Content Rewards references:
 - [Find and apply to a campaign](https://help.contentrewards.com/en/articles/16817237-find-and-apply-to-a-campaign)
 - [Submit a video](https://help.contentrewards.com/en/articles/15319814-submit-a-video)
 - [Connect social accounts](https://help.contentrewards.com/en/articles/16746780-connect-your-social-accounts)
+- [Creator Terms of Service](https://contentrewards.com/terms)
+- [What you can target, and what you can measure](https://help.contentrewards.com/en/articles/16830147-what-you-can-target-and-what-you-can-measure)
 - [Approval and review](https://help.contentrewards.com/en/articles/15319801-approval-and-review)
 - [How Content Rewards works](https://help.contentrewards.com/en/articles/15319790-how-content-rewards-works)
 

@@ -64,7 +64,7 @@ A backend /health response confirms process health only. Use GET /api/social/pro
 
 1. Use the latest campaign snapshot to shortlist a public campaign. Open the official campaign page and verify deadline, remaining budget, rules, account eligibility and accepted platform.
 2. Complete Join / Apply on Content Rewards. For application campaigns, answer the brand's questions and wait for its decision. Update the local tracker only to reflect what you actually completed.
-3. Re-open the post-join brief. Confirm disclosure, content rights, format, length, language, hashtags, mentions, originality and any pre-approval requirement.
+3. Re-open the post-join brief. Put a clear sponsorship/affiliate disclosure at the very beginning of the clip. Do not use Instagram Collab or another co-posting feature unless the live campaign brief explicitly allows it; Content Rewards warns co-posted views may not track correctly. Never buy views or use bots, engagement exchanges or artificial engagement. Confirm content rights, format, length, language, hashtags, mentions, originality and any pre-approval requirement.
 4. Prepare the clip in Clip Studio. Review source rights, captions, transcript, scene boundaries and exported format. The renderer is local and device/browser codec support varies.
 5. Connect the correct publisher account using Google or Meta OAuth. Separately verify that the **same exact account** is connected in Content Rewards. Connecting a Google/Meta account to this app does not verify it in Content Rewards.
 6. Select the campaign and platform in Social Desk. Confirm campaign state/rules, account attestation, pre-approval if required, caption, destination and visibility. Publish only after explicit confirmation.

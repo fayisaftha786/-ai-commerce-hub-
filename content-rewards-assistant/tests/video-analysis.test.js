@@ -73,6 +73,38 @@ test("builds a four-scene Malayalam, English or bilingual script only from suppl
   assert.throws(() => Analysis.buildVideoScript({ topic: "Product", notes: "" }), /real video details/i);
 });
 
+test("places the supplied sponsorship disclosure first in the caption and opening script", () => {
+  const result = Analysis.buildPostPackage({
+    platform: "Instagram Reels",
+    topic: "Product demonstration",
+    notes: "Show how the product is used.",
+    disclosure: "Paid partnership with Example Brand",
+    campaignRules: "Accepted platforms: Instagram\\nCollab feature is allowed."
+  });
+  assert.equal(result.disclosurePlacement, "opening");
+  assert.ok(result.caption.startsWith("Paid partnership with Example Brand\\n\\n"));
+  assert.match(result.videoScript.scenes[0].text, /^DISCLOSURE — show and say this clearly at the beginning: Paid partnership with Example Brand/);
+  assert.deepEqual(result.videoScript.disclosureCue, {
+    text: "Paid partnership with Example Brand",
+    placement: "opening"
+  });
+  assert.ok(result.warnings.some((item) => /visibly readable or clearly spoken/i.test(item)));
+  assert.equal(result.warnings.some((item) => /Do not use Instagram Collab/i.test(item)), false);
+});
+
+test("requires an opening disclosure and warns against unapproved Collab or co-posting", () => {
+  const result = Analysis.buildPostPackage({
+    platform: "Instagram Reels",
+    topic: "Product demonstration",
+    notes: "Show how the product is used.",
+    campaignRules: "Accepted platforms: Instagram\\nDo not use Instagram Collab."
+  });
+  assert.equal(result.disclosurePlacement, "missing");
+  assert.ok(result.warnings.some((item) => /disclosure at the very beginning/i.test(item)));
+  assert.ok(result.warnings.some((item) => /Do not use Instagram Collab/i.test(item)));
+  assert.equal(result.caption.startsWith("Product demonstration"), true);
+});
+
 test("requires a real topic and user-supplied description instead of guessing video contents", () => {
   assert.throws(() => Analysis.buildPostPackage({
     platform: "YouTube", topic: "", notes: "Video shows a demonstration."

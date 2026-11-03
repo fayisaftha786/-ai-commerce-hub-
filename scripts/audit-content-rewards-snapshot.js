@@ -30,7 +30,9 @@ function auditSnapshot(snapshot, now = Date.now()) {
   if (!validDate(snapshot.generatedAt)) errors.push("generatedAt must be a valid ISO date.");
   if (!Array.isArray(snapshot.campaigns)) errors.push("campaigns must be an array.");
   if (!Array.isArray(snapshot.campaignDetails)) errors.push("campaignDetails must be an array.");
-  if (errors.length) return { ok: false, errors, warnings, metrics: {} };
+  if (!Array.isArray(snapshot.campaigns) || !Array.isArray(snapshot.campaignDetails)) {
+    return { ok: false, errors, warnings, metrics: {} };
+  }
 
   const campaigns = snapshot.campaigns;
   const details = snapshot.campaignDetails;

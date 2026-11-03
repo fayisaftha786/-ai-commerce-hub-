@@ -483,7 +483,11 @@ test("submission UI wires exact posting platform and submission time, and labels
   assert.match(htmlSource, /0 \/ 6 confirmed/);
   assert.match(htmlSource, /contentrewards\.com\/login/);
   assert.doesNotMatch(htmlSource, /CR-XXXXXX|code expires after 24 hours/);
-  assert.match(htmlSource, /Instagram professional Business account/);
+  assert.match(htmlSource, /Official Content Rewards sources currently disagree/);
+  assert.match(htmlSource, /Creator Terms §14\.1/);
+  assert.match(htmlSource, /Privacy Policy §4\.1/);
+  assert.match(htmlSource, /Try connecting your existing Creator account/);
+  assert.match(htmlSource, /Do not switch account type based only on this app/);
   assert.match(htmlSource, /value="applied">Applied/);
   assert.match(htmlSource, /value="joined">Joined/);
   assert.match(htmlSource, /A pool is a shared allocation/i);
@@ -491,8 +495,8 @@ test("submission UI wires exact posting platform and submission time, and labels
   assert.match(htmlSource, /Your account shows as not linked/);
   assert.match(htmlSource, /X sign-in window/);
   assert.match(htmlSource, /value="rejected">Rejected/);
-  assert.match(htmlSource, /Instagram Business account/);
-  assert.doesNotMatch(htmlSource, /Instagram Creator account/);
+  assert.match(htmlSource, /Professional\/Business or Creator/);
+  assert.match(htmlSource, /ask Support with the exact error before switching account type/);
 });
 
 

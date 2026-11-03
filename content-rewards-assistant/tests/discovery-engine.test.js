@@ -378,6 +378,49 @@ test("historical leads absent from the latest official scan cannot remain Promis
   assert.match(result.campaigns[0].reasons.join(" "), /absent from the latest official Discover listing/i);
 });
 
+test("deep scan exposes current campaigns with locked briefs and missing deadlines", () => {
+  const Scout = require("../campaign-scout.js");
+  const Rewards = require("../rewards-intelligence.js");
+  const url = "https://contentrewards.com/c/campaigns/locked-brief-current";
+  const pageText = [
+    "Campaign: Clips Hablando de VALOR",
+    "Accepting clips",
+    "Launched 2 months ago",
+    "Instagram YouTube",
+    "Join Campaign",
+    "Instagram",
+    "Per 1K views",
+    "$0.50",
+    "Min payout",
+    "$5.00",
+    "Max payout",
+    "$100.00",
+    "Budget",
+    "$2,123 / $5,000",
+    "Join to see the brief"
+  ].join("\n");
+  const result = Discovery.analyzePublicCampaigns([{
+    id: "locked-brief-current",
+    title: "Clips Hablando de VALOR",
+    officialUrl: url,
+    notSeenInLatestScan: false,
+    opportunity: { score: 90, status: "needs-verification" }
+  }], [{
+    url,
+    status: "ok",
+    fetchedAt: "2026-11-03T13:00:00.000Z",
+    pageText
+  }], Scout, Rewards, "Instagram", { today: "2026-11-03" });
+
+  assert.equal(result.summary.analysed, 1);
+  assert.equal(result.summary.lockedBriefCount, 1);
+  assert.equal(result.summary.missingDeadlineCount, 1);
+  assert.equal(result.summary.promising, 0);
+  assert.equal(result.summary.verify, 1);
+  assert.equal(result.campaigns[0].brief.hiddenRequirements.locked, true);
+  assert.equal(result.campaigns[0].state, "verify");
+});
+
 test("current official leads rank ahead of higher-scoring historical leads", () => {
   const merged = Discovery.mergeHistory([
     sample("old-high", {

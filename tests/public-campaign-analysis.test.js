@@ -9,6 +9,7 @@ async function withServer(callback, options = {}) {
     env: { DISCOVERY_CORS_ORIGINS: "https://app.example.com", ...options.env },
     publicCampaignPageFetcher: options.publicCampaignPageFetcher,
     publicCampaignPageLimiter: options.publicCampaignPageLimiter,
+    publicCampaignFetchImpl: options.publicCampaignFetchImpl,
     maxConcurrentPublicCampaignScans: options.maxConcurrentPublicCampaignScans
   });
   await new Promise((resolve, reject) => {
@@ -154,3 +155,72 @@ test("live campaign endpoint rejects malformed scanner results instead of return
     assert.equal((await response.json()).error, "public_campaign_scan_invalid_result");
   }, { publicCampaignPageFetcher: async () => ({ ...publicDetail(), status: "stale", pageText: "" }) });
 });
+
+test("live campaign endpoint runs the production public-page fetcher against the approved public HTML flow", async () => {
+  const calls = [];
+  const html = [
+    "<!doctype html><html><head><title>Live creator campaign</title></head><body>",
+    "<nav>Discover Analytics Settings</nav><main>",
+    "<h1>Campaign: Live creator campaign</h1>",
+    "<p>Accepting clips. Original content only. Instagram Reels.</p>",
+    "<p>CPM $2.50 per 1K views. Minimum payout $5. Maximum payout $125.</p>",
+    "<p>Budget $250 / $2,000. Minimum 5K views. Deadline December 20, 2026.</p>",
+    "<p>Join Campaign</p></main></body></html>"
+  ].join("");
+  await withServer(async (base) => {
+    const response = await fetch(base + "/api/discovery/analyze-public-campaign", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url: "https://contentrewards.com/c/campaigns/production-fetcher" })
+    });
+    const payload = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(payload.sourceVerification, "official-public-page");
+    assert.equal(payload.detail.status, "ok");
+    assert.equal(payload.detail.url, "https://contentrewards.com/c/campaigns/production-fetcher");
+    assert.match(payload.detail.pageText, /Live creator campaign/);
+    assert.equal(payload.detail.pageTitle, "Live creator campaign");
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].url, payload.detail.url);
+    assert.equal(calls[0].options.method, "GET");
+    assert.equal(calls[0].options.redirect, "manual");
+    assert.equal(calls[0].options.credentials, "omit");
+  }, {
+    publicCampaignFetchImpl: async (url, options) => {
+      calls.push({ url, options });
+      return {
+        ok: true,
+        status: 200,
+        url,
+        headers: {
+          get(name) {
+            return String(name).toLowerCase() === "content-type" ? "text/html; charset=utf-8" : "";
+          }
+        },
+        async text() { return html; }
+      };
+    }
+  });
+});
+
+test("live campaign endpoint stops at the injected request limiter before fetching", async () => {
+  let fetchCalls = 0;
+  const limiter = {
+    consume() { return { allowed: false, retryAfterSeconds: 9 }; }
+  };
+  await withServer(async (base) => {
+    const response = await fetch(base + "/api/discovery/analyze-public-campaign", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url: "https://contentrewards.com/c/campaigns/limited" })
+    });
+    assert.equal(response.status, 429);
+    assert.equal(response.headers.get("retry-after"), "9");
+    assert.equal((await response.json()).error, "public_campaign_scan_rate_limited");
+    assert.equal(fetchCalls, 0);
+  }, {
+    publicCampaignPageLimiter: limiter,
+    publicCampaignPageFetcher: async () => { fetchCalls += 1; return publicDetail(); }
+  });
+});
+

@@ -539,16 +539,19 @@
   function renderCampaignScout(result) {
     campaignScoutResult = result;
     $("scout-result-title").textContent = result.title || "Campaign details found";
-    const sourceLabel = result.analysisSource === "public-url" ? "Auto-fetched public page" :
+    const sourceLabel = result.analysisSource === "live-public-url" ? "Live-fetched public page" :
+      result.analysisSource === "public-url" ? "Saved public-page snapshot" :
       result.analysisSource === "third-party-feed" ? "Third-party lead data" : "Copied text";
     $("scout-confidence").textContent = sourceLabel + " · " + (result.coverageScore == null ? result.confidence : result.coverageScore + "% core-field coverage");
     $("scout-confidence").classList.toggle("scout-match", result.platformMatch === "match");
     $("scout-confidence").classList.toggle("scout-mismatch", result.platformMatch === "mismatch");
     $("scout-confidence").classList.toggle("scout-unknown", result.platformMatch === "unknown");
     $("scout-confidence").title = "Coverage is a count of six key fields detected in the copied text. It is not a confidence score for eligibility or approval. " + result.requirementLines.length + " rule lines were captured.";
-    const provenance = result.analysisSource === "public-url"
-      ? "This report was extracted automatically from the public Content Rewards campaign page stored in the latest scheduled snapshot. It can be up to six hours old; verify current rules, availability and eligibility on the official page."
-      : result.analysisSource === "third-party-feed"
+    const provenance = result.analysisSource === "live-public-url"
+      ? "This report was fetched directly from the public Content Rewards campaign page by your configured HTTPS backend during this request. It reflects the public HTML returned at that time; verify the live campaign in your official account before acting."
+      : result.analysisSource === "public-url"
+        ? "This report was extracted from a saved public Content Rewards campaign-page snapshot. It may be up to six hours old; verify current rules, availability and eligibility on the official page."
+        : result.analysisSource === "third-party-feed"
         ? "This report uses third-party feed metadata only; it is not a full public campaign-page analysis. Open the URL analyzer when the latest scheduled scan has fetched that page."
         : "Findings come only from the text you pasted. Unknown values stay unknown; verify current rules, availability and eligibility on the official page.";
     $("scout-source-note").textContent = (result.platformMatch === "match"
@@ -1167,9 +1170,11 @@
       });
       result.analysisSource = analysisSource || "copied-text";
       renderCampaignScout(result);
-      showToast(analysisSource === "public-url"
-        ? "Public campaign page analysed automatically. Review findings and missing fields."
-        : "Campaign brief analysed. Review every detected rule and missing field.");
+      showToast(analysisSource === "live-public-url"
+        ? "Live public campaign page fetched and analysed. Review the findings and unknown fields."
+        : analysisSource === "public-url"
+          ? "Saved public campaign page analysed. Check its scan time before relying on it."
+          : "Campaign brief analysed. Review every detected rule and missing field.");
     } catch (error) {
       campaignScoutResult = null;
       $("scout-results").hidden = true;
@@ -1189,6 +1194,27 @@
     button.textContent = "Reading public page…";
     $("scout-source-url").value = canonicalUrl;
     try {
+      if (discoverySettings.backendUrl) {
+        const liveDetail = await window.ClipRewardDiscovery.fetchBackendCampaignPage({
+          backendUrl: discoverySettings.backendUrl,
+          url: canonicalUrl,
+          timeoutMs: 15000
+        });
+        $("scout-on-demand-actions").hidden = true;
+        $("scout-brief-text").value = liveDetail.pageText;
+        analyseCampaignBrief(null, "live-public-url");
+        if (campaignScoutResult) {
+          campaignScoutResult.pageFetchedAt = liveDetail.fetchedAt || "";
+          campaignScoutResult.pageFetchStatus = "ok";
+          $("scout-source-note").textContent += " Live public page fetched: " +
+            (liveDetail.fetchedAt || "timestamp unavailable") + " · " +
+            Number(liveDetail.htmlBytes || 0) + " HTML bytes. No Content Rewards login or private account data was used.";
+          $("scout-results").scrollIntoView({ behavior: "smooth", block: "start" });
+          return true;
+        }
+        return false;
+      }
+
       const snapshot = await window.ClipRewardDiscovery.fetchStaticSnapshot({ url: "./discovery-snapshot.json" });
       const detail = (snapshot.campaignDetails || []).find((item) =>
         window.ClipRewardFeed.canonicalCampaignUrl(item.url) === canonicalUrl
@@ -1246,7 +1272,9 @@
       return false;
     } catch (error) {
       $("scout-on-demand-actions").hidden = false;
-      $("scout-on-demand-help").textContent = (error && error.message ? error.message : "The saved scan could not be loaded.") + " You can queue this public URL through the GitHub Actions scanner and retry after its deployment finishes.";
+      $("scout-on-demand-help").textContent = discoverySettings.backendUrl
+        ? "Live scan failed: " + (error && error.message ? error.message : "The configured backend could not read the public page.") + " No saved or historical page was substituted. Check the backend URL, CORS allowlist and scanner health, then retry."
+        : (error && error.message ? error.message : "The saved scan could not be loaded.") + " You can queue this public URL through the GitHub Actions scanner and retry after its deployment finishes."
       showToast(error && error.message ? error.message : "Could not auto-analyse this public campaign URL.");
       return false;
     } finally {

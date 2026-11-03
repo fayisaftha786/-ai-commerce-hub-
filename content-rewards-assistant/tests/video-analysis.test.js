@@ -99,6 +99,7 @@ test("Clip Studio wires local analysis, package download and Social Desk handoff
   const worker = fs.readFileSync(path.join(__dirname, "..", "service-worker.js"), "utf8");
   const ui = fs.readFileSync(path.join(__dirname, "..", "video-analysis-ui.js"), "utf8");
   const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "..", "package.json"), "utf8"));
+  assert.ok(html.includes("</label>\n    <label>Campaign-aware video script"), "campaign script field must begin on a real new line");
   for (const id of [
     "video-analysis-file", "video-analysis-run", "video-analysis-topic",
     "video-analysis-notes", "video-analysis-transcript", "video-analysis-generate",

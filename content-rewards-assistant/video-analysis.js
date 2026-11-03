@@ -368,6 +368,7 @@
     const title = topic.length > 95 ? topic.slice(0, 92).trimEnd() + "..." : topic;
     const warnings = [];
     if (!campaignRules) warnings.push("No saved campaign rules were linked to this package. Check the live brief before posting.");
+    warnings.push("Never buy views, use bots, join engagement exchanges or artificially generate engagement. Content Rewards warns that artificial engagement can lead to a permanent ban.");
     if (!disclosure) {
       warnings.push("Add a clear sponsorship / paid-promotion / affiliate disclosure at the very beginning of the clip and at the start of its caption, following the live brief.");
     } else {

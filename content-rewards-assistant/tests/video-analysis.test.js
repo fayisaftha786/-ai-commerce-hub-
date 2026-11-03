@@ -79,10 +79,11 @@ test("places the supplied sponsorship disclosure first in the caption and openin
     topic: "Product demonstration",
     notes: "Show how the product is used.",
     disclosure: "Paid partnership with Example Brand",
-    campaignRules: "Accepted platforms: Instagram\\nCollab feature is allowed."
+    campaignRules: "Accepted platforms: Instagram\nCollab feature is allowed."
   });
   assert.equal(result.disclosurePlacement, "opening");
-  assert.ok(result.caption.startsWith("Paid partnership with Example Brand\\n\\n"));
+  assert.ok(result.caption.startsWith("Paid partnership with Example Brand\n\nProduct demonstration"));
+  assert.equal(result.caption.split("Paid partnership with Example Brand").length - 1, 1, "the disclosure appears once, not again at the end");
   assert.match(result.videoScript.scenes[0].text, /^DISCLOSURE — show and say this clearly at the beginning: Paid partnership with Example Brand/);
   assert.deepEqual(result.videoScript.disclosureCue, {
     text: "Paid partnership with Example Brand",
@@ -97,7 +98,7 @@ test("requires an opening disclosure and warns against unapproved Collab or co-p
     platform: "Instagram Reels",
     topic: "Product demonstration",
     notes: "Show how the product is used.",
-    campaignRules: "Accepted platforms: Instagram\\nDo not use Instagram Collab."
+    campaignRules: "Accepted platforms: Instagram\nDo not use Instagram Collab."
   });
   assert.equal(result.disclosurePlacement, "missing");
   assert.ok(result.warnings.some((item) => /disclosure at the very beginning/i.test(item)));

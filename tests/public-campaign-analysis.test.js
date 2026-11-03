@@ -58,7 +58,7 @@ test("live campaign endpoint reads one canonical public Content Rewards URL and 
     assert.equal(payload.detail.status, "ok");
     assert.equal(payload.detail.url, "https://contentrewards.com/c/campaigns/live-123");
     assert.match(payload.detail.pageText, /Live public campaign/);
-    assert.match(payload.note, /No Content Rewards login/);
+    assert.match(payload.note, /without Content Rewards login/i);
     assert.equal(calls.length, 1);
     assert.equal(calls[0].url, "https://contentrewards.com/c/campaigns/live-123");
     assert.equal(calls[0].options.timeoutMs, 10000);

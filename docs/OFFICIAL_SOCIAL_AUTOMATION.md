@@ -1,6 +1,6 @@
 # Official social publishing and Content Rewards automation
 
-## Current implementation status — 2026-11-02
+## Current implementation status — 2026-11-03
 
 The repository contains code for public Content Rewards campaign discovery, rules/reward analysis, a local campaign tracker, browser-local video preparation, Clip Studio → Social Desk handoff, and official social publishing integrations for YouTube and Meta (Facebook Page Reels and linked Instagram Professional Reels).
 
@@ -23,8 +23,8 @@ The integrations are **code implemented, deployment and real-account verificatio
 | Import campaigns to local tracker | Batch import of fresh/readable Promising rows with deduplication and stale/blocked filtering | Imports as Found / idea; it does not Join or Apply |
 | Prepare video and post package | Browser-local media analysis, sampled frames/scene-cut heuristic, creator-supplied transcript/notes, SRT scaffolding, local 720×1280 renderer, captions and hashtags | Not text-to-video AI; no semantic scene recognition or automatic transcription of uploaded files; check device codec support |
 | Send rendered export to Social Desk | Same-origin, opener-checked handoff of rendered file, caption, platform and campaign context | Handoff is not a publish; browser popup/File transfer and size/format limits apply |
-| YouTube connect and publish | Google OAuth/PKCE, encrypted server-side token vault, channel identification, explicit upload confirmation, processing/public-visibility check | Requires deployed HTTPS backend, Google OAuth client, YouTube Data API access, scopes and connected channel |
-| Facebook Page Reels connect and publish | Meta OAuth, managed Page selection, server-side token vault, upload/publish/status path and public permalink/time | Requires deployed HTTPS backend, Meta app, Page access and approved permissions/review; only eligible managed Pages |
+| YouTube connect and publish | Google OAuth/PKCE, encrypted server-side token vault, channel identification, explicit upload confirmation, bounded automatic processing/public-visibility polling after upload, verified public receipt handoff | Requires deployed HTTPS backend, Google OAuth client, YouTube Data API access, scopes and connected channel |
+| Facebook Page Reels connect and publish | Meta OAuth, managed Page selection, server-side token vault, upload/publish path, bounded automatic status polling and verified public permalink/time | Requires deployed HTTPS backend, Meta app, Page access and approved permissions/review; only eligible managed Pages |
 | Instagram Reels connect and publish | Meta OAuth for linked Instagram Professional account, Reel container processing/publish path and public permalink/time | Requires eligible linked Professional account, Meta app permissions/review and a publicly fetchable temporary media URL |
 | X / WhatsApp publishing | Manual Social Desk handoff | No official publisher integration is implemented here |
 | Content Rewards account verification | Creator guidance and local explicit attestation gate | Connect and verify the exact posting account inside Content Rewards; the app cannot read or verify that private state |
@@ -32,6 +32,9 @@ The integrations are **code implemented, deployment and real-account verificatio
 | Start 30-minute timer | Verified public YouTube/Meta publishing response can save post URL/time and start local reminder | Creator must confirm exact posting account is verified in Content Rewards; reminders require the page/browser to remain active |
 | Submit Clip | Guided official link-submission workflow and local time/evidence fields | Creator manually submits public permalink in Content Rewards while the post is strictly less than 30 minutes old |
 | Credited views, review, approval and payout | Local evidence/notes only | Read from official Content Rewards/Whop account; no private dashboard sync or payout API is integrated |
+
+
+After an accepted YouTube or Facebook upload, the Social Desk now performs up to 24 provider-status checks at five-second intervals while the page remains open. A verified public permalink and timestamp are handed to the campaign tracker only after the provider confirms the completed public state. Private/unlisted YouTube uploads and timed-out/pending posts do not start the Content Rewards reminder. The manual status controls remain available after the bounded polling window.
 
 ## What a publish receipt means
 

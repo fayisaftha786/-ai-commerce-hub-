@@ -7,6 +7,19 @@ const Discovery = require("../discovery-engine.js");
 function sample(id, overrides) {
   return Object.assign({ id, title: "Creator campaign " + id, brand: "Sample brand", payouts: [{ platform: "Instagram", ratePerKViews: 2.5, minViewsRequired: 1000, maxPayoutPerSubmission: 50 }], officialUrl: "https://contentrewards.com/c/discover", snapshotDate: "2026-10-30", ageDays: 1, freshness: "recent", source: "Third-party scraped snapshot" }, overrides || {});
 }
+test("labels latest-scan, historical, stale and unknown campaign records without claiming they are open", () => {
+  assert.deepEqual(Discovery.listingStatus(sample("current", { notSeenInLatestScan: false })), {
+    kind: "latest",
+    label: "Seen in latest scan",
+    detail: "Listing presence does not prove the campaign is still open or that your account is eligible."
+  });
+  assert.equal(Discovery.listingStatus(sample("history", { notSeenInLatestScan: true })).kind, "historical");
+  assert.equal(Discovery.listingStatus(sample("history-status", { opportunity: { status: "not-seen-in-latest-scan" } })).kind, "historical");
+  assert.equal(Discovery.listingStatus(sample("stale", { freshness: "stale" })).kind, "stale");
+  assert.equal(Discovery.listingStatus(sample("expired", { opportunity: { expired: true } })).kind, "expired");
+  assert.equal(Discovery.listingStatus(sample("unknown")).kind, "unknown");
+});
+
 test("scores field coverage and freshness without claiming eligibility", () => {
   const result = Discovery.assessOpportunity(sample("a"), Date.parse("2026-10-31T00:00:00Z"));
   assert.equal(result.tier, "high");
@@ -320,7 +333,7 @@ test("ClipReward auto shortlist is wired into the radar and deep findings panel"
   assert.match(app, /data-deep-draft/);
   assert.match(app, /Campaign title and platform prepared/);
   assert.match(app, /Add only a benefit you can verify/);
-  assert.match(worker, /clipreward-static-v36/);
+  assert.match(worker, /clipreward-static-v38/);
   assert.match(worker, /discovery-engine\.js/);
 });
 
@@ -401,3 +414,136 @@ test("historical campaign count includes leads whose detail page is missing from
   assert.equal(result.summary.missingDetailCount, 3);
   assert.equal(result.summary.analysed, 0);
 });
+
+test("live public campaign analysis posts one canonical URL to the configured HTTPS backend without credentials", async () => {
+  const calls = [];
+  const detail = {
+    url: "https://contentrewards.com/c/campaigns/live-123",
+    finalUrl: "https://contentrewards.com/c/campaigns/live-123",
+    status: "ok",
+    fetchedAt: "2026-11-03T06:00:00.000Z",
+    pageText: "Campaign: Live public campaign\nInstagram\nAccepting clips\n$2 per 1,000 views",
+    htmlBytes: 420,
+    detected: { platforms: ["Instagram"], missing: [] }
+  };
+  const result = await Discovery.fetchBackendCampaignPage({
+    backendUrl: "https://api.example.com",
+    url: "https://contentrewards.com/c/campaigns/live-123?utm_source=ignored",
+    fetchImpl: async (url, options) => {
+      calls.push({ url, options });
+      return { ok: true, status: 200, async json() { return { sourceVerification: "official-public-page", detail }; } };
+    }
+  });
+  assert.deepEqual(result, detail);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].url, "https://api.example.com/api/discovery/analyze-public-campaign");
+  assert.equal(calls[0].options.method, "POST");
+  assert.equal(calls[0].options.mode, "cors");
+  assert.equal(calls[0].options.credentials, "omit");
+  assert.equal(calls[0].options.headers["Content-Type"], "application/json");
+  assert.deepEqual(JSON.parse(calls[0].options.body), { url: detail.url });
+});
+
+test("live public campaign analysis rejects unsafe origins and non-Content-Rewards URLs before fetch", async () => {
+  let calls = 0;
+  const fetchImpl = async () => { calls += 1; throw new Error("must not fetch"); };
+  await assert.rejects(Discovery.fetchBackendCampaignPage({
+    backendUrl: "http://api.example.com", url: "https://contentrewards.com/c/campaigns/one", fetchImpl
+  }), /valid HTTPS backend origin/i);
+  await assert.rejects(Discovery.fetchBackendCampaignPage({
+    backendUrl: "https://api.example.com", url: "https://evil.example/c/campaigns/one", fetchImpl
+  }), /public HTTPS Content Rewards/i);
+  assert.equal(calls, 0);
+});
+
+test("live public campaign analysis rejects mismatched, stale or malformed backend results", async () => {
+  const validBase = {
+    status: "ok", fetchedAt: "2026-11-03T06:00:00.000Z",
+    pageText: "Campaign: Example public campaign\nYouTube\nAccepting clips"
+  };
+  const cases = [
+    { sourceVerification: "third-party", detail: { ...validBase, url: "https://contentrewards.com/c/campaigns/one" } },
+    { sourceVerification: "official-public-page", detail: { ...validBase, url: "https://contentrewards.com/c/campaigns/two" } },
+    { sourceVerification: "official-public-page", detail: { ...validBase, url: "https://contentrewards.com/c/campaigns/one", status: "stale" } },
+    { sourceVerification: "official-public-page", detail: { ...validBase, url: "https://contentrewards.com/c/campaigns/one", pageText: "short" } }
+  ];
+  for (const payload of cases) {
+    await assert.rejects(Discovery.fetchBackendCampaignPage({
+      backendUrl: "https://api.example.com", url: "https://contentrewards.com/c/campaigns/one",
+      fetchImpl: async () => ({ ok: true, status: 200, async json() { return payload; } })
+    }), /invalid live public campaign analysis/i);
+  }
+});
+
+test("live public campaign analysis reports backend errors without hiding the response message", async () => {
+  await assert.rejects(Discovery.fetchBackendCampaignPage({
+    backendUrl: "https://api.example.com", url: "https://contentrewards.com/c/campaigns/one",
+    fetchImpl: async () => ({
+      ok: false, status: 429,
+      async json() { return { error: "rate_limited", message: "Wait before scanning again." }; }
+    })
+  }), /Wait before scanning again/);
+});
+
+test("live site analysis is wired before the historical snapshot fallback when a backend is configured", () => {
+  const appSource = fs.readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
+  const liveCall = appSource.indexOf("fetchBackendCampaignPage");
+  const snapshotCall = appSource.indexOf('fetchStaticSnapshot({ url: "./discovery-snapshot.json" })', liveCall);
+  assert.ok(liveCall >= 0);
+  assert.ok(snapshotCall > liveCall);
+  assert.match(appSource, /analysisSource === "live-public-url"/);
+  assert.match(appSource, /No saved or historical page was substituted/);
+});
+
+test("same-origin backend detection accepts only a healthy discovery API and never sends credentials", async () => {
+  const calls = [];
+  const origin = await Discovery.detectSameOriginBackend({
+    origin: "https://clipreward.example.com/",
+    fetchImpl: async (url, options) => {
+      calls.push({ url, options });
+      return {
+        ok: true,
+        async json() { return { sourceRegistry: [{ id: "official-public-discover" }] }; }
+      };
+    }
+  });
+  assert.equal(origin, "https://clipreward.example.com");
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].url, "https://clipreward.example.com/api/discovery/status");
+  assert.equal(calls[0].options.method, "GET");
+  assert.equal(calls[0].options.credentials, "omit");
+  assert.equal(calls[0].options.cache, "no-store");
+});
+
+test("same-origin backend detection silently falls back for GitHub Pages, invalid origins and malformed responses", async () => {
+  let calls = 0;
+  const notBackend = await Discovery.detectSameOriginBackend({
+    origin: "https://fayisaftha786.github.io",
+    fetchImpl: async () => {
+      calls += 1;
+      return { ok: true, async json() { return { message: "Not Found" }; } };
+    }
+  });
+  assert.equal(notBackend, "");
+  const wrongOrigin = await Discovery.detectSameOriginBackend({
+    origin: "http://api.example.com",
+    fetchImpl: async () => { calls += 1; return { ok: true, async json() { return { sourceRegistry: [] }; } }; }
+  });
+  assert.equal(wrongOrigin, "");
+  const unavailable = await Discovery.detectSameOriginBackend({
+    origin: "https://clipreward.example.com",
+    fetchImpl: async () => { throw new Error("not deployed"); }
+  });
+  assert.equal(unavailable, "");
+  assert.equal(calls, 1);
+});
+
+test("ClipReward attempts same-origin backend detection before falling back to the GitHub snapshot", () => {
+  const appSource = fs.readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
+  const configureAt = appSource.indexOf("function configureDiscovery()");
+  const detectAt = appSource.indexOf("detectSameOriginBackend", configureAt);
+  const snapshotAt = appSource.indexOf("syncScheduledSnapshot()", detectAt);
+  assert.ok(configureAt >= 0 && detectAt > configureAt && snapshotAt > detectAt);
+  assert.match(appSource, /Auto-detected the same-origin discovery backend/);
+});
+

@@ -19,6 +19,7 @@ const ASSET_PATHS = [
   "./campaign-report.js",
   "./video-maker.js",
   "./social-center.js",
+  "./social-publish-monitor.js",
   "./social-account-connect.js",
   "./meta-social-connect.js",
   "./app.js",

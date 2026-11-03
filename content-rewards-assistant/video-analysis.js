@@ -285,7 +285,7 @@
     throw new Error("Choose Instagram, Facebook, YouTube or X as the target platform.");
   }
   function tagsFromRules(rules, label) {
-    const match = new RegExp("^\\s*" + label + "\\s*:\\s*(.*)$", "im").exec(String(rules || ""));
+    const match = new RegExp("^\s*" + label + "\s*:\s*(.*)$", "im").exec(String(rules || ""));
     if (!match) return [];
     const pattern = label.toLowerCase() === "mentions" ? /@[a-z0-9._]{2,}/gi : /#[\p{L}\p{N}_]+/gu;
     return unique((match[1].match(pattern) || []).map((item) => item.trim()));
@@ -296,6 +296,63 @@
       .filter((word) => !stopWords.has(word.toLowerCase()))
       .slice(0, 3).map((word) => "#" + word.replace(/[^\p{L}\p{N}_]/gu, "")));
   }
+  function buildVideoScript(options) {
+    const source = options && typeof options === "object" ? options : {};
+    const language = ["ml", "both"].includes(source.language) ? source.language : "en";
+    const topic = clean(source.topic, 180);
+    const notes = clean(source.notes || source.transcript, MAX_NOTES_CHARS);
+    const campaignName = clean(source.campaignName, 180);
+    const disclosure = clean(source.disclosure, 500);
+    const duration = Number(source.durationSeconds) || 30;
+    if (topic.length < 3) throw new Error("Add the real video topic before generating a script.");
+    if (notes.length < 5) throw new Error("Add real video details or a transcript. The script will not invent product features or footage.");
+    const chunks = notes.split(/(?<=[.!?。！？])\s+/).filter(Boolean);
+    const detail = chunks.length > 1 ? chunks.slice(0, 3).join(" ") : notes;
+    const ml = [
+      "ആരംഭം: " + topic + " — ഈ വിഷയം ശ്രദ്ധിക്കൂ.",
+      "സന്ദർഭം: " + (campaignName ? campaignName + " ക്യാമ്പെയ്‌നിനായി " : "") + "ഈ വീഡിയോയിൽ കാണിക്കുന്ന കാര്യം ചുരുക്കത്തിൽ പരിചയപ്പെടുത്താം.",
+      "പ്രധാന ഭാഗം: " + detail,
+      "അവസാനം: കൂടുതൽ വിവരങ്ങൾ അറിയാൻ ഔദ്യോഗിക വിവരങ്ങൾ പരിശോധിക്കുക; നിങ്ങളുടെ അഭിപ്രായം കമന്റിൽ പങ്കുവെക്കൂ."
+    ];
+    const en = [
+      "HOOK: " + topic + " — here is what to know.",
+      "CONTEXT: " + (campaignName ? "For the " + campaignName + " campaign, " : "") + "let’s look at what this video actually shows.",
+      "KEY POINTS: " + detail,
+      "CTA: Check the official details for more information and share your experience in the comments."
+    ];
+    const scenes = language === "ml" ? ml : language === "both"
+      ? ml.map((line, index) => line + "\n" + en[index]) : en;
+    const labels = language === "ml" ? ["ഹുക്ക്", "സന്ദർഭം", "പ്രധാന ഭാഗം", "അവസാനം"]
+      : ["Hook", "Context", "Key points", "Call to action"];
+    const disclosureCue = disclosure
+      ? "DISCLOSURE — show and say this clearly at the beginning: " + disclosure
+      : "";
+    if (disclosureCue) scenes[0] = disclosureCue + "\n\n" + scenes[0];
+    const sceneCaptions = scenes.map((line, index) => labels[index] + ": " + line.replace(/^(?:ആരംഭം|സന്ദർഭം|പ്രധാന ഭാഗം|അവസാനം|HOOK|CONTEXT|KEY POINTS|CTA):?\s*/i, ""));
+    return {
+      language, durationSeconds: Math.max(15, Math.min(60, duration)),
+      scenes: scenes.map((text, index) => ({ number: index + 1, label: labels[index], text })),
+      sceneCaptions,
+      script: scenes.join("\n\n"),
+      disclosureCue: disclosure ? { text: disclosure, placement: "opening" } : null,
+      note: "Template-generated from your supplied topic and notes; not AI footage understanding or a factual verification. The opening disclosure is a cue only: make it visibly readable or clearly spoken in the actual video. Edit every line and verify campaign rules before publishing."
+    };
+  }
+
+  function validateContentRewardsDisclosure(campaign, postPackage) {
+    const source = campaign && typeof campaign === "object" ? campaign : {};
+    if (String(source.platform || "") !== "Content Rewards") return { ok: true };
+    const post = postPackage && typeof postPackage === "object" ? postPackage : {};
+    const disclosure = clean(post.disclosure, 500);
+    if (!disclosure || post.disclosurePlacement !== "opening") {
+      return {
+        ok: false,
+        error: "Content Rewards requires a clear disclosure at the beginning of the clip. Add the exact opening disclosure in Clip Studio and regenerate the post package before publishing."
+      };
+    }
+    return { ok: true };
+  }
+
   function buildPostPackage(options) {
     const source = options && typeof options === "object" ? options : {};
     const platform = normalizePlatform(source.platform);
@@ -314,19 +371,27 @@
       : language === "both"
         ? "Save this for later and share your experience. · ഉപകാരപ്പെട്ടാൽ സേവ് ചെയ്യൂ; അഭിപ്രായം പങ്കുവെക്കൂ."
         : "Save this for later and share your question or experience in the comments.";
-    const disclosureText = disclosure ? "\n\n" + disclosure : "";
+    const disclosureText = disclosure ? disclosure + "\n\n" : "";
     const mentions = tagsFromRules(campaignRules, "Mentions");
     const requiredHashtags = tagsFromRules(campaignRules, "Hashtags");
     const platformTags = platform === "YouTube" ? ["#Shorts"] :
       platform === "Instagram" || platform === "Facebook" ? ["#Reels"] : [];
     const hashtags = unique(requiredHashtags.concat(topicHashtags(topic), platformTags)).slice(0, 12);
-    const captionBody = topic + "\n\n" + detail + "\n\n" + cta + disclosureText;
+    const captionBody = disclosureText + topic + "\n\n" + detail + "\n\n" + cta;
     const caption = [captionBody, hashtags.join(" "), mentions.join(" ")].filter(Boolean).join("\n\n");
     const title = topic.length > 95 ? topic.slice(0, 92).trimEnd() + "..." : topic;
     const warnings = [];
     if (!campaignRules) warnings.push("No saved campaign rules were linked to this package. Check the live brief before posting.");
-    if (!disclosure && /(disclos|sponsor|affiliate|paid partnership|#ad\b)/i.test(campaignRules)) {
-      warnings.push("The saved brief mentions a disclosure. Add the exact required disclosure before posting.");
+    warnings.push("Never buy views, use bots, join engagement exchanges or artificially generate engagement. Content Rewards warns that artificial engagement can lead to a permanent ban.");
+    if (!disclosure) {
+      warnings.push("Add a clear sponsorship / paid-promotion / affiliate disclosure at the very beginning of the clip and at the start of its caption, following the live brief.");
+    } else {
+      warnings.push("The supplied disclosure is placed first in the caption and added as an opening script cue. Make it visibly readable or clearly spoken in the actual video's opening; this tool does not burn text into the footage.");
+    }
+    const collabExplicitlyForbidden = /(?:\b(?:do not|don't|must not|not allowed|prohibited|forbidden|avoid)\b[^.\n]{0,80}\b(?:collab|co-post(?:ing)?|coauthor|co-author)\b|\b(?:collab|co-post(?:ing)?|coauthor|co-author)\b[^.\n]{0,80}\b(?:not allowed|prohibited|forbidden)\b)/i.test(campaignRules);
+    const collabExplicitlyAllowed = /(?:\b(?:collab|co-post(?:ing)?|coauthor|co-author)\b[^.\n]{0,80}\b(?:allowed|permitted|approved)\b|\b(?:allowed|permitted|approved)\b[^.\n]{0,80}\b(?:collab|co-post(?:ing)?|coauthor|co-author)\b)/i.test(campaignRules);
+    if (!collabExplicitlyAllowed || collabExplicitlyForbidden) {
+      warnings.push("Do not use Instagram Collab or another co-posting feature unless the live campaign brief explicitly allows it; co-posted views may not track correctly.");
     }
     if (/(pre.?approval|approve.*draft|draft.*approval)/i.test(campaignRules)) {
       warnings.push("The brief may require draft pre-approval. Do not publish until the campaign team approves the draft.");
@@ -337,6 +402,10 @@
     if (!transcript) warnings.push("No spoken-word transcript was supplied. Captions and copy are based only on your written notes.");
     warnings.push("Frame previews show selected moments only. This tool does not identify objects/scenes or transcribe audio automatically.");
     const video = source.video || null;
+    const videoScript = buildVideoScript({
+      language, topic, notes, transcript, campaignName, disclosure,
+      durationSeconds: video && video.durationSeconds
+    });
     const videoInfo = video ? {
       durationSeconds: video.durationSeconds, width: video.width, height: video.height,
       aspectRatio: video.aspectRatio, aspect: video.aspect, sizeBytes: video.sizeBytes
@@ -346,7 +415,8 @@
       version: 1, createdAt: new Date().toISOString(), platform, campaignName,
       sourceFile: video && video.file ? video.file.name : "",
       video: videoInfo, title, caption, hashtags, mentions, disclosure,
-      notes, transcriptProvided: Boolean(transcript), warnings
+      disclosurePlacement: disclosure ? "opening" : "missing",
+      notes, transcriptProvided: Boolean(transcript), videoScript, sceneCaptions: videoScript.sceneCaptions, warnings
     };
   }
 
@@ -354,6 +424,6 @@
     MAX_SOURCE_BYTES, MAX_NOTES_CHARS, MAX_TRANSCRIPT_CHARS, MAX_SCENE_SAMPLES,
     validateSourceVideo, formatDuration, classifyAspect, colorHistogram, histogramDistance,
     buildSceneMap, sampleSceneChanges, srtTimestamp, buildSrt, analyzeVideoFile,
-    normalizePlatform, buildPostPackage
+    normalizePlatform, buildVideoScript, validateContentRewardsDisclosure, buildPostPackage
   });
 });

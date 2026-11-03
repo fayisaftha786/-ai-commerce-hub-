@@ -74,6 +74,45 @@
             "Insufficient or stale information. Verify the source and fill missing details before prioritising."
     };
   }
+  function listingStatus(campaign) {
+    const row = campaign && typeof campaign === "object" ? campaign : {};
+    const opportunity = row.opportunity && typeof row.opportunity === "object" ? row.opportunity : {};
+    const status = clean(opportunity.status, 80);
+    if (row.notSeenInLatestScan === true || status === "not-seen-in-latest-scan") {
+      return {
+        kind: "historical",
+        label: "Historical lead",
+        detail: "Absent from the latest official Discover scan. Recheck the live campaign page before applying."
+      };
+    }
+    if (opportunity.expired === true || status === "expired") {
+      return {
+        kind: "expired",
+        label: "Deadline appears passed",
+        detail: "Verify the official campaign page before spending time or applying."
+      };
+    }
+    if (row.freshness === "stale" || status === "stale") {
+      return {
+        kind: "stale",
+        label: "Saved data is stale",
+        detail: "Reopen the current official campaign page; saved details may no longer be accurate."
+      };
+    }
+    if (row.notSeenInLatestScan === false) {
+      return {
+        kind: "latest",
+        label: "Seen in latest scan",
+        detail: "Listing presence does not prove the campaign is still open or that your account is eligible."
+      };
+    }
+    return {
+      kind: "unknown",
+      label: "Latest listing not confirmed",
+      detail: "No explicit latest-scan confirmation is available. Verify the current official page before applying."
+    };
+  }
+
   function enrich(campaign, now) {
     const row = Object.assign({}, campaign || {});
     row.discoveryKey = keyFor(row);
@@ -124,6 +163,35 @@
     } catch (_) { return ""; }
   }
 
+
+  async function detectSameOriginBackend(options) {
+    const opts = options || {};
+    const origin = normalizeBackendUrl(opts.origin);
+    if (!origin) return "";
+    const fetcher = opts.fetchImpl || (typeof fetch === "function" ? fetch : null);
+    if (!fetcher) return "";
+    const controller = typeof AbortController === "function" ? new AbortController() : null;
+    const timeoutMs = Number.isInteger(opts.timeoutMs) ? Math.max(500, Math.min(10000, opts.timeoutMs)) : 4000;
+    const timeout = controller ? setTimeout(() => controller.abort(), timeoutMs) : null;
+    try {
+      const response = await fetcher(origin + "/api/discovery/status", {
+        method: "GET",
+        mode: "cors",
+        credentials: "omit",
+        cache: "no-store",
+        headers: { Accept: "application/json" },
+        signal: controller ? controller.signal : undefined
+      });
+      if (!response || !response.ok) return "";
+      const status = await response.json();
+      return status && Array.isArray(status.sourceRegistry) ? origin : "";
+    } catch (_) {
+      return "";
+    } finally {
+      if (timeout) clearTimeout(timeout);
+    }
+  }
+
   async function fetchBackendSnapshot(options) {
     const opts = options || {};
     const baseUrl = normalizeBackendUrl(opts.backendUrl);
@@ -148,6 +216,49 @@
       return { status, campaigns: deduplicate(data.campaigns), totalReceived: data.totalSaved || data.count, fetchedAt: data.updatedAt || status.updatedAt || "", sourceLabel: "Server-side scheduled discovery", sourceUrl: baseUrl };
     } catch (error) {
       if (error && error.name === "AbortError") throw new Error("Discovery backend request timed out.");
+      throw error;
+    } finally {
+      if (timeout) clearTimeout(timeout);
+    }
+  }
+
+
+  async function fetchBackendCampaignPage(options) {
+    const opts = options || {};
+    const baseUrl = normalizeBackendUrl(opts.backendUrl);
+    const campaignUrl = canonicalPublicCampaignUrl(opts.url);
+    if (!baseUrl) throw new Error("Enter a valid HTTPS backend origin before using live public-page analysis.");
+    if (!campaignUrl) throw new Error("Only a public HTTPS Content Rewards campaign detail URL can be analysed.");
+    const fetcher = opts.fetchImpl || (typeof fetch === "function" ? fetch : null);
+    if (!fetcher) throw new Error("This browser does not support secure live campaign-page requests.");
+    const controller = typeof AbortController === "function" ? new AbortController() : null;
+    const timeoutMs = Number.isInteger(opts.timeoutMs) ? Math.max(1000, Math.min(30000, opts.timeoutMs)) : 15000;
+    const timeout = controller ? setTimeout(() => controller.abort(), timeoutMs) : null;
+    try {
+      const response = await fetcher(baseUrl + "/api/discovery/analyze-public-campaign", {
+        method: "POST",
+        mode: "cors",
+        credentials: "omit",
+        headers: { Accept: "application/json", "Content-Type": "application/json" },
+        body: JSON.stringify({ url: campaignUrl }),
+        signal: controller ? controller.signal : undefined
+      });
+      let payload = null;
+      try { payload = await response.json(); } catch (_) {}
+      if (!response || !response.ok) {
+        const message = payload && (payload.message || payload.error);
+        throw new Error(clean(message || "Live public campaign scan returned an HTTP error.", 260));
+      }
+      const detail = payload && payload.detail;
+      if (!payload || payload.sourceVerification !== "official-public-page" ||
+          !detail || canonicalPublicCampaignUrl(detail.url) !== campaignUrl ||
+          detail.status !== "ok" || typeof detail.pageText !== "string" ||
+          detail.pageText.trim().length < 20 || detail.pageText.length > 20000) {
+        throw new Error("The backend returned an invalid live public campaign analysis. No snapshot result was substituted.");
+      }
+      return detail;
+    } catch (error) {
+      if (error && error.name === "AbortError") throw new Error("Live public campaign analysis timed out. Check the backend and try again.");
       throw error;
     } finally {
       if (timeout) clearTimeout(timeout);
@@ -415,5 +526,5 @@
       }
     };
   }
-  return { STORAGE_KEY, SETTINGS_KEY, DEFAULT_INTERVAL_HOURS, SOURCES, keyFor, assessOpportunity, enrich, deduplicate, readState, writeState, readSettings, writeSettings, normalizeBackendUrl, fetchBackendSnapshot, fetchStaticSnapshot, mergeHistory, canonicalPublicCampaignUrl, analyzePublicCampaigns, scan };
+  return { STORAGE_KEY, SETTINGS_KEY, DEFAULT_INTERVAL_HOURS, SOURCES, keyFor, assessOpportunity, listingStatus, enrich, deduplicate, readState, writeState, readSettings, writeSettings, normalizeBackendUrl, detectSameOriginBackend, fetchBackendSnapshot, fetchBackendCampaignPage, fetchStaticSnapshot, mergeHistory, canonicalPublicCampaignUrl, analyzePublicCampaigns, scan };
 });

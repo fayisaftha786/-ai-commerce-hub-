@@ -374,6 +374,30 @@
       state = coreComplete ? "promising" : "verify";
     }
 
+    const creatorAccount = source.account && typeof source.account === "object" ? source.account : {};
+    const accountChecklist = creatorAccount.checklist && typeof creatorAccount.checklist === "object"
+      ? creatorAccount.checklist : {};
+    const socialAccounts = Array.isArray(creatorAccount.socialAccounts) ? creatorAccount.socialAccounts : [];
+    const matchingAccount = socialAccounts.find((item) => item && item.platform === platform) || null;
+    const accountReadinessChecks = [
+      { key: "ageEligible", label: "18+ age requirement", done: accountChecklist.ageEligible === true,
+        detail: accountChecklist.ageEligible === true ? "You marked the age requirement as confirmed in your local checklist." : "Confirm the current 18+ requirement on the official terms; this app cannot verify age." },
+      { key: "loggedIn", label: "Content Rewards account access", done: accountChecklist.loggedIn === true,
+        detail: accountChecklist.loggedIn === true ? "You marked that you can access your official account." : "Confirm that you can sign in to the official Content Rewards account." },
+      { key: "socialVerified", label: "Official social-account connection", done: accountChecklist.socialVerified === true,
+        detail: accountChecklist.socialVerified === true ? "You marked the exact posting account as Connected in Content Rewards." : "Verify the exact posting account in Content Rewards → Connected accounts." },
+      { key: "postingAccount", label: platform + " posting handle", done: Boolean(matchingAccount && matchingAccount.confirmedConnected),
+        detail: matchingAccount ? (matchingAccount.confirmedConnected ? "Local reminder marked connected for " + matchingAccount.handle + "; this is not a live provider check." : matchingAccount.handle + " is saved, but its local connection reminder is not confirmed.") : "No " + platform + " handle is saved in this device's account checklist." },
+      { key: "campaignReady", label: "Campaign joined / application approved", done: accountChecklist.campaignReady === true,
+        detail: accountChecklist.campaignReady === true ? "You marked the campaign access step as complete." : "Complete the official Join / Apply step and wait for approval when required." }
+    ];
+    const accountReadiness = {
+      checks: accountReadinessChecks,
+      completeCount: accountReadinessChecks.filter((item) => item.done).length,
+      totalCount: accountReadinessChecks.length,
+      note: "These are local user confirmations only. No private Content Rewards account or social-provider API is connected."
+    };
+
     const checks = [
       {
         label: "Selected platform",
@@ -478,7 +502,7 @@
         state === "promising" ? "Promising copied brief · verify before joining" : "More evidence required",
       reasons, missing, platform, acceptedPlatforms: accepted, excludedPlatforms: excluded, rate, payout, requirements, checks,
       capPerClip, minimumPayout, minimumViews, maximumViews, acceptingWithoutDeadline,
-      poolTermsComplete, creatorFee: payout.creatorFee,
+      poolTermsComplete, creatorFee: payout.creatorFee, accountReadiness,
       nextStep,
       earningsNote: "This is a rule and evidence assessment, not an earnings forecast. No views, campaign approval, actual payout or paid balance is assumed."
     };

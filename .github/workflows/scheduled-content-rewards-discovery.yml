@@ -53,6 +53,11 @@ jobs:
           CAMPAIGN_URL: ${{ inputs.campaign_url || '' }}
         run: node scripts/content-rewards-discovery-scan.js
 
+      - name: Audit Content Rewards snapshot quality
+        id: audit_snapshot
+        if: ${{ always() && steps.scan.outcome != 'skipped' }}
+        run: node scripts/audit-content-rewards-snapshot.js
+
       - name: Refresh official creator-program source checks
         id: creator_scan
         run: node scripts/creator-program-discovery.js
@@ -66,7 +71,7 @@ jobs:
 
       - name: Commit latest scan snapshots
         id: snapshot
-        if: ${{ always() && steps.scan.outcome != 'skipped' && (steps.creator_scan.outcome == 'success' || steps.prepare_sources.outcome == 'success') }}
+        if: ${{ always() && steps.scan.outcome != 'skipped' && steps.audit_snapshot.outcome == 'success' && (steps.creator_scan.outcome == 'success' || steps.prepare_sources.outcome == 'success') }}
         env:
           CREATOR_SCAN_OUTCOME: ${{ steps.creator_scan.outcome }}
         run: |

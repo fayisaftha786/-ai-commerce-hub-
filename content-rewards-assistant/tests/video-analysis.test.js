@@ -58,6 +58,55 @@ test("builds a post package from supplied facts, campaign tags, mentions and pla
   assert.ok(result.warnings.some((item) => /does not identify objects\/scenes/i.test(item)));
 });
 
+test("builds a four-scene Malayalam, English or bilingual script only from supplied facts", () => {
+  const options = { topic: "Kitchen organisation", notes: "Show three storage steps using containers already at home.", campaignName: "Home ideas", durationSeconds: 30 };
+  const ml = Analysis.buildVideoScript({ ...options, language: "ml" });
+  assert.equal(ml.scenes.length, 4);
+  assert.match(ml.script, /ആരംഭം/);
+  assert.match(ml.script, /three storage steps/);
+  assert.match(ml.note, /not AI footage understanding/i);
+  const en = Analysis.buildVideoScript({ ...options, language: "en" });
+  assert.match(en.script, /HOOK:/);
+  const both = Analysis.buildVideoScript({ ...options, language: "both" });
+  assert.match(both.scenes[0].text, /\nHOOK:/);
+  assert.equal(both.sceneCaptions.length, 4);
+  assert.throws(() => Analysis.buildVideoScript({ topic: "Product", notes: "" }), /real video details/i);
+});
+
+test("places the supplied sponsorship disclosure first in the caption and opening script", () => {
+  const result = Analysis.buildPostPackage({
+    platform: "Instagram Reels",
+    topic: "Product demonstration",
+    notes: "Show how the product is used.",
+    disclosure: "Paid partnership with Example Brand",
+    campaignRules: "Accepted platforms: Instagram\nCollab feature is allowed."
+  });
+  assert.equal(result.disclosurePlacement, "opening");
+  assert.ok(result.caption.startsWith("Paid partnership with Example Brand\n\nProduct demonstration"));
+  assert.equal(result.caption.split("Paid partnership with Example Brand").length - 1, 1, "the disclosure appears once, not again at the end");
+  assert.match(result.videoScript.scenes[0].text, /^DISCLOSURE — show and say this clearly at the beginning: Paid partnership with Example Brand/);
+  assert.deepEqual(result.videoScript.disclosureCue, {
+    text: "Paid partnership with Example Brand",
+    placement: "opening"
+  });
+  assert.ok(result.warnings.some((item) => /visibly readable or clearly spoken/i.test(item)));
+  assert.equal(result.warnings.some((item) => /Do not use Instagram Collab/i.test(item)), false);
+});
+
+test("requires an opening disclosure and warns against unapproved Collab or co-posting", () => {
+  const result = Analysis.buildPostPackage({
+    platform: "Instagram Reels",
+    topic: "Product demonstration",
+    notes: "Show how the product is used.",
+    campaignRules: "Accepted platforms: Instagram\nDo not use Instagram Collab."
+  });
+  assert.equal(result.disclosurePlacement, "missing");
+  assert.ok(result.warnings.some((item) => /disclosure at the very beginning/i.test(item)));
+  assert.ok(result.warnings.some((item) => /Do not use Instagram Collab/i.test(item)));
+  assert.ok(result.warnings.some((item) => /Never buy views, use bots/i.test(item)));
+  assert.equal(result.caption.startsWith("Product demonstration"), true);
+});
+
 test("requires a real topic and user-supplied description instead of guessing video contents", () => {
   assert.throws(() => Analysis.buildPostPackage({
     platform: "YouTube", topic: "", notes: "Video shows a demonstration."
@@ -65,6 +114,20 @@ test("requires a real topic and user-supplied description instead of guessing vi
   assert.throws(() => Analysis.buildPostPackage({
     platform: "YouTube", topic: "My video", notes: ""
   }), /key points or a transcript/i);
+});
+
+test("enforces an opening disclosure before Content Rewards publishing handoff", () => {
+  const campaign = { platform: "Content Rewards" };
+  assert.deepEqual(Analysis.validateContentRewardsDisclosure(campaign, {
+    disclosure: "", disclosurePlacement: "missing"
+  }), {
+    ok: false,
+    error: "Content Rewards requires a clear disclosure at the beginning of the clip. Add the exact opening disclosure in Clip Studio and regenerate the post package before publishing."
+  });
+  assert.deepEqual(Analysis.validateContentRewardsDisclosure(campaign, {
+    disclosure: "Paid partnership with Brand", disclosurePlacement: "opening"
+  }), { ok: true });
+  assert.deepEqual(Analysis.validateContentRewardsDisclosure({ platform: "YouTube campaign" }, {}), { ok: true });
 });
 
 test("warns about missing disclosures and pre-approval rules", () => {
@@ -84,10 +147,11 @@ test("Clip Studio wires local analysis, package download and Social Desk handoff
   const worker = fs.readFileSync(path.join(__dirname, "..", "service-worker.js"), "utf8");
   const ui = fs.readFileSync(path.join(__dirname, "..", "video-analysis-ui.js"), "utf8");
   const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "..", "package.json"), "utf8"));
+  assert.ok(html.includes("</label>\n    <label>Campaign-aware video script"), "campaign script field must begin on a real new line");
   for (const id of [
     "video-analysis-file", "video-analysis-run", "video-analysis-topic",
     "video-analysis-notes", "video-analysis-transcript", "video-analysis-generate",
-    "video-analysis-caption", "video-analysis-download-text", "video-analysis-download-json",
+    "video-analysis-caption", "video-analysis-script", "video-analysis-download-text", "video-analysis-download-json",
     "video-analysis-use-editor", "video-analysis-send-social", "video-analysis-preapproval-confirm"
   ]) assert.ok(html.includes('id="' + id + '"'), "missing video analysis control " + id);
   assert.match(html, /video-analysis\.js/);
@@ -102,6 +166,7 @@ test("Clip Studio wires local analysis, package download and Social Desk handoff
   assert.match(ui, /clipreward:youtube-published/);
   assert.match(ui, /AI_COMMERCE_YOUTUBE_PUBLISH_RESULT/);
   assert.match(ui, /preApprovalConfirmed/);
+  assert.ok(ui.includes("Analysis.validateContentRewardsDisclosure"));
   assert.match(ui, /source file stays in this browser/i);
   assert.match(packageJson.scripts.check, /content-rewards-assistant\/video-analysis\.js/);
   assert.match(packageJson.scripts.check, /content-rewards-assistant\/video-analysis-ui\.js/);

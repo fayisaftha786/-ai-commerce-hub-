@@ -63,6 +63,7 @@
     let lastUploadedVideoId = "";
     let lastPublishContext = null;
     let statusCheckInFlight = false;
+    const PublishMonitor = windowObject.ClipRewardPublishMonitor;
 
     function status(message) {
       statusNode.textContent = message;
@@ -174,6 +175,37 @@
       }
     }
 
+
+    async function autoPollYouTubePublication(videoId) {
+      if (!PublishMonitor || typeof PublishMonitor.pollUntilPublic !== "function") {
+        status("Upload accepted. Automatic status monitor is unavailable; use Check processing & public status.");
+        return;
+      }
+      const outcome = await PublishMonitor.pollUntilPublic(async () => {
+        const response = await windowObject.fetch(
+          backendOrigin + "/api/social/youtube/status?videoId=" + encodeURIComponent(videoId),
+          { method: "GET", credentials: "include", cache: "no-store", headers: { Accept: "application/json" } }
+        );
+        const result = await response.json();
+        return response.ok ? result : { ok: false, error: result.error || "youtube_status_http_" + response.status };
+      }, {
+        provider: "youtube",
+        maxAttempts: 24,
+        intervalMs: 5000,
+        onAttempt: (attempt, total) => status("Automatically checking YouTube processing/public status · " + attempt + "/" + total + ". Keep this page open.")
+      });
+
+      if (outcome.state === "published") {
+        status("YouTube reports a processed public video. Rechecking its exact link and timestamp before sending the receipt…");
+        await checkUploadedVideoStatus();
+      } else if (outcome.state === "not_public") {
+        status("YouTube processing is complete, but visibility is " + (outcome.privacyStatus || "not public") + ". Change visibility in YouTube Studio, then use Check processing & public status. No Content Rewards timer has started.");
+      } else if (outcome.state === "timed_out") {
+        status("YouTube is still processing or has not confirmed public visibility after the automatic checks. Keep the video ID and use Check processing & public status later. No timer has started.");
+      } else {
+        status("Automatic YouTube verification stopped (" + (outcome.error || outcome.state) + "). Check the channel and use the manual status button; no timer has started.");
+      }
+    }
 
     async function checkUploadedVideoStatus() {
       const videoId = String((videoIdInput && videoIdInput.value) || lastUploadedVideoId).trim();
@@ -337,8 +369,9 @@
           }
           lastUploadedVideoId = String(result.videoId);
           if (videoIdInput) videoIdInput.value = lastUploadedVideoId;
-          status("YouTube accepted the upload (not yet confirmed public). Check processing & public status before starting any Content Rewards timer.");
+          status("YouTube accepted the upload. Automatically checking processing and visibility; the tracker will update only after a verified public receipt.");
           updatePublishControls();
+          await autoPollYouTubePublication(lastUploadedVideoId);
         } catch (error) {
           status((error && error.message ? error.message : "YouTube upload failed.") + " Check YouTube Studio before retrying so you do not create a duplicate upload.");
           publishButton.disabled = false;

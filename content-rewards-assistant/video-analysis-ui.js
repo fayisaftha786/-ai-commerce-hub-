@@ -19,6 +19,7 @@
     const titleOutput = $("video-analysis-title");
     const captionOutput = $("video-analysis-caption");
     const tagsOutput = $("video-analysis-tags");
+    const scriptOutput = $("video-analysis-script");
     const warnings = $("video-analysis-warnings");
     const mediaInput = $("video-media-files");
     const postCaption = $("video-post-caption");
@@ -169,6 +170,7 @@
         titleOutput.value = postPackage.title;
         captionOutput.value = postPackage.caption;
         tagsOutput.value = postPackage.hashtags.join(" ");
+        scriptOutput.value = postPackage.videoScript.script;
         warnings.replaceChildren();
         postPackage.warnings.forEach((warningText) => {
           const item = root.document.createElement("li");
@@ -270,6 +272,11 @@
       const campaign = selectedCampaign();
       if (!postPackage || campaign.id !== postPackage.campaignId) {
         setStatus("The selected campaign changed after this post package was generated. Select the correct campaign and generate the package again before handoff.", true);
+        return;
+      }
+      const disclosureCheck = Analysis.validateContentRewardsDisclosure(campaign, postPackage);
+      if (!disclosureCheck.ok) {
+        setStatus(disclosureCheck.error, true);
         return;
       }
       const requiresPreApproval = /(pre.?approval|approve.*draft|draft.*approval)/i.test(campaign.rules);

@@ -1,6 +1,6 @@
 # Official social publishing and Content Rewards automation
 
-## Current implementation status — 2026-11-02
+## Current implementation status — 2026-11-03
 
 The repository contains code for public Content Rewards campaign discovery, rules/reward analysis, a local campaign tracker, browser-local video preparation, Clip Studio → Social Desk handoff, and official social publishing integrations for YouTube and Meta (Facebook Page Reels and linked Instagram Professional Reels).
 
@@ -14,17 +14,23 @@ Merged implementation:
 
 The integrations are **code implemented, deployment and real-account verification pending** unless a live deployment and test receipt have separately been confirmed. Passing CI validates repository code/tests; it does not configure provider apps or prove a real upload.
 
+### Live public campaign-page analysis (optional backend)
+
+When ClipReward Studio has an HTTPS backend origin configured, Analyse website automatically first calls the read-only endpoint POST /api/discovery/analyze-public-campaign with one canonical public campaign URL. The backend reuses the bounded public-page fetcher: HTTPS only, contentrewards.com or its subdomains, /c/campaigns/{id} only, redirects revalidated against the same allowlist, no cookies or credentials, HTML-only responses, a 1.5 MB page cap, a 20,000-character visible-text cap and a 10-second fetch timeout. The endpoint limits scan rate per connection and concurrent fetches. The browser validates the returned official-source label, exact URL and readable text before analysis. If a configured live scan fails, the app reports the error and does not silently replace it with historical snapshot data.
+
+On same-origin OCI hosting, ClipReward probes `/api/discovery/status` at startup and auto-saves the backend origin only when the response has the expected discovery API structure. Cross-origin backends can still be entered manually. If no backend responds, the app continues to use the public GitHub Actions snapshot and its explicit on-demand workflow. That snapshot can be delayed; it is not a live per-click scan. Both routes read public campaign HTML only. They do not use Content Rewards account cookies, sign in, unlock joined requirements or inspect private campaigns. The backend is optional for this function and still needs provisioning and an exact DISCOVERY_CORS_ORIGINS entry for the published ClipReward origin.
+
 ## Capability matrix
 
 | Workflow | Current implementation | Boundary / required creator action |
 |---|---|---|
-| Discover public Content Rewards campaigns | Scheduled GitHub Actions scan, official public Discover first, third-party public-feed fallback, saved snapshot and up to 100 public details | Snapshot is best-effort and may be stale; private/invitation-only/join-only details stay hidden |
+| Discover public Content Rewards campaigns | Scheduled GitHub Actions scan, official public Discover first, third-party public-feed fallback, plus a live single-URL scan when the optional HTTPS backend is configured | Scheduled snapshot is best-effort and may be stale; live scan reads public HTML only; private/invitation-only/join-only details stay hidden |
 | Analyze rules and reward terms | Platform matching, visible rule extraction, payout model/budget evidence, missing fields, Promising / Verify / Blocked ranking | Evidence aid only; re-open live brief and verify deadline, budget, eligibility and acceptance |
 | Import campaigns to local tracker | Batch import of fresh/readable Promising rows with deduplication and stale/blocked filtering | Imports as Found / idea; it does not Join or Apply |
 | Prepare video and post package | Browser-local media analysis, sampled frames/scene-cut heuristic, creator-supplied transcript/notes, SRT scaffolding, local 720×1280 renderer, captions and hashtags | Not text-to-video AI; no semantic scene recognition or automatic transcription of uploaded files; check device codec support |
 | Send rendered export to Social Desk | Same-origin, opener-checked handoff of rendered file, caption, platform and campaign context | Handoff is not a publish; browser popup/File transfer and size/format limits apply |
-| YouTube connect and publish | Google OAuth/PKCE, encrypted server-side token vault, channel identification, explicit upload confirmation, processing/public-visibility check | Requires deployed HTTPS backend, Google OAuth client, YouTube Data API access, scopes and connected channel |
-| Facebook Page Reels connect and publish | Meta OAuth, managed Page selection, server-side token vault, upload/publish/status path and public permalink/time | Requires deployed HTTPS backend, Meta app, Page access and approved permissions/review; only eligible managed Pages |
+| YouTube connect and publish | Google OAuth/PKCE, encrypted server-side token vault, channel identification, explicit upload confirmation, bounded automatic processing/public-visibility polling after upload, verified public receipt handoff | Requires deployed HTTPS backend, Google OAuth client, YouTube Data API access, scopes and connected channel |
+| Facebook Page Reels connect and publish | Meta OAuth, managed Page selection, server-side token vault, upload/publish path, bounded automatic status polling and verified public permalink/time | Requires deployed HTTPS backend, Meta app, Page access and approved permissions/review; only eligible managed Pages |
 | Instagram Reels connect and publish | Meta OAuth for linked Instagram Professional account, Reel container processing/publish path and public permalink/time | Requires eligible linked Professional account, Meta app permissions/review and a publicly fetchable temporary media URL |
 | X / WhatsApp publishing | Manual Social Desk handoff | No official publisher integration is implemented here |
 | Content Rewards account verification | Creator guidance and local explicit attestation gate | Connect and verify the exact posting account inside Content Rewards; the app cannot read or verify that private state |
@@ -32,6 +38,9 @@ The integrations are **code implemented, deployment and real-account verificatio
 | Start 30-minute timer | Verified public YouTube/Meta publishing response can save post URL/time and start local reminder | Creator must confirm exact posting account is verified in Content Rewards; reminders require the page/browser to remain active |
 | Submit Clip | Guided official link-submission workflow and local time/evidence fields | Creator manually submits public permalink in Content Rewards while the post is strictly less than 30 minutes old |
 | Credited views, review, approval and payout | Local evidence/notes only | Read from official Content Rewards/Whop account; no private dashboard sync or payout API is integrated |
+
+
+After an accepted YouTube or Facebook upload, the Social Desk now performs up to 24 provider-status checks at five-second intervals while the page remains open. A verified public permalink and timestamp are handed to the campaign tracker only after the provider confirms the completed public state. Private/unlisted YouTube uploads and timed-out/pending posts do not start the Content Rewards reminder. The manual status controls remain available after the bounded polling window.
 
 ## What a publish receipt means
 
@@ -61,7 +70,7 @@ A backend /health response confirms process health only. Use GET /api/social/pro
 
 1. Use the latest campaign snapshot to shortlist a public campaign. Open the official campaign page and verify deadline, remaining budget, rules, account eligibility and accepted platform.
 2. Complete Join / Apply on Content Rewards. For application campaigns, answer the brand's questions and wait for its decision. Update the local tracker only to reflect what you actually completed.
-3. Re-open the post-join brief. Confirm disclosure, content rights, format, length, language, hashtags, mentions, originality and any pre-approval requirement.
+3. Re-open the post-join brief. Put a clear sponsorship/affiliate disclosure at the very beginning of the clip. Do not use Instagram Collab or another co-posting feature unless the live campaign brief explicitly allows it; Content Rewards warns co-posted views may not track correctly. Never buy views or use bots, engagement exchanges or artificial engagement. Confirm content rights, format, length, language, hashtags, mentions, originality and any pre-approval requirement.
 4. Prepare the clip in Clip Studio. Review source rights, captions, transcript, scene boundaries and exported format. The renderer is local and device/browser codec support varies.
 5. Connect the correct publisher account using Google or Meta OAuth. Separately verify that the **same exact account** is connected in Content Rewards. Connecting a Google/Meta account to this app does not verify it in Content Rewards.
 6. Select the campaign and platform in Social Desk. Confirm campaign state/rules, account attestation, pre-approval if required, caption, destination and visibility. Publish only after explicit confirmation.
@@ -73,12 +82,16 @@ A backend /health response confirms process health only. Use GET /api/social/pro
 
 The public scanner sends no Content Rewards cookies or login credentials and does not scrape private/signed-in pages, bypass CAPTCHA or access locked content. A public campaign page may omit join-only requirements, and the latest snapshot can be stale or incomplete. The tracker stores user-maintained progress; statuses do not prove that Content Rewards has changed state.
 
+The current official Help Center page **What you can target, and what you can measure** explicitly lists an API as “Not available today”. The current Creator Terms §12.2 and §13.2 prohibit buying/generating non-genuine engagement and state that this can result in a permanent ban; §12.6 prohibits Instagram Collab/equivalent co-posting unless the live campaign requirements or description permit it; §12.9 requires a clear, conspicuous disclosure at the beginning of the video; and §14.2 says connected social access is read-only and Content Rewards does not post on the creator’s behalf. For that reason, this project does not call undocumented private endpoints, replay browser cookies or automate private Join/Apply, Submit Clip, review, views, balance or payout actions. The creator completes those steps in the official account. The app’s separate YouTube/Meta publishing integrations use the provider’s own OAuth/API permissions and are independent of Content Rewards’ read-only connection.
+
 Do not automate private account actions without an official documented API and permission. Do not fabricate account verification, receipts, views, approval, balances or earnings. Do not create fake engagement or use media/accounts without permission. Keep required disclosure and licensing terms.
 
 Official Content Rewards references:
 - [Find and apply to a campaign](https://help.contentrewards.com/en/articles/16817237-find-and-apply-to-a-campaign)
 - [Submit a video](https://help.contentrewards.com/en/articles/15319814-submit-a-video)
 - [Connect social accounts](https://help.contentrewards.com/en/articles/16746780-connect-your-social-accounts)
+- [Creator Terms of Service](https://contentrewards.com/terms)
+- [What you can target, and what you can measure](https://help.contentrewards.com/en/articles/16830147-what-you-can-target-and-what-you-can-measure)
 - [Approval and review](https://help.contentrewards.com/en/articles/15319801-approval-and-review)
 - [How Content Rewards works](https://help.contentrewards.com/en/articles/15319790-how-content-rewards-works)
 

@@ -172,12 +172,12 @@
     <p class="feed-disclaimer">Important: GitHub Actions reads public campaign links from the official Content Rewards Discover page first, then fetches up to 100 public campaign detail pages for the analyzer. The third-party scraped feed is used only as a fallback if the official Discover page cannot be read. Scheduled runs are attempted about every six hours but may be delayed or skipped under platform load. If the snapshot is unavailable, browser fallback checks only the third-party feed while this page is open. Private, invitation-only, sign-in-gated and unlisted campaigns are not crawled. Creator eligibility, current availability and reward approval remain controlled by Content Rewards. Scores measure field coverage and freshness, not likelihood of approval or guaranteed earnings.</p>
     <p id="discovery-history" class="tiny-note">No scan history yet.</p>
   </section>
-  <div class="account-warning"><strong>Automatic public-page analysis:</strong> enter a public HTTPS Content Rewards campaign URL and select “Analyse website automatically”. GitHub Actions first reads public campaign links from the official Content Rewards Discover page, then fetches up to 100 readable campaign detail pages for the analyzer. The third-party feed is used only if official Discover cannot be read. Run “Run GitHub page scan” above when the first scan is pending. The browser feed test is not the same as the background page crawler. Private, join-only, sign-in-gated or unlisted campaigns and locked requirements are not fetched; verify all reward terms, eligibility and current availability on the official page. No passwords, OTPs or cookies are requested.</div>
+  <div class="account-warning"><strong>Automatic public-page analysis:</strong> enter a public HTTPS Content Rewards campaign URL and select “Analyse website automatically”. A configured HTTPS backend can fetch one public campaign URL live for immediate analysis. Otherwise GitHub Actions reads public campaign links from official Discover first, then fetches up to 100 public detail pages; the third-party feed is only a fallback if official Discover cannot be read. Run “Run GitHub page scan” when the first scheduled snapshot is pending. Private, join-only, sign-in-gated or unlisted campaigns and locked requirements are not fetched; verify all terms and eligibility on the official page. No passwords, OTPs or cookies are requested.</div>
   <form id="campaign-scout-form" class="scout-form">
     <label>Target platform <span class="optional">(select one to filter the findings and autofill)</span><select id="scout-target-platform"><option value="Instagram">Instagram</option><option value="Facebook">Facebook</option><option value="YouTube">YouTube</option><option value="X">X</option></select></label>
     <label>Public campaign URL <span class="optional">(enter a Content Rewards public campaign page)</span><input id="scout-source-url" type="url" inputmode="url" maxlength="500" placeholder="https://contentrewards.com/c/campaigns/..."></label>
     <div class="scout-actions"><button class="button button-primary" id="scout-url-analyse-button" type="button">⌕ Analyse website automatically</button><button class="button button-quiet" id="scout-clear-button" type="button">Clear</button></div>
-    <p class="tiny-note">The app reads public campaign-page text saved by its scheduled scan (up to 100 pages from the official Discover listing, refreshed about every six hours). A public campaign outside that listing can be queued for an on-demand background scan below. Private, sign-in-only and non-Content Rewards URLs are not fetched.</p>
+    <p class="tiny-note">When an HTTPS backend is configured, this action fetches the exact public Content Rewards campaign page live. Without a backend, it uses the latest scheduled snapshot (up to 100 pages from official Discover, refreshed about every six hours) and offers the GitHub Actions on-demand scan for URLs not in that snapshot. Private, sign-in-only and non-Content Rewards URLs are never fetched. A public campaign outside that listing can be queued for an on-demand background scan when no backend is configured.</p>
     <div id="scout-on-demand-actions" class="account-warning" hidden>
       <strong>This public URL is not in the latest saved scan.</strong>
       <p id="scout-on-demand-help">Copy the URL and request an on-demand background scan.</p>
@@ -205,6 +205,7 @@
       <div class="ri-heading"><div><div class="section-kicker">UNIFIED REWARDS INTELLIGENCE</div><h3>Campaign action plan & native earning checks</h3></div><span class="ri-badge">Rules analysis</span></div>
       <div id="ri-campaign-summary"></div>
       <div id="ri-rule-checks" class="ri-check-grid"></div>
+      <div id="ri-account-readiness"></div>
       <div id="ri-requirements"></div>
       <div class="ri-native-heading"><div class="section-kicker">SEPARATE NATIVE PLATFORM EARNINGS</div><p>These are independent from Content Rewards campaign payouts.</p></div>
       <div id="ri-native-programs" class="ri-native-grid"></div>
@@ -327,14 +328,16 @@
       <label class="tiny-note"><input id="speech-dictation-cloud-consent" type="checkbox"> I explicitly allow the browser's online speech service to process my microphone audio when on-device recognition is unavailable or I choose online mode.</label>
       <p class="tiny-note">Privacy: voice typing starts only after you press Start and grant microphone permission. On-device mode is used where supported. Online mode may send audio to the browser provider and needs internet. Do not dictate passwords, OTPs or private information. The app does not save microphone audio. Check every word before publishing.</p>
     </div>
-    <label>Exact sponsorship / affiliate disclosure (when applicable)
-      <input id="video-analysis-disclosure" maxlength="500" placeholder="e.g. Ad / Paid partnership / Affiliate link">
+    <label>Opening disclosure for sponsorship / paid promotion / affiliate content
+      <input id="video-analysis-disclosure" maxlength="500" placeholder="e.g. Ad · Paid partnership with Brand · Affiliate link">
+      <small class="tiny-note">When supplied, this text is placed first in the caption and shown as an opening script cue. Add it visibly or say it clearly at the start of the actual video; it is not automatically burned into the footage.</small>
     </label>
     <button class="button button-primary full-width" type="button" id="video-analysis-generate" disabled>Generate platform post package</button>
   </div>
   <div id="video-analysis-package" class="video-analysis-package" hidden>
     <label id="video-analysis-preapproval-label" hidden><input id="video-analysis-preapproval-confirm" type="checkbox"> I confirm the campaign team has already approved this draft for the account I will publish from. Do not tick this before official approval.</label>
     <label>Post title <input id="video-analysis-title" readonly></label>
+    <label>Campaign-aware video script <span class="optional">Template from your real notes · review before recording</span><textarea id="video-analysis-script" rows="8" readonly></textarea></label>
     <label>Caption / description <textarea id="video-analysis-caption" rows="7"></textarea></label>
     <label>Hashtags <textarea id="video-analysis-tags" rows="2" readonly></textarea></label>
     <strong class="video-analysis-warning-heading">Checks to review</strong>

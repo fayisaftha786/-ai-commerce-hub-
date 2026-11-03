@@ -82,6 +82,7 @@
     let pages = [];
     let lastFacebookVideoId = "";
     let publishInFlight = false;
+    const PublishMonitor = windowObject.ClipRewardPublishMonitor;
 
     function setStatus(message, error) {
       statusNode.textContent = message;
@@ -356,6 +357,7 @@
       if (!windowObject.confirm(confirmMessage)) return;
       publishInFlight = true;
       updateControls();
+      let uploadedFacebookVideoId = "";
       setPublishStatus("Uploading and publishing the Reel through Meta's official API… Keep this tab open.", false);
       try {
         const query = new URLSearchParams({
@@ -378,9 +380,10 @@
         if (!response.ok || !result.ok) throw new Error(result.error || "Meta publishing failed.");
         if (provider === "facebook") {
           lastFacebookVideoId = String(result.videoId || "");
+          uploadedFacebookVideoId = lastFacebookVideoId;
           if (facebookVideoIdInput && lastFacebookVideoId) facebookVideoIdInput.value = lastFacebookVideoId;
           facebookCheckButton.disabled = !lastFacebookVideoId;
-          setPublishStatus("Meta accepted the Facebook Reel upload. The video is not yet confirmed published; press Check Facebook publish status before starting any Content Rewards timer.", false);
+          setPublishStatus("Meta accepted the Facebook Reel upload. Automatically checking upload, processing and public status; no Content Rewards timer starts until a public permalink/time is verified.", false);
         } else {
           if (result.published !== true || !result.permalink || !result.publishedAt) {
             throw new Error("Instagram did not return a confirmed public permalink and publication timestamp.");
@@ -392,6 +395,42 @@
       } finally {
         publishInFlight = false;
         updateControls();
+      }
+      if (uploadedFacebookVideoId) {
+        await autoPollFacebookPublication(checked.page, uploadedFacebookVideoId, checked.handoff);
+      }
+    }
+
+    async function autoPollFacebookPublication(page, videoId, handoff) {
+      if (!PublishMonitor || typeof PublishMonitor.pollUntilPublic !== "function") {
+        setPublishStatus("Meta accepted the Facebook Reel. Automatic status monitoring is unavailable; use Check Facebook publish status.", false);
+        return;
+      }
+      const outcome = await PublishMonitor.pollUntilPublic(async () => {
+        const query = new URLSearchParams({ pageId: page.id, videoId });
+        const response = await windowObject.fetch(backendOrigin + "/api/social/meta/facebook/status?" + query.toString(), {
+          method: "GET", credentials: "include", cache: "no-store", headers: { Accept: "application/json" }
+        });
+        const result = await response.json();
+        return response.ok ? result : { ok: false, error: result.error || "facebook_status_http_" + response.status };
+      }, {
+        provider: "facebook",
+        maxAttempts: 24,
+        intervalMs: 5000,
+        onAttempt: (attempt, total) => setPublishStatus("Automatically checking Facebook upload/processing/publication · " + attempt + "/" + total + ". Keep this tab open.", false)
+      });
+
+      if (outcome.state === "published") {
+        sendPublishedResult("facebook", {
+          ...outcome.result,
+          url: outcome.result.permalink,
+          uploadStatus: "processed",
+          processingStatus: "succeeded"
+        }, page, handoff);
+      } else if (outcome.state === "timed_out") {
+        setPublishStatus("Meta accepted the Facebook Reel, but has not confirmed a public permalink yet. Use Check Facebook publish status later. No Content Rewards timer has started.", false);
+      } else {
+        setPublishStatus("Automatic Facebook verification stopped (" + (outcome.error || outcome.state) + "). Check the Page and use the manual status button; no timer has started.", true);
       }
     }
 

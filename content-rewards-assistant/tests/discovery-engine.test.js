@@ -482,3 +482,55 @@ test("live site analysis is wired before the historical snapshot fallback when a
   assert.match(appSource, /No saved or historical page was substituted/);
 });
 
+test("same-origin backend detection accepts only a healthy discovery API and never sends credentials", async () => {
+  const calls = [];
+  const origin = await Discovery.detectSameOriginBackend({
+    origin: "https://clipreward.example.com/",
+    fetchImpl: async (url, options) => {
+      calls.push({ url, options });
+      return {
+        ok: true,
+        async json() { return { sourceRegistry: [{ id: "official-public-discover" }] }; }
+      };
+    }
+  });
+  assert.equal(origin, "https://clipreward.example.com");
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].url, "https://clipreward.example.com/api/discovery/status");
+  assert.equal(calls[0].options.method, "GET");
+  assert.equal(calls[0].options.credentials, "omit");
+  assert.equal(calls[0].options.cache, "no-store");
+});
+
+test("same-origin backend detection silently falls back for GitHub Pages, invalid origins and malformed responses", async () => {
+  let calls = 0;
+  const notBackend = await Discovery.detectSameOriginBackend({
+    origin: "https://fayisaftha786.github.io",
+    fetchImpl: async () => {
+      calls += 1;
+      return { ok: true, async json() { return { message: "Not Found" }; } };
+    }
+  });
+  assert.equal(notBackend, "");
+  const wrongOrigin = await Discovery.detectSameOriginBackend({
+    origin: "http://api.example.com",
+    fetchImpl: async () => { calls += 1; return { ok: true, async json() { return { sourceRegistry: [] }; } }; }
+  });
+  assert.equal(wrongOrigin, "");
+  const unavailable = await Discovery.detectSameOriginBackend({
+    origin: "https://clipreward.example.com",
+    fetchImpl: async () => { throw new Error("not deployed"); }
+  });
+  assert.equal(unavailable, "");
+  assert.equal(calls, 1);
+});
+
+test("ClipReward attempts same-origin backend detection before falling back to the GitHub snapshot", () => {
+  const appSource = fs.readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
+  const configureAt = appSource.indexOf("function configureDiscovery()");
+  const detectAt = appSource.indexOf("detectSameOriginBackend", configureAt);
+  const snapshotAt = appSource.indexOf("syncScheduledSnapshot()", detectAt);
+  assert.ok(configureAt >= 0 && detectAt > configureAt && snapshotAt > detectAt);
+  assert.match(appSource, /Auto-detected the same-origin discovery backend/);
+});
+

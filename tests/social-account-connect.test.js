@@ -185,6 +185,20 @@ test("YouTube upload keeps Private as default and requires explicit public confi
   assert.equal(fixture.postedMessages[0].message.payload.publishedAt, "2026-11-02T05:02:00.000Z");
 });
 
+test("automatic YouTube verification does not emit a receipt for a processed private upload", async () => {
+  const fixture = makeWindow({ configured: true, connectionStatus: "connected" });
+  fixture.windowObject.localStorage.setItem("ai-commerce-hub.social-backend-origin.v1", "https://api.example.com");
+  connector.init(fixture.windowObject);
+  await new Promise((resolve) => setImmediate(resolve));
+  fixture.windowObject.document.getElementById("socialMediaFiles").files = [{ name: "private-clip.mp4", type: "video/mp4", size: 2048 }];
+  fixture.windowObject.document.getElementById("socialCaption").value = "Private review copy";
+  fixture.windowObject.document.getElementById("socialPlatform").value = "youtube";
+  await fixture.nodes.get("publishYouTubeVideo").events.click();
+  assert.ok(fixture.requests.some((item) => item.url.includes("/api/social/youtube/status?videoId=test-video")));
+  assert.equal(fixture.postedMessages.length, 0);
+  assert.match(fixture.nodes.get("socialAccountConnectionStatus").textContent, /visibility is private/i);
+});
+
 test("YouTube campaign publisher requires the same account to be verified in Content Rewards", async () => {
   const fixture = makeWindow({ configured: true, connectionStatus: "connected" });
   fixture.windowObject.localStorage.setItem("ai-commerce-hub.social-backend-origin.v1", "https://api.example.com");

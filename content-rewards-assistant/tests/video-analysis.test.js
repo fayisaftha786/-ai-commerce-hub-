@@ -58,6 +58,21 @@ test("builds a post package from supplied facts, campaign tags, mentions and pla
   assert.ok(result.warnings.some((item) => /does not identify objects\/scenes/i.test(item)));
 });
 
+test("builds a four-scene Malayalam, English or bilingual script only from supplied facts", () => {
+  const options = { topic: "Kitchen organisation", notes: "Show three storage steps using containers already at home.", campaignName: "Home ideas", durationSeconds: 30 };
+  const ml = Analysis.buildVideoScript({ ...options, language: "ml" });
+  assert.equal(ml.scenes.length, 4);
+  assert.match(ml.script, /ആരംഭം/);
+  assert.match(ml.script, /three storage steps/);
+  assert.match(ml.note, /not AI footage understanding/i);
+  const en = Analysis.buildVideoScript({ ...options, language: "en" });
+  assert.match(en.script, /HOOK:/);
+  const both = Analysis.buildVideoScript({ ...options, language: "both" });
+  assert.match(both.scenes[0].text, /\\nHOOK:/);
+  assert.equal(both.sceneCaptions.length, 4);
+  assert.throws(() => Analysis.buildVideoScript({ topic: "Product", notes: "" }), /real video details/i);
+});
+
 test("requires a real topic and user-supplied description instead of guessing video contents", () => {
   assert.throws(() => Analysis.buildPostPackage({
     platform: "YouTube", topic: "", notes: "Video shows a demonstration."
@@ -87,7 +102,7 @@ test("Clip Studio wires local analysis, package download and Social Desk handoff
   for (const id of [
     "video-analysis-file", "video-analysis-run", "video-analysis-topic",
     "video-analysis-notes", "video-analysis-transcript", "video-analysis-generate",
-    "video-analysis-caption", "video-analysis-download-text", "video-analysis-download-json",
+    "video-analysis-caption", "video-analysis-script", "video-analysis-download-text", "video-analysis-download-json",
     "video-analysis-use-editor", "video-analysis-send-social", "video-analysis-preapproval-confirm"
   ]) assert.ok(html.includes('id="' + id + '"'), "missing video analysis control " + id);
   assert.match(html, /video-analysis\.js/);

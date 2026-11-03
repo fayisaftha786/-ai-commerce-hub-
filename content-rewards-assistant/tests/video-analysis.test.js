@@ -102,6 +102,7 @@ test("requires an opening disclosure and warns against unapproved Collab or co-p
   assert.equal(result.disclosurePlacement, "missing");
   assert.ok(result.warnings.some((item) => /disclosure at the very beginning/i.test(item)));
   assert.ok(result.warnings.some((item) => /Do not use Instagram Collab/i.test(item)));
+  assert.ok(result.warnings.some((item) => /Never buy views, use bots/i.test(item)));
   assert.equal(result.caption.startsWith("Product demonstration"), true);
 });
 

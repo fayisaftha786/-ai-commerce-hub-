@@ -339,6 +339,20 @@
     };
   }
 
+  function validateContentRewardsDisclosure(campaign, postPackage) {
+    const source = campaign && typeof campaign === "object" ? campaign : {};
+    if (String(source.platform || "") !== "Content Rewards") return { ok: true };
+    const post = postPackage && typeof postPackage === "object" ? postPackage : {};
+    const disclosure = clean(post.disclosure, 500);
+    if (!disclosure || post.disclosurePlacement !== "opening") {
+      return {
+        ok: false,
+        error: "Content Rewards requires a clear disclosure at the beginning of the clip. Add the exact opening disclosure in Clip Studio and regenerate the post package before publishing."
+      };
+    }
+    return { ok: true };
+  }
+
   function buildPostPackage(options) {
     const source = options && typeof options === "object" ? options : {};
     const platform = normalizePlatform(source.platform);
@@ -410,6 +424,6 @@
     MAX_SOURCE_BYTES, MAX_NOTES_CHARS, MAX_TRANSCRIPT_CHARS, MAX_SCENE_SAMPLES,
     validateSourceVideo, formatDuration, classifyAspect, colorHistogram, histogramDistance,
     buildSceneMap, sampleSceneChanges, srtTimestamp, buildSrt, analyzeVideoFile,
-    normalizePlatform, buildVideoScript, buildPostPackage
+    normalizePlatform, buildVideoScript, validateContentRewardsDisclosure, buildPostPackage
   });
 });

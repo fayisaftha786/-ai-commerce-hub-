@@ -287,8 +287,14 @@
     const raw = String(text || "");
     const match = /join\s+to\s+unlock\s+(\d+)\s+requirements?/i.exec(raw);
     const fileMatch = /reference\s+materials\s+(\d+)\s+files?/i.exec(raw);
+    const explicitlyHidden = /visible once you join|join to unlock/i.test(raw);
+    const briefHiddenUntilJoin =
+      /\bjoin\s+(?:to\s+)?(?:see|view|read)\s+(?:(?:the|full|complete|your)\s+)*(?:campaign\s+)?(?:brief|requirements?|rules|guidelines|details|reference\s+materials?)\b/i.test(raw) ||
+      /\b(?:full|complete)\s+(?:campaign\s+)?brief\s+(?:unlocks?|available)\s+after\s+joining\b/i.test(raw);
     return {
-      locked: /visible once you join|join to unlock/i.test(raw),
+      // A campaign can hide its whole brief without showing a numeric requirement count.
+      // Treat that as locked so a short public card cannot be mistaken for a complete brief.
+      locked: explicitlyHidden || briefHiddenUntilJoin,
       count: match ? Number(match[1]) : null,
       referenceFiles: fileMatch ? Number(fileMatch[1]) : null
     };

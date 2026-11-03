@@ -23,6 +23,36 @@ test("matching complete campaign brief is promising but never claims account eli
   assert.match(result.nextStep, /confirm the exact account/i);
 });
 
+test("Join to see the brief prevents a direct-join public card from being ranked Promising", () => {
+  const Scout = require("../campaign-scout.js");
+  const parsed = Scout.parseCampaignBrief({
+    url: "https://contentrewards.com/c/campaigns/7610267f-aa08-45b4-9975-6acf0faeca1a",
+    requestedPlatform: "Instagram",
+    text: [
+      "Campaign: Clips Hablando de VALOR",
+      "Accepting clips",
+      "Launched 2 months ago",
+      "Instagram YouTube",
+      "Join Campaign",
+      "Instagram",
+      "Per 1K views",
+      "$0.50",
+      "Min payout",
+      "$5.00",
+      "Max payout",
+      "$100.00",
+      "Budget",
+      "$2,123 / $5,000",
+      "Join to see the brief"
+    ].join("\n")
+  });
+  assert.equal(parsed.hiddenRequirements.locked, true);
+  const result = Engine.assessCampaign({ brief: parsed, platform: "Instagram", today: "2026-11-03" });
+  assert.equal(result.state, "verify");
+  assert.ok(result.reasons.some((reason) => /full creator requirements are still hidden/i.test(reason)));
+  assert.ok(result.requirements.some((item) => item.key === "locked-requirements"));
+});
+
 test("explicit platform mismatch blocks campaign work", () => {
   const result = Engine.assessCampaign({ brief: brief({ platforms: ["YouTube"], platformMatch: "mismatch" }), platform: "Instagram", today: "2026-10-31" });
   assert.equal(result.state, "blocked");
@@ -81,7 +111,7 @@ test("UI loads the engine, renders the three native checks and refreshes its off
   assert.match(app, /ClipRewardIntelligence\.assessAll/);
   assert.match(app, /renderRewardsIntelligence/);
   assert.match(worker, /rewards-intelligence\.js/);
-  assert.match(worker, /clipreward-static-v38/);
+  assert.match(worker, /clipreward-static-v39/);
   assert.match(packageJson.scripts.check, /content-rewards-assistant\/rewards-intelligence\.js/);
   assert.match(packageJson.scripts.check, /content-rewards-assistant\/tests\/rewards-intelligence\.test\.js/);
 });
@@ -359,7 +389,7 @@ test("Rewards Studio wires the payout scenario calculator and refreshes its stat
   assert.match(app, /estimateCreatorNetPayout/);
   assert.match(app, /ri-estimate-views/);
   assert.match(app, /confirmedPayable/);
-  assert.match(worker, /clipreward-static-v38/);
+  assert.match(worker, /clipreward-static-v39/);
 });
 
 

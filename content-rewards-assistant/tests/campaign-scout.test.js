@@ -182,7 +182,7 @@ test("campaign finder is wired to official Discover, local parser, and existing 
   assert.ok(app.includes("analyseCampaignBrief();"));
   assert.ok(app.includes('addEventListener("input"'));
   assert.match(app, /result\.platformMatch === "mismatch"/);
-  assert.match(worker, /clipreward-static-v38/);
+  assert.match(worker, /clipreward-static-v39/);
   assert.match(worker, /campaign-scout\.js/);
 });
 
@@ -240,7 +240,7 @@ test("unified Rewards Intelligence engine is loaded and displayed with the campa
   assert.match(html, /id="reward-intelligence-results"/);
   assert.match(app, /ClipRewardIntelligence\.assessAll/);
   assert.match(app, /renderRewardsIntelligence/);
-  assert.match(worker, /clipreward-static-v38/);
+  assert.match(worker, /clipreward-static-v39/);
   assert.match(worker, /rewards-intelligence\.js/);
 });
 
@@ -421,6 +421,34 @@ test("public Content Rewards campaign detail extracts CPM, minimum and maximum p
   assert.equal(result.platformMatch, "mismatch");
   assert.deepEqual(result.hiddenRequirements, { locked: true, count: 1, referenceFiles: 3 });
   assert.match(result.sourceUrl, /contentrewards\.com\/c\/campaigns\//);
+  assert.ok(result.missing.some((item) => /requirements are locked until Join Campaign/i.test(item)));
+});
+
+test("a public card that says Join to see the brief is treated as hidden requirements without needing a count", () => {
+  const result = Scout.parseCampaignBrief({
+    url: "https://contentrewards.com/c/campaigns/7610267f-aa08-45b4-9975-6acf0faeca1a",
+    requestedPlatform: "Instagram",
+    text: [
+      "Campaign: Clips Hablando de VALOR",
+      "Accepting clips",
+      "Launched 2 months ago",
+      "Instagram YouTube",
+      "Join Campaign",
+      "Instagram",
+      "Per 1K views",
+      "$0.50",
+      "Min payout",
+      "$5.00",
+      "Max payout",
+      "$100.00",
+      "Budget",
+      "$2,123 / $5,000",
+      "Join to see the brief"
+    ].join("\n")
+  });
+  assert.equal(result.entryMode, "Open campaign / direct join");
+  assert.equal(result.campaignStatus, "Appears live in copied text");
+  assert.deepEqual(result.hiddenRequirements, { locked: true, count: null, referenceFiles: null });
   assert.ok(result.missing.some((item) => /requirements are locked until Join Campaign/i.test(item)));
 });
 

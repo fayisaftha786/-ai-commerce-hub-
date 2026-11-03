@@ -383,7 +383,7 @@
           uploadedFacebookVideoId = lastFacebookVideoId;
           if (facebookVideoIdInput && lastFacebookVideoId) facebookVideoIdInput.value = lastFacebookVideoId;
           facebookCheckButton.disabled = !lastFacebookVideoId;
-          setPublishStatus("Meta accepted the Facebook Reel upload. The video is not yet confirmed published; press Check Facebook publish status before starting any Content Rewards timer.", false);
+          setPublishStatus("Meta accepted the Facebook Reel upload. Automatically checking upload, processing and public status; no Content Rewards timer starts until a public permalink/time is verified.", false);
         } else {
           if (result.published !== true || !result.permalink || !result.publishedAt) {
             throw new Error("Instagram did not return a confirmed public permalink and publication timestamp.");

@@ -14,6 +14,7 @@ function validEnvironment(overrides = {}) {
     SOCIAL_TOKEN_STORE_PATH: "/data/social-token-vault.json",
     DISCOVERY_STORE_PATH: "/data/content-rewards-discovery.json",
     SOCIAL_CORS_ORIGINS: "https://hub.example.com",
+    DISCOVERY_CORS_ORIGINS: "https://hub.example.com",
     SOCIAL_RETURN_URL: "https://hub.example.com/",
     SOCIAL_COOKIE_SAMESITE: "Lax",
     META_MEDIA_BASE_URL: "https://hub.example.com",
@@ -54,6 +55,7 @@ test("rejects placeholder hosts, invalid email, wrong origin and unsafe storage 
     SITE_HOST: "your-subdomain.duckdns.org",
     ACME_EMAIL: "not-an-email",
     SOCIAL_CORS_ORIGINS: "*",
+    DISCOVERY_CORS_ORIGINS: "*",
     SOCIAL_RETURN_URL: "https://other.example/",
     SOCIAL_TOKEN_STORE_PATH: "/tmp/token.json",
     DISCOVERY_STORE_PATH: "/root/discovery.json"
@@ -62,6 +64,7 @@ test("rejects placeholder hosts, invalid email, wrong origin and unsafe storage 
   assert.ok(result.errors.some((item) => item.startsWith("SITE_HOST:")));
   assert.ok(result.errors.some((item) => item.startsWith("ACME_EMAIL:")));
   assert.ok(result.errors.some((item) => item.startsWith("SOCIAL_CORS_ORIGINS:")));
+  assert.ok(result.errors.some((item) => item.startsWith("DISCOVERY_CORS_ORIGINS:")));
   assert.ok(result.errors.some((item) => item.startsWith("SOCIAL_RETURN_URL:")));
   assert.ok(result.errors.some((item) => item.startsWith("SOCIAL_TOKEN_STORE_PATH:")));
   assert.ok(result.errors.some((item) => item.startsWith("DISCOVERY_STORE_PATH:")));
@@ -91,6 +94,14 @@ test("rejects partial provider credentials and callbacks from another hostname",
   }));
   assert.equal(wrongCallback.ok, false);
   assert.ok(wrongCallback.errors.some((item) => /Meta OAuth callback/.test(item)));
+});
+
+test("rejects malformed hostname labels and IP-only public hosts", () => {
+  for (const hostname of ["bad..example.com", "-bad.example.com", "bad-.example.com", "192.0.2.10"]) {
+    const result = validateOciEnvironment(validEnvironment({ SITE_HOST: hostname }));
+    assert.equal(result.ok, false, hostname);
+    assert.ok(result.errors.some((item) => item.startsWith("SITE_HOST:")));
+  }
 });
 
 test("requires exact same-origin media host and SameSite=Lax", () => {

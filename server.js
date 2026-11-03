@@ -34,7 +34,9 @@ function applyDiscoveryCors(request, response, env = process.env) {
   const allowed = allowedOrigins(env);
   if (!allowed.includes(origin)) return false;
   response.setHeader("access-control-allow-origin", origin);
-  response.setHeader("access-control-allow-methods", "GET, POST, OPTIONS");
+  const discoveryPath = new URL(request.url || "/", "http://localhost").pathname;
+  const allowedMethods = discoveryPath === "/api/discovery/analyze-public-campaign" ? "GET, POST, OPTIONS" : "GET, OPTIONS";
+  response.setHeader("access-control-allow-methods", allowedMethods);
   response.setHeader("access-control-allow-headers", "Accept, Content-Type");
   response.setHeader("access-control-max-age", "600");
   response.setHeader("vary", "Origin");
@@ -224,7 +226,7 @@ function createServer(options = {}) {
       if (request.method === "OPTIONS" && !isNavigationRoute) {
         response.writeHead(204, {
           "cache-control": "no-store",
-          "access-control-allow-methods": "GET, POST, OPTIONS",
+          "access-control-allow-methods": pathname === "/api/discovery/analyze-public-campaign" ? "GET, POST, OPTIONS" : "GET, OPTIONS",
           "access-control-allow-headers": "Accept, Content-Type, X-AI-Commerce-Action"
         });
         return response.end();
@@ -535,7 +537,7 @@ function createServer(options = {}) {
         }
       }
       if (request.method !== "GET") {
-        response.setHeader("allow", "GET, POST, OPTIONS");
+        response.setHeader("allow", "GET, OPTIONS");
         return sendJson(response, 405, { error: "method_not_allowed" });
       }
 

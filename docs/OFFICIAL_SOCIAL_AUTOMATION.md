@@ -76,6 +76,8 @@ A backend /health response confirms process health only. Use GET /api/social/pro
 
 The public scanner sends no Content Rewards cookies or login credentials and does not scrape private/signed-in pages, bypass CAPTCHA or access locked content. A public campaign page may omit join-only requirements, and the latest snapshot can be stale or incomplete. The tracker stores user-maintained progress; statuses do not prove that Content Rewards has changed state.
 
+The current official Help Center page **What you can target, and what you can measure** explicitly lists an API as “Not available today”. The current Creator Terms §14.2 describe Content Rewards-linked social account access as read-only and state that Content Rewards does not post on the creator’s behalf. For that reason, this project does not call undocumented private endpoints, replay browser cookies or automate private Join/Apply, Submit Clip, review, views, balance or payout actions. The creator completes those steps in the official account. The app’s separate YouTube/Meta publishing integrations use the provider’s own OAuth/API permissions and are independent of Content Rewards’ read-only connection.
+
 Do not automate private account actions without an official documented API and permission. Do not fabricate account verification, receipts, views, approval, balances or earnings. Do not create fake engagement or use media/accounts without permission. Keep required disclosure and licensing terms.
 
 Official Content Rewards references:

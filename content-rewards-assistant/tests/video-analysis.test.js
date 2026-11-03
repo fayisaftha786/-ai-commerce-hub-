@@ -68,7 +68,7 @@ test("builds a four-scene Malayalam, English or bilingual script only from suppl
   const en = Analysis.buildVideoScript({ ...options, language: "en" });
   assert.match(en.script, /HOOK:/);
   const both = Analysis.buildVideoScript({ ...options, language: "both" });
-  assert.match(both.scenes[0].text, /\\nHOOK:/);
+  assert.match(both.scenes[0].text, /\nHOOK:/);
   assert.equal(both.sceneCaptions.length, 4);
   assert.throws(() => Analysis.buildVideoScript({ topic: "Product", notes: "" }), /real video details/i);
 });

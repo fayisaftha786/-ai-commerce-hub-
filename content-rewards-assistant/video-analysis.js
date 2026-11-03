@@ -302,6 +302,7 @@
     const topic = clean(source.topic, 180);
     const notes = clean(source.notes || source.transcript, MAX_NOTES_CHARS);
     const campaignName = clean(source.campaignName, 180);
+    const disclosure = clean(source.disclosure, 500);
     const duration = Number(source.durationSeconds) || 30;
     if (topic.length < 3) throw new Error("Add the real video topic before generating a script.");
     if (notes.length < 5) throw new Error("Add real video details or a transcript. The script will not invent product features or footage.");
@@ -323,13 +324,18 @@
       ? ml.map((line, index) => line + "\n" + en[index]) : en;
     const labels = language === "ml" ? ["ഹുക്ക്", "സന്ദർഭം", "പ്രധാന ഭാഗം", "അവസാനം"]
       : ["Hook", "Context", "Key points", "Call to action"];
+    const disclosureCue = disclosure
+      ? "DISCLOSURE — show and say this clearly at the beginning: " + disclosure
+      : "";
+    if (disclosureCue) scenes[0] = disclosureCue + "\n\n" + scenes[0];
     const sceneCaptions = scenes.map((line, index) => labels[index] + ": " + line.replace(/^(?:ആരംഭം|സന്ദർഭം|പ്രധാന ഭാഗം|അവസാനം|HOOK|CONTEXT|KEY POINTS|CTA):?\s*/i, ""));
     return {
       language, durationSeconds: Math.max(15, Math.min(60, duration)),
       scenes: scenes.map((text, index) => ({ number: index + 1, label: labels[index], text })),
       sceneCaptions,
       script: scenes.join("\n\n"),
-      note: "Template-generated from your supplied topic and notes; not AI footage understanding or a factual verification. Edit every line and verify campaign rules before publishing."
+      disclosureCue: disclosure ? { text: disclosure, placement: "opening" } : null,
+      note: "Template-generated from your supplied topic and notes; not AI footage understanding or a factual verification. The opening disclosure is a cue only: make it visibly readable or clearly spoken in the actual video. Edit every line and verify campaign rules before publishing."
     };
   }
 
@@ -351,7 +357,7 @@
       : language === "both"
         ? "Save this for later and share your experience. · ഉപകാരപ്പെട്ടാൽ സേവ് ചെയ്യൂ; അഭിപ്രായം പങ്കുവെക്കൂ."
         : "Save this for later and share your question or experience in the comments.";
-    const disclosureText = disclosure ? "\n\n" + disclosure : "";
+    const disclosureText = disclosure ? disclosure + "\n\n" : "";
     const mentions = tagsFromRules(campaignRules, "Mentions");
     const requiredHashtags = tagsFromRules(campaignRules, "Hashtags");
     const platformTags = platform === "YouTube" ? ["#Shorts"] :
@@ -362,8 +368,15 @@
     const title = topic.length > 95 ? topic.slice(0, 92).trimEnd() + "..." : topic;
     const warnings = [];
     if (!campaignRules) warnings.push("No saved campaign rules were linked to this package. Check the live brief before posting.");
-    if (!disclosure && /(disclos|sponsor|affiliate|paid partnership|#ad\b)/i.test(campaignRules)) {
-      warnings.push("The saved brief mentions a disclosure. Add the exact required disclosure before posting.");
+    if (!disclosure) {
+      warnings.push("Add a clear sponsorship / paid-promotion / affiliate disclosure at the very beginning of the clip and at the start of its caption, following the live brief.");
+    } else {
+      warnings.push("The supplied disclosure is placed first in the caption and added as an opening script cue. Make it visibly readable or clearly spoken in the actual video's opening; this tool does not burn text into the footage.");
+    }
+    const collabExplicitlyForbidden = /(?:\b(?:do not|don't|must not|not allowed|prohibited|forbidden|avoid)\b[^.\n]{0,80}\b(?:collab|co-post(?:ing)?|coauthor|co-author)\b|\b(?:collab|co-post(?:ing)?|coauthor|co-author)\b[^.\n]{0,80}\b(?:not allowed|prohibited|forbidden)\b)/i.test(campaignRules);
+    const collabExplicitlyAllowed = /(?:\b(?:collab|co-post(?:ing)?|coauthor|co-author)\b[^.\n]{0,80}\b(?:allowed|permitted|approved)\b|\b(?:allowed|permitted|approved)\b[^.\n]{0,80}\b(?:collab|co-post(?:ing)?|coauthor|co-author)\b)/i.test(campaignRules);
+    if (!collabExplicitlyAllowed || collabExplicitlyForbidden) {
+      warnings.push("Do not use Instagram Collab or another co-posting feature unless the live campaign brief explicitly allows it; co-posted views may not track correctly.");
     }
     if (/(pre.?approval|approve.*draft|draft.*approval)/i.test(campaignRules)) {
       warnings.push("The brief may require draft pre-approval. Do not publish until the campaign team approves the draft.");
@@ -375,7 +388,7 @@
     warnings.push("Frame previews show selected moments only. This tool does not identify objects/scenes or transcribe audio automatically.");
     const video = source.video || null;
     const videoScript = buildVideoScript({
-      language, topic, notes, transcript, campaignName,
+      language, topic, notes, transcript, campaignName, disclosure,
       durationSeconds: video && video.durationSeconds
     });
     const videoInfo = video ? {
@@ -387,6 +400,7 @@
       version: 1, createdAt: new Date().toISOString(), platform, campaignName,
       sourceFile: video && video.file ? video.file.name : "",
       video: videoInfo, title, caption, hashtags, mentions, disclosure,
+      disclosurePlacement: disclosure ? "opening" : "missing",
       notes, transcriptProvided: Boolean(transcript), videoScript, sceneCaptions: videoScript.sceneCaptions, warnings
     };
   }

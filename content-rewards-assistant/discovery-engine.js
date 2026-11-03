@@ -154,6 +154,49 @@
     }
   }
 
+
+  async function fetchBackendCampaignPage(options) {
+    const opts = options || {};
+    const baseUrl = normalizeBackendUrl(opts.backendUrl);
+    const campaignUrl = canonicalPublicCampaignUrl(opts.url);
+    if (!baseUrl) throw new Error("Enter a valid HTTPS backend origin before using live public-page analysis.");
+    if (!campaignUrl) throw new Error("Only a public HTTPS Content Rewards campaign detail URL can be analysed.");
+    const fetcher = opts.fetchImpl || (typeof fetch === "function" ? fetch : null);
+    if (!fetcher) throw new Error("This browser does not support secure live campaign-page requests.");
+    const controller = typeof AbortController === "function" ? new AbortController() : null;
+    const timeoutMs = Number.isInteger(opts.timeoutMs) ? Math.max(1000, Math.min(30000, opts.timeoutMs)) : 15000;
+    const timeout = controller ? setTimeout(() => controller.abort(), timeoutMs) : null;
+    try {
+      const response = await fetcher(baseUrl + "/api/discovery/analyze-public-campaign", {
+        method: "POST",
+        mode: "cors",
+        credentials: "omit",
+        headers: { Accept: "application/json", "Content-Type": "application/json" },
+        body: JSON.stringify({ url: campaignUrl }),
+        signal: controller ? controller.signal : undefined
+      });
+      let payload = null;
+      try { payload = await response.json(); } catch (_) {}
+      if (!response || !response.ok) {
+        const message = payload && (payload.message || payload.error);
+        throw new Error(clean(message || "Live public campaign scan returned an HTTP error.", 260));
+      }
+      const detail = payload && payload.detail;
+      if (!payload || payload.sourceVerification !== "official-public-page" ||
+          !detail || canonicalPublicCampaignUrl(detail.url) !== campaignUrl ||
+          detail.status !== "ok" || typeof detail.pageText !== "string" ||
+          detail.pageText.trim().length < 20 || detail.pageText.length > 20000) {
+        throw new Error("The backend returned an invalid live public campaign analysis. No snapshot result was substituted.");
+      }
+      return detail;
+    } catch (error) {
+      if (error && error.name === "AbortError") throw new Error("Live public campaign analysis timed out. Check the backend and try again.");
+      throw error;
+    } finally {
+      if (timeout) clearTimeout(timeout);
+    }
+  }
+
   async function fetchStaticSnapshot(options) {
     const opts = options || {};
     const fetcher = opts.fetchImpl || (typeof fetch === "function" ? fetch : null);
@@ -415,5 +458,5 @@
       }
     };
   }
-  return { STORAGE_KEY, SETTINGS_KEY, DEFAULT_INTERVAL_HOURS, SOURCES, keyFor, assessOpportunity, enrich, deduplicate, readState, writeState, readSettings, writeSettings, normalizeBackendUrl, fetchBackendSnapshot, fetchStaticSnapshot, mergeHistory, canonicalPublicCampaignUrl, analyzePublicCampaigns, scan };
+  return { STORAGE_KEY, SETTINGS_KEY, DEFAULT_INTERVAL_HOURS, SOURCES, keyFor, assessOpportunity, enrich, deduplicate, readState, writeState, readSettings, writeSettings, normalizeBackendUrl, fetchBackendSnapshot, fetchBackendCampaignPage, fetchStaticSnapshot, mergeHistory, canonicalPublicCampaignUrl, analyzePublicCampaigns, scan };
 });

@@ -424,6 +424,34 @@ test("public Content Rewards campaign detail extracts CPM, minimum and maximum p
   assert.ok(result.missing.some((item) => /requirements are locked until Join Campaign/i.test(item)));
 });
 
+test("a public card that says Join to see the brief is treated as hidden requirements without needing a count", () => {
+  const result = Scout.parseCampaignBrief({
+    url: "https://contentrewards.com/c/campaigns/7610267f-aa08-45b4-9975-6acf0faeca1a",
+    requestedPlatform: "Instagram",
+    text: [
+      "Campaign: Clips Hablando de VALOR",
+      "Accepting clips",
+      "Launched 2 months ago",
+      "Instagram YouTube",
+      "Join Campaign",
+      "Instagram",
+      "Per 1K views",
+      "$0.50",
+      "Min payout",
+      "$5.00",
+      "Max payout",
+      "$100.00",
+      "Budget",
+      "$2,123 / $5,000",
+      "Join to see the brief"
+    ].join("\n")
+  });
+  assert.equal(result.entryMode, "Open campaign / direct join");
+  assert.equal(result.campaignStatus, "Appears live in copied text");
+  assert.deepEqual(result.hiddenRequirements, { locked: true, count: null, referenceFiles: null });
+  assert.ok(result.missing.some((item) => /requirements are locked until Join Campaign/i.test(item)));
+});
+
 test("public campaign detail accepts rate labels with amount on the next line", () => {
   const result = Scout.parseCampaignBrief({
     text: "Campaign: Split line CPM\nInstagram\nPer 1K views\n$1.25\nMin payout\n$2\nMax payout\n$100"

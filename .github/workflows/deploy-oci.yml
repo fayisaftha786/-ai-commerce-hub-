@@ -33,6 +33,7 @@ on:
       - "product-utils.js"
       - "pwa-install.js"
       - "social-account-connect.js"
+      - "social-publish-monitor.js"
       - "social-center.js"
       - "social-oauth-state.js"
       - "social-provider-readiness.js"
@@ -104,4 +105,4 @@ jobs:
             -o BatchMode=yes \
             -o StrictHostKeyChecking=yes \
             "$OCI_USER@$OCI_HOST" \
-            "cd /opt/ai-commerce-hub && git fetch origin main && git reset --hard origin/main && sudo docker compose -f compose.oci.yml up -d --build --remove-orphans && sudo docker compose -f compose.oci.yml ps"
+            "cd /opt/ai-commerce-hub && git fetch origin main && git reset --hard origin/main && sudo bash ops/oci/deploy.sh"

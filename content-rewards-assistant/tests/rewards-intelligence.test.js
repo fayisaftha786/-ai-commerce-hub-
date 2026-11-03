@@ -361,3 +361,41 @@ test("Rewards Studio wires the payout scenario calculator and refreshes its stat
   assert.match(app, /confirmedPayable/);
   assert.match(worker, /clipreward-static-v36/);
 });
+
+
+test("campaign assessment evaluates the selected creator account's local readiness checklist", () => {
+  const empty = Engine.assessCampaign({
+    brief: brief(), platform: "Instagram", today: "2026-10-31", account: {}
+  });
+  assert.equal(empty.accountReadiness.completeCount, 0);
+  assert.equal(empty.accountReadiness.totalCount, 5);
+  assert.equal(empty.accountReadiness.checks.find((item) => item.key === "postingAccount").done, false);
+
+  const ready = Engine.assessCampaign({
+    brief: brief(), platform: "Instagram", today: "2026-10-31",
+    account: {
+      checklist: {
+        ageEligible: true, loggedIn: true, socialVerified: true, campaignReady: true
+      },
+      socialAccounts: [
+        { platform: "Instagram", handle: "@creator", confirmedConnected: true }
+      ]
+    }
+  });
+  assert.equal(ready.accountReadiness.completeCount, 5);
+  assert.equal(ready.accountReadiness.checks.every((item) => item.done), true);
+  assert.match(ready.accountReadiness.note, /local user confirmations/i);
+});
+
+test("creator readiness never treats a different platform handle as verified", () => {
+  const result = Engine.assessCampaign({
+    brief: brief(), platform: "YouTube", today: "2026-10-31",
+    account: {
+      checklist: { ageEligible: true, loggedIn: true, socialVerified: true, campaignReady: true },
+      socialAccounts: [{ platform: "Instagram", handle: "@creator", confirmedConnected: true }]
+    }
+  });
+  const posting = result.accountReadiness.checks.find((item) => item.key === "postingAccount");
+  assert.equal(posting.done, false);
+  assert.match(posting.detail, /No YouTube handle is saved/);
+});

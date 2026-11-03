@@ -2,6 +2,8 @@
 
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
 const { validateOciEnvironment, formatReport } = require("../scripts/oci-preflight.js");
 
 function validEnvironment(overrides = {}) {
@@ -122,4 +124,17 @@ test("requires exact same-origin media host and SameSite=Lax", () => {
   assert.equal(result.ok, false);
   assert.ok(result.errors.some((item) => item.startsWith("META_MEDIA_BASE_URL:")));
   assert.ok(result.errors.some((item) => item.startsWith("SOCIAL_COOKIE_SAMESITE:")));
+});
+
+test("OCI deployment workflow invokes the guarded deployment script and tracks publishing monitor changes", () => {
+  const root = path.join(__dirname, "..");
+  const workflow = fs.readFileSync(path.join(root, ".github", "workflows", "deploy-oci.yml"), "utf8");
+  const deploy = fs.readFileSync(path.join(root, "ops", "oci", "deploy.sh"), "utf8");
+  assert.match(workflow, /social-publish-monitor\\.js/);
+  assert.match(workflow, /scripts\\/\\*\\*/);
+  assert.match(workflow, /ops\\/oci\\/\\*\\*/);
+  assert.match(workflow, /sudo bash ops\\/oci\\/deploy\\.sh/);
+  assert.match(deploy, /docker compose -f compose\\.oci\\.yml run --rm --no-deps app node scripts\\/oci-preflight\\.js/);
+  assert.match(deploy, /docker compose -f compose\\.oci\\.yml up -d --no-build --remove-orphans/);
+  assert.match(deploy, /https:\\/\\/\\$SITE_HOST\\/health/);
 });

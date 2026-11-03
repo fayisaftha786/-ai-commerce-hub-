@@ -1132,6 +1132,16 @@
       '<article class="ri-check"><span class="ri-status ri-' + escapeHtml(item.status) + '">' + escapeHtml(item.status.toUpperCase()) +
       '</span><strong>' + escapeHtml(item.label) + '</strong><p>' + escapeHtml(item.detail) + '</p></article>'
     ).join("");
+    const readiness = campaign.accountReadiness;
+    $("ri-account-readiness").innerHTML =
+      '<div class="ri-requirements"><strong>Creator account readiness · ' +
+      readiness.completeCount + ' / ' + readiness.totalCount + ' local checks confirmed</strong><div class="ri-check-grid">' +
+      readiness.checks.map((item) =>
+        '<article class="ri-check"><span class="ri-status ri-' + (item.done ? 'pass' : 'unknown') + '">' +
+        (item.done ? 'CONFIRMED LOCALLY' : 'CHECK REQUIRED') + '</span><strong>' + escapeHtml(item.label) +
+        '</strong><p>' + escapeHtml(item.detail) + '</p></article>'
+      ).join("") + '</div><small>' + escapeHtml(readiness.note) + '</small></div>';
+
     const requirements = campaign.requirements.length
       ? campaign.requirements.map((item) => '<li><strong>' + escapeHtml(item.label) + ':</strong> ' + escapeHtml(item.detail) + '</li>').join("")
       : '<li>No additional explicit requirements were recognised. Read the full official brief; this does not mean there are no requirements.</li>';
@@ -1327,6 +1337,7 @@
     $("scout-found-grid").innerHTML = "";
     $("ri-campaign-summary").innerHTML = "";
     $("ri-rule-checks").innerHTML = "";
+    $("ri-account-readiness").innerHTML = "";
     $("ri-requirements").innerHTML = "";
     $("ri-native-programs").innerHTML = "";
     campaignScoutResult = null;

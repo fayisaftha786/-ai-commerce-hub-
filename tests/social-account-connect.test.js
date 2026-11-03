@@ -3,6 +3,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const connector = require("../social-account-connect.js");
+const publishMonitor = require("../social-publish-monitor.js");
 
 function makeNode() {
   return {
@@ -22,6 +23,7 @@ function makeWindow(options = {}) {
   const values = new Map();
   const requests = [];
   const postedMessages = [];
+  let uploadedPrivacy = "";
   let confirmResult = true;
   const windowObject = {
     document: { getElementById(id) { if (!nodes.has(id)) nodes.set(id, makeNode()); return nodes.get(id); } },
@@ -40,6 +42,7 @@ function makeWindow(options = {}) {
       windowObject.events[name] = callback;
     },
     history: { replaceState() {} },
+    ClipRewardPublishMonitor: publishMonitor,
     URL,
     confirm(message) { windowObject.lastConfirmMessage = message; return confirmResult; },
     opener: { postMessage(message, origin) { postedMessages.push({ message, origin }); } },
@@ -52,9 +55,10 @@ function makeWindow(options = {}) {
         return { ok: true, async json() { return { connections: [{ provider: "youtube", status: options.connectionStatus || "not_connected", channelTitle: "Creator channel" }] }; } };
       }
       if (url.includes("/api/social/youtube/publish?")) {
+        uploadedPrivacy = new URL(url).searchParams.get("privacy") || "private";
         return {
           ok: true, async json() {
-            return { ok: true, provider: "youtube", videoId: "test-video", url: "https://www.youtube.com/watch?v=test-video", privacyStatus: new URL(url).searchParams.get("privacy"), uploadedAt: "2026-11-02T05:00:00.000Z" };
+            return { ok: true, provider: "youtube", videoId: "test-video", url: "https://www.youtube.com/watch?v=test-video", privacyStatus: uploadedPrivacy, uploadedAt: "2026-11-02T05:00:00.000Z" };
           }
         };
       }
@@ -64,7 +68,8 @@ function makeWindow(options = {}) {
           async json() {
             return options.videoStatus || {
               ok: true, provider: "youtube", videoId: "test-video", url: "https://www.youtube.com/watch?v=test-video",
-              uploadStatus: "processed", processingStatus: "succeeded", privacyStatus: "public", publishedAt: "2026-11-02T05:02:00.000Z"
+              uploadStatus: "processed", processingStatus: "succeeded", privacyStatus: uploadedPrivacy || "public",
+              publishedAt: (uploadedPrivacy || "public") === "public" ? "2026-11-02T05:02:00.000Z" : ""
             };
           }
         };
@@ -175,7 +180,9 @@ test("YouTube upload keeps Private as default and requires explicit public confi
   assert.equal(request.init.credentials, "include");
   assert.equal(fixture.nodes.get("youtube-video-id").value, "test-video");
   assert.equal(fixture.nodes.get("checkYouTubeVideoStatus").disabled, false);
-  assert.equal(fixture.postedMessages.length, 0, "upload receipt alone must not start the timer");
+  assert.ok(fixture.requests.some((item) => item.url.includes("/api/social/youtube/status?videoId=test-video")), "the provider status is polled automatically after upload");
+  assert.equal(fixture.postedMessages.length, 1, "the timer handoff follows the verified public status response, not the upload receipt");
+  assert.equal(fixture.postedMessages[0].message.payload.publishedAt, "2026-11-02T05:02:00.000Z");
 });
 
 test("YouTube campaign publisher requires the same account to be verified in Content Rewards", async () => {

@@ -131,7 +131,7 @@ sudo bash ops/oci/deploy.sh
 sudo docker compose -f compose.oci.yml logs --tail=100 app caddy
 ```
 
-Open `https://YOUR_HOSTNAME/`. The static application and Node API now share one origin, so the app can detect its backend automatically and its secure session cookie remains first-party.
+Open `https://YOUR_HOSTNAME/`. The static application and Node API now share one origin. On startup, ClipReward probes the same-origin `/api/discovery/status` endpoint and saves that backend origin automatically when the expected discovery API response is returned; no manual backend URL entry is required. Its secure session cookie also remains first-party.
 
 Verify the public health and provider-readiness endpoints:
 

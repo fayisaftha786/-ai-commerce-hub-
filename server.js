@@ -9,6 +9,7 @@ const { createEncryptedTokenVault } = require("./social-token-vault.js");
 const { createMetaSocialService } = require("./meta-social-oauth.js");
 const { createEphemeralMetaMediaStore } = require("./meta-media-store.js");
 const { createStaticSite } = require("./static-site.js");
+const PublicCampaignScanner = require("./scripts/content-rewards-discovery-scan.js");
 
 function sendJson(response, statusCode, payload, extraHeaders = {}) {
   const body = JSON.stringify(payload);
@@ -33,7 +34,7 @@ function applyDiscoveryCors(request, response, env = process.env) {
   const allowed = allowedOrigins(env);
   if (!allowed.includes(origin)) return false;
   response.setHeader("access-control-allow-origin", origin);
-  response.setHeader("access-control-allow-methods", "GET, OPTIONS");
+  response.setHeader("access-control-allow-methods", "GET, POST, OPTIONS");
   response.setHeader("access-control-allow-headers", "Accept, Content-Type");
   response.setHeader("access-control-max-age", "600");
   response.setHeader("vary", "Origin");
@@ -112,6 +113,31 @@ async function readRawBody(request, maxBytes) {
   return Buffer.concat(chunks, size);
 }
 
+
+function createPublicCampaignPageRateLimiter(options = {}) {
+  const limit = Number.isInteger(options.limit) && options.limit >= 1 && options.limit <= 100 ? options.limit : 20;
+  const windowMs = Number.isInteger(options.windowMs) && options.windowMs >= 1000 ? Math.min(options.windowMs, 3600000) : 600000;
+  const now = typeof options.now === "function" ? options.now : () => Date.now();
+  const buckets = new Map();
+  function consume(key) {
+    const bucketKey = String(key || "unknown").slice(0, 120);
+    const current = Number(now());
+    if (!Number.isFinite(current)) return { allowed: false, retryAfterSeconds: 60 };
+    const recent = (buckets.get(bucketKey) || []).filter((stamp) => current >= stamp && current - stamp < windowMs);
+    if (recent.length >= limit) return { allowed: false, retryAfterSeconds: Math.max(1, Math.ceil((recent[0] + windowMs - current) / 1000)) };
+    recent.push(current);
+    buckets.set(bucketKey, recent);
+    if (buckets.size > 1000) {
+      for (const [candidate, stamps] of buckets.entries()) {
+        if (!stamps.some((stamp) => current >= stamp && current - stamp < windowMs)) buckets.delete(candidate);
+        if (buckets.size <= 800) break;
+      }
+    }
+    return { allowed: true, remaining: limit - recent.length };
+  }
+  return Object.freeze({ consume, limit, windowMs });
+}
+
 function createServer(options = {}) {
   const env = options.env ?? process.env;
   const sharedSocialTokenVault = options.socialTokenVault ||
@@ -136,6 +162,11 @@ function createServer(options = {}) {
     clearInterval: options.clearInterval
   });
   const ownsDiscoveryService = !options.discoveryService;
+  const publicCampaignPageFetcher = options.publicCampaignPageFetcher || PublicCampaignScanner.fetchPublicCampaignPage;
+  const publicCampaignPageLimiter = options.publicCampaignPageLimiter || createPublicCampaignPageRateLimiter({ now: options.now });
+  const maxConcurrentPublicCampaignScans = Number.isInteger(options.maxConcurrentPublicCampaignScans)
+    ? Math.max(1, Math.min(4, options.maxConcurrentPublicCampaignScans)) : 2;
+  let activePublicCampaignScans = 0;
   const socialOAuthService = options.socialOAuthService || createYouTubeOAuthService({
     env,
     tokenVault: sharedSocialTokenVault,
@@ -442,13 +473,69 @@ function createServer(options = {}) {
       if (request.method === "OPTIONS") {
         response.writeHead(204, {
           "cache-control": "no-store",
-          "access-control-allow-methods": "GET, OPTIONS",
+          "access-control-allow-methods": "GET, POST, OPTIONS",
           "access-control-allow-headers": "Accept, Content-Type"
         });
         return response.end();
       }
+      if (pathname === "/api/discovery/analyze-public-campaign") {
+        if (request.method !== "POST") {
+          response.setHeader("allow", "POST, OPTIONS");
+          return sendJson(response, 405, { error: "method_not_allowed" });
+        }
+        const quota = publicCampaignPageLimiter.consume(request.socket && request.socket.remoteAddress || "unknown");
+        if (!quota.allowed) {
+          response.setHeader("retry-after", String(quota.retryAfterSeconds));
+          return sendJson(response, 429, { error: "public_campaign_scan_rate_limited", message: "Too many live campaign-page scans. Wait before trying again.", retryAfterSeconds: quota.retryAfterSeconds });
+        }
+        if (activePublicCampaignScans >= maxConcurrentPublicCampaignScans) {
+          response.setHeader("retry-after", "5");
+          return sendJson(response, 429, { error: "public_campaign_scan_busy", message: "The public campaign scanner is busy. Try again shortly." });
+        }
+        if (!/^application\/json(?:\s*;|$)/i.test(String(request.headers["content-type"] || ""))) {
+          return sendJson(response, 415, { error: "json_required", message: "Send the public campaign URL as a JSON body." });
+        }
+        activePublicCampaignScans += 1;
+        try {
+          const raw = await readRawBody(request, 4096);
+          let input;
+          try { input = JSON.parse(raw.toString("utf8")); }
+          catch (_) { return sendJson(response, 400, { error: "invalid_json", message: "The request must contain valid JSON." }); }
+          const suppliedUrl = input && typeof input.url === "string" ? input.url.trim() : "";
+          if (!suppliedUrl || suppliedUrl.length > 500) return sendJson(response, 400, { error: "invalid_campaign_url", message: "Provide one public campaign URL (500 characters maximum)." });
+          const campaignUrl = PublicCampaignScanner.canonicalPublicCampaignDetailUrl(suppliedUrl);
+          if (!campaignUrl) return sendJson(response, 400, {
+            error: "unsupported_campaign_url",
+            message: "Only public HTTPS Content Rewards /c/campaigns/{id} pages are supported."
+          });
+          const scanNow = typeof options.now === "function" ? options.now() : options.now;
+          const detail = await publicCampaignPageFetcher(campaignUrl, {
+            fetchImpl: options.publicCampaignFetchImpl || globalThis.fetch,
+            now: scanNow,
+            timeoutMs: 10000
+          });
+          if (!detail || detail.status !== "ok" || detail.url !== campaignUrl ||
+              typeof detail.pageText !== "string" || detail.pageText.trim().length < 20 || detail.pageText.length > 20000) {
+            return sendJson(response, 502, { error: "public_campaign_scan_invalid_result", message: "The scanner did not return a valid readable public campaign page." });
+          }
+          return sendJson(response, 200, {
+            sourceVerification: "official-public-page",
+            detail,
+            note: "Fetched from the public campaign page without Content Rewards login, cookies or private account data."
+          });
+        } catch (error) {
+          const message = String(error && error.message || "Public campaign scan failed.").slice(0, 300);
+          const status = message === "request_body_too_large" ? 413 : /timed out/i.test(message) ? 504 : 422;
+          return sendJson(response, status, {
+            error: status === 504 ? "public_campaign_scan_timeout" : status === 413 ? "request_too_large" : "public_campaign_scan_failed",
+            message: status === 413 ? "The request exceeded the 4 KB limit." : message
+          });
+        } finally {
+          activePublicCampaignScans = Math.max(0, activePublicCampaignScans - 1);
+        }
+      }
       if (request.method !== "GET") {
-        response.setHeader("allow", "GET, OPTIONS");
+        response.setHeader("allow", "GET, POST, OPTIONS");
         return sendJson(response, 405, { error: "method_not_allowed" });
       }
 
@@ -555,5 +642,5 @@ if (require.main === module) {
 
 module.exports = {
   sendJson, allowedOrigins, applyDiscoveryCors, allowedSocialOrigins, applySocialCors, readRawBody,
-  socialSessionCookieName, parseCookie, buildSessionCookie, createServer, getListenConfig, startServer
+  createPublicCampaignPageRateLimiter, socialSessionCookieName, parseCookie, buildSessionCookie, createServer, getListenConfig, startServer
 };

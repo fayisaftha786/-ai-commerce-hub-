@@ -124,6 +124,35 @@
     } catch (_) { return ""; }
   }
 
+
+  async function detectSameOriginBackend(options) {
+    const opts = options || {};
+    const origin = normalizeBackendUrl(opts.origin);
+    if (!origin) return "";
+    const fetcher = opts.fetchImpl || (typeof fetch === "function" ? fetch : null);
+    if (!fetcher) return "";
+    const controller = typeof AbortController === "function" ? new AbortController() : null;
+    const timeoutMs = Number.isInteger(opts.timeoutMs) ? Math.max(500, Math.min(10000, opts.timeoutMs)) : 4000;
+    const timeout = controller ? setTimeout(() => controller.abort(), timeoutMs) : null;
+    try {
+      const response = await fetcher(origin + "/api/discovery/status", {
+        method: "GET",
+        mode: "cors",
+        credentials: "omit",
+        cache: "no-store",
+        headers: { Accept: "application/json" },
+        signal: controller ? controller.signal : undefined
+      });
+      if (!response || !response.ok) return "";
+      const status = await response.json();
+      return status && Array.isArray(status.sourceRegistry) ? origin : "";
+    } catch (_) {
+      return "";
+    } finally {
+      if (timeout) clearTimeout(timeout);
+    }
+  }
+
   async function fetchBackendSnapshot(options) {
     const opts = options || {};
     const baseUrl = normalizeBackendUrl(opts.backendUrl);
@@ -458,5 +487,5 @@
       }
     };
   }
-  return { STORAGE_KEY, SETTINGS_KEY, DEFAULT_INTERVAL_HOURS, SOURCES, keyFor, assessOpportunity, enrich, deduplicate, readState, writeState, readSettings, writeSettings, normalizeBackendUrl, fetchBackendSnapshot, fetchBackendCampaignPage, fetchStaticSnapshot, mergeHistory, canonicalPublicCampaignUrl, analyzePublicCampaigns, scan };
+  return { STORAGE_KEY, SETTINGS_KEY, DEFAULT_INTERVAL_HOURS, SOURCES, keyFor, assessOpportunity, enrich, deduplicate, readState, writeState, readSettings, writeSettings, normalizeBackendUrl, detectSameOriginBackend, fetchBackendSnapshot, fetchBackendCampaignPage, fetchStaticSnapshot, mergeHistory, canonicalPublicCampaignUrl, analyzePublicCampaigns, scan };
 });

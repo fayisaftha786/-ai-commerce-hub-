@@ -4,6 +4,8 @@ This is an optional deployment path for the existing Node.js backend. GitHub Pag
 
 The repository now includes:
 - `compose.oci.yml`: Node.js app, persistent data volume and Caddy HTTPS reverse proxy.
+- `scripts/oci-preflight.js`: validates private environment values, encryption key, exact callbacks, CORS origin and persistent paths without printing secrets.
+- `ops/oci/deploy.sh`: guarded deployment that checks `.env` permissions, validates Compose, builds the app, runs preflight, starts HTTPS services and checks public health endpoints.
 - `ops/oci/Caddyfile`: automatic TLS certificate management and reverse proxy.
 - `ops/oci/backend.env.example`: safe environment-variable template.
 - `.github/workflows/deploy-oci.yml`: optional push-to-deploy workflow after its SSH secrets are configured.
@@ -125,8 +127,7 @@ OAuth connection does not itself verify that the same social account is connecte
 From `/opt/ai-commerce-hub`:
 
 ```sh
-sudo docker compose -f compose.oci.yml up -d --build
-sudo docker compose -f compose.oci.yml ps
+sudo bash ops/oci/deploy.sh
 sudo docker compose -f compose.oci.yml logs --tail=100 app caddy
 ```
 
@@ -139,7 +140,7 @@ curl -fsS https://YOUR_HOSTNAME/health
 curl -fsS https://YOUR_HOSTNAME/api/social/providers
 ```
 
-A healthy `/health` response proves only that the server process is responding. `/api/social/providers` should report whether the Google/Meta environment variables are present. It does not prove OAuth consent, account connection, API permission or a successful upload.
+The deployment script runs `docker compose config --quiet`, builds the app image, and runs `node scripts/oci-preflight.js` inside that container using the private `.env` variables. It blocks deployment when the hostname, encryption key, exact same-origin URLs or persistent storage paths are invalid. It then starts the app/Caddy stack and checks HTTPS `/health` and `/api/social/providers`. A healthy `/health` response proves only that the server is responding. `/api/social/providers` reports configuration readiness; neither proves OAuth consent, account connection, API permission or a successful upload.
 
 Then open Social Media Desk, connect YouTube and/or Meta, select the correct channel/Page/Instagram destination, and complete a small controlled upload test. The publish flow still requires explicit confirmation.
 
@@ -154,9 +155,9 @@ After the VM is running, configure these GitHub repository **Actions secrets** (
 
 The public host key must be verified from the VM/OCI console before saving it. Do not blindly trust an unverified `ssh-keyscan` result.
 
-The workflow connects to `/opt/ai-commerce-hub`, fetches the latest `main`, rebuilds the Docker image and restarts Compose. This means a successful scheduled Content Rewards snapshot commit on `main` can also refresh the app's bundled public snapshot on the VM.
+The workflow connects to `/opt/ai-commerce-hub`, fetches the latest `main`, and runs `sudo bash ops/oci/deploy.sh`. That script validates the private `.env`, builds the Docker image, runs the OCI preflight, restarts Compose and checks the public HTTPS health endpoints. This means a successful scheduled Content Rewards snapshot commit on `main` can also refresh the app's bundled public snapshot on the VM.
 
-After adding the secrets, run **Deploy Oracle Cloud backend** once from GitHub → Actions → workflow_dispatch. For automatic deployment after relevant pushes to `main`, also add the repository Actions variable `OCI_DEPLOY_ENABLED=true`. Without that variable, push-triggered deployment is safely skipped. The workflow never reads or uploads the VM's `.env` file.
+After adding the secrets, run **Deploy Oracle Cloud backend** once from GitHub → Actions → workflow_dispatch. The workflow deploys only from `main`; PR #201 must be merged before its changes can be deployed. For automatic deployment after relevant pushes to `main`, also add the repository Actions variable `OCI_DEPLOY_ENABLED=true`. Without that variable, push-triggered deployment is safely skipped. The workflow never reads or uploads the VM's `.env` file.
 
 ## 8. Backups and operations
 

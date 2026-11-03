@@ -171,7 +171,9 @@ YouTube OAuth/API ഉപയോഗത്തിന് Google policy, consent scree
 6. Facebook account-ന് ആവശ്യമായ Page access ഉണ്ടെന്നും Instagram Professional account ആ Page-ലേക്ക് link ചെയ്തിട്ടുണ്ടെന്നും പരിശോധിക്കുക.
 7. Social Desk → Meta connect വഴി login ചെയ്ത് ശരിയായ Page/Instagram account തിരിച്ചറിയപ്പെടുന്നുണ്ടോ പരിശോധിക്കുക.
 
-**Instagram Creator account:** Creator account ഒരു Professional account ആണ്; Business-ലേക്ക് മാറേണ്ടതില്ല. എന്നാൽ ഈ repository-യിലെ Facebook Login integration-ന് Instagram Professional account ഒരു Facebook Page-ുമായി link ചെയ്തിരിക്കണം. Page link ഇല്ലെങ്കിൽ Meta connection-ൽ Instagram account കണ്ടെത്താനിടയില്ല. Meta app development mode-ൽ app roles/test users ഉപയോഗിച്ച് ആദ്യം നിങ്ങളുടെ സ്വന്തം account പരീക്ഷിക്കുക. മറ്റുള്ളവരുടെ accounts-നായി സേവനം നൽകുമ്പോൾ Meta App Review/Advanced Access ആവശ്യമായേക്കാം; permissions approval ഉറപ്പല്ല.
+**Instagram Creator account — രണ്ട് വ്യത്യസ്ത നിയമങ്ങൾ:** Content Rewards-ന്റെ connection guide Business മാത്രം എന്ന് പറയുന്നു. എന്നാൽ അതിന്റെ Creator Terms §14.1, Privacy Policy §4.1 Professional/Business അല്ലെങ്കിൽ Creator account OAuth വഴി connect ചെയ്യാമെന്ന് പറയുന്നു. ഇത് official documentation conflict ആണ്. അതിനാൽ ആദ്യം നിലവിലെ Creator account Content Rewards-ൽ തന്നെ connect ചെയ്ത് നോക്കുക. reject ചെയ്താൽ exact error സൂക്ഷിച്ച് Support-നോട് clarification ചോദിച്ചശേഷം മാത്രമേ account type മാറ്റാവൂ.
+
+**ClipReward-ന്റെ വേറിട്ട Meta publishing integration:** Facebook Login API-യ്ക്ക് Professional Creator അല്ലെങ്കിൽ Business account ഒരു Facebook Page-ുമായി link ചെയ്തിരിക്കണം. Page link ഇല്ലെങ്കിൽ Meta connection-ൽ Instagram account കണ്ടെത്താനിടയില്ല. Meta app development mode-ൽ app roles/test users ഉപയോഗിച്ച് ആദ്യം സ്വന്തം account പരീക്ഷിക്കുക. മറ്റുള്ളവരുടെ accounts-നായി സേവനം നൽകുമ്പോൾ Meta App Review/Advanced Access ആവശ്യമായേക്കാം; permissions approval ഉറപ്പല്ല. Content Rewards link, Meta publisher OAuth എന്നിവ പരസ്പരം പകരമല്ല.
 
 Official Meta developer entry: https://developers.meta.com/  
 Meta Instagram API collection: https://www.postman.com/meta/instagram/documentation/6yqw8pt/instagram-api
@@ -202,7 +204,7 @@ Workflow secrets names/format പരിശോധിച്ചശേഷം `/opt/a
 4. Video export locally download ചെയ്ത് playback പരിശോധിക്കുക.
 5. YouTube OAuth connect → channel identity → ഒരു test video unlisted/private ആയി upload → provider status/permalink verify ചെയ്യുക. Public Content Rewards post ചെയ്യുന്നതിന് മുമ്പ് campaign rules വീണ്ടും പരിശോധിക്കുക.
 6. Meta OAuth connect → സ്വന്തം test Page-ലേക്ക് Reels test ചെയ്യുക.
-7. Instagram Creator account ശരിയായി കണ്ടെത്തുന്നു എന്ന് പരിശോധിക്കുക; public media URL വഴി provider processing വിജയിച്ചിരിക്കണം.
+7. ClipReward Meta publisher-ൽ Creator/Business Professional account linked Facebook Page സഹിതം കണ്ടെത്തുന്നുണ്ടോ പരിശോധിക്കുക. Content Rewards-ന്റെ സ്വന്തം Instagram connection വേറിട്ട് official flow-ൽ test ചെയ്യുക; നിലവിലെ Help Guide-നും Terms/Privacy Policy-ക്കും account-type വ്യത്യാസമുണ്ട്.
 8. Social Desk-ൽ public publishing confirmation ലഭിച്ചാൽ മാത്രമേ post receipt tracker-ിലേക്ക് പോകൂ. Content Rewards-ൽ exact account verification, Join/Apply, 30-minute ഉള്ളിൽ Submit Clip എന്നിവ creator തന്നെ ചെയ്യണം.
 
 ## 12. Troubleshooting

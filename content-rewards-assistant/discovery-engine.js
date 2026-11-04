@@ -40,6 +40,7 @@
     const age = Number.isFinite(row.ageDays) ? row.ageDays : null;
     const today = new Date(now == null ? Date.now() : now).toISOString().slice(0, 10);
     const expired = Boolean(row.deadline && /^\d{4}-\d{2}-\d{2}$/.test(row.deadline) && row.deadline < today);
+    const lockedRequirements = Boolean(row.hiddenRequirements && row.hiddenRequirements.locked === true);
     let score = 0;
     if (knownRate) score += 25;
     if (knownMinimum) score += 10;
@@ -54,6 +55,9 @@
     if (age != null && age > 14) score -= 15;
     if (row.notSeenInLatestScan === true) score -= 15;
     if (expired) score -= 35;
+    // A hidden creator brief is a material evidence gap, even when the public card is otherwise rich.
+    // Keep such campaigns out of the High information tier until the full requirements are visible.
+    if (lockedRequirements) score = Math.min(score, 74);
     score = Math.max(0, Math.min(100, score));
     const missing = [];
     if (!knownRate) missing.push("Reward rate");
@@ -63,12 +67,14 @@
     if (!hasSource) missing.push("Source link");
     if (age == null) missing.push("Snapshot date");
     if (row.notSeenInLatestScan === true) missing.push("Not present in the latest public feed scan");
+    if (lockedRequirements) missing.push("Full creator requirements hidden until joining");
     const status = expired ? "expired" : row.freshness === "stale" || (age != null && age > 7) ? "stale" : row.notSeenInLatestScan === true ? "not-seen-in-latest-scan" : "needs-verification";
     return {
       score, tier: score >= 75 ? "high" : score >= 50 ? "medium" : "low", status, expired, missing,
-      confidence: missing.length <= 1 ? "strong field coverage" : missing.length <= 3 ? "partial field coverage" : "limited field coverage",
+      confidence: lockedRequirements ? "incomplete public brief" : missing.length <= 1 ? "strong field coverage" : missing.length <= 3 ? "partial field coverage" : "limited field coverage",
       explanation: expired ? "Deadline appears to have passed; verify the official page before spending time." :
         row.notSeenInLatestScan === true ? "This lead was not present in the latest public feed scan. It may have ended or been removed; verify its official status before prioritising." :
+        lockedRequirements ? "The public page hides creator requirements until joining. This lead is capped at Medium information score; verify the complete brief before spending time or producing content." :
         score >= 75 ? "Good information coverage and/or fresh snapshot. Official availability and eligibility still need confirmation." :
           score >= 50 ? "Some useful reward information is available, but important details remain unknown." :
             "Insufficient or stale information. Verify the source and fill missing details before prioritising."

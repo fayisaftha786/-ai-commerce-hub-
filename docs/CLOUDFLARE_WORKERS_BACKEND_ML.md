@@ -98,6 +98,8 @@ curl https://<your-worker-host>/api/social/providers
 }
 ```
 
+ഇതിനുശേഷം workflow `CLOUDFLARE_DEPLOY_ENABLED=true` ഉള്ളപ്പോൾ മാത്രം main-ലുള്ള backend code changes-ന് സ്വയം trigger ചെയ്യും. Scheduled discovery snapshot JSON മാത്രം മാറുമ്പോൾ Worker വീണ്ടും deploy ആവാതിരിക്കാൻ workflow അതിനെ path filter-ൽ നിന്ന് ഒഴിവാക്കിയിട്ടുണ്ട്.
+
 ഈ vars-ന് ശേഷം വീണ്ടും:
 
 ```sh
@@ -110,6 +112,8 @@ Google OAuth consent screen, YouTube Data API v3, Meta Login permissions, Facebo
 ## Optional: GitHub Actions auto-deploy
 
 ആദ്യമായി D1 database, R2 bucket, Worker name/subdomain എന്നിവ Cloudflare account-ൽ ഒരിക്കൽ സൃഷ്ടിക്കുക. ശേഷം GitHub repository → Settings → Secrets and variables → Actions എന്നിടത്ത് താഴെ പറയുന്നവ ചേർക്കുക.
+
+**Cloudflare API token permissions:** ആദ്യ Worker സൃഷ്ടിക്കാൻ Workers Scripts Admin (അല്ലെങ്കിൽ Workers product Admin) നൽകണം; നിലവിലുള്ള Worker update ചെയ്യാൻ Worker Editor മതി. D1 migrations നടത്താൻ D1 Edit permission കൂടി വേണം. R2 bucket ആദ്യം Dashboard/CLI വഴി സൃഷ്ടിക്കുക; Worker runtime പിന്നീട് binding വഴി object access നടത്തും.
 
 **Repository variables**
 - `CLOUDFLARE_DEPLOY_ENABLED` = `true` (ഈ variable `true` ആകുന്നതുവരെ workflow എല്ലാ deploy-ുകളും skip ചെയ്യും).

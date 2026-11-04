@@ -217,7 +217,10 @@
       if (remaining) gross = Math.min(gross, remaining.value);
     } else {
       gross = amount;
-      if (model === "Per post" && minimumViews !== null && (!Number.isFinite(views) || views < minimumViews)) {
+      if (model === "Per post" && minimumViews === null) {
+        thresholdMet = false;
+        warnings.push("The campaign's minimum-view requirement is unknown; do not treat the fixed post amount as earned until the official brief confirms whether a threshold applies.");
+      } else if (model === "Per post" && (!Number.isFinite(views) || views < minimumViews)) {
         thresholdMet = false;
         warnings.push("The minimum-view condition is not yet met.");
       }

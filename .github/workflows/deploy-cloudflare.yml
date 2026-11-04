@@ -12,6 +12,7 @@ on:
       - "meta-social-oauth.js"
       - "scripts/pages-build.js"
       - "content-rewards-assistant/**"
+      - "!content-rewards-assistant/discovery-snapshot.json"
       - "package.json"
   workflow_dispatch:
 

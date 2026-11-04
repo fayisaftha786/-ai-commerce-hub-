@@ -105,6 +105,15 @@
         detail: "Reopen the current official campaign page; saved details may no longer be accurate."
       };
     }
+    const campaignStatus = clean(row.campaignStatus, 80);
+    if (["Paused", "Ended / closed", "Out of budget"].includes(campaignStatus)) {
+      return {
+        kind: "not-accepting",
+        label: campaignStatus,
+        detail: "The public campaign text reports this campaign is " + campaignStatus.toLowerCase() +
+          ". Do not treat it as an open opportunity; verify the official page before preparing content."
+      };
+    }
     if (row.notSeenInLatestScan === false) {
       return {
         kind: "latest",

@@ -16,6 +16,15 @@ test("labels latest-scan, historical, stale and unknown campaign records without
   assert.equal(Discovery.listingStatus(sample("history", { notSeenInLatestScan: true })).kind, "historical");
   assert.equal(Discovery.listingStatus(sample("history-status", { opportunity: { status: "not-seen-in-latest-scan" } })).kind, "historical");
   assert.equal(Discovery.listingStatus(sample("stale", { freshness: "stale" })).kind, "stale");
+  for (const campaignStatus of ["Paused", "Ended / closed", "Out of budget"]) {
+    const listing = Discovery.listingStatus(sample("closed-" + campaignStatus, {
+      notSeenInLatestScan: false,
+      campaignStatus
+    }));
+    assert.equal(listing.kind, "not-accepting", campaignStatus);
+    assert.equal(listing.label, campaignStatus);
+    assert.match(listing.detail, /do not treat it as an open opportunity/i);
+  }
   assert.equal(Discovery.listingStatus(sample("expired", { opportunity: { expired: true } })).kind, "expired");
   assert.equal(Discovery.listingStatus(sample("unknown")).kind, "unknown");
 });
@@ -348,7 +357,7 @@ test("ClipReward auto shortlist is wired into the radar and deep findings panel"
   assert.match(app, /Brief locked · join required/);
   assert.match(app, /No deadline found/);
   assert.match(app, /automatic import is blocked/);
-  assert.match(worker, /clipreward-static-v41/);
+  assert.match(worker, /clipreward-static-v42/);
   assert.match(worker, /discovery-engine\.js/);
 });
 

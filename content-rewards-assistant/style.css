@@ -188,7 +188,7 @@
 .discovery-tier-high{background:#17372f;color:#a9e8ca}.discovery-tier-medium{background:#3b301f;color:#f0d18d}.discovery-tier-low{background:#30384a;color:#c0cbe0}
 .discovery-card p{font-size:10px;color:#a9b7cf;margin:7px 0}
 .discovery-card>small{display:block;font-size:9px;line-height:1.55;color:#aab6cc;margin-top:8px}
-.discovery-card>small.discovery-listing-status-historical,.discovery-card>small.discovery-listing-status-stale,.discovery-card>small.discovery-listing-status-expired{color:#ffd58a;font-weight:700}
+.discovery-card>small.discovery-listing-status-historical,.discovery-card>small.discovery-listing-status-stale,.discovery-card>small.discovery-listing-status-expired{color:#ffd58a;font-weight:700}.discovery-card>small.discovery-listing-status-not-accepting{color:#ffb6aa;font-weight:800}
 .discovery-card .feed-card-actions{margin-top:10px}
 @media(max-width:650px){.discovery-list{grid-template-columns:1fr}.discovery-controls{align-items:stretch;flex-direction:column}.discovery-controls label,.discovery-controls .button{width:100%}.discovery-metrics strong{font-size:19px}}
 

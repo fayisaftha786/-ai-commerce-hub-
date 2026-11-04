@@ -98,6 +98,8 @@ curl https://<your-worker-host>/api/social/providers
 }
 ```
 
+ഇതിനുശേഷം workflow `CLOUDFLARE_DEPLOY_ENABLED=true` ഉള്ളപ്പോൾ മാത്രം main-ലുള്ള backend code changes-ന് സ്വയം trigger ചെയ്യും. Scheduled discovery snapshot JSON മാത്രം മാറുമ്പോൾ Worker വീണ്ടും deploy ആവാതിരിക്കാൻ workflow അതിനെ path filter-ൽ നിന്ന് ഒഴിവാക്കിയിട്ടുണ്ട്.
+
 ഈ vars-ന് ശേഷം വീണ്ടും:
 
 ```sh
@@ -105,6 +107,34 @@ npm run deploy:cloudflare
 ```
 
 Google OAuth consent screen, YouTube Data API v3, Meta Login permissions, Facebook Page, അതുമായി ബന്ധിപ്പിച്ച Instagram Professional account എന്നിവ നിങ്ങളുടെ സ്വന്തം developer accounts-ൽ configure ചെയ്യണം. OAuth app verification / Meta App Review ആവശ്യമെങ്കിൽ provider തീരുമാനം അനുസരിച്ച് പൂർത്തിയാക്കണം. Login authorize ചെയ്യാതെ code മാത്രം ചേർത്താൽ publishing enabled ആകില്ല.
+
+
+## Optional: GitHub Actions auto-deploy
+
+ആദ്യമായി D1 database, R2 bucket, Worker name/subdomain എന്നിവ Cloudflare account-ൽ ഒരിക്കൽ സൃഷ്ടിക്കുക. ശേഷം GitHub repository → Settings → Secrets and variables → Actions എന്നിടത്ത് താഴെ പറയുന്നവ ചേർക്കുക.
+
+**Cloudflare API token permissions:** ആദ്യ Worker സൃഷ്ടിക്കാൻ Workers Scripts Admin (അല്ലെങ്കിൽ Workers product Admin) നൽകണം; നിലവിലുള്ള Worker update ചെയ്യാൻ Worker Editor മതി. D1 migrations നടത്താൻ D1 Edit permission കൂടി വേണം. R2 bucket ആദ്യം Dashboard/CLI വഴി സൃഷ്ടിക്കുക; Worker runtime പിന്നീട് binding വഴി object access നടത്തും.
+
+**Repository variables**
+- `CLOUDFLARE_DEPLOY_ENABLED` = `true` (ഈ variable `true` ആകുന്നതുവരെ workflow എല്ലാ deploy-ുകളും skip ചെയ്യും).
+- `CF_ACCOUNT_ID` = 32-character Cloudflare account ID.
+- `CF_D1_DATABASE_ID` = സൃഷ്ടിച്ച D1 database UUID.
+- `CF_WORKER_URL` = Worker-ന്റെ കൃത്യമായ HTTPS origin; ഉദാ. `https://clipreward-studio.<your-subdomain>.workers.dev`.
+
+**Repository secrets**
+- `CF_API_TOKEN` = Workers deploy, D1 migrations, R2 binding ഉപയോഗിക്കാൻ ആവശ്യമായ കുറഞ്ഞ permissions ഉള്ള Cloudflare API token.
+- `SOCIAL_TOKEN_ENCRYPTION_KEY` = `openssl rand -base64 32` വഴി സൃഷ്ടിച്ച key.
+- Optional provider secrets: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `META_APP_ID`, `META_APP_SECRET`.
+
+ഇവ ചേർത്താൽ, main-ൽ Cloudflare backend/static app code മാറ്റം merge ചെയ്യുമ്പോൾ GitHub Actions:
+1. Wrangler config യഥാർത്ഥ IDs/origin ഉപയോഗിച്ച് local ignored file ആയി സൃഷ്ടിക്കും.
+2. static site build ചെയ്യും; D1 migrations apply ചെയ്യും.
+3. Worker deploy ചെയ്യും; token encryption key, നൽകിയിട്ടുള്ള OAuth secrets ചേർക്കും.
+4. Worker `/health` endpoint-ും app shell-ും പരിശോധിക്കും.
+
+Manual trigger വേണമെങ്കിൽ Actions → **Deploy ClipReward backend to Cloudflare Workers** → **Run workflow**. `CLOUDFLARE_DEPLOY_ENABLED` true ആണെന്നും എല്ലാ required values നൽകിയിട്ടുണ്ടെന്നും ഉറപ്പാക്കുക. Workflow PR-കളിൽ run ചെയ്യില്ല; secrets PR code-ലേക്ക് expose ചെയ്യില്ല. Worker deploy ആരോഗ്യപരിശോധനയിൽ പരാജയപ്പെട്ടാൽ run fail ആയി കാണിക്കും.
+
+`CF_WORKER_URL` തെറ്റായോ DNS/Workers route ബന്ധിപ്പിക്കാതെയോ ഇരിക്കുകയാണെങ്കിൽ health check പരാജയപ്പെടും. Provider credentials ഇല്ലെങ്കിൽ API പ്രവർത്തിച്ചാലും YouTube/Meta OAuth readiness incomplete ആയിരിക്കും. Secrets GitHub Actions-ൽ തന്നെ സൂക്ഷിക്കുക; chat-ലോ repository files-ലോ ഇടരുത്.
 
 ## App തുറക്കുക
 

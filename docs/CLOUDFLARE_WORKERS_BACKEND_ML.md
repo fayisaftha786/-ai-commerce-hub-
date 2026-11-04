@@ -13,7 +13,7 @@
 
 ## ആവശ്യമായ Cloudflare resources
 
-Cloudflare Free account ഉപയോഗിച്ച് തുടങ്ങാം. Free plan-ിന് usage quotas ഉണ്ട്; workload പരിധി കടന്നാൽ paid charges/limits ബാധകമാകാം. Deploy ചെയ്യുന്നതിന് മുമ്പ് സ്വന്തം dashboard-ലെ നിലവിലെ quota/pricing പരിശോധിക്കുക.
+Cloudflare Free account ഉപയോഗിച്ച് തുടങ്ങാം. നിലവിലെ Workers Free plan limits: 100,000 requests/day, 10 ms CPU time per request, 128 MB memory; limits മാറാം, paid quota automatically assume ചെയ്യരുത്. 50 MB വരെ video buffer ചെയ്യുന്ന publish flow free Worker memory/CPU പരിധിയിൽ എല്ലായ്പ്പോഴും fit ആകുമെന്ന് ഉറപ്പില്ല; ചെറിയ clips കൊണ്ട് test ചെയ്യുക. Deploy ചെയ്യുന്നതിന് മുമ്പ് dashboard-ലെ നിലവിലെ quota/pricing പരിശോധിക്കുക.
 
 1. [Cloudflare Dashboard](https://dash.cloudflare.com/) തുറന്ന് Workers & Pages access സജ്ജമാക്കുക.
 2. D1 database സൃഷ്ടിക്കുക.

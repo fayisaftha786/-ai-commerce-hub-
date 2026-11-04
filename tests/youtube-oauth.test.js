@@ -339,12 +339,12 @@ test("does not publish when upload scope is missing", async () => {
   assert.equal(calls, 0);
 });
 
-test("disconnect removes the current browser session's YouTube token record", () => {
+test("disconnect removes the current browser session's YouTube token record", async () => {
   const store = makeStore();
   const sessionId = "1234567890123456789012345678901234567890123";
   store.set(sha256(sessionId), "youtube", { accessToken: "token" });
   const service = createYouTubeOAuthService({ env: ENV, tokenVault: store });
-  assert.equal(service.disconnect(sessionId), true);
-  assert.equal(service.disconnect(sessionId), false);
+  assert.equal(await service.disconnect(sessionId), true);
+  assert.equal(await service.disconnect(sessionId), false);
   assert.equal(store.records.size, 0);
 });

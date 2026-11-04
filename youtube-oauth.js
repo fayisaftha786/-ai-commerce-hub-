@@ -198,7 +198,9 @@ function createYouTubeOAuthService(options = {}) {
   }
 
   async function completeAuthorization(input = {}) {
-    const pending = await consumeState(input.state, input.sessionId);
+    let pending;
+    try { pending = await consumeState(input.state, input.sessionId); }
+    catch (_) { return { ok: false, error: "oauth_state_store_unavailable" }; }
     if (!pending) return { ok: false, error: "invalid_or_expired_state" };
     if (input.providerError) return { ok: false, error: input.providerError === "access_denied" ? "access_denied" : "authorization_failed" };
     if (typeof input.code !== "string" || input.code.length < 8 || input.code.length > 4096) {

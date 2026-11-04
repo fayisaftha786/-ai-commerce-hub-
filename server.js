@@ -239,7 +239,9 @@ function createServer(options = {}) {
           response.setHeader("allow", "GET");
           return sendJson(response, 405, { error: "method_not_allowed" });
         }
-        const started = await socialOAuthService.createAuthorizationRequest(sessionId);
+        let started;
+        try { started = await socialOAuthService.createAuthorizationRequest(sessionId); }
+        catch (_) { return sendJson(response, 503, { error: "oauth_state_store_unavailable" }); }
         if (!started.ok) return sendJson(response, 503, {
           error: "youtube_oauth_not_configured",
           missing: started.missing || [],
@@ -273,7 +275,9 @@ function createServer(options = {}) {
           response.setHeader("allow", "GET");
           return sendJson(response, 405, { error: "method_not_allowed" });
         }
-        const started = await metaSocialService.createAuthorizationRequest(sessionId);
+        let started;
+        try { started = await metaSocialService.createAuthorizationRequest(sessionId); }
+        catch (_) { return sendJson(response, 503, { error: "oauth_state_store_unavailable" }); }
         if (!started.ok) return sendJson(response, 503, {
           error: started.error || "meta_oauth_not_configured",
           missing: started.missing || []

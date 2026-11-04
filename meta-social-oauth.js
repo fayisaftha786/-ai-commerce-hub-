@@ -272,7 +272,10 @@ function createMetaSocialService(options = {}) {
   }
 
   async function completeAuthorization(input = {}) {
-    if (!await consumeState(input.state, input.sessionId)) return { ok: false, error: "invalid_or_expired_state" };
+    let validState;
+    try { validState = await consumeState(input.state, input.sessionId); }
+    catch (_) { return { ok: false, error: "oauth_state_store_unavailable" }; }
+    if (!validState) return { ok: false, error: "invalid_or_expired_state" };
     if (input.providerError) return {
       ok: false,
       error: input.providerError === "access_denied" ? "access_denied" : "authorization_failed"

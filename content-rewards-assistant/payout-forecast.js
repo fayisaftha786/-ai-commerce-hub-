@@ -73,12 +73,13 @@
       }
 
       if (model === "CPM") {
+        const firstRoundStartAt = Math.max(approvedAt, thresholdMetAt == null ? approvedAt : thresholdMetAt);
         return result(
           "estimate",
           "Estimated first CPM balance-credit date",
-          "After approval, CPM keeps earning for 7 more days, then the amount is held for 3 days and pays on day 10. The minimum-view requirement must already be met for the clip to earn.",
-          approvedAt + 10 * DAY_MS,
-          "First approved round only. This estimate assumes the clip is eligible and its minimum was met; a flag, rejection, returned payout, funding issue or later approval change can alter the result."
+          "The first CPM payout round opens only after both approval and the minimum payout requirement are satisfied. From that later timestamp, the clip earns for 7 days, then the amount is held for 3 days and normally settles on day 10.",
+          firstRoundStartAt + 10 * DAY_MS,
+          "First approved round only. This estimate assumes the clip remains eligible and funded; an open flag, rejection, returned payout, funding issue or later approval change can alter the result."
         );
       }
       const perPostStart = Math.max(approvedAt, thresholdMetAt == null ? approvedAt : thresholdMetAt);

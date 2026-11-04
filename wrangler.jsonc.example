@@ -33,8 +33,5 @@
     "SOCIAL_COOKIE_SAMESITE": "Lax",
     "META_GRAPH_API_VERSION": "v26.0",
     "DISCOVERY_PUBLIC_SNAPSHOT_URL": "https://fayisaftha786.github.io/-ai-commerce-hub-/content-rewards-assistant/discovery-snapshot.json"
-  },
-  "compatibility_flags": [
-    "nodejs_compat"
-  ]
+  }
 }

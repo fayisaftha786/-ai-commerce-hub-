@@ -2,7 +2,7 @@
 
 ഈ guide, GitHub Pages-ൽ കാണുന്ന ClipReward Studio-യെ സ്വകാര്യ HTTPS backend-ുമായി ബന്ധിപ്പിച്ച് YouTube, Facebook Page, Instagram Professional publishing സജ്ജമാക്കാനുള്ളതാണ്.
 
-> **നിലവിലെ code status:** PR #201-ൽ ഉള്ള പുതിയ live-campaign analysis, scan-status labels, backend auto-detection എന്നിവ ആദ്യം merge ചെയ്ത് `main`-ൽ എത്തണം. PR merge ചെയ്യുന്നതിന് മുമ്പ് താഴെ പറയുന്ന production workflow ഉപയോഗിച്ച് ആ പുതിയ code deploy ചെയ്യാൻ കഴിയില്ല. PR #201: https://github.com/fayisaftha786/-ai-commerce-hub-/pull/201
+> **നിലവിലെ code/deployment status (2026-11-04):** PR #201, #202, #203 എല്ലാം `main`-ൽ merge ചെയ്തിട്ടുണ്ട്. Live public campaign analysis, historical/latest labels, backend auto-detection, hidden-brief detection, Instagram Creator/Business guidance എന്നിവ code-ൽ ഉൾപ്പെട്ടിട്ടുണ്ട്. Main CI, Docker backend build/smoke test, GitHub Pages deployment എന്നിവ വിജയിച്ചിട്ടുണ്ട്. GitHub Pages app live ആണ്. **OCI backend deploy ഇതുവരെ നടത്തിയിട്ടില്ല** — അത് നടത്താൻ VM/hostname, SSH deployment secrets, private `.env`, encrypted token vault, Google/Meta app credentials എന്നിവ server-ൽ ക്രമീകരിക്കണം. CI PASS എന്നത് live OAuth/publishing PASS എന്നർത്ഥമല്ല.
 
 ## 1. എന്താണ് auto ആകുന്നത്, എന്താണ് manual?
 
@@ -190,7 +190,7 @@ Meta Instagram API collection: https://www.postman.com/meta/instagram/documentat
    - `OCI_KNOWN_HOSTS` — server host-key line. Host fingerprint-നെ trusted console/source-ൽ നിന്ന് verify ചെയ്തശേഷം മാത്രം സ്വീകരിക്കുക; blindly `ssh-keyscan` output വിശ്വസിക്കരുത്.
 3. Actions → Variables-ൽ `OCI_DEPLOY_ENABLED=true` ചേർക്കുക.
 4. VM user-ൽ `sudo -n true` വിജയിക്കുന്നുണ്ടെന്ന് പരിശോധിക്കുക; SSH workflow interactive password ചോദിക്കാനാവില്ല.
-5. PR #201 merge ചെയ്ത് main CI വിജയിച്ചതിനുശേഷം മാത്രം Actions → Deploy Oracle Cloud backend → Run workflow പ്രവർത്തിപ്പിക്കുക.
+5. ഇപ്പോഴത്തെ `main`-ൽ ആവശ്യമായ code merge ചെയ്തിട്ടുണ്ട്. VM, HTTPS hostname, SSH secrets, സ്വകാര്യ backend environment എന്നിവ തയ്യാറായശേഷം മാത്രം Actions → Deploy Oracle Cloud backend → Run workflow പ്രവർത്തിപ്പിക്കുക. Workflow manually dispatch ചെയ്താൽ `OCI_DEPLOY_ENABLED` push gate മറികടക്കും; പക്ഷേ നാല് OCI secrets ഇല്ലെങ്കിൽ അത് സുരക്ഷിതമായി fail ചെയ്യും.
 
 Workflow secrets names/format പരിശോധിച്ചശേഷം `/opt/ai-commerce-hub`-ൽ main update ചെയ്ത് deploy script പ്രവർത്തിപ്പിക്കും. SSH secrets ഇല്ലാതെ auto-deploy സാധ്യമല്ല. `OCI_DEPLOY_ENABLED` ഒരു non-secret switch മാത്രമാണ്.
 

@@ -2,7 +2,7 @@
 
 ഈ guide, GitHub Pages-ൽ കാണുന്ന ClipReward Studio-യെ സ്വകാര്യ HTTPS backend-ുമായി ബന്ധിപ്പിച്ച് YouTube, Facebook Page, Instagram Professional publishing സജ്ജമാക്കാനുള്ളതാണ്.
 
-> **നിലവിലെ code/deployment status (2026-11-04):** PR #201, #202, #203 എല്ലാം `main`-ൽ merge ചെയ്തിട്ടുണ്ട്. Live public campaign analysis, historical/latest labels, backend auto-detection, hidden-brief detection, Instagram Creator/Business guidance എന്നിവ code-ൽ ഉൾപ്പെട്ടിട്ടുണ്ട്. Main CI, Docker backend build/smoke test, GitHub Pages deployment എന്നിവ വിജയിച്ചിട്ടുണ്ട്. GitHub Pages app live ആണ്. **OCI backend deploy ഇതുവരെ നടത്തിയിട്ടില്ല** — അത് നടത്താൻ VM/hostname, SSH deployment secrets, private `.env`, encrypted token vault, Google/Meta app credentials എന്നിവ server-ൽ ക്രമീകരിക്കണം. CI PASS എന്നത് live OAuth/publishing PASS എന്നർത്ഥമല്ല.
+> **നിലവിലെ code/deployment status (2026-11-04):** PR #201, #202, #203, #205, #206, #207 എന്നിവ `main`-ൽ merge ചെയ്തിട്ടുണ്ട്. ഏറ്റവും പുതിയ `main` snapshot commit `9174b768` ആണ്. Main CI (run #714), GitHub Pages deploy (#156), scheduled discovery (#72) എന്നിവ വിജയിച്ചു; OCI backend deploy workflow **skipped** ആണ്. ഏറ്റവും പുതിയ public scan: 108 saved campaigns (68 latest, 40 historical); latest 68-നും public detail fetch വിജയിച്ചു, പക്ഷേ 68-ലും creator requirements Join ചെയ്തശേഷം മാത്രമേ കാണൂ. Latest 68-ൽ deadline കണ്ടെത്തിയിട്ടില്ല, minimum-view threshold കണ്ടെത്തിയിട്ടില്ല, safe batch-import candidate 0 ആണ്. `High information score` campaign approval/eligibility അല്ല. **Backend live ആയി deploy ചെയ്തിട്ടില്ല** — VM/hostname, SSH deployment secrets, private `.env`, encrypted token vault, Google/Meta app credentials എന്നിവ ഇതുവരെ സ്ഥിരീകരിച്ചിട്ടില്ല. CI PASS എന്നത് live OAuth/publishing PASS എന്നർത്ഥമല്ല.
 
 ## 1. എന്താണ് auto ആകുന്നത്, എന്താണ് manual?
 
@@ -68,7 +68,7 @@ git checkout main
 
 Docker Compose package install නොആയാൽ Docker-ന്റെ official Ubuntu install guide പിന്തുടരുക: https://docs.docker.com/engine/install/ubuntu/
 
-**ആദ്യ deploy സമയത്ത് PR #201 merge ചെയ്തിരിക്കണം.** അതിന് മുമ്പ് main branch-ൽ പുതിയ PR changes ഇല്ല.
+**ഇപ്പോൾ `main`-ൽ ആവശ്യമായ code changes merge ചെയ്തിട്ടുണ്ട്.** VM, HTTPS hostname, SSH secrets, private backend `.env` എന്നിവ സജ്ജമാക്കിയശേഷം മാത്രമേ backend deploy നടത്താവൂ.
 
 ## 6. സ്വകാര്യ backend environment സൃഷ്ടിക്കുക
 

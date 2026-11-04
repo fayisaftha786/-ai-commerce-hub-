@@ -39,7 +39,9 @@ test("valid snapshot passes structural checks and reports risk indicators separa
   assert.equal(result.metrics.lockedCurrentRequirementsCount, 1);
   assert.equal(result.metrics.missingCurrentDeadlineCount, 1);
   assert.ok(result.warnings.some((item) => /historical campaign/i.test(item)));
-  assert.ok(result.warnings.some((item) => /not an eligibility or earnings prediction/i.test(item)));
+  assert.ok(result.warnings.some((item) => /creator requirements hidden until joining/i.test(item)));
+  assert.equal(result.metrics.lockedRequirementsHighInformationCount, 0);
+  assert.equal(result.metrics.lockedRequirementsWithoutWarningCount, 0);
 });
 
 test("locked creator requirements cannot pass the audit with a High score or without a missing-evidence warning", () => {

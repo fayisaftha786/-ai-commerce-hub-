@@ -29,6 +29,18 @@ test("scores field coverage and freshness without claiming eligibility", () => {
   assert.equal(weak.tier, "low");
   assert.ok(weak.missing.includes("Reward rate"));
 });
+test("caps information tier when creator requirements remain hidden until joining", () => {
+  const locked = Discovery.assessOpportunity(sample("hidden-brief", {
+    hiddenRequirements: { locked: true, count: 2, referenceFiles: 3 },
+    campaignStatus: "Appears live in copied text"
+  }), Date.parse("2026-11-04T00:00:00Z"));
+  assert.equal(locked.score, 74);
+  assert.equal(locked.tier, "medium");
+  assert.equal(locked.confidence, "incomplete public brief");
+  assert.ok(locked.missing.includes("Full creator requirements hidden until joining"));
+  assert.match(locked.explanation, /capped at Medium information score/i);
+});
+
 test("marks expired deadlines as expired and low priority", () => {
   const result = Discovery.assessOpportunity(sample("old", { deadline: "2026-10-01" }), Date.parse("2026-10-31T00:00:00Z"));
   assert.equal(result.expired, true);

@@ -429,3 +429,22 @@ test("creator readiness never treats a different platform handle as verified", (
   assert.equal(posting.done, false);
   assert.match(posting.detail, /No YouTube handle is saved/);
 });
+
+
+test("Per-post payout stays unearned when the campaign minimum-view rule is unknown", () => {
+  const result = Engine.estimateCreatorNetPayout({
+    rate: { model: "Per post", amount: { value: 50, currency: "USD" }, label: "$50 per approved post" },
+    budget: { total: { value: 3000, currency: "USD" }, remaining: { value: 3000, currency: "USD" } },
+    budgetRemaining: { value: 3000, currency: "USD" },
+    views: 100000,
+    minimumViews: null,
+    approved: true
+  });
+  assert.equal(result.projectedGross, 50);
+  assert.equal(result.projectedNet, 45);
+  assert.equal(result.thresholdMet, false);
+  assert.equal(result.estimatedNetAfterApproval, 0);
+  assert.equal(result.confirmedPayable, 0);
+  assert.ok(result.warnings.some((item) => /minimum-view requirement is unknown/i.test(item)));
+  assert.equal(result.confidence, "incomplete");
+});

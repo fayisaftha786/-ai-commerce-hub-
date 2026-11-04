@@ -1,0 +1,32 @@
+{
+  "$schema": "https://developers.cloudflare.com/workers/wrangler/schema.json",
+  "name": "clipreward-studio",
+  "main": "cloudflare/worker.mjs",
+  "compatibility_date": "2026-08-04",
+  "assets": {
+    "directory": "./_site",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*", "/media/*", "/health"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "clipreward-studio",
+      "database_id": "REPLACE_WITH_CLOUDFLARE_D1_DATABASE_ID",
+      "migrations_dir": "cloudflare/migrations"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "MEDIA",
+      "bucket_name": "clipreward-studio-media"
+    }
+  ],
+  "vars": {
+    "NODE_ENV": "production",
+    "SERVE_STATIC_APP": "false",
+    "DISCOVERY_SCHEDULER_ENABLED": "false",
+    "SOCIAL_COOKIE_SAMESITE": "Lax",
+    "META_GRAPH_API_VERSION": "v26.0"
+  }
+}

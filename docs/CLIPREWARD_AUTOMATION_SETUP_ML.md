@@ -2,7 +2,7 @@
 
 ഈ guide, GitHub Pages-ൽ കാണുന്ന ClipReward Studio-യെ സ്വകാര്യ HTTPS backend-ുമായി ബന്ധിപ്പിച്ച് YouTube, Facebook Page, Instagram Professional publishing സജ്ജമാക്കാനുള്ളതാണ്.
 
-> **നിലവിലെ code/deployment status (2026-11-04, 12:36 UTC):** PR #201–#203, #205–#212 എന്നിവ `main`-ൽ merge ചെയ്തിട്ടുണ്ട്. ഏറ്റവും പുതിയ code merge `943f01a` (PR #212); പുതിയ discovery snapshot commit `af0ba48e` ആണ്. Main CI #725, GitHub Pages deploy #162, scheduled discovery #77 എന്നിവ വിജയിച്ചു. Service-worker cache `v42` ആണ്. **OCI backend deploy #11 skipped** — live VM/hostname, SSH deployment secrets, private `.env`, Google/Meta OAuth credentials എന്നിവ ഇതുവരെ സ്ഥിരീകരിച്ചിട്ടില്ല; അതിനാൽ backend/OAuth publishing live ആയി പ്രവർത്തിക്കുന്നതായി കരുതരുത്. ഏറ്റവും പുതിയ ഔദ്യോഗിക public scan: 109 saved campaigns (68 latest, 41 historical); 68/68 public detail pages വായിച്ചു. Latest 68-ലും full creator requirements Join ചെയ്തശേഷം മാത്രമേ കാണൂ; എല്ലാം 74/100 Medium information score ആയി cap ചെയ്തിട്ടുണ്ട്, warning ചേർത്തിട്ടുണ്ട്, snapshot audit ഇത് നിർബന്ധമാക്കുന്നു. Deadline കണ്ടെത്തിയത് 0; minimum-view threshold കണ്ടെത്തിയത് 0; safe batch-import candidate 0. Platform counts overlap: Instagram 61, YouTube 46, Facebook 2, X 11, TikTok 64. TikTok എണ്ണം international brief-ുകളിൽ കാണാം; India posting destination ആയി ClipReward ഇതിനെ ഉപയോഗിക്കുന്നില്ല. `High information score` eligibility, approval, earnings എന്നിവയുടെ തെളിവല്ല. CI PASS എന്നത് live OAuth/publishing PASS എന്നർത്ഥമല്ല.
+> **നിലവിലെ code/deployment status (2026-11-05):** Cloudflare no-VM backend code PR #214 `main`-ൽ merge ചെയ്തു (`5db1463`). Main CI #732, GitHub Pages deploy #165, scheduled discovery #80 എന്നിവ PASS ആണ്. Cloudflare Worker code, D1/R2 adapters, encrypted OAuth token/state storage, Worker setup guide എന്നിവ repository-ൽ ഉണ്ട്; പക്ഷേ യഥാർത്ഥ Cloudflare account-ൽ D1/R2 resources സൃഷ്ടിക്കുകയോ Worker deploy ചെയ്യുകയോ ചെയ്തിട്ടില്ല. OCI backend deploy #12 skipped ആണ്. അതിനാൽ ഇപ്പോൾ live OAuth/publishing backend പ്രവർത്തിക്കുന്നില്ല. ഏറ്റവും പുതിയ ഔദ്യോഗിക public scan: 115 saved (68 latest, 47 historical); 68/68 latest public detail pages ലഭിച്ചു; 68-ലും full creator brief Join ചെയ്തശേഷം മാത്രം കാണാം, അതിനാൽ score എല്ലാം 74/100 Medium; safe batch import 0. കണ്ടെത്തിയ deadline 0, minimum-view threshold 0. Platform എണ്ണങ്ങൾ overlap: Instagram 60, YouTube 44, Facebook 2, X 11, TikTok 62. TikTok international briefs-ൽ മാത്രം വരാം; India posting destination ആയി app ഇത് കാണിക്കില്ല. CI PASS என்பது live Cloudflare OAuth/provider permission/live account publishing PASS എന്നർത്ഥമല്ല.
 
 ## 1. എന്താണ് auto ആകുന്നത്, എന്താണ് manual?
 
@@ -21,16 +21,34 @@
 
 ## 2. Architecture
 
-- GitHub Pages: frontend, scheduled public-discovery snapshot.
-- OCI VM: Node backend, OAuth callbacks, encrypted token vault, Instagram temporary media endpoint, same-origin HTTPS app.
-- GitHub Actions: CI + scheduled scan + (deploy secrets ചേർത്താൽ) OCI deployment.
-- OAuth secrets: OCI VM-യിലെ സ്വകാര്യ `.env`-ൽ മാത്രം. GitHub Pages, frontend JavaScript, browser storage, chat എന്നിവയിൽ ഇടരുത്.
+- GitHub Actions: CI + scheduled official-public campaign scan; ഏകദേശം ആറു മണിക്കൂറിൽ ഒരിക്കൽ snapshot പുതുക്കുന്നു.
+- GitHub Pages: നിലവിലെ static frontend + public discovery snapshot.
+- **Cloudflare Workers (no-VM route):** Worker-ൽ നിലവിലെ Node API; D1-ൽ discovery state, encrypted OAuth tokens, one-time OAuth state; R2-ൽ Instagram temporary media. Setup: [Cloudflare Workers Malayalam Guide](CLOUDFLARE_WORKERS_BACKEND_ML.md).
+- **OCI VM (alternative):** Node backend, OAuth callbacks, encrypted file token vault, Instagram temporary media endpoint, same-origin HTTPS app. OCI setup sections താഴെ നിലനിർത്തിയിട്ടുണ്ട്.
+- OAuth credentials/secrets: Cloudflare Worker Secrets അല്ലെങ്കിൽ OCI VM-യിലെ സ്വകാര്യ `.env` മാത്രം. GitHub Pages, frontend JavaScript, browser storage, chat എന്നിവയിൽ ഇടരുത്. 
+- GitHub Actions scheduled scan ആണ് discovery source of truth; Worker backend deploy ചെയ്താലും സ്വകാര്യ joined-only campaign pages തുറക്കില്ല.
+
 
 **Free hosting കുറിപ്പ്:** OCI Always Free-ൽ Ampere A1-ന് 2 OCPU + 12 GB RAM equivalent monthly allowance കാണിക്കുന്നു. Always Free eligibility, region capacity, account approval, boot volume/IP availability എന്നിവ മാറാം. Oracle home region-ൽ capacity ഇല്ലെങ്കിൽ VM ലഭിക്കാതിരിക്കാം. Idle Always Free VM reclaim ചെയ്യപ്പെടാനും സാധ്യതയുണ്ട്. Free Tier-ന് SLA ഇല്ല; അതിനാൽ ഇത് low-cost പരീക്ഷണ hosting ആയി കാണുക, guaranteed uptime ആയി അല്ല. പരിശോധിക്കുക: https://docs.oracle.com/en-us/iaas/Content/FreeTier/freetier_topic-Always_Free_Resources.htm
 
 Oracle Free Tier signup-ൽ identity/payment-card verification ചോദിക്കാം; temporary authorization hold ഉണ്ടാകാം. Billing console-ൽ resource-ുകൾ **Always Free-eligible** ആണെന്ന് ഉറപ്പാക്കാതെ paid shape/resource സൃഷ്ടിക്കരുത്: https://www.oracle.com/cloud/free/faq/
 
-## 3. OCI VM സൃഷ്ടിക്കൽ
+## 3. Cloudflare Workers — no-VM backend
+
+Oracle VM ആവശ്യമില്ലാത്ത route ഇതാണ്. ഇത് source code-ൽ തയ്യാറാണ്; നിങ്ങളുടെ Cloudflare account-ൽ resources സൃഷ്ടിച്ച് deploy ചെയ്യുമ്പോഴേ live ആകൂ.
+
+1. [Cloudflare Dashboard](https://dash.cloudflare.com/) തുറന്ന് Workers & Pages account സജ്ജമാക്കുക.
+2. D1 database `clipreward-studio`യും R2 bucket `clipreward-studio-media`യും സൃഷ്ടിക്കുക.
+3. Repository clone ചെയ്ത device-ൽ `cp wrangler.jsonc.example wrangler.jsonc` ചെയ്ത് D1 create output-ൽ കിട്ടിയ database ID ചേർക്കുക. `wrangler.jsonc` local-only; git commit ചെയ്യരുത്.
+4. `npx wrangler d1 migrations apply clipreward-studio --remote --config wrangler.jsonc` പ്രവർത്തിപ്പിക്കുക.
+5. `openssl rand -base64 32` ഉപയോഗിച്ച് encryption key ഉണ്ടാക്കി `npx wrangler secret put SOCIAL_TOKEN_ENCRYPTION_KEY --config wrangler.jsonc` വഴി മാത്രം ചേർക്കുക.
+6. `npm run deploy:cloudflare` പ്രവർത്തിപ്പിച്ച് ലഭിക്കുന്ന `workers.dev` URL രേഖപ്പെടുത്തുക.
+7. ആ URL-ന്റെ കൃത്യമായ Google/Meta OAuth callback URIs provider dashboards-ൽ ചേർക്കുക; ശേഷം `wrangler.jsonc`-ൽ exact CORS origin, return URL, redirect URI, media base URL ചേർത്ത് redeploy ചെയ്യുക.
+8. [Cloudflare Workers Malayalam Guide](CLOUDFLARE_WORKERS_BACKEND_ML.md)-ൽ copy/paste commands ഉം health checks ഉം ഉണ്ട്.
+
+**Free-plan പരിധി:** Workers Free-ൽ ഇപ്പോൾ 100,000 requests/day, ഓരോ request-നും 10 ms CPU, 128 MB memory എന്നിവയാണ് പ്രസിദ്ധീകരിച്ച limits. വലിയ video uploads/long-running provider calls ഇവയിൽ പരാജയപ്പെടാം; ആദ്യം ചെറിയ sample clips ഉപയോഗിച്ച് പരിശോധിക്കുക. Quotas മാറാം; paid usage സ്വമേധയാ ആരംഭിക്കാതിരിക്കാൻ dashboard usage നിരീക്ഷിക്കുക. (Cloudflare limits: https://developers.cloudflare.com/workers/platform/limits/)
+
+## 4. OCI VM സൃഷ്ടിക്കൽ
 
 1. https://cloud.oracle.com/ തുറന്ന് നിങ്ങളുടെ സ്വന്തം Oracle account ഉപയോഗിച്ച് sign in ചെയ്യുക.
 2. Home Region-ൽ Compute → Instances → Create Instance തുറക്കുക.

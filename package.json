@@ -8,7 +8,9 @@
     "test": "node --test && npm run test:rewards",
     "test:rewards": "node --test content-rewards-assistant/tests/*.test.js",
     "start": "node server.js",
-    "test:oci-preflight": "node --test tests/oci-preflight.test.js"
+    "test:oci-preflight": "node --test tests/oci-preflight.test.js",
+    "build:cloudflare": "node scripts/pages-build.js _site",
+    "deploy:cloudflare": "npm run build:cloudflare && npx wrangler deploy --config wrangler.jsonc"
   },
   "keywords": [
     "affiliate",

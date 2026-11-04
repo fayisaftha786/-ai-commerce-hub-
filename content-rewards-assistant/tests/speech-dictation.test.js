@@ -130,7 +130,7 @@ test("voice dictation controls are wired and cached for the Content Rewards app"
   assert.match(html, /speech-dictation-ui\.js/);
   assert.match(ui, /requireOnDevice/);
   assert.match(ui, /dispatchEvent/);
-  assert.match(worker, /clipreward-static-v40/);
+  assert.match(worker, /clipreward-static-v41/);
   assert.match(worker, /speech-dictation\.js/);
   assert.match(worker, /speech-dictation-ui\.js/);
   assert.match(packageJson.scripts.check, /content-rewards-assistant\/speech-dictation\.js/);

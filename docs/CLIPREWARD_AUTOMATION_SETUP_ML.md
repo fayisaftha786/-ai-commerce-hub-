@@ -59,7 +59,7 @@ Oracle VM ആവശ്യമില്ലാത്ത route ഇതാണ്. ഇ�
 
 Capacity error വരികയാണെങ്കിൽ paid shape എടുക്കാതെ മറ്റൊരു availability domain പരിശോധിക്കുക അല്ലെങ്കിൽ പിന്നീട് വീണ്ടും ശ്രമിക്കുക.
 
-## 4. Hostname + HTTPS
+## 5. Hostname + HTTPS
 
 നിങ്ങൾക്ക് ഒരു domain/subdomain വേണം. അതിന്റെ DNS A record VM-ന്റെ public IPv4-ലേക്ക് point ചെയ്യുക. സ്വന്തം domain ഇല്ലെങ്കിൽ വിശ്വസനീയമായ free dynamic-DNS hostname ഉപയോഗിക്കാം; അതിന്റെ DNS update തുടർച്ചയായി ശരിയാണെന്ന് ഉറപ്പാക്കണം.
 
@@ -69,7 +69,7 @@ Capacity error വരികയാണെങ്കിൽ paid shape എടുക�
 
 Caddy reverse proxy ആണ് HTTPS കൈകാര്യം ചെയ്യുന്നത്. DNS തെറ്റാണെങ്കിൽ അല്ലെങ്കിൽ ports 80/443 അടച്ചിട്ടുണ്ടെങ്കിൽ certificate/health check പരാജയപ്പെടും.
 
-## 5. VM-ൽ backend install ചെയ്യുക
+## 6. VM-ൽ backend install ചെയ്യുക
 
 SSH വഴി VM-ൽ കയറി താഴെയുള്ള command-ുകൾ പ്രവർത്തിപ്പിക്കുക. Ubuntu image-ൽ സാധാരണ `ubuntu` user ഉപയോഗിക്കുന്നു.
 
@@ -88,7 +88,7 @@ Docker Compose package install නොആയാൽ Docker-ന്റെ official U
 
 **ഇപ്പോൾ `main`-ൽ ആവശ്യമായ code changes merge ചെയ്തിട്ടുണ്ട്.** VM, HTTPS hostname, SSH secrets, private backend `.env` എന്നിവ സജ്ജമാക്കിയശേഷം മാത്രമേ backend deploy നടത്താവൂ.
 
-## 6. സ്വകാര്യ backend environment സൃഷ്ടിക്കുക
+## 7. സ്വകാര്യ backend environment സൃഷ്ടിക്കുക
 
 ```bash
 cd /opt/ai-commerce-hub
@@ -126,7 +126,7 @@ openssl rand -base64 32
 
 Google/Meta OAuth credentials ഇപ്പോൾ ഇല്ലെങ്കിൽ ആദ്യം അവ blank ആയി വെച്ച് backend health deploy ചെയ്യാം; publishing അതുവരെ disabled ആയിരിക്കും.
 
-## 7. ആദ്യ backend deployment + health check
+## 8. ആദ്യ backend deployment + health check
 
 ```bash
 cd /opt/ai-commerce-hub
@@ -148,7 +148,7 @@ sudo bash ops/oci/deploy.sh
 
 Preflight FAIL വന്നാൽ error name/detail മാത്രം നോക്കി `.env`-ൽ തിരുത്തുക. Secret values ആരോടും അയക്കരുത്.
 
-## 8. Google / YouTube OAuth
+## 9. Google / YouTube OAuth
 
 1. https://console.cloud.google.com/ തുറന്ന് പുതിയ project സൃഷ്ടിക്കുക.
 2. YouTube Data API v3 enable ചെയ്യുക.
@@ -168,7 +168,7 @@ Preflight FAIL വന്നാൽ error name/detail മാത്രം നോക
 
 YouTube OAuth/API ഉപയോഗത്തിന് Google policy, consent screen, quota, publishing restrictions എന്നിവ ബാധകമാണ്. API enable ചെയ്തതുകൊണ്ട് മാത്രം public publishing approval ഉറപ്പില്ല. Official docs: https://developers.google.com/youtube/v3/getting-started
 
-## 9. Meta / Facebook / Instagram OAuth
+## 10. Meta / Facebook / Instagram OAuth
 
 ഈ code path ഉപയോഗിക്കുന്നത് Meta Facebook Login + Graph API ആണ്. ആവശ്യമായ permissions:
 - `pages_show_list`
@@ -196,7 +196,7 @@ YouTube OAuth/API ഉപയോഗത്തിന് Google policy, consent scree
 Official Meta developer entry: https://developers.meta.com/  
 Meta Instagram API collection: https://www.postman.com/meta/instagram/documentation/6yqw8pt/instagram-api
 
-## 10. GitHub Actions വഴി തുടർ auto-deploy
+## 11. GitHub Actions വഴി തുടർ auto-deploy
 
 ആദ്യ manual backend deployment വിജയിച്ചതിനു ശേഷം മാത്രമേ ഇത് configure ചെയ്യാവൂ.
 
@@ -212,7 +212,7 @@ Meta Instagram API collection: https://www.postman.com/meta/instagram/documentat
 
 Workflow secrets names/format പരിശോധിച്ചശേഷം `/opt/ai-commerce-hub`-ൽ main update ചെയ്ത് deploy script പ്രവർത്തിപ്പിക്കും. SSH secrets ഇല്ലാതെ auto-deploy സാധ്യമല്ല. `OCI_DEPLOY_ENABLED` ഒരു non-secret switch മാത്രമാണ്.
 
-## 11. End-to-end acceptance test
+## 12. End-to-end acceptance test
 
 ഓരോ ഘട്ടവും വേർതിരിച്ച് verify ചെയ്യുക:
 
@@ -225,7 +225,7 @@ Workflow secrets names/format പരിശോധിച്ചശേഷം `/opt/a
 7. ClipReward Meta publisher-ൽ Creator/Business Professional account linked Facebook Page സഹിതം കണ്ടെത്തുന്നുണ്ടോ പരിശോധിക്കുക. Content Rewards-ന്റെ സ്വന്തം Instagram connection വേറിട്ട് official flow-ൽ test ചെയ്യുക; നിലവിലെ Help Guide-നും Terms/Privacy Policy-ക്കും account-type വ്യത്യാസമുണ്ട്.
 8. Social Desk-ൽ public publishing confirmation ലഭിച്ചാൽ മാത്രമേ post receipt tracker-ിലേക്ക് പോകൂ. Content Rewards-ൽ exact account verification, Join/Apply, 30-minute ഉള്ളിൽ Submit Clip എന്നിവ creator തന്നെ ചെയ്യണം.
 
-## 12. Troubleshooting
+## 13. Troubleshooting
 
 - HTTPS certificate error: DNS A record, public IP, TCP 80/443, Caddy logs പരിശോധിക്കുക.
 - `SITE_HOST` / CORS preflight error: hostname, scheme `https`, no path, exact origin പരിശോധിക്കുക.
@@ -236,6 +236,6 @@ Workflow secrets names/format പരിശോധിച്ചശേഷം `/opt/a
 - VM capacity unavailable: Always Free shape-ന് capacity ഇല്ലായിരിക്കാം; paid shape എടുക്കാതെ വീണ്ടും ശ്രമിക്കുക.
 - Backup: encrypted token vault file-ും അതിന്റെ encryption key-യും രണ്ടും വേർതിരിച്ച് സുരക്ഷിതമായി സൂക്ഷിക്കുക.
 
-## 13. സുരക്ഷാ പരിധി
+## 14. സുരക്ഷാ പരിധി
 
 Creator passwords, Content Rewards cookies, browser session tokens, Google/Meta secrets എന്നിവ ഒരിക്കലും GitHub source, Issues, chat, screenshot, frontend/localStorage എന്നിവയിൽ ഇടരുത്. Account login, Join/Apply, Submit Clip, credited views, approval, payout എന്നിവ automated ആണെന്ന് app അവകാശപ്പെടരുത്. Provider OAuth connect ചെയ്തതും Content Rewards-ൽ account verify ചെയ്തതും രണ്ട് വ്യത്യസ്ത കാര്യങ്ങളാണ്.

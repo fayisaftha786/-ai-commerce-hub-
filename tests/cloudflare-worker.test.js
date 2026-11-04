@@ -10,6 +10,10 @@ function fakeD1() {
   return {
     prepare(query) {
       return {
+        async first() {
+          if (query.includes("SELECT state_json")) return state == null ? null : { state_json: state };
+          return null;
+        },
         bind(...values) {
           return {
             async first() {

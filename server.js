@@ -173,6 +173,7 @@ function createServer(options = {}) {
     env,
     tokenVault: sharedSocialTokenVault,
     fetchImpl: options.socialFetchImpl || options.fetchImpl,
+    oauthStateStore: options.oauthStateStore,
     now: options.now
   });
   const metaSocialService = options.metaSocialService || createMetaSocialService({
@@ -180,6 +181,7 @@ function createServer(options = {}) {
     tokenVault: sharedSocialTokenVault,
     mediaStore: metaMediaStore,
     fetchImpl: options.socialFetchImpl || options.fetchImpl,
+    oauthStateStore: options.oauthStateStore,
     now: options.now,
     sleep: options.metaSleep,
     pollAttempts: options.metaPollAttempts,
@@ -201,7 +203,7 @@ function createServer(options = {}) {
         return sendJson(response, 405, { error: "method_not_allowed" });
       }
       const token = pathname.slice("/media/instagram/".length);
-      const media = metaMediaStore.get(token);
+      const media = await metaMediaStore.get(token);
       if (!media) return sendJson(response, 404, { error: "media_not_found_or_expired" });
       response.writeHead(200, {
         "content-type": media.mimeType,
@@ -237,7 +239,9 @@ function createServer(options = {}) {
           response.setHeader("allow", "GET");
           return sendJson(response, 405, { error: "method_not_allowed" });
         }
-        const started = socialOAuthService.createAuthorizationRequest(sessionId);
+        let started;
+        try { started = await socialOAuthService.createAuthorizationRequest(sessionId); }
+        catch (_) { return sendJson(response, 503, { error: "oauth_state_store_unavailable" }); }
         if (!started.ok) return sendJson(response, 503, {
           error: "youtube_oauth_not_configured",
           missing: started.missing || [],
@@ -271,7 +275,9 @@ function createServer(options = {}) {
           response.setHeader("allow", "GET");
           return sendJson(response, 405, { error: "method_not_allowed" });
         }
-        const started = metaSocialService.createAuthorizationRequest(sessionId);
+        let started;
+        try { started = await metaSocialService.createAuthorizationRequest(sessionId); }
+        catch (_) { return sendJson(response, 503, { error: "oauth_state_store_unavailable" }); }
         if (!started.ok) return sendJson(response, 503, {
           error: started.error || "meta_oauth_not_configured",
           missing: started.missing || []
@@ -309,7 +315,7 @@ function createServer(options = {}) {
           return sendJson(response, 403, { error: "social_request_not_authorized" });
         }
         try {
-          metaSocialService.disconnect(sessionId);
+          await metaSocialService.disconnect(sessionId);
           return sendJson(response, 200, { provider: "meta", status: "not_connected" });
         } catch (_) {
           return sendJson(response, 503, { error: "social_disconnect_failed" });
@@ -376,7 +382,7 @@ function createServer(options = {}) {
         }
         try {
           const youtube = await socialOAuthService.getConnection(sessionId);
-          const meta = metaSocialService.getConnection(sessionId);
+          const meta = await metaSocialService.getConnection(sessionId);
           return sendJson(response, 200, { connections: [youtube, meta] });
         } catch (_) {
           return sendJson(response, 503, { error: "social_connection_status_unavailable" });
@@ -441,7 +447,7 @@ function createServer(options = {}) {
           return sendJson(response, 403, { error: "social_request_not_authorized" });
         }
         try {
-          socialOAuthService.disconnect(sessionId);
+          await socialOAuthService.disconnect(sessionId);
           return sendJson(response, 200, { provider: "youtube", status: "not_connected" });
         } catch (_) {
           return sendJson(response, 503, { error: "social_disconnect_failed" });
@@ -485,7 +491,7 @@ function createServer(options = {}) {
           response.setHeader("allow", "POST, OPTIONS");
           return sendJson(response, 405, { error: "method_not_allowed" });
         }
-        const quota = publicCampaignPageLimiter.consume(request.socket && request.socket.remoteAddress || "unknown");
+        const quota = publicCampaignPageLimiter.consume(request.headers["cf-connecting-ip"] || request.socket && request.socket.remoteAddress || "unknown");
         if (!quota.allowed) {
           response.setHeader("retry-after", String(quota.retryAfterSeconds));
           return sendJson(response, 429, { error: "public_campaign_scan_rate_limited", message: "Too many live campaign-page scans. Wait before trying again.", retryAfterSeconds: quota.retryAfterSeconds });

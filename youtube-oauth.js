@@ -97,6 +97,7 @@ function createYouTubeOAuthService(options = {}) {
     })
     : null);
   const pendingStates = new Map();
+  const oauthStateStore = options.oauthStateStore || null;
 
   function getReadiness() {
     const missing = [];
@@ -131,11 +132,14 @@ function createYouTubeOAuthService(options = {}) {
     const verifier = base64url(randomBytes(32));
     const challenge = base64url(crypto.createHash("sha256").update(verifier).digest());
     const currentTime = now();
-    for (const [key, pending] of pendingStates) {
-      if (pending.expiresAt <= currentTime) pendingStates.delete(key);
+    const pending = { sessionHash, verifier, expiresAt: currentTime + STATE_TTL_MS };
+    if (!oauthStateStore) {
+      for (const [key, item] of pendingStates) {
+        if (item.expiresAt <= currentTime) pendingStates.delete(key);
+      }
+      if (pendingStates.size >= 10000) return { ok: false, error: "too_many_pending_authorizations" };
+      pendingStates.set(state, pending);
     }
-    if (pendingStates.size >= 10000) return { ok: false, error: "too_many_pending_authorizations" };
-    pendingStates.set(state, { sessionHash, verifier, expiresAt: currentTime + STATE_TTL_MS });
 
     const auth = new URL(AUTHORIZE_URL);
     auth.searchParams.set("client_id", env.GOOGLE_CLIENT_ID);
@@ -149,19 +153,32 @@ function createYouTubeOAuthService(options = {}) {
     auth.searchParams.set("code_challenge", challenge);
     auth.searchParams.set("code_challenge_method", "S256");
 
-    return { ok: true, url: auth.href, sessionId, setCookie: sessionId !== existingSessionId };
+    const result = { ok: true, url: auth.href, sessionId, setCookie: sessionId !== existingSessionId };
+    if (oauthStateStore) {
+      return Promise.resolve(oauthStateStore.put("youtube", state, pending, pending.expiresAt))
+        .then(() => result);
+    }
+    return result;
   }
 
-  function consumeState(state, sessionId) {
-    if (typeof state !== "string" || !STATE_PATTERN.test(state) ||
-        typeof sessionId !== "string" || !SESSION_ID_PATTERN.test(sessionId)) return null;
-    const pending = pendingStates.get(state);
-    pendingStates.delete(state);
+  function validatePendingState(pending, sessionId) {
     if (!pending || pending.expiresAt <= now()) return null;
     const suppliedHash = Buffer.from(sha256(sessionId), "hex");
     const expectedHash = Buffer.from(pending.sessionHash, "hex");
     if (suppliedHash.length !== expectedHash.length || !crypto.timingSafeEqual(suppliedHash, expectedHash)) return null;
     return pending;
+  }
+
+  function consumeState(state, sessionId) {
+    if (typeof state !== "string" || !STATE_PATTERN.test(state) ||
+        typeof sessionId !== "string" || !SESSION_ID_PATTERN.test(sessionId)) return null;
+    if (oauthStateStore) {
+      return Promise.resolve(oauthStateStore.consume("youtube", state))
+        .then((pending) => validatePendingState(pending, sessionId));
+    }
+    const pending = pendingStates.get(state);
+    pendingStates.delete(state);
+    return validatePendingState(pending, sessionId);
   }
 
   async function postToken(fields) {
@@ -181,7 +198,9 @@ function createYouTubeOAuthService(options = {}) {
   }
 
   async function completeAuthorization(input = {}) {
-    const pending = consumeState(input.state, input.sessionId);
+    let pending;
+    try { pending = await consumeState(input.state, input.sessionId); }
+    catch (_) { return { ok: false, error: "oauth_state_store_unavailable" }; }
     if (!pending) return { ok: false, error: "invalid_or_expired_state" };
     if (input.providerError) return { ok: false, error: input.providerError === "access_denied" ? "access_denied" : "authorization_failed" };
     if (typeof input.code !== "string" || input.code.length < 8 || input.code.length > 4096) {
@@ -235,7 +254,7 @@ function createYouTubeOAuthService(options = {}) {
         connectedAt,
         updatedAt: connectedAt
       };
-      tokenVault.set(sha256(input.sessionId), "youtube", record);
+      await tokenVault.set(sha256(input.sessionId), "youtube", record);
       return { ok: true, connection: publicConnection(record) };
     } catch (error) {
       const code = String(error && error.message || "");
@@ -267,7 +286,7 @@ function createYouTubeOAuthService(options = {}) {
         scopes: typeof tokens.scope === "string" ? tokens.scope.split(/\s+/).filter(Boolean) : record.scopes,
         updatedAt: new Date(now()).toISOString()
       };
-      tokenVault.set(sha256(sessionId), "youtube", updated);
+      await tokenVault.set(sha256(sessionId), "youtube", updated);
       return { ok: true, record: updated };
     } catch (error) {
       return { ok: false, error: String(error && error.message || "") === "authorization_expired" ? "reconnect_required" : "refresh_failed" };
@@ -279,7 +298,7 @@ function createYouTubeOAuthService(options = {}) {
       return { provider: "youtube", status: "not_connected" };
     }
     const sessionHash = sha256(sessionId);
-    const record = tokenVault.get(sessionHash, "youtube");
+    const record = await tokenVault.get(sessionHash, "youtube");
     if (!record) return { provider: "youtube", status: "not_connected" };
     let active = record;
     if (Number(record.expiresAt) <= now() + 60000) {
@@ -308,7 +327,7 @@ function createYouTubeOAuthService(options = {}) {
 
     const connection = await getConnection(sessionId);
     if (connection.status !== "connected") return { ok: false, error: "reconnect_required" };
-    const record = tokenVault.get(sha256(sessionId), "youtube");
+    const record = await tokenVault.get(sha256(sessionId), "youtube");
     if (!record || !record.scopes.includes("https://www.googleapis.com/auth/youtube.upload")) {
       return { ok: false, error: "upload_permission_required" };
     }
@@ -366,7 +385,7 @@ function createYouTubeOAuthService(options = {}) {
 
     const connection = await getConnection(sessionId);
     if (connection.status !== "connected") return { ok: false, error: "reconnect_required" };
-    const record = tokenVault.get(sha256(sessionId), "youtube");
+    const record = await tokenVault.get(sha256(sessionId), "youtube");
     if (!record || !record.scopes.includes("https://www.googleapis.com/auth/youtube.readonly")) {
       return { ok: false, error: "video_status_permission_required" };
     }
@@ -414,9 +433,9 @@ function createYouTubeOAuthService(options = {}) {
     }
   }
 
-  function disconnect(sessionId) {
+  async function disconnect(sessionId) {
     if (typeof sessionId !== "string" || !SESSION_ID_PATTERN.test(sessionId) || !tokenVault) return false;
-    return tokenVault.deleteProvider(sha256(sessionId), "youtube");
+    return await tokenVault.deleteProvider(sha256(sessionId), "youtube");
   }
 
   function buildReturnUrl(outcome, reason = "") {

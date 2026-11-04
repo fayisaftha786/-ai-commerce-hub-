@@ -131,6 +131,7 @@ function createMetaSocialService(options = {}) {
       filePath: env.SOCIAL_TOKEN_STORE_PATH
     }) : null);
   const pendingStates = new Map();
+  const oauthStateStore = options.oauthStateStore || null;
   const stateTtlMs = 10 * 60 * 1000;
 
   function getReadiness() {
@@ -163,9 +164,12 @@ function createMetaSocialService(options = {}) {
     const sessionId = SESSION_PATTERN.test(existingSessionId) ? existingSessionId : createSessionId();
     const state = crypto.randomBytes(32).toString("base64url");
     const current = now();
-    for (const [key, item] of pendingStates) if (item.expiresAt <= current) pendingStates.delete(key);
-    if (pendingStates.size >= 10000) return { ok: false, error: "too_many_pending_authorizations", missing: [] };
-    pendingStates.set(state, { sessionHash: sha256(sessionId), expiresAt: current + stateTtlMs });
+    const pending = { sessionHash: sha256(sessionId), expiresAt: current + stateTtlMs };
+    if (!oauthStateStore) {
+      for (const [key, item] of pendingStates) if (item.expiresAt <= current) pendingStates.delete(key);
+      if (pendingStates.size >= 10000) return { ok: false, error: "too_many_pending_authorizations", missing: [] };
+      pendingStates.set(state, pending);
+    }
     const url = new URL("/" + apiVersion + "/dialog/oauth", META_AUTH_BASE);
     url.searchParams.set("client_id", String(env.META_APP_ID).trim());
     url.searchParams.set("redirect_uri", redirectUri);
@@ -173,17 +177,30 @@ function createMetaSocialService(options = {}) {
     url.searchParams.set("state", state);
     url.searchParams.set("scope", META_SCOPES.join(","));
     url.searchParams.set("auth_type", "rerequest");
-    return { ok: true, url: url.href, sessionId, setCookie: sessionId !== existingSessionId };
+    const result = { ok: true, url: url.href, sessionId, setCookie: sessionId !== existingSessionId };
+    if (oauthStateStore) {
+      return Promise.resolve(oauthStateStore.put("meta", state, pending, pending.expiresAt))
+        .then(() => result);
+    }
+    return result;
+  }
+
+  function validatePendingState(pending, sessionId) {
+    if (!pending || pending.expiresAt <= now()) return false;
+    return crypto.timingSafeEqual(Buffer.from(pending.sessionHash, "hex"), Buffer.from(sha256(sessionId), "hex"));
   }
 
   function consumeState(state, sessionId) {
     if (typeof state !== "string" || !/^[A-Za-z0-9_-]{43}$/.test(state) ||
         typeof sessionId !== "string" || !SESSION_PATTERN.test(sessionId)) return false;
+    if (oauthStateStore) {
+      return Promise.resolve(oauthStateStore.consume("meta", state))
+        .then((pending) => validatePendingState(pending, sessionId));
+    }
     const pending = pendingStates.get(state);
     if (!pending) return false;
     pendingStates.delete(state);
-    return pending.expiresAt > now() &&
-      crypto.timingSafeEqual(Buffer.from(pending.sessionHash, "hex"), Buffer.from(sha256(sessionId), "hex"));
+    return validatePendingState(pending, sessionId);
   }
 
   function graphUrl(pathname, params = {}, token = "") {
@@ -255,7 +272,10 @@ function createMetaSocialService(options = {}) {
   }
 
   async function completeAuthorization(input = {}) {
-    if (!consumeState(input.state, input.sessionId)) return { ok: false, error: "invalid_or_expired_state" };
+    let validState;
+    try { validState = await consumeState(input.state, input.sessionId); }
+    catch (_) { return { ok: false, error: "oauth_state_store_unavailable" }; }
+    if (!validState) return { ok: false, error: "invalid_or_expired_state" };
     if (input.providerError) return {
       ok: false,
       error: input.providerError === "access_denied" ? "access_denied" : "authorization_failed"
@@ -275,7 +295,7 @@ function createMetaSocialService(options = {}) {
         graphVersion: apiVersion,
         connectedAt: now()
       };
-      tokenVault.set(sha256(input.sessionId), "meta", record);
+      await tokenVault.set(sha256(input.sessionId), "meta", record);
       return { ok: true, connection: publicConnection(record) };
     } catch (error) {
       if (error && error.metaCode === 190) return { ok: false, error: "authorization_expired" };
@@ -289,20 +309,20 @@ function createMetaSocialService(options = {}) {
     }
   }
 
-  function getStoredRecord(sessionId) {
+  async function getStoredRecord(sessionId) {
     if (typeof sessionId !== "string" || !SESSION_PATTERN.test(sessionId) || !tokenVault) return null;
-    return tokenVault.get(sha256(sessionId), "meta");
+    return await tokenVault.get(sha256(sessionId), "meta");
   }
 
-  function getConnection(sessionId) {
-    const record = getStoredRecord(sessionId);
+  async function getConnection(sessionId) {
+    const record = await getStoredRecord(sessionId);
     if (!record) return { provider: "meta", status: "not_connected", pages: [], pageCount: 0 };
     if (record.expiresAt && record.expiresAt <= now()) return publicConnection(record, "reconnect_required");
     return publicConnection(record);
   }
 
-  function getPageRecord(sessionId, pageId, capability) {
-    const record = getStoredRecord(sessionId);
+  async function getPageRecord(sessionId, pageId, capability) {
+    const record = await getStoredRecord(sessionId);
     if (!record || (record.expiresAt && record.expiresAt <= now())) return { ok: false, error: "reconnect_required" };
     const id = String(pageId || "");
     if (!/^\d{3,40}$/.test(id)) return { ok: false, error: "invalid_page_id" };
@@ -325,7 +345,7 @@ function createMetaSocialService(options = {}) {
     if (!["video/mp4", "video/quicktime"].includes(mimeType)) return { ok: false, error: "facebook_reel_requires_mp4_or_mov" };
     if (!video.length || video.length > MAX_VIDEO_BYTES) return { ok: false, error: "facebook_reel_video_size_invalid" };
     if (!Number.isFinite(duration) || duration < 4 || duration > 60) return { ok: false, error: "facebook_reel_duration_must_be_4_to_60_seconds" };
-    const found = getPageRecord(sessionId, input.pageId, "facebook");
+    const found = await getPageRecord(sessionId, input.pageId, "facebook");
     if (!found.ok) return found;
     const { page } = found;
     try {
@@ -375,7 +395,7 @@ function createMetaSocialService(options = {}) {
   }
 
   async function getFacebookReelStatus(sessionId, input = {}) {
-    const found = getPageRecord(sessionId, input.pageId, "facebook");
+    const found = await getPageRecord(sessionId, input.pageId, "facebook");
     if (!found.ok) return found;
     const videoId = String(input.videoId || "");
     if (!/^\d{3,60}$/.test(videoId)) return { ok: false, error: "invalid_facebook_video_id" };
@@ -424,13 +444,13 @@ function createMetaSocialService(options = {}) {
     if (!["video/mp4", "video/quicktime"].includes(mimeType)) return { ok: false, error: "instagram_reel_requires_mp4_or_mov" };
     if (!video.length || video.length > MAX_VIDEO_BYTES) return { ok: false, error: "instagram_reel_video_size_invalid" };
     if (!Number.isFinite(duration) || duration < 3 || duration > 900) return { ok: false, error: "instagram_reel_duration_invalid" };
-    const found = getPageRecord(sessionId, input.pageId, "instagram");
+    const found = await getPageRecord(sessionId, input.pageId, "instagram");
     if (!found.ok) return found;
     const mediaStore = options.mediaStore;
     if (!mediaStore || typeof mediaStore.create !== "function") return { ok: false, error: "instagram_media_store_unavailable" };
     let media = null;
     try {
-      media = mediaStore.create(video, mimeType);
+      media = await mediaStore.create(video, mimeType);
       if (!media || typeof media.url !== "string" || !/^https:\/\//.test(media.url)) {
         return { ok: false, error: "instagram_media_host_unavailable" };
       }
@@ -497,14 +517,14 @@ function createMetaSocialService(options = {}) {
       return { ok: false, error: "instagram_reel_publish_failed" };
     } finally {
       if (media && typeof media.dispose === "function") {
-        try { media.dispose(); } catch (_) {}
+        try { await media.dispose(); } catch (_) {}
       }
     }
   }
 
-  function disconnect(sessionId) {
+  async function disconnect(sessionId) {
     if (typeof sessionId !== "string" || !SESSION_PATTERN.test(sessionId) || !tokenVault) return false;
-    return tokenVault.deleteProvider(sha256(sessionId), "meta");
+    return await tokenVault.deleteProvider(sha256(sessionId), "meta");
   }
 
   function buildReturnUrl(outcome, reason = "") {

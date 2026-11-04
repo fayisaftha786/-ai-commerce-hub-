@@ -168,7 +168,7 @@ test("exchanges a Meta code, discovers linked Pages and Instagram professional a
   const saved = store.get(sha256(started.sessionId), "meta");
   assert.equal(saved.userAccessToken, "long-lived-user-secret");
   assert.equal(saved.pages[0].accessToken, "page-token-secret");
-  assert.equal(service.getConnection(started.sessionId).pageCount, 1);
+  assert.equal((await service.getConnection(started.sessionId)).pageCount, 1);
   assert.ok(requests.every((url) => url.protocol === "https:"));
 });
 
@@ -319,13 +319,13 @@ test("does not publish Instagram Reels when no professional account is linked to
   assert.deepEqual(result, { ok: false, error: "instagram_professional_account_not_linked_to_page" });
 });
 
-test("disconnect deletes only the Meta Page connection for this browser session", () => {
+test("disconnect deletes only the Meta Page connection for this browser session", async () => {
   const store = makeVault();
   const service = createMetaSocialService({ env: ENV, tokenVault: store });
   store.set(sha256(SESSION), "meta", connectedRecord());
   store.set(sha256(SESSION), "youtube", { accessToken: "youtube-token" });
-  assert.equal(service.disconnect(SESSION), true);
-  assert.equal(service.getConnection(SESSION).status, "not_connected");
+  assert.equal(await service.disconnect(SESSION), true);
+  assert.equal((await service.getConnection(SESSION)).status, "not_connected");
   assert.ok(store.get(sha256(SESSION), "youtube"));
-  assert.equal(service.disconnect(SESSION), false);
+  assert.equal(await service.disconnect(SESSION), false);
 });

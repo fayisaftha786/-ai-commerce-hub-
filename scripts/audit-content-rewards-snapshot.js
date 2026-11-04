@@ -50,6 +50,8 @@ function auditSnapshot(snapshot, now = Date.now()) {
   let staleCampaigns = 0;
   let missingDetail = 0;
   let lockedRequirements = 0;
+  let lockedRequirementsHighInformation = 0;
+  let lockedRequirementsWithoutWarning = 0;
   let missingDeadlines = 0;
   let currentHighInformation = 0;
   let readableCurrentDetails = 0;
@@ -87,7 +89,18 @@ function auditSnapshot(snapshot, now = Date.now()) {
     else {
       current += 1;
       if (row.freshness === "stale") staleCampaigns += 1;
-      if (row.hiddenRequirements && row.hiddenRequirements.locked) lockedRequirements += 1;
+      if (row.hiddenRequirements && row.hiddenRequirements.locked) {
+        lockedRequirements += 1;
+        const opportunity = row.opportunity && typeof row.opportunity === "object" ? row.opportunity : {};
+        const score = Number(opportunity.score);
+        if (opportunity.tier === "high" || (Number.isFinite(score) && score >= 75)) {
+          lockedRequirementsHighInformation += 1;
+        }
+        const missingEvidence = Array.isArray(opportunity.missing) ? opportunity.missing : [];
+        if (!missingEvidence.includes("Full creator requirements hidden until joining")) {
+          lockedRequirementsWithoutWarning += 1;
+        }
+      }
       if (!row.deadline && !row.endDate) missingDeadlines += 1;
       if (row.opportunity && row.opportunity.tier === "high") currentHighInformation += 1;
       const detail = url && detailByUrl.get(url);
@@ -105,6 +118,8 @@ function auditSnapshot(snapshot, now = Date.now()) {
   if (staleCampaigns) warnings.push(staleCampaigns + " current campaign record(s) are marked stale.");
   if (missingDetail) warnings.push(missingDetail + " current campaign(s) have no matching saved detail page.");
   if (lockedRequirements) warnings.push(lockedRequirements + " current campaign(s) have creator requirements hidden until joining.");
+  if (lockedRequirementsHighInformation) errors.push(lockedRequirementsHighInformation + " current campaign(s) have locked creator requirements but still carry a High information tier or score of 75+.");
+  if (lockedRequirementsWithoutWarning) errors.push(lockedRequirementsWithoutWarning + " current campaign(s) have locked creator requirements but omit the required missing-evidence warning.");
   if (missingDeadlines) warnings.push(missingDeadlines + " current campaign(s) have no detected deadline; verify current availability.");
   if (currentHighInformation) warnings.push(currentHighInformation + " current campaign(s) have a high information score; this is not an eligibility or earnings prediction.");
 
@@ -119,6 +134,8 @@ function auditSnapshot(snapshot, now = Date.now()) {
     staleCurrentCampaignCount: staleCampaigns,
     missingCurrentDetailCount: missingDetail,
     lockedCurrentRequirementsCount: lockedRequirements,
+    lockedRequirementsHighInformationCount: lockedRequirementsHighInformation,
+    lockedRequirementsWithoutWarningCount: lockedRequirementsWithoutWarning,
     missingCurrentDeadlineCount: missingDeadlines,
     highInformationCurrentCount: currentHighInformation,
     duplicateCampaignIds: duplicateIds,
@@ -140,6 +157,8 @@ function formatReport(result) {
     "- **Stale current records:** " + (m.staleCurrentCampaignCount || 0),
     "- **Missing current detail pages:** " + (m.missingCurrentDetailCount || 0),
     "- **Locked creator requirements:** " + (m.lockedCurrentRequirementsCount || 0),
+    "- **Locked briefs incorrectly rated High:** " + (m.lockedRequirementsHighInformationCount || 0),
+    "- **Locked briefs missing warning:** " + (m.lockedRequirementsWithoutWarningCount || 0),
     "- **Current campaigns without detected deadline:** " + (m.missingCurrentDeadlineCount || 0),
     "- **High information score (not earnings):** " + (m.highInformationCurrentCount || 0)
   ];

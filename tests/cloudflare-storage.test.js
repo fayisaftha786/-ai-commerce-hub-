@@ -17,6 +17,15 @@ function fakeD1() {
   function prepare(query) {
     const sql = query.replace(/\s+/g, " ").trim();
     return {
+      async first() {
+        if (sql.startsWith("SELECT state_json FROM discovery_state")) {
+          return discovery.state == null ? null : { state_json: discovery.state };
+        }
+        if (sql.startsWith("SELECT COUNT(DISTINCT session_hash)")) {
+          return { count: new Set([...tokens.keys()].map((key) => key.split(":")[0])).size };
+        }
+        return null;
+      },
       bind(...values) {
         return {
           async first() {

@@ -22,8 +22,17 @@ test("CPM forecast starts only after approval and the minimum payout threshold",
     payoutThresholdMetAt: "2026-11-03T10:00:00.000Z",
     reviewedAt: approvedAt
   });
-  assert.equal(metLater.estimateAt, "2026-11-11T10:00:00.000Z");
+  assert.equal(metLater.estimateAt, "2026-11-13T10:00:00.000Z");
+  assert.match(metLater.detail, /both approval and the minimum payout requirement/i);
   assert.match(metLater.caveat, /First approved round/);
+
+  const thresholdBeforeApproval = Forecast.calculatePayoutForecast({
+    payoutModel: "CPM",
+    payoutThresholdStatus: "met",
+    payoutThresholdMetAt: "2026-10-30T10:00:00.000Z",
+    reviewedAt: approvedAt
+  });
+  assert.equal(thresholdBeforeApproval.estimateAt, "2026-11-11T10:00:00.000Z");
 });
 
 test("CPM and Per-post do not invent a date while approval or required threshold is unknown", () => {

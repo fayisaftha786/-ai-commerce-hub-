@@ -466,3 +466,26 @@ test("Per-post payout stays unearned when the campaign minimum-view rule is unkn
   assert.ok(result.warnings.some((item) => /minimum-view requirement is unknown/i.test(item)));
   assert.equal(result.confidence, "incomplete");
 });
+
+test("detects viewer-country payout rules expressed as Pay by viewer country and unpaid country rows", () => {
+  const result = Engine.inferBriefRequirements({
+    rawText: [
+      "Pay by viewer country",
+      "United Kingdom $2.50/1K",
+      "Other countries Not paid",
+      "No country data Not paid"
+    ].join("\n")
+  });
+  const geography = result.find((item) => item.key === "audience-geography");
+  assert.ok(geography);
+  assert.match(geography.detail, /eligible-country list/i);
+  assert.match(geography.detail, /do not apply one CPM rate to all views/i);
+});
+
+test("does not infer viewer-country payout restrictions from a campaign's country name alone", () => {
+  const result = Engine.inferBriefRequirements({
+    rawText: "United Kingdom creator campaign\nInstagram\nPer 1K views\n$2.50"
+  });
+  assert.equal(result.some((item) => item.key === "audience-geography"), false);
+});
+

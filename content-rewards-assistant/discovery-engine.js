@@ -450,6 +450,19 @@
           account: opts.account || null
         });
         const campaignAssessment = Object.assign({}, assessment.campaign);
+        const audienceGeographyRequirement = Array.isArray(campaignAssessment.requirements)
+          ? campaignAssessment.requirements.find((item) => item && item.key === "audience-geography")
+          : null;
+        const geographyEvidence = audienceGeographyRequirement
+          ? String(brief.rawText || "").split(/\r?\n/).map((line) => clean(line, 180))
+            .filter((line) => /\b(?:pay(?:out)?\s+(?:by|per)\s+(?:viewer|audience)\s+country|viewer\s+country|audience\s+country|other countries|no country data|not paid|unpaid)\b/i.test(line))
+            .slice(0, 5)
+          : [];
+        const audienceGeographyRisk = audienceGeographyRequirement
+          ? clean(audienceGeographyRequirement.detail + (geographyEvidence.length
+            ? " Visible page evidence: " + geographyEvidence.join(" · ")
+            : ""), 520)
+          : "";
         const notSeenInLatestScan = row.notSeenInLatestScan === true ||
           (row.opportunity && row.opportunity.status === "not-seen-in-latest-scan");
         if (campaignAssessment.state === "promising" && (detail.status === "stale" || notSeenInLatestScan)) {
@@ -491,6 +504,7 @@
           campaignStatus: brief.campaignStatus,
           missing: brief.missing.slice(0, 12),
           reasons: campaignAssessment.reasons.slice(0, 8),
+          audienceGeographyRisk,
           assessment: campaignAssessment,
           brief
         });

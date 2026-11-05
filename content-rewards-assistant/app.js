@@ -785,7 +785,7 @@
     const historicalCount = campaigns.filter((row) => window.ClipRewardDiscovery.listingStatus(row).kind === "historical").length;
     const latestScanCount = campaigns.filter((row) => row.notSeenInLatestScan === false).length;
     const unclassifiedCount = Math.max(0, campaigns.length - historicalCount - latestScanCount);
-    $("discovery-total").textContent = campaigns.length;
+    $("discovery-total").textContent = latestScanCount;
     $("discovery-high").textContent = campaigns.filter((row) =>
       row.notSeenInLatestScan !== true && row.opportunity && row.opportunity.tier === "high"
     ).length;
@@ -812,7 +812,8 @@
     $("discovery-interval").disabled = backendConfigured || scheduledSnapshot;
     $("discovery-backend-url").value = discoverySettings.backendUrl || "";
     $("discovery-scan-now").textContent = backendConfigured ? "↻ Sync latest findings" : "↻ Test feed in browser";
-    const rows = campaigns.slice(0, 8);
+    const rows = campaigns.filter((row) => row.notSeenInLatestScan === false &&
+      !(row.opportunity && row.opportunity.status === "not-seen-in-latest-scan")).slice(0, 8);
     $("discovery-list").innerHTML = rows.length ? rows.map((row, index) => {
       const payout = (row.payouts || []).find((item) => item.platform === $("scout-target-platform").value) || (row.payouts || [])[0];
       const amountLabel = (amount) => amount && Number.isFinite(amount.value)
@@ -829,7 +830,7 @@
       const freshness = row.opportunity ? row.opportunity.status.replace(/-/g, " ") : "unknown";
       const availability = window.ClipRewardDiscovery.listingStatus(row);
       return '<article class="discovery-card"><div class="discovery-card-head"><strong>' + escapeHtml(row.title) + '</strong><span class="discovery-tier discovery-tier-' + escapeHtml(tier.toLowerCase()) + '">' + escapeHtml(tier) + ' · ' + escapeHtml(row.opportunity ? row.opportunity.score : 0) + '/100</span></div><p>' + escapeHtml(row.brand || "Brand not stated") + ' · ' + escapeHtml((row.platforms || []).join(", ") || "Platform unknown") + '</p><div class="feed-metrics"><span>' + escapeHtml(rate) + '</span><span>' + escapeHtml(minimum || freshness) + '</span></div><small class="discovery-listing-status discovery-listing-status-' + escapeHtml(availability.kind) + '"><strong>' + escapeHtml(availability.label) + '</strong> · ' + escapeHtml(availability.detail) + '</small>' + (poolTerms ? '<small>' + escapeHtml(poolTerms) + '</small>' : '') + '<small>' + escapeHtml(row.opportunity ? row.opportunity.explanation : "Verify source details.") + '</small><div class="feed-card-actions"><button class="button button-secondary" type="button" data-discovery-import="' + index + '">Analyse campaign</button>' + (row.officialUrl ? '<a class="text-button" href="' + escapeHtml(row.officialUrl) + '" target="_blank" rel="noopener noreferrer">Verify official page ↗</a>' : '') + '</div></article>';
-    }).join("") : '<p class="muted small-text">No saved discoveries yet. Run the GitHub page-scan workflow for background campaign-page analysis. “Test feed in browser” checks only the public lead feed while this page is open.</p>';
+    }).join("") : '<p class="muted small-text">No campaigns are confirmed in the latest official Discover scan. Historical records remain in deep analysis and must be rechecked before applying.</p>';
     $("discovery-list").querySelectorAll("[data-discovery-import]").forEach((button) => button.addEventListener("click", () => {
       campaignFeedRows = rows;
       importFeedCampaign(Number(button.dataset.discoveryImport));

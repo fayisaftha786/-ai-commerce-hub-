@@ -86,6 +86,24 @@ test("campaign brief requirement scan recognises key production and submission r
   assert.ok(Engine.inferBriefRequirements({ rawExcerpt: "Draft must receive pre-approval before publish." }).some(x => x.key === "preapproval"));
 });
 
+
+test("viewer-country payout restrictions are exposed as a required geography check", () => {
+  const rules = Engine.inferBriefRequirements({
+    rawExcerpt: "UK viewers only qualify for payout. Views from other countries and views with no country data are not paid."
+  });
+  const geography = rules.find((item) => item.key === "audience-geography");
+  assert.ok(geography);
+  assert.equal(geography.label, "Audience / viewer geography");
+  assert.match(geography.detail, /viewer country or region/i);
+});
+
+test("unrestricted all-viewer wording does not invent a regional payout restriction", () => {
+  const rules = Engine.inferBriefRequirements({
+    rawExcerpt: "Creators may publish worldwide. All public views count toward the campaign."
+  });
+  assert.equal(rules.some((item) => item.key === "audience-geography"), false);
+});
+
 test("India platform destinations exclude TikTok", () => {
   assert.deepEqual(Engine.INDIA_POSTING_PLATFORMS, ["Instagram", "Facebook", "YouTube", "X"]);
   const result = Engine.assessCampaign({ brief: brief({ platforms: ["TikTok"], unsupportedPlatforms: ["TikTok"], platformMatch: "mismatch" }), platform: "Instagram", today: "2026-10-31" });
@@ -111,7 +129,7 @@ test("UI loads the engine, renders the three native checks and refreshes its off
   assert.match(app, /ClipRewardIntelligence\.assessAll/);
   assert.match(app, /renderRewardsIntelligence/);
   assert.match(worker, /rewards-intelligence\.js/);
-  assert.match(worker, /clipreward-static-v42/);
+  assert.match(worker, /clipreward-static-v43/);
   assert.match(packageJson.scripts.check, /content-rewards-assistant\/rewards-intelligence\.js/);
   assert.match(packageJson.scripts.check, /content-rewards-assistant\/tests\/rewards-intelligence\.test\.js/);
 });
@@ -389,7 +407,7 @@ test("Rewards Studio wires the payout scenario calculator and refreshes its stat
   assert.match(app, /estimateCreatorNetPayout/);
   assert.match(app, /ri-estimate-views/);
   assert.match(app, /confirmedPayable/);
-  assert.match(worker, /clipreward-static-v42/);
+  assert.match(worker, /clipreward-static-v43/);
 });
 
 

@@ -501,6 +501,7 @@
 
     const stateOrder = { promising: 0, verify: 1, blocked: 2 };
     analysed.sort((a, b) =>
+      Number(a.notSeenInLatestScan === true) - Number(b.notSeenInLatestScan === true) ||
       (stateOrder[a.state] ?? 3) - (stateOrder[b.state] ?? 3) ||
       b.coverageScore - a.coverageScore ||
       b.discoveryScore - a.discoveryScore ||

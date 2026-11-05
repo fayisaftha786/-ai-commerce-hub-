@@ -117,7 +117,9 @@ The product discovery score is a transparent heuristic based on entered informat
 
 ## ClipReward Studio sub-app
 
-A separate early-stage creator workspace is in [`content-rewards-assistant/`](content-rewards-assistant/). Once the updated GitHub Pages deployment workflow runs successfully, its expected public path is `https://fayisaftha786.github.io/-ai-commerce-hub-/content-rewards-assistant/`. The app tracks campaigns and submissions and generates local template drafts; it is **not** connected to Content Rewards or Whop APIs and does not auto-publish videos or verify payouts. Read its README for limitations and privacy details.
+The standalone creator-rewards workspace is in [`content-rewards-assistant/`](content-rewards-assistant/). It includes scheduled official-public Discover scanning, public campaign-page parsing and evidence-based ranking, a local campaign/submission/payout evidence tracker, a 30-minute submission reminder, and a browser-local 9:16 video editor/export flow. The editor prepares files for the creator to download and post manually; it is not a connected text-to-video AI service.
+
+The public scanner does **not** access private, invitation-only or join-locked data. Campaign Join/Apply, Content Rewards account verification, Submit Clip, private credited views, approval and payout sync remain creator actions because no official private Content Rewards API integration is present. YouTube and Meta publishing code is optional and still needs a deployed private backend, provider credentials, permissions and real account tests; it is not enabled by the GitHub Pages site alone. Read the [ClipReward README](content-rewards-assistant/README.md), [Cloudflare no-VM setup](docs/CLIPREWARD_CLOUDFLARE_SETUP.md) and [2026-11-05 audit](docs/CLIPREWARD_AUTOMATION_AUDIT_2026-11-05.md) for exact status and limits.
 
 ## Development roadmap
 

@@ -34,9 +34,16 @@ WRANGLER_PID=$!
 
 ready=false
 for attempt in $(seq 1 35); do
-  if curl --fail --silent "${BASE_URL}/health" > /tmp/clipreward-worker-health.json; then
+  HEALTH_STATUS="$(curl --silent --show-error --output /tmp/clipreward-worker-health.json --write-out '%{http_code}' "${BASE_URL}/health" || true)"
+  if [ "${HEALTH_STATUS}" = "200" ]; then
     ready=true
     break
+  fi
+  if [ "${HEALTH_STATUS}" = "503" ]; then
+    echo "Worker initialization returned HTTP 503:" >&2
+    cat /tmp/clipreward-worker-health.json >&2
+    cat "${LOG_FILE}" >&2
+    exit 1
   fi
   if ! kill -0 "${WRANGLER_PID}" >/dev/null 2>&1; then
     cat "${LOG_FILE}" >&2

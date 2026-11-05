@@ -173,7 +173,7 @@ The official Discover page is now the primary campaign-link source. If it cannot
 
 The radar keeps older leads for history, but if a campaign disappears from the latest official Discover scan it is marked **not seen in latest scan**, ranked below every current lead, excluded from the current high-information count, and forced into **Verify** rather than **Promising** even when an old saved detail page still looks attractive. Expired deadlines stay separately marked. Scores measure evidence coverage/freshness only, never likelihood of reward or approval.
 
-Read [the optional backend deployment and security guide](../docs/BACKEND.md) for the Node.js worker, persistent store, exact-origin CORS and read-only APIs. No account passwords, OTPs, cookies, tokens or private creator analytics are sent to the public feed or stored in the published snapshot.
+For the optional no-VM Cloudflare deployment, read the [Cloudflare Worker setup guide](../docs/CLIPREWARD_CLOUDFLARE_SETUP.md). The older [Node.js backend guide](../docs/BACKEND.md) remains available for a separately hosted server. No account passwords, OTPs, cookies, tokens or private creator analytics are sent to the public feed or stored in the published snapshot.
 
 
 

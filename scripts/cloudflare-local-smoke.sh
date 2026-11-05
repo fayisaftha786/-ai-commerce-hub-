@@ -67,7 +67,8 @@ if (health.ok !== true || health.service !== "ai-commerce-hub-social-api") {
 }
 NODE
 
-curl --fail --silent "${BASE_URL}/content-rewards-assistant/" | grep -qi "ClipReward"
+curl --fail --silent --show-error --output /tmp/clipreward-worker-app.html "${BASE_URL}/content-rewards-assistant/"
+grep -qi "ClipReward" /tmp/clipreward-worker-app.html
 curl --fail --silent "${BASE_URL}/api/social/providers" > /tmp/clipreward-worker-providers.json
 curl --fail --silent "${BASE_URL}/api/discovery/status" > /tmp/clipreward-worker-discovery.json
 curl --fail --silent "${BASE_URL}/api/discovery/campaigns" > /tmp/clipreward-worker-campaigns.json

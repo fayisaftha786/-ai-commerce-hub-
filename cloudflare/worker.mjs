@@ -8,7 +8,9 @@ export default {
     try {
       if (!handler) handler = factory.createCloudflareHandler(env, httpServerHandler);
       return handler(request);
-    } catch (_) {
+    } catch (error) {
+      // Keep detailed initialization errors in Worker logs only; never echo secrets or stack traces to callers.
+      console.error("ClipReward Cloudflare Worker initialization failed:", String(error && error.stack || error && error.message || error).slice(0, 2500));
       return Response.json({
         ok: false,
         error: "cloudflare_backend_not_configured",

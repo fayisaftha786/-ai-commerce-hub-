@@ -11,6 +11,10 @@
 - D1-ൽ campaign state ഇല്ലാത്തപ്പോൾ Worker GitHub Pages-ൽ പ്രസിദ്ധീകരിക്കുന്ന latest public discovery snapshot വായിക്കുന്നു. Scheduled GitHub Actions scan തന്നെയാണ് source of truth.
 - Worker runtime-ൽ file-based store ഉപയോഗിക്കുന്നില്ല. Cloudflare-ന്റെ `node:fs` virtual filesystem per-request മാത്രമാണ്; അതുകൊണ്ട് restart/request ഇടയിൽ token/discovery files persist ആകുമെന്ന് കരുതാൻ പറ്റില്ല.
 
+## CI-യിൽ യഥാർത്ഥ local Worker runtime validation
+
+2026-11-05-ന് PR #217 വഴി Main CI-യിൽ login ഇല്ലാത്ത Wrangler local-runtime smoke ചേർത്തിട്ടുണ്ട്. ഇത് local-only D1 migration/read, R2-backed media route, Worker static asset serving, `/health`, provider readiness, discovery status/campaign endpoints എന്നിവ പരിശോധിക്കുന്നു. `cloudflare:node`-ലെ `httpServerHandler(server)` Worker handler object തിരികെ നൽകുന്നതിനാൽ entrypoint അതിന്റെ `.fetch()` വിളിക്കുന്നു. CI #748-ൽ ഈ smoke test വിജയിച്ചു. ഇത് Cloudflare account-ലേക്ക് deploy ചെയ്യുന്നതോ Google/Meta OAuth provider-നെ real account-ൽ പരീക്ഷിക്കുന്നതോ അല്ല; production deployment ഇപ്പോഴും GitHub secrets/variables ആവശ്യപ്പെടുന്നു.
+
 ## ആവശ്യമായ Cloudflare resources
 
 Cloudflare Free account ഉപയോഗിച്ച് തുടങ്ങാം. നിലവിലെ Workers Free plan limits: 100,000 requests/day, 10 ms CPU time per request, 128 MB memory; limits മാറാം, paid quota automatically assume ചെയ്യരുത്. 50 MB വരെ video buffer ചെയ്യുന്ന publish flow free Worker memory/CPU പരിധിയിൽ എല്ലായ്പ്പോഴും fit ആകുമെന്ന് ഉറപ്പില്ല; ചെറിയ clips കൊണ്ട് test ചെയ്യുക. Deploy ചെയ്യുന്നതിന് മുമ്പ് dashboard-ലെ നിലവിലെ quota/pricing പരിശോധിക്കുക.

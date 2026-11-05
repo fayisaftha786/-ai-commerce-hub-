@@ -16,7 +16,11 @@ const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
 const TRANSIENT_FEED_STATUSES = new Set([408, 425, 429, 500, 502, 503, 504]);
 const DEFAULT_FEED_RETRY_DELAYS_MS = [350, 1000];
 
-const DEFAULT_FILE = path.join(__dirname, "..", "content-rewards-assistant", "discovery-snapshot.json");
+// The scanner is also imported by the Cloudflare Worker for read-only public-page analysis.
+// File-backed scheduled scans run only in Node/GitHub Actions, where __dirname exists.
+const DEFAULT_FILE = typeof __dirname === "string"
+  ? path.join(__dirname, "..", "content-rewards-assistant", "discovery-snapshot.json")
+  : "";
 
 async function readSnapshot(filePath) {
   try {
@@ -533,6 +537,9 @@ async function fetchFeedWithRetry(feed, options = {}) {
 }
 
 async function runScheduledScan(options = {}) {
+  if (!options.filePath && !DEFAULT_FILE) {
+    return { ok: false, error: "File-backed scheduled discovery scans are unavailable in this runtime." };
+  }
   const filePath = path.resolve(options.filePath || DEFAULT_FILE);
   const feed = options.feed || Feed;
   const now = typeof options.now === "function" ? options.now() : options.now == null ? Date.now() : options.now;

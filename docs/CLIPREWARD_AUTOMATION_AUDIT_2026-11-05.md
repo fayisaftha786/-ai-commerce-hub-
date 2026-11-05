@@ -60,5 +60,9 @@ See [Cloudflare no-VM setup](CLIPREWARD_CLOUDFLARE_SETUP.md) for exact configura
 - Deep-analysis sorting places latest-scan campaigns ahead of historical campaigns before comparing evidence/state scores.
 - Radar headline count and quick list refer only to campaigns seen in the latest official scan; historical leads remain in analysis history.
 - Rewards Intelligence flags viewer-country/region payout restrictions when the brief links eligible/paid views to geographic terms.
-- Service-worker cache is bumped so clients fetch corrected app assets; regression tests cover ranking, latest-scan display and geographic payout parsing.
-- A no-VM Cloudflare Worker deployment guide documents resource limits, secrets, same-origin behavior and local backup migration.
+- Service-worker cache is bumped to v43 and every existing cache-version assertion is updated.
+- Regression tests cover current-vs-historical deep ranking, latest-scan headline/list display, viewer-country restriction positives and a no-geography negative case.
+- Root and app READMEs now describe the actual feature boundaries and link the no-VM Cloudflare guide.
+- The no-VM Cloudflare Worker guide documents required D1/R2 resources, GitHub variables/secrets, scoped token permissions, same-origin app URL, free-plan limits and local backup migration.
+
+**Validation state:** GitHub pull-request CI has not yet run for this branch. The tests are added but are not described as passing until the PR checks report success. The Cloudflare deployment is not provisioned by this code change.

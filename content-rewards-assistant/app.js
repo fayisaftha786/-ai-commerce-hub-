@@ -684,6 +684,9 @@
         : row.pageStatus === "stale"
           ? '<small class="deep-stale-note">Saved detail is stale — recheck the current campaign page.</small>'
           : "";
+      const geographyNote = row.audienceGeographyRisk
+        ? '<small class="deep-geography-note">Viewer-country payout check: ' + escapeHtml(row.audienceGeographyRisk) + '</small>'
+        : "";
       return '<article class="deep-campaign-card deep-campaign-' + escapeHtml(row.state) + '">' +
         '<div class="deep-campaign-head"><strong>' + escapeHtml(row.title) + '</strong>' +
         '<span class="deep-state deep-state-' + escapeHtml(row.state) + '">' + escapeHtml(row.stateLabel) + '</span></div>' +
@@ -691,7 +694,7 @@
         '<div class="deep-campaign-metrics"><span>' + escapeHtml(rate) + '</span><span>' + escapeHtml(budget) + '</span>' +
         (minimum ? '<span>' + escapeHtml(minimum) + '</span>' : '') + '</div>' +
         (row.pool && row.pool.paidWhen ? '<small>Pool payment: ' + escapeHtml(row.pool.paidWhen) + '</small>' : '') +
-        staleNote + '<small class="deep-missing">Evidence gaps / checks: ' + escapeHtml(missing) + '</small>' +
+        staleNote + geographyNote + '<small class="deep-missing">Evidence gaps / checks: ' + escapeHtml(missing) + '</small>' +
         '<div class="feed-card-actions"><button class="button button-secondary" type="button" data-deep-open="' + index + '">Open full findings</button>' +
         (row.state === "promising" && row.pageStatus === "ok" && !row.notSeenInLatestScan ? '<button class="button button-secondary" type="button" data-deep-draft="' + index + '">Prepare content draft</button>' : '') +
         '<a class="text-button" href="' + escapeHtml(row.url) + '" target="_blank" rel="noopener noreferrer">Verify official page ↗</a></div></article>';

@@ -42,8 +42,9 @@ At this snapshot time, all current records must be treated as **Verify first**. 
 - Cloudflare deploy workflow exists but is gated by `CLOUDFLARE_DEPLOY_ENABLED=true`.
 - It requires `CF_API_TOKEN`, `SOCIAL_TOKEN_ENCRYPTION_KEY`, Cloudflare account/D1 IDs, `CF_WORKER_URL`, a pre-created D1 database and R2 bucket.
 - Those account values and secrets are not visible in repository source and must not be guessed.
-- GitHub connector did not return status-check entries or a verifiable workflow-run record for the audited main commit. CI is therefore **unverified**, not declared green.
-- Tests and static checks are defined in `package.json` and `.github/workflows/ci.yml`. A local test run was not completed because the container could not resolve `github.com`; pull-request CI is needed to validate the source changes.
+- GitHub connector did not return status-check entries for the audited base `main` commit; that historical base result remains unverified.
+- Pull request [#219](https://github.com/fayisaftha786/-ai-commerce-hub-/pull/219) ran GitHub Actions CI run **#752** on the updated PR merge snapshot. The JavaScript syntax check passed; **585/585 main tests** and **196/196 rewards tests** passed; Cloudflare Worker bundle validation, local D1/R2 runtime smoke test, backend container build and same-origin container smoke test all passed.
+- This validates the code in the PR merge snapshot only. It does not provision a Cloudflare account or prove provider OAuth / public-content publishing. A local test run was unnecessary after the GitHub runner completed these checks.
 
 See [Cloudflare no-VM setup](CLIPREWARD_CLOUDFLARE_SETUP.md) for exact configuration steps.
 
@@ -65,4 +66,4 @@ See [Cloudflare no-VM setup](CLIPREWARD_CLOUDFLARE_SETUP.md) for exact configura
 - Root and app READMEs now describe the actual feature boundaries and link the no-VM Cloudflare guide.
 - The no-VM Cloudflare Worker guide documents required D1/R2 resources, GitHub variables/secrets, scoped token permissions, same-origin app URL, free-plan limits and local backup migration.
 
-**Validation state:** GitHub pull-request CI has not yet run for this branch. The tests are added but are not described as passing until the PR checks report success. The Cloudflare deployment is not provisioned by this code change.
+**Validation state:** GitHub Actions PR run #752 passed on the updated PR merge snapshot: syntax, 585 main tests, 196 rewards tests, Worker bundle, local D1/R2, backend container and same-origin smoke checks. Cloudflare production deployment and social OAuth remain unconfigured and unverified.

@@ -695,7 +695,7 @@ test("batch analysis surfaces viewer-country payout warnings and public evidence
   assert.match(result.campaigns[0].audienceGeographyRisk, /No country data Not paid/i);
 
   const app = fs.readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
-  assert.match(app, /row\\.audienceGeographyRisk/);
+  assert.match(app, /row\.audienceGeographyRisk/);
   assert.match(app, /Viewer-country payout check/);
 });
 

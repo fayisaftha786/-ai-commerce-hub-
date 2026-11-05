@@ -95,11 +95,16 @@ test("Cloudflare worker factory creates the existing Node HTTP app with persiste
   const handler = createCloudflareHandler(env, (server) => {
     captured = server;
     assert.ok(server instanceof http.Server);
-    return async () => new Response("worker-handler-ready");
+    return {
+      async fetch(request) {
+        assert.equal(request.url, "https://clipreward.example.workers.dev/health");
+        return new Response("worker-handler-ready");
+      }
+    };
   });
-  assert.equal(typeof handler, "function");
+  assert.equal(typeof handler.fetch, "function");
   assert.ok(captured);
-  const response = await handler(new Request("https://clipreward.example.workers.dev/health"));
+  const response = await handler.fetch(new Request("https://clipreward.example.workers.dev/health"));
   assert.equal(await response.text(), "worker-handler-ready");
 });
 

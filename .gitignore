@@ -9,3 +9,4 @@ coverage/
 wrangler.jsonc
 .wrangler/
 _site/
+.dev.vars

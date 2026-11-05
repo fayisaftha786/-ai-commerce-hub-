@@ -86,6 +86,9 @@
     if (source.minimumViews != null) add("minimum-views", "Minimum views", "The campaign text states at least " + Number(source.minimumViews).toLocaleString("en") + " views. Check whether this threshold is per clip and whether views are qualified.");
     if (source.maximumViews != null) add("maximum-views", "Maximum views", "The copied brief mentions a maximum of " + Number(source.maximumViews).toLocaleString("en") + " views. Confirm how the campaign counts and caps them.");
     if (source.minimumFollowers != null) add("minimum-followers", "Audience threshold", "The brief mentions at least " + Number(source.minimumFollowers).toLocaleString("en") + " followers/subscribers. Verify the required platform and account.");
+    const audiencePayoutScope = /\b(?:views?|viewers?|viewership|audience)\b.{0,100}\b(?:only|eligible|qualif(?:y|ies|ied)|paid|payout|rate)\b|\b(?:only|eligible|qualif(?:y|ies|ied)|paid|payout|rate)\b.{0,100}\b(?:views?|viewers?|viewership|audience)\b/i.test(raw);
+    const geographicScope = /\b(?:countries?|regions?|locations?|territor(?:y|ies)|geograph(?:y|ic|ical)|UK|United Kingdom|US|USA|United States|Canada|Australia|New Zealand|Europe|India)\b/i.test(raw);
+    if (audiencePayoutScope && geographicScope) add("audience-geography", "Audience / viewer geography", "The brief appears to limit qualifying views or payout by viewer country or region. Check the exact eligible-country list and whether views from elsewhere or with unknown location are excluded; do not apply one CPM rate to all views.");
     const format = clean(source.creativeFormat, 120);
     if (format || /\b9\s*:\s*16\b|\bvertical\b|1080\s*[x×]\s*1920/i.test(raw)) {
       add("format", "Video format", format ? "Detected format: " + format + ". Match the required aspect ratio, orientation and resolution." : "The brief mentions a vertical or aspect-ratio requirement. Verify the exact export dimensions.");

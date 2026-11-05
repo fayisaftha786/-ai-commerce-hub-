@@ -652,3 +652,50 @@ test("ClipReward attempts same-origin backend detection before falling back to t
   assert.match(appSource, /Auto-detected the same-origin discovery backend/);
 });
 
+test("batch analysis surfaces viewer-country payout warnings and public evidence on campaign cards", () => {
+  const Scout = require("../campaign-scout.js");
+  const Rewards = require("../rewards-intelligence.js");
+  const url = "https://contentrewards.com/c/campaigns/viewer-country-payout";
+  const pageText = [
+    "Campaign: UK Viewer CPM",
+    "Accepting clips",
+    "Instagram",
+    "Per 1K views",
+    "$2.50",
+    "Min payout",
+    "$2.00",
+    "Max payout",
+    "$250.00",
+    "Pay by viewer country",
+    "United Kingdom $2.50/1K",
+    "Other countries Not paid",
+    "No country data Not paid",
+    "Budget",
+    "$25 / $1,000",
+    "Join Campaign",
+    "Join to unlock 1 file"
+  ].join("\n");
+  const result = Discovery.analyzePublicCampaigns([{
+    id: "viewer-country-payout",
+    title: "UK Viewer CPM",
+    officialUrl: url,
+    notSeenInLatestScan: false,
+    opportunity: { score: 74, status: "needs-verification" }
+  }], [{
+    url,
+    status: "ok",
+    fetchedAt: "2026-11-05T13:49:00.000Z",
+    pageText
+  }], Scout, Rewards, "Instagram", { today: "2026-11-05" });
+
+  assert.equal(result.summary.analysed, 1);
+  assert.equal(result.campaigns[0].state, "verify");
+  assert.match(result.campaigns[0].audienceGeographyRisk, /viewer country or region/i);
+  assert.match(result.campaigns[0].audienceGeographyRisk, /Other countries Not paid/i);
+  assert.match(result.campaigns[0].audienceGeographyRisk, /No country data Not paid/i);
+
+  const app = fs.readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
+  assert.match(app, /row\\.audienceGeographyRisk/);
+  assert.match(app, /Viewer-country payout check/);
+});
+

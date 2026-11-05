@@ -471,6 +471,44 @@ test("deep analysis keeps historical leads visible but counts them separately fr
 });
 
 
+
+test("deep analysis keeps latest-scan listings above higher-scoring historical rows", () => {
+  const Scout = require("../campaign-scout.js");
+  const Rewards = require("../rewards-intelligence.js");
+  const currentUrl = "https://contentrewards.com/c/campaigns/current-lower-score";
+  const historicalUrl = "https://contentrewards.com/c/campaigns/historical-higher-score";
+  const pageText = (title) => [
+    "Campaign: " + title, "Accepting clips", "Instagram", "Per 1K views",
+    "$1.00", "Min payout", "$5.00", "Max payout", "$100.00",
+    "Budget", "$200 / $500", "Join to see the brief"
+  ].join("\n");
+  const result = Discovery.analyzePublicCampaigns([
+    { id: "current-lower-score", title: "Current listing", officialUrl: currentUrl,
+      notSeenInLatestScan: false, opportunity: { score: 55, status: "needs-verification" } },
+    { id: "historical-higher-score", title: "Historical listing", officialUrl: historicalUrl,
+      notSeenInLatestScan: true, opportunity: { score: 99, status: "not-seen-in-latest-scan" } }
+  ], [
+    { url: currentUrl, status: "ok", fetchedAt: "2026-11-05T10:00:00.000Z", pageText: pageText("Current listing") },
+    { url: historicalUrl, status: "ok", fetchedAt: "2026-10-30T10:00:00.000Z", pageText: pageText("Historical listing") }
+  ], Scout, Rewards, "Instagram", { today: "2026-11-05" });
+
+  assert.equal(result.campaigns.length, 2);
+  assert.equal(result.campaigns[0].id, "current-lower-score");
+  assert.equal(result.campaigns[0].notSeenInLatestScan, false);
+  assert.equal(result.campaigns[1].id, "historical-higher-score");
+  assert.equal(result.campaigns[1].notSeenInLatestScan, true);
+});
+
+test("radar headline count and quick list use only campaigns seen in the latest scan", () => {
+  const root = path.join(__dirname, "..");
+  const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  assert.match(html, /Seen in latest scan/);
+  assert.match(app, /\$\("discovery-total"\)\.textContent = latestScanCount/);
+  assert.match(app, /campaigns\.filter\(\(row\) => row\.notSeenInLatestScan === false/);
+  assert.match(app, /Historical records remain in deep analysis/);
+});
+
 test("historical campaign count includes leads whose detail page is missing from the current snapshot", () => {
   const result = Discovery.analyzePublicCampaigns([
     { id: "current", title: "Current", officialUrl: "https://contentrewards.com/c/campaigns/current" },

@@ -220,3 +220,10 @@ These fields are evidence manually entered from the respective official dashboar
 
 
 Legacy receipt safety: records created before the three-stage ledger may contain a generic “received” amount without identifying whether it was in Content Rewards Balance, Whop Balance or a bank account. Such records are kept intact but displayed as **legacy amount · destination unknown** and do not count as confirmed CR balance credits. Before recording a subsequent Whop transfer, explicitly confirm the earlier amount came from Content Rewards Balance. This avoids silently reclassifying historical amounts.
+
+
+## One-click complete campaign ZIP
+
+The automatic creative panel can export one offline ZIP for the selected fresh, readable and unlocked Promising public campaign. The archive contains the bilingual text/JSON pack, timed SRT and WebVTT subtitles, captured public rule lines, campaign URL and source-freshness metadata, and a README. If a rendered video is already present, the ZIP includes that final MP4/WebM export; otherwise it includes a clear note that no video has been rendered yet.
+
+The ZIP builder is bundled locally, uses ZIP32 without a CDN or external library, calculates CRC32 while streaming Blob data, and refuses unsafe paths, duplicate names and archives larger than the ZIP32 limit. It does not include the original photos, video clips or audio files selected by the creator—only a rendered export. ZIP download does not re-fetch the campaign page; open the included official URL and re-check live rules, availability, eligibility and deadlines before production or publishing. Join/Apply, private account verification, social publishing, clip submission, review, credited views and payout confirmation remain outside this static app's automated permissions.

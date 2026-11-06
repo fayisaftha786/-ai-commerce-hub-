@@ -311,7 +311,8 @@
         updatedAt: snapshot.generatedAt || ""
       },
       campaigns: rows,
-      campaignDetails: Array.isArray(snapshot.campaignDetails) ? snapshot.campaignDetails.slice(0, 60) : [],
+      // Match the scheduled scanner cap so every fetched current campaign remains available to the analysis UI.
+      campaignDetails: Array.isArray(snapshot.campaignDetails) ? snapshot.campaignDetails.slice(0, 100) : [],
       scans: Array.isArray(snapshot.scans) ? snapshot.scans.slice(0, 50) : [],
       totalReceived: snapshot.totalReceived || rows.length,
       fetchedAt: snapshot.generatedAt || "",

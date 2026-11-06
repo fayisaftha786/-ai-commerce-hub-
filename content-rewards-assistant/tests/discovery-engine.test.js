@@ -156,7 +156,11 @@ test("loads the public GitHub Actions snapshot without credentials and keeps sou
         source: { label: "Third-party snapshot", url: "https://contentrewards.xyz/api/cr/campaigns" },
         totalReceived: 1,
         campaigns: [sample("static")],
-        campaignDetails: [{ url: "https://contentrewards.com/c/campaigns/static", status: "ok", pageText: "Campaign details" }],
+        campaignDetails: Array.from({ length: 100 }, (_, index) => ({
+          url: "https://contentrewards.com/c/campaigns/detail-" + index,
+          status: "ok",
+          pageText: "Campaign details page " + index
+        })),
         lastScan: { status: "success", at: "2026-10-31T00:00:00Z", newCount: 1 },
         scans: [{ status: "success" }]
       }) };
@@ -168,7 +172,9 @@ test("loads the public GitHub Actions snapshot without credentials and keeps sou
   assert.equal(request.options.credentials, "omit");
   assert.equal(result.status.scheduler, "github-actions-scheduled");
   assert.equal(result.campaigns[0].id, "static");
-  assert.equal(result.campaignDetails[0].pageText, "Campaign details");
+  assert.equal(result.campaignDetails.length, 100);
+  assert.equal(result.campaignDetails[0].pageText, "Campaign details page 0");
+  assert.equal(result.campaignDetails[99].pageText, "Campaign details page 99");
   assert.equal(result.sourceLabel, "Third-party snapshot");
 });
 

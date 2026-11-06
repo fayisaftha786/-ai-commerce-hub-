@@ -960,10 +960,10 @@
       '<div class="auto-pack-language"><small>English VO</small><p>' + escapeHtml(scene.voiceoverEn) + '</p></div>' +
       '<div class="auto-pack-language"><small>Malayalam VO</small><p>' + escapeHtml(scene.voiceoverMl) + '</p></div></article>'
     ).join("");
-    const tagText = pack.requiredHashtags.length
+    const tagText = pack.hashtagsFound.length
       ? pack.requiredHashtags.join(" ")
-      : "No required hashtags were recognised in the public brief. Check the official page.";
-    const mentionText = pack.requiredMentions.length
+      : "No hashtags were recognised in the public brief. Check the official page.";
+    const mentionText = pack.mentionsFound.length
       ? pack.requiredMentions.join(" ")
       : "No campaign mentions were recognised in the public brief.";
     const ruleLines = pack.publicRules.length
@@ -972,8 +972,8 @@
     body.innerHTML = '<div class="auto-pack-subsection"><h5>Platform captions & hooks</h5><div class="auto-pack-variants">' + variants + '</div></div>' +
       '<div class="auto-pack-subsection"><h5>Scene-by-scene video storyboard</h5><div class="auto-pack-scenes">' + scenes + '</div></div>' +
       '<div class="auto-pack-subsection auto-pack-rules"><h5>Campaign requirements captured from public brief</h5><ul>' + ruleLines + '</ul>' +
-      '<p><strong>Required hashtags found:</strong> ' + escapeHtml(tagText) + '</p>' +
-      '<p><strong>Required mentions found:</strong> ' + escapeHtml(mentionText) + '</p>' +
+      '<p><strong>Hashtags found in public brief:</strong> ' + escapeHtml(tagText) + '</p>' +
+      '<p><strong>Mentions found in public brief:</strong> ' + escapeHtml(mentionText) + '</p>' +
       (pack.disclosureRules.length ? '<p><strong>Disclosure rules:</strong> ' + escapeHtml(pack.disclosureRules.join(" · ")) + '</p>' :
         '<p><strong>Disclosure:</strong> add paid/sponsored/affiliate disclosure where required by the campaign or platform.</p>') +
       '</div><p class="auto-pack-boundary">This is a video-ready script/storyboard pack, not a rendered video. Use original footage or expressly approved assets. No payout, approval, result or personal-experience claim is invented.</p>';

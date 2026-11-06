@@ -117,6 +117,8 @@
     const opts = options && typeof options === "object" ? options : {};
     const fail = (message) => ({ ok: false, error: message });
 
+    if (clean(brief.rawText, 20000).length < 12) return fail("The readable public campaign brief is incomplete. A safe content pack cannot be prepared.");
+
     if (source.state !== "promising") return fail("A content pack is created only for a fresh Promising campaign.");
     if (source.pageStatus !== "ok" || source.notSeenInLatestScan === true) {
       return fail("The public campaign detail is stale or not in the latest scan. Refresh and verify it first.");

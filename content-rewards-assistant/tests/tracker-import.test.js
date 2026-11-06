@@ -68,13 +68,12 @@ test("batch import respects the tracker capacity", () => {
   assert.equal(plan.summary.skippedInvalid, 1);
 });
 
-test("batch import refuses briefs whose creator requirements remain locked until Join", () => {
+test("fresh promising campaign with Join-locked requirements is tracked as idea without claiming eligibility", () => {
   const lockedBrief = Object.assign({}, row("locked").brief, { hiddenRequirements: { locked: true, count: 2 } });
   const plan = Import.buildTrackerImportPlan([
-    row("locked", { brief: lockedBrief }),
-    row("unlocked")
-  ], []);
+    row("locked", { brief: lockedBrief })
+  ], [], (brief) => brief.hiddenRequirements.locked ? "Creator requirements hidden until Join" : "");
   assert.equal(plan.records.length, 1);
-  assert.equal(plan.records[0].url, "https://contentrewards.com/c/campaigns/unlocked");
-  assert.equal(plan.summary.skippedLocked, 1);
+  assert.equal(plan.records[0].status, "idea");
+  assert.match(plan.records[0].rules, /hidden until Join/);
 });

@@ -8,7 +8,7 @@
   const MAX_SEEN_KEYS = 1000;
 
   function clean(value, max) {
-    return String(value == null ? "" : value).replace(/[\\u0000-\\u001f\\u007f]/g, " ").replace(/\\s+/g, " ").trim().slice(0, max || 300);
+    return String(value == null ? "" : value).replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, max || 300);
   }
 
   function officialUrl(value) {
@@ -17,7 +17,7 @@
       const host = url.hostname.toLowerCase();
       if (url.protocol !== "https:" || (host !== "contentrewards.com" && !host.endsWith(".contentrewards.com")) ||
           url.username || url.password || (url.port && url.port !== "443") ||
-          !/^\\/c\\/campaigns\\/[^/]+$/.test(url.pathname)) return "";
+          !/^\/c\/campaigns\/[^/]+$/.test(url.pathname)) return "";
       return url.origin + url.pathname;
     } catch (_) {
       return "";

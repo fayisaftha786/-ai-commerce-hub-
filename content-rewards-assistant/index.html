@@ -181,6 +181,17 @@
           <button class="button button-secondary" id="auto-content-pack-download-json" type="button" disabled>Download JSON</button>
           <button class="button button-quiet" id="auto-content-pack-copy" type="button" disabled>Copy full pack</button><button class="button button-primary" id="auto-content-pack-create-video" type="button" disabled>▶ Create video automatically</button>
         </div>
+        <div class="auto-pack-media-panel">
+          <div class="auto-pack-media-heading"><strong>Use your own photos/videos for a finished campaign edit</strong><p class="tiny-note">Add up to 8 assets (JPG, PNG, WebP, MP4, WebM or MOV). Optional narration/music can be added as one audio file. Everything renders locally on this device.</p></div>
+          <label class="auto-pack-file-label">Photos or video clips<input id="auto-content-pack-media" type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime,.jpg,.jpeg,.png,.webp,.mp4,.m4v,.webm,.mov,.3gp" multiple></label>
+          <label class="auto-pack-file-label">Optional narration / licensed background audio<input id="auto-content-pack-audio" type="file" accept="audio/*,.mp3,.m4a,.aac,.wav,.ogg,.opus"></label>
+          <label class="auto-pack-confirm"><input id="auto-content-pack-rights" type="checkbox"> I own these assets or have permission to use them in this campaign.</label>
+          <label class="auto-pack-confirm"><input id="auto-content-pack-rules" type="checkbox"> I have checked the current full campaign brief, including duration, permitted assets and disclosure.</label>
+          <button class="button button-primary" id="auto-content-pack-create-media-video" type="button" disabled>▶ Make video from my media</button>
+          <p id="auto-content-pack-media-status" class="tiny-note" role="status" aria-live="polite">Choose your own assets and confirm rights + current campaign rules to make the campaign-matched video.</p>
+        </div>
+        <video id="auto-content-pack-media-preview" class="auto-pack-video-preview" controls playsinline hidden></video>
+        <a id="auto-content-pack-media-download" class="button button-secondary auto-pack-video-download" hidden>↓ Download finished campaign video</a>
         <video id="auto-content-pack-video-preview" class="auto-pack-video-preview" controls playsinline hidden></video><a id="auto-content-pack-download-video" class="button button-secondary auto-pack-video-download" hidden>↓ Download video (WebM)</a><p class="auto-pack-boundary">Automatic export creates a silent, text-only 9:16 WebM from the verified public brief. It does not generate footage or voice. Add your own verified observation before posting; check campaign duration, disclosure and asset rules.</p>
       </section>
       <div id="discovery-deep-list" class="deep-analysis-list"><p class="muted small-text">The ranked shortlist will appear automatically after the public snapshot loads.</p></div>

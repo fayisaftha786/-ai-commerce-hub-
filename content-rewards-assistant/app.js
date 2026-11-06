@@ -766,13 +766,21 @@
     const autoImport = autoImportFreshPromisingCampaigns(result);
     if (autoImport.imported > 0) render();
     const topPromising = result.campaigns.find((row) => row.state === "promising" &&
-      row.pageStatus === "ok" && row.notSeenInLatestScan !== true &&
+      row.pageStatus === "ok" && row.notSeenInLatestScan === false &&
       !(row.brief && row.brief.hiddenRequirements && row.brief.hiddenRequirements.locked === true));
-    renderAutoContentPack(topPromising, "No fresh public campaign has passed the Promising, readable, current and unlocked checks yet.");
+    const topPreliminary = result.campaigns.find((row) => row.state === "verify" &&
+      row.pageStatus === "ok" && row.notSeenInLatestScan === false &&
+      row.brief && row.brief.hiddenRequirements && row.brief.hiddenRequirements.locked === true &&
+      row.brief.platformMatch === "match" &&
+      !["Paused", "Ended / closed", "Out of budget"].includes(row.brief.campaignStatus));
+    const contentPackCampaign = topPromising || topPreliminary;
+    renderAutoContentPack(contentPackCampaign, "No fresh public campaign is ready for safe script preparation. Historical, unreadable, blocked and platform-unknown leads are excluded.");
     const draftAreaOccupied = Boolean($("draft-topic").value.trim() || $("draft-output").value.trim());
     const draftPrepared = topPromising ? autoPrepareDraftFromCampaign(topPromising) : false;
     if (!topPromising && lockedBriefCount > 0 && !draftAreaOccupied) {
-      $("draft-auto-status").textContent = "Draft held: the available public brief hides creator requirements until Join. No private requirements or claims were invented.";
+      $("draft-auto-status").textContent = topPreliminary
+        ? "A preliminary script is available from visible public details only. The full campaign rules remain locked; no final video or submission is cleared."
+        : "Draft held: the available public brief hides creator requirements until Join. No private requirements or claims were invented.";
     }
     const failedPlatforms = (summary.failures || []).map((item) => String(item).split(":")[0]);
     const successfulPlatforms = (summary.platforms || []).filter((platform) => !failedPlatforms.includes(platform));
@@ -789,7 +797,8 @@
           : state.campaigns.length >= Core.MAX_CAMPAIGNS
             ? automationScope + " completed, but Tracker capacity is reached. Export a backup before adding more campaigns."
             : lockedBriefCount > 0
-              ? automationScope + " completed. " + lockedBriefCount + " briefs still hide creator requirements until Join; no private data was guessed."
+              ? automationScope + " completed. " + lockedBriefCount + " briefs still hide creator requirements until Join. " +
+                (topPreliminary ? "A preliminary script pack is ready from visible details only; video/subtitle/ZIP export remains locked." : "No safe preliminary public-brief match was found.")
               : automationScope + " completed. No fresh, fully assessable Promising campaign is available; Verify / Blocked findings remain separate.";
     statusNode.textContent = summary.analysed + " / " + summary.totalCampaigns + " public campaigns screened across " +
       summary.platform + " · checked " + new Date(summary.checkedAt).toLocaleTimeString() +
@@ -979,18 +988,24 @@
       status.textContent = "Content-pack generator is unavailable. Refresh the app after the update.";
       return;
     }
-    const pack = AutoContentPack.create(row);
+    const pack = AutoContentPack.create(row, { allowPreliminary: true });
     if (!pack.ok) {
       status.textContent = pack.error;
       updateAutoContentPackMediaButton();
       return;
     }
     currentAutoContentPack = pack;
-    buttons.forEach((button) => { if (button) button.disabled = false; });
+    buttons.forEach((button, index) => {
+      if (button) button.disabled = Boolean(pack.preliminaryOnly && index >= 3);
+    });
     updateAutoContentPackMediaButton();
-    status.textContent = "Ready · local bilingual template pack · " + pack.platformVariants.length +
-      " accepted platform variant(s). Download or copy it; verify the live campaign brief before production.";
+    status.textContent = pack.preliminaryOnly
+      ? "PRELIMINARY SCRIPT ONLY · " + (pack.sourceEvidence.hiddenRequirementCount == null ? "Creator requirements" : pack.sourceEvidence.hiddenRequirementCount + " creator requirement(s)") +
+        " hidden until Join. Text/JSON/copy only; unlock and re-analyse the complete brief before video, subtitles, ZIP or publishing."
+      : "Ready · local bilingual template pack · " + pack.platformVariants.length +
+        " accepted platform variant(s). Download or copy it; verify the live campaign brief before production.";
     const chips = [
+      ["Status", pack.preliminaryOnly ? "PRELIMINARY ONLY · NOT CLEARED" : "Public brief readable"],
       ["Campaign", pack.campaign.title],
       ["Platforms", pack.campaign.acceptedPlatforms.join(", ")],
       ["Duration", pack.production.duration],
@@ -1022,7 +1037,9 @@
     const ruleLines = pack.publicRules.length
       ? pack.publicRules.slice(0, 10).map((line) => '<li>' + escapeHtml(line) + '</li>').join("")
       : '<li>No explicit rules were recognised. Review the full official campaign brief.</li>';
-    body.innerHTML = '<div class="auto-pack-subsection"><h5>Platform captions & hooks</h5><div class="auto-pack-variants">' + variants + '</div></div>' +
+    body.innerHTML = (pack.preliminaryOnly
+      ? '<div class="auto-pack-boundary"><strong>PRELIMINARY ONLY · DO NOT PRODUCE OR PUBLISH</strong><p>The official page hides creator requirements and reference files until Join. This script uses only visible public text; it is not proof of eligibility, complete rules, payout or campaign availability.</p><p>After joining, unlock and re-analyse the full brief before making any video or exporting subtitles/ZIP.</p></div>'
+      : '') + '<div class="auto-pack-subsection"><h5>Platform captions & hooks</h5><div class="auto-pack-variants">' + variants + '</div></div>' +
       '<div class="auto-pack-subsection"><h5>Scene-by-scene video storyboard</h5><div class="auto-pack-scenes">' + scenes + '</div></div>' +
       '<div class="auto-pack-subsection auto-pack-rules"><h5>Campaign requirements captured from public brief</h5><ul>' + ruleLines + '</ul>' +
       '<p><strong>Hashtags found in public brief:</strong> ' + escapeHtml(tagText) + '</p>' +
@@ -1056,7 +1073,7 @@
     if (files.length && Studio && typeof Studio.validateFiles === "function") {
       try { Studio.validateFiles(files, audioFile); } catch (error) { validationError = error.message || "Selected media is not supported."; }
     }
-    const allowed = !!currentAutoContentPack && files.length > 0 && !!(rights && rights.checked) && !!(rules && rules.checked) && !validationError && !autoMediaVideoBusy;
+    const allowed = !!currentAutoContentPack && !currentAutoContentPack.preliminaryOnly && files.length > 0 && !!(rights && rights.checked) && !!(rules && rules.checked) && !validationError && !autoMediaVideoBusy;
     button.disabled = !allowed;
     if (!status || autoMediaVideoBusy) return;
     if (validationError) status.textContent = validationError;

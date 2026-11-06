@@ -5,7 +5,10 @@
   const AutoContentPack = window.ClipRewardAutoContentPack;
   const AutoVideoRenderer = window.ClipRewardAutoVideoRenderer;
   let currentAutoContentPack = null;
-  let currentAutoVideoUrl = "";\n  let currentAutoMediaVideoUrl = "";\n  let currentAutoMediaCampaignUrl = "";\n  let autoMediaVideoBusy = false;
+  let currentAutoVideoUrl = "";
+  let currentAutoMediaVideoUrl = "";
+  let currentAutoMediaCampaignUrl = "";
+  let autoMediaVideoBusy = false;
   const STORAGE_KEY = "clipreward-studio-v1";
   const SUBMISSION_ALERTS_ENABLED_KEY = "clipreward-submission-alerts-enabled-v1";
   const SUBMISSION_ALERTS_SENT_KEY = "clipreward-submission-alerts-sent-v1";

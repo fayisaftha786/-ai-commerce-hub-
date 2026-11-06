@@ -630,7 +630,6 @@
         ? "No matching public campaign details are ready for batch analysis."
         : "Waiting for the latest official public campaign-page snapshot.";
       summaryNode.innerHTML = "";
-      $("discovery-import-promising").disabled = true;
       $("discovery-import-status").textContent = "Waiting for a fresh public campaign analysis.";
       listNode.innerHTML = '<p class="muted small-text">When the scheduled public snapshot is available, every readable campaign page is analysed automatically for the selected platform.</p>';
       return;
@@ -638,22 +637,35 @@
     if (result.error) {
       statusNode.textContent = result.error;
       summaryNode.innerHTML = "";
-      $("discovery-import-promising").disabled = true;
       $("discovery-import-status").textContent = "Import unavailable because batch analysis failed.";
       listNode.innerHTML = "";
       return;
     }
     const summary = result.summary;
-    const importableCount = result.campaigns.filter((row) => row.state === "promising" && row.pageStatus === "ok" && row.notSeenInLatestScan !== true && row.url && row.brief).length;
     const lockedBriefCount = Number(summary.lockedBriefCount || 0);
     const missingDeadlineCount = Number(summary.missingDeadlineCount || 0);
-    $("discovery-import-promising").disabled = importableCount === 0 || state.campaigns.length >= Core.MAX_CAMPAIGNS;
-    $("discovery-import-status").textContent = importableCount > 0
-      ? importableCount + " fresh Promising result(s) available. Imports are saved locally as Found / idea for your review."
-      : lockedBriefCount > 0
-        ? lockedBriefCount + " current brief(s) hide creator requirements until Join; automatic import is blocked. " +
-          missingDeadlineCount + " current campaign(s) also have no detected deadline. Open the official page and verify the full brief after joining."
-        : "No fresh, fully assessable Promising campaign is available for automatic import. Review Verify / Blocked findings and the official campaign pages.";
+    const autoImport = autoImportFreshPromisingCampaigns(result);
+    if (autoImport.imported > 0) render();
+    const topPromising = result.campaigns.find((row) => row.state === "promising" &&
+      row.pageStatus === "ok" && row.notSeenInLatestScan !== true &&
+      !(row.brief && row.brief.hiddenRequirements && row.brief.hiddenRequirements.locked === true));
+    const draftAreaOccupied = Boolean($("draft-topic").value.trim() || $("draft-output").value.trim());
+    const draftPrepared = topPromising ? autoPrepareDraftFromCampaign(topPromising) : false;
+    if (!topPromising && lockedBriefCount > 0 && !draftAreaOccupied) {
+      $("draft-auto-status").textContent = "Draft held: the available public brief hides creator requirements until Join. No private requirements or claims were invented.";
+    }
+    $("discovery-import-status").textContent = autoImport.error
+      ? autoImport.error + " Existing Tracker records were preserved."
+      : autoImport.imported > 0
+        ? "Automation added " + autoImport.imported + " fresh, readable Promising campaign(s) to your Tracker as Found / idea. " +
+          (draftPrepared ? "A bilingual draft is ready." : draftAreaOccupied ? "Your existing draft was preserved." : "Draft preparation waits for an unlocked brief.")
+        : autoImport.plan.summary.skippedDuplicate > 0
+          ? "All fresh Promising campaigns are already in your Tracker. No duplicates were created."
+          : state.campaigns.length >= Core.MAX_CAMPAIGNS
+            ? "Tracker capacity reached. Export a backup before adding more campaigns."
+            : lockedBriefCount > 0
+              ? lockedBriefCount + " current campaign brief(s) still hide creator requirements until Join. No private data was guessed; verify the full brief before creating or publishing."
+              : "No fresh, fully assessable Promising campaign is available for automatic import. Verify / Blocked findings remain separate.";
     statusNode.textContent = summary.analysed + " / " + summary.totalCampaigns + " campaign records deeply analysed for " +
       summary.platform + " · checked " + new Date(summary.checkedAt).toLocaleTimeString() +
       (lastScan.source ? " · source: " + lastScan.source : "");
@@ -696,31 +708,11 @@
         (row.pool && row.pool.paidWhen ? '<small>Pool payment: ' + escapeHtml(row.pool.paidWhen) + '</small>' : '') +
         staleNote + geographyNote + '<small class="deep-missing">Evidence gaps / checks: ' + escapeHtml(missing) + '</small>' +
         '<div class="feed-card-actions"><button class="button button-secondary" type="button" data-deep-open="' + index + '">Open full findings</button>' +
-        (row.state === "promising" && row.pageStatus === "ok" && !row.notSeenInLatestScan ? '<button class="button button-secondary" type="button" data-deep-draft="' + index + '">Prepare content draft</button>' : '') +
         '<a class="text-button" href="' + escapeHtml(row.url) + '" target="_blank" rel="noopener noreferrer">Verify official page ↗</a></div></article>';
     }).join("") : '<p class="muted small-text">No readable public campaign detail pages were available for this platform.</p>';
     if (result.campaigns.length > rows.length) {
       listNode.insertAdjacentHTML("beforeend", '<p class="tiny-note">Showing the top ' + rows.length + ' of ' + result.campaigns.length + ' ranked public campaign analyses.</p>');
     }
-    listNode.querySelectorAll("[data-deep-draft]").forEach((button) => button.addEventListener("click", () => {
-      const row = result.campaigns[Number(button.dataset.deepDraft)];
-      if (!row || row.state !== "promising" || row.pageStatus !== "ok" || row.notSeenInLatestScan) return;
-      const platformMap = {
-        Instagram: "Instagram Reels",
-        Facebook: "Facebook Reels",
-        YouTube: "YouTube Shorts",
-        X: "X"
-      };
-      const platform = platformMap[row.platform] || "Other";
-      const matchingCampaign = state.campaigns.find((campaign) => campaign.url && campaign.url.replace(/\/$/, "") === String(row.url || "").replace(/\/$/, ""));
-      $("draft-topic").value = String(row.title || "").slice(0, 180);
-      $("draft-platform").value = platform;
-      $("draft-campaign").value = matchingCampaign ? matchingCampaign.id : "";
-      $("draft-result").hidden = true;
-      $("clip-studio").scrollIntoView({ behavior: "smooth", block: "start" });
-      $("draft-topic").focus();
-      showToast("Campaign title and platform prepared. Add only a benefit you can verify, then generate and review the draft.");
-    }));
     listNode.querySelectorAll("[data-deep-open]").forEach((button) => button.addEventListener("click", () => {
       const row = result.campaigns[Number(button.dataset.deepOpen)];
       if (!row) return;
@@ -740,41 +732,57 @@
     }));
   }
 
-  function importPromisingCampaignsToTracker() {
-    const result = getDiscoveryDeepAnalysis();
-    const status = $("discovery-import-status");
-    if (!result || result.error || !Array.isArray(result.campaigns)) {
-      status.textContent = "No completed public analysis is available to import.";
-      return;
-    }
+  function autoImportFreshPromisingCampaigns(result) {
     const remaining = Math.max(0, Core.MAX_CAMPAIGNS - state.campaigns.length);
-    if (!remaining) {
-      status.textContent = "Tracker is at its record limit. Export a backup before adding campaigns.";
-      return;
-    }
     const plan = window.ClipRewardTrackerImport.buildTrackerImportPlan(
       result.campaigns,
       state.campaigns,
       (brief) => window.ClipRewardScout.buildTrackerNotes(brief),
       remaining
     );
-    if (!plan.records.length) {
-      status.textContent = "Nothing new to import. Duplicate, stale, blocked and unverified results were skipped.";
-      showToast("No new fresh Promising campaigns were available to add.");
-      return;
-    }
+    if (!plan.records.length) return { imported: 0, plan };
+    const previous = snapshotState();
     try {
       const imported = plan.records.map((draft) => Core.normalizeCampaign(draft));
-      const previous = snapshotState();
       state.campaigns = [...imported, ...state.campaigns];
-      if (!saveOrRestore(previous)) return;
-      render();
-      status.textContent = imported.length + " campaign(s) added as Found / idea. Review each official page and complete Join / Apply yourself.";
-      showToast(imported.length + " fresh Promising campaign(s) added to your Tracker.");
-      $("campaigns").scrollIntoView({ behavior: "smooth", block: "start" });
+      if (!saveOrRestore(previous)) return { imported: 0, plan, error: "Local storage could not save the automatic import." };
+      return { imported: imported.length, plan };
     } catch (error) {
-      status.textContent = "Import stopped safely: " + (error && error.message ? error.message : "campaign data validation failed.");
-      showToast("Batch import stopped. No unverified campaign was marked as joined.");
+      state = previous;
+      return { imported: 0, plan, error: error && error.message ? error.message : "Automatic import validation failed." };
+    }
+  }
+
+  function autoPrepareDraftFromCampaign(row) {
+    if ($("draft-topic").value.trim() || $("draft-output").value.trim()) return false;
+    const platformMap = { Instagram: "Instagram Reels", Facebook: "Facebook Reels", YouTube: "YouTube Shorts", X: "X" };
+    const platform = platformMap[row.platform] || "Other";
+    const canonical = window.ClipRewardTrackerImport.canonicalCampaignUrl(row.url);
+    const matchingCampaign = state.campaigns.find((campaign) =>
+      window.ClipRewardTrackerImport.canonicalCampaignUrl(campaign.url) === canonical
+    );
+    $("draft-topic").value = String(row.title || "").slice(0, 180);
+    $("draft-platform").value = platform;
+    $("draft-campaign").value = matchingCampaign ? matchingCampaign.id : "";
+    if ($("draft-language").value === "en") $("draft-language").value = "both";
+    const rules = matchingCampaign ? matchingCampaign.rules.toLowerCase() : "";
+    const disclosure = rules.includes("disclos") || rules.includes("affiliate")
+      ? "Follow the selected campaign's written disclosure rule: " + matchingCampaign.rules
+      : "Clearly disclose a paid, sponsored or affiliate relationship where applicable.";
+    try {
+      $("draft-output").value = Core.makeDraft({
+        topic: $("draft-topic").value,
+        benefit: "",
+        language: $("draft-language").value,
+        platform,
+        disclosure
+      });
+      $("draft-result").hidden = false;
+      $("draft-auto-status").textContent = "Automatically prepared from the top fresh Promising campaign. No product benefit or reward claim was invented; review the full brief and edit before use.";
+      return true;
+    } catch (error) {
+      $("draft-auto-status").textContent = "Campaign found, but automatic draft preparation failed: " + (error.message || "unknown error");
+      return false;
     }
   }
 
@@ -1902,7 +1910,6 @@
     });
   });
   $("scout-autofill-button").addEventListener("click", autofillCampaignTracker);
-  $("discovery-import-promising").addEventListener("click", importPromisingCampaignsToTracker);
   $("scout-clear-button").addEventListener("click", clearCampaignScout);
   $("draft-form").addEventListener("submit", generateDraft);
   $("copy-draft").addEventListener("click", copyDraft);

@@ -69,6 +69,12 @@
         brief.budget && brief.budget.remaining ? amountLabel(brief.budget.remaining) + " remaining" : ""
       ].filter(Boolean).join(" · ").slice(0, 180);
 
+      const capturedNotes = typeof buildNotes === "function" ? String(buildNotes(brief) || "") : "";
+      const lockedRequirementsNote = brief.hiddenRequirements && brief.hiddenRequirements.locked === true
+        ? "Creator requirements and reference files are hidden until Join; verify the full official brief after joining. No private requirements were inferred."
+        : "";
+      const rules = [capturedNotes, lockedRequirementsNote].filter(Boolean).join("\n").slice(0, 2000);
+
       records.push({
         name: String(row.title || brief.title || "Content Rewards campaign").trim().slice(0, 120),
         platform: "Content Rewards",
@@ -76,7 +82,7 @@
         deadline: /^\d{4}-\d{2}-\d{2}$/.test(String(brief.deadline || "")) ? brief.deadline : "",
         payoutTerms,
         budgetTerms,
-        rules: typeof buildNotes === "function" ? String(buildNotes(brief) || "").slice(0, 2000) : "",
+        rules,
         status: "idea",
         postUrl: "",
         postPlatform: "Other",

@@ -924,8 +924,8 @@
     if (currentAutoVideoUrl) { URL.revokeObjectURL(currentAutoVideoUrl); currentAutoVideoUrl = ""; }
     const videoPreview = $("auto-content-pack-video-preview");
     const videoDownload = $("auto-content-pack-download-video");
-    if (videoPreview) { videoPreview.pause(); videoPreview.removeAttribute("src"); videoPreview.hidden = true; }
-    if (videoDownload) { videoDownload.removeAttribute("href"); videoDownload.hidden = true; }
+    if (videoPreview) { if (typeof videoPreview.pause === "function") videoPreview.pause(); if (typeof videoPreview.removeAttribute === "function") videoPreview.removeAttribute("src"); videoPreview.hidden = true; }
+    if (videoDownload) { if (typeof videoDownload.removeAttribute === "function") videoDownload.removeAttribute("href"); videoDownload.hidden = true; }
     const videoButton = $("auto-content-pack-create-video");
     if (videoButton && videoButton.dataset.bound !== "true") {
       videoButton.dataset.bound = "true";

@@ -26,7 +26,8 @@ function row(overrides = {}) {
       requirementLines: [
         "Use original footage only.",
         "Include #SampleCampaign and @samplebrand in the caption.",
-        "Add a paid partnership disclosure."
+        "Add a paid partnership disclosure.",
+        "No third-party watermark."
       ],
       hiddenRequirements: { locked: false },
       campaignStatus: "Appears live in copied text",
@@ -52,7 +53,7 @@ test("builds a fresh bilingual content pack for every supported accepted platfor
 
 test("uses only tags and mentions explicitly found in the public brief", () => {
   const pack = Pack.create(row());
-  assert.deepEqual(pack.requiredHashtags, ["#samplecampaign", "#creatortips"]);
+  assert.deepEqual(pack.requiredHashtags, ["#SampleCampaign", "#CreatorTips"]);
   assert.deepEqual(pack.requiredMentions, ["@samplebrand"]);
   const noTags = Pack.create(row({
     brief: { ...row().brief, hashtags: [], mentions: [], requirementLines: [] }
@@ -66,7 +67,7 @@ test("keeps detected campaign rules and disclosure restrictions in the output", 
   const pack = Pack.create(row());
   assert.ok(pack.publicRules.includes("Use original footage only."));
   assert.deepEqual(pack.disclosureRules, ["Add a paid partnership disclosure."]);
-  assert.ok(pack.prohibitionRules.some((line) => /original footage/i.test(line)));
+  assert.ok(pack.prohibitionRules.some((line) => /No third-party watermark/i.test(line)));
   const text = Pack.toText(pack);
   assert.match(text, /Use original footage only/);
   assert.match(text, /paid partnership disclosure/);

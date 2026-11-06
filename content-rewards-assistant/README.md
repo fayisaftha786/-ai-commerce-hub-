@@ -34,7 +34,7 @@ The optional Cloudflare Worker can fetch one allowed public Content Rewards camp
 
 ## Automatic batch deep analysis
 
-After the official public snapshot loads, ClipReward Studio screens every readable saved public campaign detail against **Instagram, Facebook and YouTube** automatically. The target-platform dropdown filters the detailed findings view only; it does not restrict automation. Each result is ranked into **Promising**, **Verify** and **Blocked** using the campaign parser and Rewards Intelligence checks. The app combines results by official campaign URL, retaining the strongest supported platform match, and automatically imports fresh Promising campaigns as **Found / idea**. TikTok and the manual third-party lead finder are excluded from this automation path.
+After the official public snapshot loads, ClipReward Studio screens every readable saved public campaign detail against **Instagram, Facebook and YouTube** automatically. Each card shows the strongest supported platform match for that campaign. Each result is ranked into **Promising**, **Verify** and **Blocked** using the campaign parser and Rewards Intelligence checks. The app combines results by official campaign URL, retaining the strongest supported platform match, and automatically imports fresh Promising campaigns as **Found / idea**. TikTok and the manual third-party lead finder are excluded from this automation path.
 
 The shortlist is a rules-and-evidence screen, not a probability of approval, earnings estimate or confirmation that a campaign is still accepting creators. Stale page text is forced into Verify even when its old rules otherwise look promising. Imported tracker items remain **Found / idea**. The app does not join or apply for campaigns.
 

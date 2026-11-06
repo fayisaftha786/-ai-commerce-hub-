@@ -57,9 +57,6 @@
   }
 
   function prepare(pack) {
-    if (pack && pack.preliminaryOnly === true) {
-      throw new Error("This is a preliminary script from a Join-locked brief. Unlock and re-analyse the full campaign requirements before video or subtitle export.");
-    }
     if (!pack || pack.ok !== true || !pack.campaign || !pack.production ||
         !Array.isArray(pack.production.scenes) || pack.production.scenes.length !== 5 ||
         !Array.isArray(pack.campaign.acceptedPlatforms) || !pack.campaign.acceptedPlatforms.length) {
@@ -92,7 +89,9 @@
       scenes,
       tags,
       mentions,
-      disclosure
+      disclosure,
+      preliminaryOnly: pack.preliminaryOnly === true,
+      watermark: pack.preliminaryOnly === true ? "PRELIMINARY · DO NOT POST UNTIL JOIN-ONLY RULES ARE VERIFIED" : ""
     };
   }
 
@@ -149,6 +148,14 @@
     context.fillStyle = "#aebbd5";
     context.font = "500 23px system-ui, sans-serif";
     wrapText(context, scene.en, 54, bodyY + mlLines * 47 + 42, 612, 36, 4);
+    if (prepared.preliminaryOnly) {
+      context.globalAlpha = 1;
+      context.fillStyle = "#8d1d2a";
+      context.fillRect(30, 175, 660, 58);
+      context.fillStyle = "#ffffff";
+      context.font = "800 20px system-ui, sans-serif";
+      context.fillText("PRELIMINARY DRAFT · DO NOT POST", 54, 212, 610);
+    }
     if (scene.needsEvidence) {
       context.fillStyle = "#ffd48a";
       context.font = "700 18px system-ui, sans-serif";
@@ -200,6 +207,8 @@
       audioFile: audioFile || null,
       durationSeconds: prepared.durationSeconds,
       captions,
+      watermark: prepared.watermark,
+      preliminaryOnly: prepared.preliminaryOnly,
       signal: opts.signal,
       onProgress: opts.onProgress
     });
@@ -226,7 +235,8 @@
       const text = selectedLanguage === "ml" ? scene.ml
         : selectedLanguage === "en" ? scene.en
         : scene.ml + "\n" + scene.en;
-      return { index: index + 1, start, end, text };
+      const warning = prepared.preliminaryOnly ? "PRELIMINARY DRAFT ONLY — DO NOT POST UNTIL JOIN-ONLY RULES ARE VERIFIED.\n" : "";
+      return { index: index + 1, start, end, text: warning + text };
     });
     const srt = cues.map((cue) =>
       cue.index + "\n" + formatSubtitleTime(cue.start, ",") + " --> " +

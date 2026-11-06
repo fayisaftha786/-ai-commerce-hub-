@@ -201,6 +201,41 @@
       onProgress: opts.onProgress
     });
   }
+  function formatSubtitleTime(milliseconds, separator) {
+    const total = Math.max(0, Math.round(milliseconds));
+    const hours = Math.floor(total / 3600000);
+    const minutes = Math.floor((total % 3600000) / 60000);
+    const seconds = Math.floor((total % 60000) / 1000);
+    const millis = total % 1000;
+    return String(hours).padStart(2, "0") + ":" +
+      String(minutes).padStart(2, "0") + ":" +
+      String(seconds).padStart(2, "0") + separator +
+      String(millis).padStart(3, "0");
+  }
+
+  function createSubtitles(pack, language) {
+    const prepared = prepare(pack);
+    const selectedLanguage = language === "ml" || language === "en" ? language : "both";
+    const durationMs = prepared.durationSeconds * 1000;
+    const cues = prepared.scenes.map((scene, index) => {
+      const start = Math.round(index * durationMs / prepared.scenes.length);
+      const end = Math.round((index + 1) * durationMs / prepared.scenes.length);
+      const text = selectedLanguage === "ml" ? scene.ml
+        : selectedLanguage === "en" ? scene.en
+        : scene.ml + "\n" + scene.en;
+      return { index: index + 1, start, end, text };
+    });
+    const srt = cues.map((cue) =>
+      cue.index + "\n" + formatSubtitleTime(cue.start, ",") + " --> " +
+      formatSubtitleTime(cue.end, ",") + "\n" + cue.text
+    ).join("\n\n") + "\n";
+    const vtt = "WEBVTT\n\n" + cues.map((cue) =>
+      formatSubtitleTime(cue.start, ".") + " --> " +
+      formatSubtitleTime(cue.end, ".") + "\n" + cue.text
+    ).join("\n\n") + "\n";
+    return { srt, vtt, durationSeconds: prepared.durationSeconds, sceneCount: cues.length, language: selectedLanguage };
+  }
+
   function chooseWebm(Recorder) {
     if (!Recorder || typeof Recorder.isTypeSupported !== "function") return "";
     for (const type of MIME_CANDIDATES) {
@@ -291,5 +326,5 @@
     });
   }
 
-  return { WIDTH, HEIGHT, FPS, prepare, resolveDuration, getCapabilities, render, renderWithMedia };
+  return { WIDTH, HEIGHT, FPS, prepare, resolveDuration, createSubtitles, getCapabilities, render, renderWithMedia };
 });

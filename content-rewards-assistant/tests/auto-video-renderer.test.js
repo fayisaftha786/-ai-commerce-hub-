@@ -79,6 +79,29 @@ test("refuses campaign media renders outside the existing local renderer duratio
   await assert.rejects(Renderer.renderWithMedia(pack("70–80 seconds"), [{ name: "clip.mp4", size: 10, type: "video/mp4" }], null, { studio }), /15–60 second safe range/);
 });
 
+test("creates correctly timed bilingual SRT and WebVTT subtitle files", () => {
+  const output = Renderer.createSubtitles(pack("20–45 seconds"));
+  assert.equal(output.durationSeconds, 30);
+  assert.equal(output.sceneCount, 5);
+  assert.equal(output.language, "both");
+  assert.match(output.srt, /^1\n00:00:00,000 --> 00:00:06,000/m);
+  assert.match(output.srt, /പരിചയം/);
+  assert.match(output.srt, /A short introduction/);
+  assert.match(output.srt, /5\n00:00:24,000 --> 00:00:30,000/m);
+  assert.match(output.vtt, /^WEBVTT\n\n00:00:00.000 --> 00:00:06.000/m);
+  assert.match(output.vtt, /പരിചയം/);
+});
+
+test("creates single-language subtitles and labels the default duration honestly", () => {
+  const unknown = pack("Not stated");
+  const ml = Renderer.createSubtitles(unknown, "ml");
+  const en = Renderer.createSubtitles(unknown, "en");
+  assert.equal(ml.durationSeconds, 15);
+  assert.match(ml.srt, /പരിചയം/);
+  assert.doesNotMatch(ml.srt, /A short introduction/);
+  assert.match(en.vtt, /A short introduction/);
+  assert.doesNotMatch(en.vtt, /പരിചയം/);
+});
 test("rejects incomplete or malformed campaign packs", () => {
   assert.throws(() => Renderer.prepare(null), /complete fresh campaign/);
   assert.throws(() => Renderer.prepare({ ok: false }), /complete fresh campaign/);

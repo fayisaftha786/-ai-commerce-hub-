@@ -1096,6 +1096,10 @@
     const audioInput = $("auto-content-pack-audio");
     const rights = $("auto-content-pack-rights");
     const rules = $("auto-content-pack-rules");
+    if (currentAutoContentPack && currentAutoContentPack.preliminaryOnly) {
+      if (status) status.textContent = "Video rendering is blocked: the full creator requirements are hidden until Join. Re-analyse the unlocked brief first.";
+      return;
+    }
     if (!currentAutoContentPack || !AutoVideoRenderer || typeof AutoVideoRenderer.renderWithMedia !== "function") {
       if (status) status.textContent = "A fresh, unlocked Promising campaign is required before rendering.";
       return;
@@ -1146,6 +1150,10 @@
     const status = $("auto-content-pack-status");
     const preview = $("auto-content-pack-video-preview");
     const download = $("auto-content-pack-download-video");
+    if (currentAutoContentPack && currentAutoContentPack.preliminaryOnly) {
+      showToast("Preliminary script only. Unlock and re-analyse the complete campaign brief before creating a video.");
+      return;
+    }
     if (!currentAutoContentPack || !AutoVideoRenderer || typeof AutoVideoRenderer.render !== "function") {
       showToast("A fresh, unlocked Promising campaign is needed before video creation.");
       return;
@@ -1183,6 +1191,10 @@
   async function downloadAutoContentPackZip() {
     const button = $("auto-content-pack-download-zip");
     const pack = currentAutoContentPack;
+    if (pack && pack.preliminaryOnly) {
+      showToast("ZIP export is blocked for preliminary scripts. Unlock and re-analyse the complete campaign brief first.");
+      return;
+    }
     if (!pack || !ZipExport || typeof ZipExport.createZip !== "function") {
       showToast("A fresh campaign content pack and the offline ZIP exporter are required.");
       return;
@@ -1294,6 +1306,10 @@
   }
 
   function downloadAutoContentPackSubtitles(format) {
+    if (currentAutoContentPack && currentAutoContentPack.preliminaryOnly) {
+      showToast("Subtitle export is blocked for a preliminary script. Unlock and re-analyse the full brief first.");
+      return;
+    }
     if (!currentAutoContentPack || !AutoVideoRenderer || typeof AutoVideoRenderer.createSubtitles !== "function") {
       showToast("A fresh campaign content pack is required before downloading subtitles.");
       return;

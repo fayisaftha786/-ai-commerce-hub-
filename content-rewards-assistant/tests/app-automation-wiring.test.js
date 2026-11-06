@@ -18,6 +18,8 @@ test("fresh public Promising campaigns are imported automatically across support
   assert.ok(!app.includes("data-discovery-import"));
   assert.ok(html.includes("AUTO-SCREEN + IMPORT ON"));
   assert.ok(html.includes("Every readable official public campaign detail is automatically screened against Instagram, Facebook and YouTube."));
+  assert.ok(app.includes("Partially screened "));
+  assert.ok(app.includes("summary.failures && summary.failures.length"));
 });
 
 test("automatic campaign draft preparation is safe and does not overwrite existing user work", () => {
@@ -37,6 +39,7 @@ test("the latest scheduled snapshot is automatically refreshed while the app is 
 });
 
 test("non-automated campaign lookup and manual feed controls are hidden from the automation-first radar", () => {
+  assert.ok(html.includes('<div class="panel-header" hidden>'));
   assert.ok(html.includes('<div class="scout-platform-tiles" hidden>'));
   assert.ok(html.includes('<section class="campaign-feed-panel" aria-labelledby="campaign-feed-heading" hidden>'));
   assert.ok(html.includes('<form id="campaign-scout-form" class="scout-form" hidden>'));

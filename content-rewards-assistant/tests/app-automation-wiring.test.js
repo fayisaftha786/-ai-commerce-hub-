@@ -61,7 +61,7 @@ test("the best fresh public campaign automatically generates a bilingual downloa
   assert.ok(videoRenderer.includes("preliminary script from a Join-locked brief"));
   assert.ok(html.includes('src="./auto-content-pack.js"'));
   assert.ok(packSource.includes("This is a local template pack, not an AI-generated or rendered video file."));
-  assert.ok(serviceWorker.includes("clipreward-static-v49"));
+  assert.ok(serviceWorker.includes("clipreward-static-v50"));
   assert.ok(serviceWorker.includes("./auto-content-pack.js"));
   assert.ok(serviceWorker.includes("./auto-video-renderer.js"));
   assert.ok(html.includes('id="auto-content-pack-create-video"'));
@@ -104,7 +104,7 @@ test("official campaign alerts use a quiet first-scan baseline and deduplicate o
   assert.ok(serviceWorker.includes('./discovery-alerts.js'));
   assert.ok(html.includes('id="discovery-alert-status"'));
   assert.ok(html.indexOf('id="discovery-notify"') < html.indexOf('<div class="discovery-controls" hidden>'));
-  assert.ok(serviceWorker.includes("clipreward-static-v49"));
+  assert.ok(serviceWorker.includes("clipreward-static-v50"));
 });
 
 test("automatic campaign draft preparation is safe and does not overwrite existing user work", () => {

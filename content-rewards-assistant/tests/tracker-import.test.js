@@ -67,3 +67,14 @@ test("batch import respects the tracker capacity", () => {
   assert.equal(plan.records.length, 1);
   assert.equal(plan.summary.skippedInvalid, 1);
 });
+
+test("batch import refuses briefs whose creator requirements remain locked until Join", () => {
+  const lockedBrief = Object.assign({}, row("locked").brief, { hiddenRequirements: { locked: true, count: 2 } });
+  const plan = Import.buildTrackerImportPlan([
+    row("locked", { brief: lockedBrief }),
+    row("unlocked")
+  ], []);
+  assert.equal(plan.records.length, 1);
+  assert.equal(plan.records[0].url, "https://contentrewards.com/c/campaigns/unlocked");
+  assert.equal(plan.summary.skippedLocked, 1);
+});

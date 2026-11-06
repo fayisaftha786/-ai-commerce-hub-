@@ -650,9 +650,11 @@
       row.pageStatus === "ok" && row.notSeenInLatestScan !== true &&
       !(row.brief && row.brief.hiddenRequirements && row.brief.hiddenRequirements.locked === true));
     if (topPromising) autoPrepareDraftFromCampaign(topPromising);
-    $("discovery-import-status").textContent = autoImport.imported > 0
-      ? "Automation added " + autoImport.imported + " fresh, readable, unlocked Promising campaign(s) to your Tracker as Found / idea. A safe draft was prepared when the draft area was empty."
-      : autoImport.plan.summary.skippedLocked > 0
+    $("discovery-import-status").textContent = autoImport.error
+      ? autoImport.error + " Existing Tracker records were preserved."
+      : autoImport.imported > 0
+        ? "Automation added " + autoImport.imported + " fresh, readable, unlocked Promising campaign(s) to your Tracker as Found / idea. A safe draft was prepared when the draft area was empty."
+        : autoImport.plan.summary.skippedLocked > 0
         ? autoImport.plan.summary.skippedLocked + " promising brief(s) are locked until Join and were not imported. " +
           missingDeadlineCount + " current campaign(s) also have no detected deadline. No private requirements were assumed."
         : autoImport.plan.summary.skippedDuplicate > 0

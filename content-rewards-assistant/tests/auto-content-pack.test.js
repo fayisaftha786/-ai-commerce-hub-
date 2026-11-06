@@ -153,3 +153,31 @@ test("refuses an incomplete public brief and missing title", () => {
     brief: { ...row().brief, title: "" }
   })).error, /title is not clear enough/);
 });
+
+test("retains public-page freshness metadata with generated campaign content", () => {
+  const pack = Pack.create(row({
+    pageFetchedAt: "2026-11-06T08:30:00.000Z",
+    pageStatus: "ok",
+    notSeenInLatestScan: false
+  }));
+  assert.deepEqual(pack.sourceEvidence, {
+    pageStatus: "ok",
+    pageFetchedAt: "2026-11-06T08:30:00.000Z",
+    seenInLatestScan: true,
+    capturedAt: pack.createdAt
+  });
+});
+
+test("retains public-page freshness metadata with generated campaign content", () => {
+  const pack = Pack.create(row({
+    pageFetchedAt: "2026-11-06T08:30:00.000Z",
+    pageStatus: "ok",
+    notSeenInLatestScan: false
+  }));
+  assert.deepEqual(pack.sourceEvidence, {
+    pageStatus: "ok",
+    pageFetchedAt: "2026-11-06T08:30:00.000Z",
+    seenInLatestScan: true,
+    capturedAt: pack.createdAt
+  });
+});

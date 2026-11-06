@@ -174,6 +174,12 @@
         campaignType: clean(brief.campaignType, 40) || "Not stated",
         acceptedPlatforms: platforms
       },
+      sourceEvidence: {
+        pageStatus: clean(source.pageStatus, 40) || "unknown",
+        pageFetchedAt: clean(source.pageFetchedAt, 64),
+        seenInLatestScan: source.notSeenInLatestScan === false,
+        capturedAt: createdAt
+      },
       production: {
         duration: durationLabel(brief.duration),
         format: formatLabel(brief),

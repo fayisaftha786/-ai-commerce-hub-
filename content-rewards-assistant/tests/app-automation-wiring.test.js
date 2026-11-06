@@ -37,7 +37,7 @@ test("the best fresh public campaign automatically generates a bilingual downloa
   assert.ok(app.includes("renderAutoContentPack(contentPackCampaign"));
   assert.ok(app.includes("const topPreliminary = result.campaigns.find"));
   assert.ok(app.includes("AutoContentPack.create(row, { allowPreliminary: true })"));
-  assert.ok(app.includes("PRELIMINARY SCRIPT ONLY"));
+  assert.ok(app.includes("PRELIMINARY DRAFT ONLY"));
   assert.ok(app.includes("buttons.forEach((button) => { if (button) button.disabled = false; })"));
   assert.ok(app.includes("PRELIMINARY DRAFT ONLY"));
   assert.ok(app.includes("PRELIMINARY-DO-NOT-POST-"));

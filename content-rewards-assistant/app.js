@@ -588,6 +588,11 @@
   let discoveryStaticDetails = [];
   let discoveryDeepAnalysisCache = null;
   let discoveryDeepAnalysisCacheKey = "";
+  let discoveryAutomationAnalysisCache = null;
+  let discoveryAutomationAnalysisCacheKey = "";
+  let lastScheduledSnapshotRefreshAt = 0;
+  let scheduledSnapshotRefreshTimer = null;
+  const SCHEDULED_SNAPSHOT_REFRESH_MS = 30 * 60 * 1000;
 
   function getDiscoveryDeepAnalysis() {
     const target = $("scout-target-platform").value;
@@ -618,6 +623,94 @@
     }
   }
 
+  // Always screen every supported India workflow destination. The dropdown below
+  // controls the detail view only; it must not hide opportunities on other channels.
+  function getDiscoveryAutomationAnalysis() {
+    const targets = ["Instagram", "Facebook", "YouTube"];
+    const lastScan = discoveryStaticStatus && discoveryStaticStatus.lastScan || {};
+    const accountKey = JSON.stringify(state.account || {});
+    const cacheKey = ["all-platforms-v1", lastScan.at || "", discoveryStaticCampaigns.length,
+      discoveryStaticDetails.length, accountKey].join("|");
+    if (discoveryAutomationAnalysisCacheKey === cacheKey && discoveryAutomationAnalysisCache) {
+      return discoveryAutomationAnalysisCache;
+    }
+    if (!discoveryStaticDetails.length || !discoveryStaticCampaigns.length) return null;
+
+    try {
+      const today = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+      const bestByUrl = new Map();
+      const failures = [];
+      const stateRank = { promising: 3, verify: 2, blocked: 1 };
+
+      targets.forEach((platform) => {
+        let report;
+        try {
+          report = window.ClipRewardDiscovery.analyzePublicCampaigns(
+            discoveryStaticCampaigns,
+            discoveryStaticDetails,
+            window.ClipRewardScout,
+            window.ClipRewardIntelligence,
+            platform,
+            { today, account: state.account }
+          );
+        } catch (error) {
+          failures.push(platform + ": " + (error && error.message ? error.message : "analysis failed"));
+          return;
+        }
+        (report.campaigns || []).forEach((row) => {
+          const url = window.ClipRewardTrackerImport.canonicalCampaignUrl(row.url);
+          if (!url) return;
+          const previous = bestByUrl.get(url);
+          const screenedPlatforms = [...new Set([...(previous && previous.screenedPlatforms || []), platform])];
+          const candidateScore = [stateRank[row.state] || 0, Number(row.coverageScore) || 0, Number(row.discoveryScore) || 0];
+          const previousScore = previous
+            ? [stateRank[previous.state] || 0, Number(previous.coverageScore) || 0, Number(previous.discoveryScore) || 0]
+            : [-1, -1, -1];
+          const isBetter = candidateScore.some((value, index) =>
+            value !== previousScore[index] && candidateScore.slice(0, index).every((part, before) => part === previousScore[before]) &&
+            value > previousScore[index]
+          );
+          if (!previous || isBetter) {
+            bestByUrl.set(url, Object.assign({}, row, { screenedPlatforms }));
+          } else {
+            previous.screenedPlatforms = screenedPlatforms;
+          }
+        });
+      });
+
+      const campaigns = [...bestByUrl.values()];
+      if (!campaigns.length && failures.length === targets.length) {
+        throw new Error(failures.join("; "));
+      }
+      campaigns.sort((a, b) =>
+        Number(a.notSeenInLatestScan === true) - Number(b.notSeenInLatestScan === true) ||
+        (stateRank[b.state] || 0) - (stateRank[a.state] || 0) ||
+        (Number(b.coverageScore) || 0) - (Number(a.coverageScore) || 0) ||
+        (Number(b.discoveryScore) || 0) - (Number(a.discoveryScore) || 0) ||
+        String(a.title || "").localeCompare(String(b.title || ""))
+      );
+      discoveryAutomationAnalysisCache = {
+        campaigns,
+        summary: {
+          totalCampaigns: campaigns.length,
+          promising: campaigns.filter((row) => row.state === "promising").length,
+          verify: campaigns.filter((row) => row.state === "verify").length,
+          blocked: campaigns.filter((row) => row.state === "blocked").length,
+          platforms: targets,
+          failures,
+          checkedAt: new Date().toISOString()
+        }
+      };
+      discoveryAutomationAnalysisCacheKey = cacheKey;
+      return discoveryAutomationAnalysisCache;
+    } catch (error) {
+      discoveryAutomationAnalysisCache = { error: error && error.message ? error.message : "Cross-platform campaign analysis failed." };
+      discoveryAutomationAnalysisCacheKey = cacheKey;
+      return discoveryAutomationAnalysisCache;
+    }
+  }
+
+
   function renderDeepCampaignAnalysis() {
     const statusNode = $("discovery-deep-status");
     const summaryNode = $("discovery-deep-summary");
@@ -644,28 +737,34 @@
     const summary = result.summary;
     const lockedBriefCount = Number(summary.lockedBriefCount || 0);
     const missingDeadlineCount = Number(summary.missingDeadlineCount || 0);
-    const autoImport = autoImportFreshPromisingCampaigns(result);
+    const automationResult = getDiscoveryAutomationAnalysis();
+    const autoImport = automationResult && !automationResult.error
+      ? autoImportFreshPromisingCampaigns(automationResult)
+      : { imported: 0, plan: { summary: { skippedDuplicate: 0 } }, error: automationResult && automationResult.error || "Cross-platform analysis is not ready." };
     if (autoImport.imported > 0) render();
-    const topPromising = result.campaigns.find((row) => row.state === "promising" &&
-      row.pageStatus === "ok" && row.notSeenInLatestScan !== true &&
-      !(row.brief && row.brief.hiddenRequirements && row.brief.hiddenRequirements.locked === true));
+    const topPromising = automationResult && Array.isArray(automationResult.campaigns)
+      ? automationResult.campaigns.find((row) => row.state === "promising" &&
+        row.pageStatus === "ok" && row.notSeenInLatestScan !== true &&
+        !(row.brief && row.brief.hiddenRequirements && row.brief.hiddenRequirements.locked === true))
+      : null;
     const draftAreaOccupied = Boolean($("draft-topic").value.trim() || $("draft-output").value.trim());
     const draftPrepared = topPromising ? autoPrepareDraftFromCampaign(topPromising) : false;
     if (!topPromising && lockedBriefCount > 0 && !draftAreaOccupied) {
       $("draft-auto-status").textContent = "Draft held: the available public brief hides creator requirements until Join. No private requirements or claims were invented.";
     }
+    const automationScope = "Auto-screened Instagram, Facebook and YouTube";
     $("discovery-import-status").textContent = autoImport.error
-      ? autoImport.error + " Existing Tracker records were preserved."
+      ? automationScope + " failed: " + autoImport.error + " Existing Tracker records were preserved."
       : autoImport.imported > 0
-        ? "Automation added " + autoImport.imported + " fresh, readable Promising campaign(s) to your Tracker as Found / idea. " +
+        ? automationScope + ": added " + autoImport.imported + " fresh, readable Promising campaign(s) to your Tracker as Found / idea. " +
           (draftPrepared ? "A bilingual draft is ready." : draftAreaOccupied ? "Your existing draft was preserved." : "Draft preparation waits for an unlocked brief.")
         : autoImport.plan.summary.skippedDuplicate > 0
-          ? "All fresh Promising campaigns are already in your Tracker. No duplicates were created."
+          ? automationScope + " completed. All fresh Promising campaigns are already in your Tracker; no duplicates were created."
           : state.campaigns.length >= Core.MAX_CAMPAIGNS
-            ? "Tracker capacity reached. Export a backup before adding more campaigns."
+            ? automationScope + " completed, but Tracker capacity is reached. Export a backup before adding more campaigns."
             : lockedBriefCount > 0
-              ? lockedBriefCount + " current campaign brief(s) still hide creator requirements until Join. No private data was guessed; verify the full brief before creating or publishing."
-              : "No fresh, fully assessable Promising campaign is available for automatic import. Verify / Blocked findings remain separate.";
+              ? automationScope + " completed. " + lockedBriefCount + " briefs still hide creator requirements until Join; no private data was guessed."
+              : automationScope + " completed. No fresh, fully assessable Promising campaign is available; Verify / Blocked findings remain separate.";
     statusNode.textContent = summary.analysed + " / " + summary.totalCampaigns + " campaign records deeply analysed for " +
       summary.platform + " · checked " + new Date(summary.checkedAt).toLocaleTimeString() +
       (lastScan.source ? " · source: " + lastScan.source : "");
@@ -890,6 +989,7 @@
 
   async function syncScheduledSnapshot() {
     if (discoverySettings.backendUrl || discoveryBusy) return null;
+    lastScheduledSnapshotRefreshAt = Date.now();
     discoveryBusy = true;
     $("discovery-scan-now").disabled = true;
     $("discovery-status").textContent = "Loading the latest scheduled GitHub campaign snapshot…";
@@ -913,6 +1013,8 @@
       discoveryStaticDetails = result.campaignDetails || [];
       discoveryDeepAnalysisCache = null;
       discoveryDeepAnalysisCacheKey = "";
+      discoveryAutomationAnalysisCache = null;
+      discoveryAutomationAnalysisCacheKey = "";
       const merged = window.ClipRewardDiscovery.mergeHistory(discoveryState.campaigns, result.campaigns);
       discoveryState = { campaigns: merged.campaigns, scans: discoveryState.scans || [] };
       if (!window.ClipRewardDiscovery.writeState(discoveryState)) throw new Error("Snapshot loaded, but the browser could not save its local cache.");
@@ -944,6 +1046,14 @@
       discoveryBusy = false;
       $("discovery-scan-now").disabled = false;
     }
+  }
+
+
+  function refreshScheduledSnapshotIfDue() {
+    if (document.visibilityState !== "visible" || discoverySettings.backendUrl ||
+        !discoveryStaticStatus || discoveryBusy) return;
+    if (Date.now() - lastScheduledSnapshotRefreshAt < SCHEDULED_SNAPSHOT_REFRESH_MS) return;
+    syncScheduledSnapshot();
   }
 
   async function syncDiscoveryBackend() {
@@ -993,6 +1103,10 @@
 
   function configureDiscovery() {
     discoverySettings = window.ClipRewardDiscovery.readSettings();
+    if (scheduledSnapshotRefreshTimer) window.clearInterval(scheduledSnapshotRefreshTimer);
+    scheduledSnapshotRefreshTimer = window.setInterval(refreshScheduledSnapshotIfDue, 60 * 1000);
+    document.addEventListener("visibilitychange", refreshScheduledSnapshotIfDue);
+    window.addEventListener("focus", refreshScheduledSnapshotIfDue);
     $("discovery-toggle").addEventListener("click", () => {
       discoverySettings.enabled = !discoverySettings.enabled;
       window.ClipRewardDiscovery.writeSettings(discoverySettings);

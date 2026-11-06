@@ -10,6 +10,10 @@ When the repository's GitHub Pages workflow succeeds and Pages is enabled, open:
 
 Or run the existing root project as usual and open \`content-rewards-assistant/index.html\` through a static local server. A secure HTTPS/localhost context is needed for service-worker installation and clipboard permissions.
 
+## Automation-only interface
+
+The active workspace is intentionally limited to the automatable public campaign workflow: scheduled public discovery, automatic screening for Instagram/Facebook/YouTube, freshness and evidence ranking, deduplicated automatic Tracker import, and safe bilingual draft preparation. The campaign list is read-only and shows imported leads. Manual account setup, manual Join/Apply/Submit instructions, manual video editing/analysis, hand-entered views and payout logs, and other non-automated controls are hidden from the main interface. The underlying local data is retained; hiding those controls does not delete existing records.
+
 ## What works in this version
 
 - Create, edit, search, filter, and delete campaign records for Content Rewards, Whop and other creator programs.

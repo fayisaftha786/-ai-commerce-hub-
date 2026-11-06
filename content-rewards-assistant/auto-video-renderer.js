@@ -32,6 +32,10 @@
       else {
         match = value.match(/up to\s+(\d+)\s*seconds?/i);
         if (match) max = Number(match[1]);
+        else {
+          match = value.match(/^(\d+)\s*seconds?$/i);
+          if (match) min = max = Number(match[1]);
+        }
       }
     }
     if (min == null && max == null) return 15;
@@ -171,6 +175,32 @@
     context.restore();
   }
 
+  async function renderWithMedia(pack, files, audioFile, options) {
+    const opts = options || {};
+    const prepared = prepare(pack);
+    const Studio = opts.studio || root.ClipRewardVideoStudio;
+    if (!Studio || typeof Studio.render !== "function" || typeof Studio.validateFiles !== "function") {
+      throw new Error("The local media renderer is not ready. Refresh the app and try again.");
+    }
+    if (prepared.durationSeconds < 15 || prepared.durationSeconds > 60) {
+      throw new Error("This campaign duration is outside the media renderer's 15–60 second safe range. Use the text-video export or choose another campaign.");
+    }
+    const mediaFiles = Array.from(files || []);
+    Studio.validateFiles(mediaFiles, audioFile || null);
+    const captions = prepared.scenes.map((scene) => {
+      const ml = clean(scene.ml, 220);
+      const en = clean(scene.en, 220);
+      return ml && en ? ml + " · " + en : ml || en;
+    }).join("\n");
+    return Studio.render({
+      files: mediaFiles,
+      audioFile: audioFile || null,
+      durationSeconds: prepared.durationSeconds,
+      captions,
+      signal: opts.signal,
+      onProgress: opts.onProgress
+    });
+  }
   function chooseWebm(Recorder) {
     if (!Recorder || typeof Recorder.isTypeSupported !== "function") return "";
     for (const type of MIME_CANDIDATES) {
@@ -261,5 +291,5 @@
     });
   }
 
-  return { WIDTH, HEIGHT, FPS, prepare, resolveDuration, getCapabilities, render };
+  return { WIDTH, HEIGHT, FPS, prepare, resolveDuration, getCapabilities, render, renderWithMedia };
 });

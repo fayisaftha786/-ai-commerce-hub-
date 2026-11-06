@@ -704,31 +704,11 @@
         (row.pool && row.pool.paidWhen ? '<small>Pool payment: ' + escapeHtml(row.pool.paidWhen) + '</small>' : '') +
         staleNote + geographyNote + '<small class="deep-missing">Evidence gaps / checks: ' + escapeHtml(missing) + '</small>' +
         '<div class="feed-card-actions"><button class="button button-secondary" type="button" data-deep-open="' + index + '">Open full findings</button>' +
-        (row.state === "promising" && row.pageStatus === "ok" && !row.notSeenInLatestScan ? '<button class="button button-secondary" type="button" data-deep-draft="' + index + '">Prepare content draft</button>' : '') +
         '<a class="text-button" href="' + escapeHtml(row.url) + '" target="_blank" rel="noopener noreferrer">Verify official page ↗</a></div></article>';
     }).join("") : '<p class="muted small-text">No readable public campaign detail pages were available for this platform.</p>';
     if (result.campaigns.length > rows.length) {
       listNode.insertAdjacentHTML("beforeend", '<p class="tiny-note">Showing the top ' + rows.length + ' of ' + result.campaigns.length + ' ranked public campaign analyses.</p>');
     }
-    listNode.querySelectorAll("[data-deep-draft]").forEach((button) => button.addEventListener("click", () => {
-      const row = result.campaigns[Number(button.dataset.deepDraft)];
-      if (!row || row.state !== "promising" || row.pageStatus !== "ok" || row.notSeenInLatestScan) return;
-      const platformMap = {
-        Instagram: "Instagram Reels",
-        Facebook: "Facebook Reels",
-        YouTube: "YouTube Shorts",
-        X: "X"
-      };
-      const platform = platformMap[row.platform] || "Other";
-      const matchingCampaign = state.campaigns.find((campaign) => campaign.url && campaign.url.replace(/\/$/, "") === String(row.url || "").replace(/\/$/, ""));
-      $("draft-topic").value = String(row.title || "").slice(0, 180);
-      $("draft-platform").value = platform;
-      $("draft-campaign").value = matchingCampaign ? matchingCampaign.id : "";
-      $("draft-result").hidden = true;
-      $("clip-studio").scrollIntoView({ behavior: "smooth", block: "start" });
-      $("draft-topic").focus();
-      showToast("Campaign title and platform prepared. Add only a benefit you can verify, then generate and review the draft.");
-    }));
     listNode.querySelectorAll("[data-deep-open]").forEach((button) => button.addEventListener("click", () => {
       const row = result.campaigns[Number(button.dataset.deepOpen)];
       if (!row) return;

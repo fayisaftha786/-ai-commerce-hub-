@@ -1438,9 +1438,6 @@
       discoveryState = { campaigns: merged.campaigns, scans: [scan, ...(discoveryState.scans || [])].slice(0, 50) };
       if (!window.ClipRewardDiscovery.writeState(discoveryState)) throw new Error("Browser storage is full or unavailable; discoveries were not saved.");
       $("discovery-status").textContent = result.summary.found + " campaigns checked · " + merged.newCount + " new · " + result.summary.high + " high-information leads. Third-party data, not verified availability.";
-      if (merged.newCount > 0 && discoverySettings.notify && "Notification" in window && Notification.permission === "granted") {
-        new Notification("ClipReward · new campaign leads", { body: merged.newCount + " new lead(s) found. Open the app to review and verify them." });
-      }
       renderDiscovery();
     } catch (error) {
       const message = error && error.message ? error.message : "Discovery scan failed.";

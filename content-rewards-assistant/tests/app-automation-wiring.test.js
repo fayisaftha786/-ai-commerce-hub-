@@ -8,6 +8,7 @@ const root = path.join(__dirname, "..");
 const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
 const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const packSource = fs.readFileSync(path.join(root, "auto-content-pack.js"), "utf8");
+const videoRenderer = fs.readFileSync(path.join(root, "auto-video-renderer.js"), "utf8");
 const serviceWorker = fs.readFileSync(path.join(root, "service-worker.js"), "utf8");
 
 test("fresh public Promising campaigns are imported automatically across supported platforms", () => {
@@ -40,6 +41,18 @@ test("the best fresh public campaign automatically generates a bilingual downloa
   assert.ok(packSource.includes("This is a local template pack, not an AI-generated or rendered video file."));
   assert.ok(serviceWorker.includes("clipreward-static-v45"));
   assert.ok(serviceWorker.includes("./auto-content-pack.js"));
+  assert.ok(serviceWorker.includes("./auto-video-renderer.js"));
+  assert.ok(html.includes('id="auto-content-pack-create-video"'));
+  assert.ok(html.includes('id="auto-content-pack-video-preview"'));
+  assert.ok(html.includes('id="auto-content-pack-download-video"'));
+  assert.ok(html.includes('src="./auto-video-renderer.js"'));
+  assert.ok(app.includes("AutoVideoRenderer.render(currentAutoContentPack)"));
+  assert.ok(app.includes("pack.hashtagsFound.join("));
+  assert.ok(app.includes("pack.mentionsFound.join("));
+  assert.ok(videoRenderer.includes("silent: true"));
+  assert.ok(videoRenderer.includes("textOnly: true"));
+  assert.ok(videoRenderer.includes("video/webm"));
+  assert.ok(!videoRenderer.includes("video/mp4"));
 });
 
 test("automatic campaign draft preparation is safe and does not overwrite existing user work", () => {

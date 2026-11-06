@@ -9,6 +9,7 @@
   let currentAutoMediaVideoUrl = "";
   let currentAutoMediaCampaignUrl = "";
   let autoMediaVideoBusy = false;
+  let autoMediaVideoController = null;
   const STORAGE_KEY = "clipreward-studio-v1";
   const SUBMISSION_ALERTS_ENABLED_KEY = "clipreward-submission-alerts-enabled-v1";
   const SUBMISSION_ALERTS_SENT_KEY = "clipreward-submission-alerts-sent-v1";
@@ -1026,6 +1027,7 @@
   }
 
   function clearAutoContentPackMediaOutput() {
+    if (autoMediaVideoController && autoMediaVideoBusy) autoMediaVideoController.abort();
     if (currentAutoMediaVideoUrl) { URL.revokeObjectURL(currentAutoMediaVideoUrl); currentAutoMediaVideoUrl = ""; }
     const preview = $("auto-content-pack-media-preview");
     const download = $("auto-content-pack-media-download");
@@ -1081,18 +1083,24 @@
       updateAutoContentPackMediaButton();
       return;
     }
+    const renderPack = currentAutoContentPack;
     autoMediaVideoBusy = true;
+    autoMediaVideoController = new AbortController();
     if (button) { button.disabled = true; button.textContent = "Rendering…"; }
     if (status) status.textContent = "Preparing your authorised media and campaign-matched captions…";
     try {
-      const output = await AutoVideoRenderer.renderWithMedia(currentAutoContentPack, files, audioFile, {
+      const output = await AutoVideoRenderer.renderWithMedia(renderPack, files, audioFile, {
+        signal: autoMediaVideoController.signal,
         onProgress: (value) => { if (status) status.textContent = "Rendering locally on this device… " + value + "%"; }
       });
+      if (!currentAutoContentPack || currentAutoContentPack.campaign.url !== renderPack.campaign.url) {
+        throw new Error("The selected campaign changed during export. Choose media and render again.");
+      }
       clearAutoContentPackMediaOutput();
       currentAutoMediaVideoUrl = URL.createObjectURL(output.blob);
       if (preview) { preview.src = currentAutoMediaVideoUrl; preview.hidden = false; if (typeof preview.load === "function") preview.load(); }
       if (download) {
-        const slug = currentAutoContentPack.campaign.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 54) || "campaign";
+        const slug = renderPack.campaign.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 54) || "campaign";
         download.href = currentAutoMediaVideoUrl;
         download.download = "clipreward-campaign-video-" + slug + "." + output.extension;
         download.hidden = false;
@@ -1105,6 +1113,7 @@
       showToast(error && error.message ? error.message : "Media video rendering failed.");
     } finally {
       autoMediaVideoBusy = false;
+      autoMediaVideoController = null;
       if (button) button.textContent = "▶ Make video from my media";
       updateAutoContentPackMediaButton();
     }

@@ -458,7 +458,7 @@
     if (signal && signal.aborted) throw abortError();
     const files = Array.from(opts.files || []);
     const duration = Number(opts.durationSeconds || 30);
-    if (![15, 30, 60].includes(duration)) throw new Error("Choose a 15, 30 or 60 second export.");
+    if (!Number.isInteger(duration) || duration < 15 || duration > 60) throw new Error("Choose a whole-number export duration from 15 to 60 seconds.");
     validateFiles(files, opts.audioFile);
     const capabilities = getCapabilities(root);
     if (!capabilities.supported) throw new Error("Video export is not supported in this browser. Missing: " + capabilities.missing.join(", ") + ".");

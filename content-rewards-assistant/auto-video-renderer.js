@@ -57,6 +57,9 @@
   }
 
   function prepare(pack) {
+    if (pack && pack.preliminaryOnly === true) {
+      throw new Error("This is a preliminary script from a Join-locked brief. Unlock and re-analyse the full campaign requirements before video or subtitle export.");
+    }
     if (!pack || pack.ok !== true || !pack.campaign || !pack.production ||
         !Array.isArray(pack.production.scenes) || pack.production.scenes.length !== 5 ||
         !Array.isArray(pack.campaign.acceptedPlatforms) || !pack.campaign.acceptedPlatforms.length) {

@@ -168,6 +168,21 @@
       <p id="discovery-deep-status" class="feed-status" role="status" aria-live="polite">Waiting for the official public snapshot…</p>
       <div id="discovery-deep-summary" class="deep-analysis-summary"></div>
       <div class="feed-heading-actions"><span class="mini-tag">AUTO-SCREEN + IMPORT ON</span><span id="discovery-import-status" class="tiny-note" role="status" aria-live="polite">Fresh, readable Promising campaigns from all three supported platforms are added to Tracker automatically as Found / idea. The top unlocked result gets a bilingual draft. Join-locked requirements remain unknown; private account actions are not automated.</span></div>
+      <section class="auto-content-pack" id="auto-content-pack" aria-labelledby="auto-content-pack-heading">
+        <div class="auto-pack-heading">
+          <div><div class="section-kicker">AUTOMATIC CREATIVE OUTPUT</div><h4 id="auto-content-pack-heading">Video-ready content pack</h4><p class="tiny-note">Automatically prepared from the best fresh, unlocked public campaign. Includes English + Malayalam voiceover, scene plan, platform captions, and only the campaign tags/rules detected in its brief.</p></div>
+          <span class="deep-analysis-icon">✦</span>
+        </div>
+        <p id="auto-content-pack-status" class="feed-status" role="status" aria-live="polite">Waiting for a fresh, readable and unlocked Promising campaign.</p>
+        <div id="auto-content-pack-meta" class="auto-pack-meta"></div>
+        <div id="auto-content-pack-body" class="auto-content-pack-body"></div>
+        <div class="auto-pack-actions">
+          <button class="button button-primary" id="auto-content-pack-download-text" type="button" disabled>↓ Download text pack</button>
+          <button class="button button-secondary" id="auto-content-pack-download-json" type="button" disabled>Download JSON</button>
+          <button class="button button-quiet" id="auto-content-pack-copy" type="button" disabled>Copy full pack</button>
+        </div>
+        <p class="auto-pack-boundary">This is a local template/storyboard pack, not a rendered video or an AI-generated media file. Add your own verified experience and original or expressly approved footage when producing the video. Unknown campaign rules remain unknown.</p>
+      </section>
       <div id="discovery-deep-list" class="deep-analysis-list"><p class="muted small-text">The ranked shortlist will appear automatically after the public snapshot loads.</p></div>
     </section>
     <p class="feed-disclaimer">Automation boundary: GitHub Actions refreshes the official public campaign snapshot about every six hours (best effort). The app screens Instagram, Facebook and YouTube automatically and checks for newer snapshots every 30 minutes while open. Only public pages are analysed. Private, invitation-only, sign-in-gated and Join-locked requirements are not accessible. Content Rewards controls creator eligibility, joining, submission, approval and payouts. Scores measure evidence coverage and freshness, not likelihood of approval or guaranteed earnings.</p>
@@ -478,7 +493,7 @@
 <p class="muted small-text deadline-help">To mark a Content Rewards record Submitted, select the platform, use its matching public post link, and record both times. The app checks that the link-submission time is not before the post and is strictly less than 30 minutes later. Enter the time you actually pressed Submit clip; this app still cannot submit or verify the receipt.</p><div class="modal-actions"><button class="button button-quiet" id="cancel-modal" type="button">Cancel</button><button class="button button-primary" type="submit">Save campaign</button></div></form>
 </section></div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
-<script src="./campaign-scout.js"></script><script src="./campaign-feed.js"></script><script src="./discovery-engine.js"></script><script src="./rewards-intelligence.js"></script><script src="./core.js"></script><script src="./submission-alerts.js"></script><script src="./tracker-import.js"></script><script src="./payout-forecast.js"></script><script src="./app.js"></script><script src="./video-studio.js"></script><script src="./video-studio-ui.js"></script><script src="./video-analysis.js"></script><script src="./speech-dictation.js"></script><script src="./video-analysis-ui.js"></script><script src="./speech-dictation-ui.js"></script>
+<script src="./campaign-scout.js"></script><script src="./campaign-feed.js"></script><script src="./discovery-engine.js"></script><script src="./rewards-intelligence.js"></script><script src="./core.js"></script><script src="./submission-alerts.js"></script><script src="./tracker-import.js"></script><script src="./payout-forecast.js"></script><script src="./auto-content-pack.js"></script><script src="./app.js"></script><script src="./video-studio.js"></script><script src="./video-studio-ui.js"></script><script src="./video-analysis.js"></script><script src="./speech-dictation.js"></script><script src="./video-analysis-ui.js"></script><script src="./speech-dictation-ui.js"></script>
 <script data-register-service-worker>
   if ("serviceWorker" in navigator && location.protocol !== "file:") {
     window.addEventListener("load", () => {

@@ -182,8 +182,8 @@
         scenes
       },
       platformVariants: variants,
-      requiredHashtags: hashtags,
-      requiredMentions: mentions,
+      hashtagsFound: hashtags,
+      mentionsFound: mentions,
       publicRules: requirements,
       disclosureRules,
       prohibitionRules,
@@ -244,11 +244,11 @@
     });
     lines.push(
       "",
-      "CAMPAIGN HASHTAGS (ONLY THOSE FOUND IN THE PUBLIC BRIEF)",
-      pack.requiredHashtags.length ? pack.requiredHashtags.join(" ") : "None detected. Do not invent required hashtags; check the official brief.",
+      "HASHTAGS FOUND IN THE PUBLIC BRIEF (CHECK WHETHER EACH IS REQUIRED)",
+      pack.hashtagsFound.length ? pack.requiredHashtags.join(" ") : "None detected. Check the official brief for any required hashtags.",
       "",
-      "CAMPAIGN MENTIONS (ONLY THOSE FOUND IN THE PUBLIC BRIEF)",
-      pack.requiredMentions.length ? pack.requiredMentions.join(" ") : "None detected.",
+      "MENTIONS FOUND IN THE PUBLIC BRIEF (CHECK WHETHER EACH IS REQUIRED)",
+      pack.mentionsFound.length ? pack.requiredMentions.join(" ") : "None detected.",
       "",
       "DISCLOSURE RULES DETECTED",
       pack.disclosureRules.length ? pack.disclosureRules.map((line) => "- " + line).join("\n") : "No explicit disclosure line was recognised. Add a clear paid/sponsored/affiliate disclosure where required by the campaign or platform.",

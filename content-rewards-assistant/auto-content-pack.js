@@ -119,14 +119,25 @@
 
     if (clean(brief.rawText, 20000).length < 12) return fail("The readable public campaign brief is incomplete. A safe content pack cannot be prepared.");
 
-    if (source.state !== "promising") return fail("A content pack is created only for a fresh Promising campaign.");
-    if (source.pageStatus !== "ok" || source.notSeenInLatestScan === true) {
-      return fail("The public campaign detail is stale or not in the latest scan. Refresh and verify it first.");
+    const locked = Boolean(brief.hiddenRequirements && brief.hiddenRequirements.locked === true);
+    const closed = ["Paused", "Ended / closed", "Out of budget"].includes(brief.campaignStatus);
+    const preliminary = opts.allowPreliminary === true &&
+      source.state === "verify" &&
+      source.pageStatus === "ok" &&
+      source.notSeenInLatestScan === false &&
+      locked &&
+      brief.platformMatch === "match" &&
+      !closed;
+    if (source.pageStatus !== "ok" || source.notSeenInLatestScan !== false) {
+      return fail("The public campaign detail is stale or not confirmed in the latest scan. Refresh and verify it first.");
     }
-    if (brief.hiddenRequirements && brief.hiddenRequirements.locked === true) {
-      return fail("The brief hides creator requirements until Join. No content pack is prepared from an incomplete brief.");
+    if (source.state !== "promising" && !preliminary) {
+      return fail("A full content pack requires a fresh Promising campaign. A preliminary draft is available only for a current, readable Join-locked campaign with an explicit supported-platform match.");
     }
-    if (["Paused", "Ended / closed", "Out of budget"].includes(brief.campaignStatus)) {
+    if (locked && !preliminary) {
+      return fail("The brief hides creator requirements until Join. Only a preliminary script can be prepared from the visible public description.");
+    }
+    if (closed) {
       return fail("The public brief indicates that this campaign is not currently suitable for a new content pack.");
     }
 
@@ -166,6 +177,8 @@
       version: 1,
       generatedBy: "ClipReward Studio local template engine",
       createdAt,
+      mode: preliminary ? "preliminary" : "complete",
+      preliminaryOnly: preliminary,
       campaign: {
         title,
         brand: clean(source.brand, 120) || "Not stated",
@@ -178,12 +191,17 @@
         pageStatus: clean(source.pageStatus, 40) || "unknown",
         pageFetchedAt: clean(source.pageFetchedAt, 64),
         seenInLatestScan: source.notSeenInLatestScan === false,
+        briefCompleteness: preliminary ? "partial-public-brief" : "readable-public-brief",
+        hiddenRequirementsLocked: locked,
+        hiddenRequirementCount: brief.hiddenRequirements && Number.isFinite(brief.hiddenRequirements.count) ? brief.hiddenRequirements.count : null,
+        hiddenReferenceFileCount: brief.hiddenRequirements && Number.isFinite(brief.hiddenRequirements.referenceFiles) ? brief.hiddenRequirements.referenceFiles : null,
         capturedAt: createdAt
       },
       production: {
         duration: durationLabel(brief.duration),
         format: formatLabel(brief),
         aspectRatio: "Not stated — do not assume a campaign requirement",
+        renderable: !preliminary,
         languages: uniqueClean(brief.languages, 8, 80),
         scenes
       },
@@ -193,7 +211,14 @@
       publicRules: requirements,
       disclosureRules,
       prohibitionRules,
-      safetyNotes: [
+      safetyNotes: preliminary ? [
+        "PRELIMINARY SCRIPT ONLY: the campaign hides creator requirements until Join. Do not render, export subtitles, publish or submit using this draft.",
+        "Only visible public campaign text was used. Hidden requirements, reference files, account eligibility, current availability and approval conditions remain unknown.",
+        "Open the official campaign page, Join only if you choose to, and read every unlocked requirement and reference file before production.",
+        "Re-analyse the complete brief before creating a final video or campaign ZIP.",
+        "This local template engine does not Join, Apply, publish, submit clips or verify payouts.",
+        "Do not promise views, approval, eligibility, payout or earnings."
+      ] : [
         "This is a local template pack, not an AI-generated or rendered video file.",
         "Only include product claims, benefits, results or personal experiences that you have independently verified.",
         "Do not promise views, approval, eligibility, payout or earnings.",
@@ -206,8 +231,13 @@
   function toText(pack) {
     if (!pack || pack.ok !== true) throw new Error("A valid generated content pack is required.");
     const lines = [
-      "CLIPREWARD STUDIO · VIDEO-READY CONTENT PACK",
+      pack.preliminaryOnly ? "CLIPREWARD STUDIO · PRELIMINARY SCRIPT ONLY · NOT CLEARED FOR PRODUCTION" : "CLIPREWARD STUDIO · VIDEO-READY CONTENT PACK",
       "Generated: " + pack.createdAt,
+      ...(pack.preliminaryOnly ? [
+        "",
+        "WARNING: Creator requirements and reference files are hidden until Join. This draft uses only visible public information.",
+        "Do not create a final video, export subtitles, publish or submit until the full current brief is unlocked and re-analysed."
+      ] : []),
       "Engine: " + pack.generatedBy,
       "",
       "CAMPAIGN",

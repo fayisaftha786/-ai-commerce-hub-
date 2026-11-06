@@ -31,10 +31,18 @@ test("fresh public Promising campaigns are imported automatically across support
 test("the best fresh public campaign automatically generates a bilingual downloadable content pack", () => {
   assert.ok(app.includes("const AutoContentPack = window.ClipRewardAutoContentPack"));
   assert.ok(app.includes("function renderAutoContentPack(row, emptyMessage)"));
-  assert.ok(app.includes("AutoContentPack.create(row)"));
+  assert.ok(app.includes("AutoContentPack.create(row, { allowPreliminary: true })"));
   assert.ok(app.includes("AutoContentPack.toText(currentAutoContentPack)"));
   assert.ok(app.includes("AutoContentPack.toJson(currentAutoContentPack)"));
-  assert.ok(app.includes("renderAutoContentPack(topPromising"));
+  assert.ok(app.includes("renderAutoContentPack(contentPackCampaign"));
+  assert.ok(app.includes("const topPreliminary = result.campaigns.find"));
+  assert.ok(app.includes("AutoContentPack.create(row, { allowPreliminary: true })"));
+  assert.ok(app.includes("PRELIMINARY SCRIPT ONLY"));
+  assert.ok(app.includes("Boolean(pack.preliminaryOnly && index >= 3)"));
+  assert.ok(app.includes("!currentAutoContentPack.preliminaryOnly"));
+  assert.ok(packSource.includes("preliminaryOnly: preliminary"));
+  assert.ok(packSource.includes("briefCompleteness: preliminary ? \"partial-public-brief\""));
+  assert.ok(videoRenderer.includes("pack.preliminaryOnly === true"));
   assert.ok(html.includes('id="auto-content-pack"'));
   assert.ok(html.includes('id="auto-content-pack-download-text"'));
   assert.ok(html.includes('id="auto-content-pack-download-json"'));
@@ -50,9 +58,10 @@ test("the best fresh public campaign automatically generates a bilingual downloa
   assert.ok(app.includes("function downloadAutoContentPackSubtitles(format)"));
   assert.ok(app.includes('AutoVideoRenderer.createSubtitles(currentAutoContentPack, "both")'));
   assert.ok(videoRenderer.includes("function createSubtitles(pack, language)"));
+  assert.ok(videoRenderer.includes("preliminary script from a Join-locked brief"));
   assert.ok(html.includes('src="./auto-content-pack.js"'));
   assert.ok(packSource.includes("This is a local template pack, not an AI-generated or rendered video file."));
-  assert.ok(serviceWorker.includes("clipreward-static-v49"));
+  assert.ok(serviceWorker.includes("clipreward-static-v50"));
   assert.ok(serviceWorker.includes("./auto-content-pack.js"));
   assert.ok(serviceWorker.includes("./auto-video-renderer.js"));
   assert.ok(html.includes('id="auto-content-pack-create-video"'));
@@ -95,7 +104,7 @@ test("official campaign alerts use a quiet first-scan baseline and deduplicate o
   assert.ok(serviceWorker.includes('./discovery-alerts.js'));
   assert.ok(html.includes('id="discovery-alert-status"'));
   assert.ok(html.indexOf('id="discovery-notify"') < html.indexOf('<div class="discovery-controls" hidden>'));
-  assert.ok(serviceWorker.includes("clipreward-static-v49"));
+  assert.ok(serviceWorker.includes("clipreward-static-v50"));
 });
 
 test("automatic campaign draft preparation is safe and does not overwrite existing user work", () => {

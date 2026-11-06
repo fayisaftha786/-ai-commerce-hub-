@@ -36,6 +36,18 @@ test("prepares a bilingual text storyboard without inventing evidence", () => {
   assert.deepEqual(result.mentions, ["@samplebrand"]);
 });
 
+test("refuses video and subtitle exports for preliminary Join-locked script packs", async () => {
+  const preliminary = { ...pack(), preliminaryOnly: true };
+  assert.throws(() => Renderer.prepare(preliminary), /preliminary script/);
+  assert.throws(() => Renderer.createSubtitles(preliminary), /preliminary script/);
+  await assert.rejects(
+    Renderer.renderWithMedia(preliminary, [{ name: "clip.mp4", size: 10, type: "video/mp4" }], null, {
+      studio: { validateFiles() {}, async render() { throw new Error("must not render"); } }
+    }),
+    /preliminary script/
+  );
+});
+
 test("respects stated campaign duration when it fits the renderer", () => {
   assert.equal(Renderer.resolveDuration("20–45 seconds"), 30);
   assert.equal(Renderer.resolveDuration("At least 45 seconds"), 45);

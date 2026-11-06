@@ -73,6 +73,55 @@ test("keeps detected campaign rules and disclosure restrictions in the output", 
   assert.match(text, /paid partnership disclosure/);
 });
 
+test("prepares a clearly labelled preliminary script from a current, platform-matched Join-locked public brief", () => {
+  const lockedRow = row({
+    state: "verify",
+    brief: {
+      ...row().brief,
+      hiddenRequirements: { locked: true, count: 1, referenceFiles: 3 },
+      platformMatch: "match",
+      campaignStatus: "Appears live in copied text",
+      entryMode: "Open campaign / direct join"
+    }
+  });
+  const pack = Pack.create(lockedRow, { allowPreliminary: true });
+  assert.equal(pack.ok, true);
+  assert.equal(pack.mode, "preliminary");
+  assert.equal(pack.preliminaryOnly, true);
+  assert.equal(pack.production.renderable, false);
+  assert.equal(pack.sourceEvidence.briefCompleteness, "partial-public-brief");
+  assert.equal(pack.sourceEvidence.hiddenRequirementsLocked, true);
+  assert.equal(pack.sourceEvidence.hiddenRequirementCount, 1);
+  assert.equal(pack.sourceEvidence.hiddenReferenceFileCount, 3);
+  assert.ok(pack.safetyNotes.some((line) => /PRELIMINARY SCRIPT ONLY/i.test(line)));
+  assert.match(Pack.toText(pack), /PRELIMINARY SCRIPT ONLY/);
+  assert.match(Pack.toText(pack), /Do not create a final video/);
+});
+
+test("preliminary mode still refuses stale, historical, blocked or platform-unknown campaigns", () => {
+  const locked = {
+    ...row(),
+    state: "verify",
+    brief: {
+      ...row().brief,
+      hiddenRequirements: { locked: true, count: 1 },
+      platformMatch: "match",
+      campaignStatus: "Appears live in copied text"
+    }
+  };
+  assert.match(Pack.create({ ...locked, pageStatus: "stale" }, { allowPreliminary: true }).error, /stale/);
+  assert.match(Pack.create({ ...locked, notSeenInLatestScan: true }, { allowPreliminary: true }).error, /stale/);
+  assert.match(Pack.create({ ...locked, state: "blocked" }, { allowPreliminary: true }).error, /fresh Promising/);
+  assert.match(Pack.create({
+    ...locked,
+    brief: { ...locked.brief, platformMatch: "unknown" }
+  }, { allowPreliminary: true }).error, /fresh Promising/);
+  assert.match(Pack.create({
+    ...locked,
+    brief: { ...locked.brief, campaignStatus: "Paused" }
+  }, { allowPreliminary: true }).error, /fresh Promising/);
+});
+
 test("rejects stale, historical, non-promising and join-locked campaigns", () => {
   assert.match(Pack.create(row({ state: "verify" })).error, /fresh Promising/);
   assert.match(Pack.create(row({ pageStatus: "stale" })).error, /stale/);
@@ -164,6 +213,10 @@ test("retains public-page freshness metadata with generated campaign content", (
     pageStatus: "ok",
     pageFetchedAt: "2026-11-06T08:30:00.000Z",
     seenInLatestScan: true,
+    briefCompleteness: "readable-public-brief",
+    hiddenRequirementsLocked: false,
+    hiddenRequirementCount: null,
+    hiddenReferenceFileCount: null,
     capturedAt: pack.createdAt
   });
 });
@@ -178,6 +231,10 @@ test("retains public-page freshness metadata with generated campaign content", (
     pageStatus: "ok",
     pageFetchedAt: "2026-11-06T08:30:00.000Z",
     seenInLatestScan: true,
+    briefCompleteness: "readable-public-brief",
+    hiddenRequirementsLocked: false,
+    hiddenRequirementCount: null,
+    hiddenReferenceFileCount: null,
     capturedAt: pack.createdAt
   });
 });

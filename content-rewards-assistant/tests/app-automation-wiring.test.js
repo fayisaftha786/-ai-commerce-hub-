@@ -38,10 +38,23 @@ test("the latest scheduled snapshot is automatically refreshed while the app is 
   assert.ok(app.includes('window.addEventListener("focus", refreshScheduledSnapshotIfDue)'));
 });
 
-test("non-automated campaign lookup and manual feed controls are hidden from the automation-first radar", () => {
-  assert.ok(html.includes('<div class="panel-header" hidden>'));
-  assert.ok(html.includes('<div class="scout-platform-tiles" hidden>'));
-  assert.ok(html.includes('<section class="campaign-feed-panel" aria-labelledby="campaign-feed-heading" hidden>'));
-  assert.ok(html.includes('<form id="campaign-scout-form" class="scout-form" hidden>'));
-  assert.ok(html.includes('<div class="discovery-controls" hidden>'));
+test("non-automated account, submission, video and editing tools are hidden from the main workspace", () => {
+  assert.ok(html.includes('<section id="account-center" class="panel account-center" hidden>'));
+  assert.ok(html.includes('<section id="content-rewards-workflow" class="panel" hidden>'));
+  assert.ok(html.includes('<section id="submissions" class="panel submissions-panel" hidden>'));
+  assert.ok(html.includes('<section id="creator-operations" class="panel ops-panel" hidden>'));
+  assert.ok(html.includes('<form id="draft-form" class="form-stack" hidden>'));
+  assert.ok(html.includes('<section class="video-analysis-panel" id="video-analysis-section" hidden>'));
+  assert.ok(html.includes('<section class="video-export-studio" id="real-video-export" hidden>'));
+  assert.ok(html.includes('<section class="panel timestamp-panel" hidden>'));
+  assert.ok(html.includes('id="add-campaign-button" type="button" hidden'));
+  assert.ok(html.includes('<div class="filter-row" hidden>'));
+  assert.ok(app.includes('<div class="campaign-actions" hidden>'));
+  assert.ok(app.includes("Verify official campaign"));
+});
+
+test("the visible campaign tracker is a read-only view of automated imports", () => {
+  assert.ok(html.includes("Auto-imported campaigns"));
+  assert.ok(html.includes("Records are added automatically as Found / idea."));
+  assert.ok(app.includes('viewCampaignLink + postLink'));
 });

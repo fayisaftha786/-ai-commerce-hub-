@@ -588,6 +588,11 @@
   let discoveryStaticDetails = [];
   let discoveryDeepAnalysisCache = null;
   let discoveryDeepAnalysisCacheKey = "";
+  let discoveryAutomationAnalysisCache = null;
+  let discoveryAutomationAnalysisCacheKey = "";
+  let lastScheduledSnapshotRefreshAt = 0;
+  let scheduledSnapshotRefreshTimer = null;
+  const SCHEDULED_SNAPSHOT_REFRESH_MS = 30 * 60 * 1000;
 
   function getDiscoveryDeepAnalysis() {
     const target = $("scout-target-platform").value;
@@ -618,32 +623,130 @@
     }
   }
 
+  // Always screen every supported India workflow destination. The dropdown below
+  // controls the detail view only; it must not hide opportunities on other channels.
+  function getDiscoveryAutomationAnalysis() {
+    const targets = ["Instagram", "Facebook", "YouTube"];
+    const lastScan = discoveryStaticStatus && discoveryStaticStatus.lastScan || {};
+    const accountKey = JSON.stringify(state.account || {});
+    const cacheKey = ["all-platforms-v1", lastScan.at || "", discoveryStaticCampaigns.length,
+      discoveryStaticDetails.length, accountKey].join("|");
+    if (discoveryAutomationAnalysisCacheKey === cacheKey && discoveryAutomationAnalysisCache) {
+      return discoveryAutomationAnalysisCache;
+    }
+    if (!discoveryStaticDetails.length || !discoveryStaticCampaigns.length) return null;
+
+    try {
+      const today = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+      const bestByUrl = new Map();
+      const failures = [];
+      let firstReportSummary = null;
+      const stateRank = { promising: 3, verify: 2, blocked: 1 };
+
+      targets.forEach((platform) => {
+        let report;
+        try {
+          report = window.ClipRewardDiscovery.analyzePublicCampaigns(
+            discoveryStaticCampaigns,
+            discoveryStaticDetails,
+            window.ClipRewardScout,
+            window.ClipRewardIntelligence,
+            platform,
+            { today, account: state.account }
+          );
+        } catch (error) {
+          failures.push(platform + ": " + (error && error.message ? error.message : "analysis failed"));
+          return;
+        }
+        if (!firstReportSummary && report.summary) firstReportSummary = report.summary;
+        (report.campaigns || []).forEach((row) => {
+          const url = window.ClipRewardTrackerImport.canonicalCampaignUrl(row.url);
+          if (!url) return;
+          const previous = bestByUrl.get(url);
+          const screenedPlatforms = [...new Set([...(previous && previous.screenedPlatforms || []), platform])];
+          const candidateScore = [stateRank[row.state] || 0, Number(row.coverageScore) || 0, Number(row.discoveryScore) || 0];
+          const previousScore = previous
+            ? [stateRank[previous.state] || 0, Number(previous.coverageScore) || 0, Number(previous.discoveryScore) || 0]
+            : [-1, -1, -1];
+          const isBetter = candidateScore.some((value, index) =>
+            value !== previousScore[index] && candidateScore.slice(0, index).every((part, before) => part === previousScore[before]) &&
+            value > previousScore[index]
+          );
+          if (!previous || isBetter) {
+            bestByUrl.set(url, Object.assign({}, row, { screenedPlatforms }));
+          } else {
+            previous.screenedPlatforms = screenedPlatforms;
+          }
+        });
+      });
+
+      const campaigns = [...bestByUrl.values()];
+      if (!campaigns.length && failures.length === targets.length) {
+        throw new Error(failures.join("; "));
+      }
+      campaigns.sort((a, b) =>
+        Number(a.notSeenInLatestScan === true) - Number(b.notSeenInLatestScan === true) ||
+        (stateRank[b.state] || 0) - (stateRank[a.state] || 0) ||
+        (Number(b.coverageScore) || 0) - (Number(a.coverageScore) || 0) ||
+        (Number(b.discoveryScore) || 0) - (Number(a.discoveryScore) || 0) ||
+        String(a.title || "").localeCompare(String(b.title || ""))
+      );
+      discoveryAutomationAnalysisCache = {
+        campaigns,
+        summary: {
+          totalCampaigns: discoveryStaticCampaigns.length,
+          analysed: campaigns.length,
+          promising: campaigns.filter((row) => row.state === "promising").length,
+          verify: campaigns.filter((row) => row.state === "verify").length,
+          blocked: campaigns.filter((row) => row.state === "blocked").length,
+          notSeenInLatestScanCount: campaigns.filter((row) => row.notSeenInLatestScan === true).length,
+          lockedBriefCount: campaigns.filter((row) => row.brief && row.brief.hiddenRequirements && row.brief.hiddenRequirements.locked === true).length,
+          missingDeadlineCount: campaigns.filter((row) => !row.deadline).length,
+          missingDetailCount: firstReportSummary ? firstReportSummary.missingDetailCount : 0,
+          unreadableDetailCount: firstReportSummary ? firstReportSummary.unreadableDetailCount : 0,
+          parserFailureCount: firstReportSummary ? firstReportSummary.parserFailureCount : 0,
+          staleDetailCount: firstReportSummary ? firstReportSummary.staleDetailCount : 0,
+          platform: targets.join(" + "),
+          platforms: targets,
+          failures,
+          checkedAt: new Date().toISOString()
+        }
+      };
+      discoveryAutomationAnalysisCacheKey = cacheKey;
+      return discoveryAutomationAnalysisCache;
+    } catch (error) {
+      discoveryAutomationAnalysisCache = { error: error && error.message ? error.message : "Cross-platform campaign analysis failed." };
+      discoveryAutomationAnalysisCacheKey = cacheKey;
+      return discoveryAutomationAnalysisCache;
+    }
+  }
+
+
   function renderDeepCampaignAnalysis() {
     const statusNode = $("discovery-deep-status");
     const summaryNode = $("discovery-deep-summary");
     const listNode = $("discovery-deep-list");
     if (!statusNode || !summaryNode || !listNode) return;
     const lastScan = discoveryStaticStatus && discoveryStaticStatus.lastScan || {};
-    const result = getDiscoveryDeepAnalysis();
+    const result = getDiscoveryAutomationAnalysis();
     if (!result) {
       statusNode.textContent = discoveryStaticDetails.length
-        ? "No matching public campaign details are ready for batch analysis."
+        ? "No matching public campaign details are ready for automated screening."
         : "Waiting for the latest official public campaign-page snapshot.";
       summaryNode.innerHTML = "";
-      $("discovery-import-status").textContent = "Waiting for a fresh public campaign analysis.";
-      listNode.innerHTML = '<p class="muted small-text">When the scheduled public snapshot is available, every readable campaign page is analysed automatically for the selected platform.</p>';
+      $("discovery-import-status").textContent = "Waiting for the scheduled public campaign snapshot.";
+      listNode.innerHTML = '<p class="muted small-text">Instagram, Facebook and YouTube campaigns will be screened automatically when the public snapshot loads.</p>';
       return;
     }
     if (result.error) {
       statusNode.textContent = result.error;
       summaryNode.innerHTML = "";
-      $("discovery-import-status").textContent = "Import unavailable because batch analysis failed.";
+      $("discovery-import-status").textContent = "Cross-platform automation failed. Existing Tracker records were preserved.";
       listNode.innerHTML = "";
       return;
     }
     const summary = result.summary;
     const lockedBriefCount = Number(summary.lockedBriefCount || 0);
-    const missingDeadlineCount = Number(summary.missingDeadlineCount || 0);
     const autoImport = autoImportFreshPromisingCampaigns(result);
     if (autoImport.imported > 0) render();
     const topPromising = result.campaigns.find((row) => row.state === "promising" &&
@@ -654,20 +757,26 @@
     if (!topPromising && lockedBriefCount > 0 && !draftAreaOccupied) {
       $("draft-auto-status").textContent = "Draft held: the available public brief hides creator requirements until Join. No private requirements or claims were invented.";
     }
+    const failedPlatforms = (summary.failures || []).map((item) => String(item).split(":")[0]);
+    const successfulPlatforms = (summary.platforms || []).filter((platform) => !failedPlatforms.includes(platform));
+    const automationScope = failedPlatforms.length
+      ? "Partially screened " + successfulPlatforms.join(", ")
+      : "Auto-screened Instagram, Facebook and YouTube";
     $("discovery-import-status").textContent = autoImport.error
-      ? autoImport.error + " Existing Tracker records were preserved."
+      ? automationScope + " failed: " + autoImport.error + " Existing Tracker records were preserved."
       : autoImport.imported > 0
-        ? "Automation added " + autoImport.imported + " fresh, readable Promising campaign(s) to your Tracker as Found / idea. " +
+        ? automationScope + ": added " + autoImport.imported + " fresh, readable Promising campaign(s) to your Tracker as Found / idea. " +
           (draftPrepared ? "A bilingual draft is ready." : draftAreaOccupied ? "Your existing draft was preserved." : "Draft preparation waits for an unlocked brief.")
         : autoImport.plan.summary.skippedDuplicate > 0
-          ? "All fresh Promising campaigns are already in your Tracker. No duplicates were created."
+          ? automationScope + " completed. All fresh Promising campaigns are already in your Tracker; no duplicates were created."
           : state.campaigns.length >= Core.MAX_CAMPAIGNS
-            ? "Tracker capacity reached. Export a backup before adding more campaigns."
+            ? automationScope + " completed, but Tracker capacity is reached. Export a backup before adding more campaigns."
             : lockedBriefCount > 0
-              ? lockedBriefCount + " current campaign brief(s) still hide creator requirements until Join. No private data was guessed; verify the full brief before creating or publishing."
-              : "No fresh, fully assessable Promising campaign is available for automatic import. Verify / Blocked findings remain separate.";
-    statusNode.textContent = summary.analysed + " / " + summary.totalCampaigns + " campaign records deeply analysed for " +
+              ? automationScope + " completed. " + lockedBriefCount + " briefs still hide creator requirements until Join; no private data was guessed."
+              : automationScope + " completed. No fresh, fully assessable Promising campaign is available; Verify / Blocked findings remain separate.";
+    statusNode.textContent = summary.analysed + " / " + summary.totalCampaigns + " public campaigns screened across " +
       summary.platform + " · checked " + new Date(summary.checkedAt).toLocaleTimeString() +
+      (summary.failures && summary.failures.length ? " · warnings: " + summary.failures.join("; ") : "") +
       (lastScan.source ? " · source: " + lastScan.source : "");
     summaryNode.innerHTML = [
       ["Promising", summary.promising, "promising"],
@@ -676,7 +785,7 @@
       ["Historical / recheck", summary.notSeenInLatestScanCount || 0, "unknown"],
       ["Brief locked · join required", summary.lockedBriefCount || 0, "unknown"],
       ["No deadline found", summary.missingDeadlineCount || 0, "unknown"],
-      ["Detail missing", summary.missingDetailCount + summary.unreadableDetailCount, "unknown"]
+      ["Detail missing / unreadable", (summary.missingDetailCount || 0) + (summary.unreadableDetailCount || 0), "unknown"]
     ].map((item) => '<span class="deep-summary-chip deep-summary-' + item[2] + '"><strong>' + item[1] + '</strong><small>' + item[0] + '</small></span>').join("");
     const amountLabel = (amount) => amount && Number.isFinite(amount.value)
       ? ((amount.currency === "INR" ? "₹" : amount.currency === "EUR" ? "€" : amount.currency === "GBP" ? "£" : "$") +
@@ -702,14 +811,14 @@
       return '<article class="deep-campaign-card deep-campaign-' + escapeHtml(row.state) + '">' +
         '<div class="deep-campaign-head"><strong>' + escapeHtml(row.title) + '</strong>' +
         '<span class="deep-state deep-state-' + escapeHtml(row.state) + '">' + escapeHtml(row.stateLabel) + '</span></div>' +
-        '<p>' + escapeHtml(row.brand || "Brand not stated") + ' · ' + escapeHtml(row.platform) + ' · ' + escapeHtml(row.entryMode || "Access route unknown") + '</p>' +
+        '<p>' + escapeHtml(row.brand || "Brand not stated") + ' · best match: ' + escapeHtml(row.platform) + '</p>' +
         '<div class="deep-campaign-metrics"><span>' + escapeHtml(rate) + '</span><span>' + escapeHtml(budget) + '</span>' +
         (minimum ? '<span>' + escapeHtml(minimum) + '</span>' : '') + '</div>' +
         (row.pool && row.pool.paidWhen ? '<small>Pool payment: ' + escapeHtml(row.pool.paidWhen) + '</small>' : '') +
         staleNote + geographyNote + '<small class="deep-missing">Evidence gaps / checks: ' + escapeHtml(missing) + '</small>' +
         '<div class="feed-card-actions"><button class="button button-secondary" type="button" data-deep-open="' + index + '">Open full findings</button>' +
         '<a class="text-button" href="' + escapeHtml(row.url) + '" target="_blank" rel="noopener noreferrer">Verify official page ↗</a></div></article>';
-    }).join("") : '<p class="muted small-text">No readable public campaign detail pages were available for this platform.</p>';
+    }).join("") : '<p class="muted small-text">No readable public campaign detail pages were available for the supported platforms.</p>';
     if (result.campaigns.length > rows.length) {
       listNode.insertAdjacentHTML("beforeend", '<p class="tiny-note">Showing the top ' + rows.length + ' of ' + result.campaigns.length + ' ranked public campaign analyses.</p>');
     }
@@ -731,6 +840,7 @@
       $("scout-results").scrollIntoView({ behavior: "smooth", block: "start" });
     }));
   }
+
 
   function autoImportFreshPromisingCampaigns(result) {
     const remaining = Math.max(0, Core.MAX_CAMPAIGNS - state.campaigns.length);
@@ -840,12 +950,8 @@
       const tier = row.opportunity ? row.opportunity.tier.toUpperCase() : "UNRATED";
       const freshness = row.opportunity ? row.opportunity.status.replace(/-/g, " ") : "unknown";
       const availability = window.ClipRewardDiscovery.listingStatus(row);
-      return '<article class="discovery-card"><div class="discovery-card-head"><strong>' + escapeHtml(row.title) + '</strong><span class="discovery-tier discovery-tier-' + escapeHtml(tier.toLowerCase()) + '">' + escapeHtml(tier) + ' · ' + escapeHtml(row.opportunity ? row.opportunity.score : 0) + '/100</span></div><p>' + escapeHtml(row.brand || "Brand not stated") + ' · ' + escapeHtml((row.platforms || []).join(", ") || "Platform unknown") + '</p><div class="feed-metrics"><span>' + escapeHtml(rate) + '</span><span>' + escapeHtml(minimum || freshness) + '</span></div><small class="discovery-listing-status discovery-listing-status-' + escapeHtml(availability.kind) + '"><strong>' + escapeHtml(availability.label) + '</strong> · ' + escapeHtml(availability.detail) + '</small>' + (poolTerms ? '<small>' + escapeHtml(poolTerms) + '</small>' : '') + '<small>' + escapeHtml(row.opportunity ? row.opportunity.explanation : "Verify source details.") + '</small><div class="feed-card-actions"><button class="button button-secondary" type="button" data-discovery-import="' + index + '">Analyse campaign</button>' + (row.officialUrl ? '<a class="text-button" href="' + escapeHtml(row.officialUrl) + '" target="_blank" rel="noopener noreferrer">Verify official page ↗</a>' : '') + '</div></article>';
+      return '<article class="discovery-card"><div class="discovery-card-head"><strong>' + escapeHtml(row.title) + '</strong><span class="discovery-tier discovery-tier-' + escapeHtml(tier.toLowerCase()) + '">' + escapeHtml(tier) + ' · ' + escapeHtml(row.opportunity ? row.opportunity.score : 0) + '/100</span></div><p>' + escapeHtml(row.brand || "Brand not stated") + ' · ' + escapeHtml((row.platforms || []).join(", ") || "Platform unknown") + '</p><div class="feed-metrics"><span>' + escapeHtml(rate) + '</span><span>' + escapeHtml(minimum || freshness) + '</span></div><small class="discovery-listing-status discovery-listing-status-' + escapeHtml(availability.kind) + '"><strong>' + escapeHtml(availability.label) + '</strong> · ' + escapeHtml(availability.detail) + '</small>' + (poolTerms ? '<small>' + escapeHtml(poolTerms) + '</small>' : '') + '<small>' + escapeHtml(row.opportunity ? row.opportunity.explanation : "Verify source details.") + '</small><div class="feed-card-actions">' + (row.officialUrl ? '<a class="text-button" href="' + escapeHtml(row.officialUrl) + '" target="_blank" rel="noopener noreferrer">Verify official page ↗</a>' : '') + '</div></article>';
     }).join("") : '<p class="muted small-text">No campaigns are confirmed in the latest official Discover scan. Historical records remain in deep analysis and must be rechecked before applying.</p>';
-    $("discovery-list").querySelectorAll("[data-discovery-import]").forEach((button) => button.addEventListener("click", () => {
-      campaignFeedRows = rows;
-      importFeedCampaign(Number(button.dataset.discoveryImport));
-    }));
     const history = discoveryBackendStatus && discoveryBackendStatus.lastScan
       ? [discoveryBackendStatus.lastScan]
       : discoveryStaticScans.length ? discoveryStaticScans : scans;
@@ -890,6 +996,7 @@
 
   async function syncScheduledSnapshot() {
     if (discoverySettings.backendUrl || discoveryBusy) return null;
+    lastScheduledSnapshotRefreshAt = Date.now();
     discoveryBusy = true;
     $("discovery-scan-now").disabled = true;
     $("discovery-status").textContent = "Loading the latest scheduled GitHub campaign snapshot…";
@@ -913,6 +1020,8 @@
       discoveryStaticDetails = result.campaignDetails || [];
       discoveryDeepAnalysisCache = null;
       discoveryDeepAnalysisCacheKey = "";
+      discoveryAutomationAnalysisCache = null;
+      discoveryAutomationAnalysisCacheKey = "";
       const merged = window.ClipRewardDiscovery.mergeHistory(discoveryState.campaigns, result.campaigns);
       discoveryState = { campaigns: merged.campaigns, scans: discoveryState.scans || [] };
       if (!window.ClipRewardDiscovery.writeState(discoveryState)) throw new Error("Snapshot loaded, but the browser could not save its local cache.");
@@ -944,6 +1053,14 @@
       discoveryBusy = false;
       $("discovery-scan-now").disabled = false;
     }
+  }
+
+
+  function refreshScheduledSnapshotIfDue() {
+    if (document.visibilityState !== "visible" || discoverySettings.backendUrl ||
+        !discoveryStaticStatus || discoveryBusy) return;
+    if (Date.now() - lastScheduledSnapshotRefreshAt < SCHEDULED_SNAPSHOT_REFRESH_MS) return;
+    syncScheduledSnapshot();
   }
 
   async function syncDiscoveryBackend() {
@@ -993,6 +1110,10 @@
 
   function configureDiscovery() {
     discoverySettings = window.ClipRewardDiscovery.readSettings();
+    if (scheduledSnapshotRefreshTimer) window.clearInterval(scheduledSnapshotRefreshTimer);
+    scheduledSnapshotRefreshTimer = window.setInterval(refreshScheduledSnapshotIfDue, 60 * 1000);
+    document.addEventListener("visibilitychange", refreshScheduledSnapshotIfDue);
+    window.addEventListener("focus", refreshScheduledSnapshotIfDue);
     $("discovery-toggle").addEventListener("click", () => {
       discoverySettings.enabled = !discoverySettings.enabled;
       window.ClipRewardDiscovery.writeSettings(discoverySettings);

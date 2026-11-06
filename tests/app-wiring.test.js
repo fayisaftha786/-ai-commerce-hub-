@@ -811,19 +811,21 @@ test("marketplace integration panel links only to official programme and API doc
   assert.match(html, /do not use private endpoints or scrape logged-in pages/);
 });
 
-test("Content Rewards radar distinguishes browser feed tests from the GitHub page crawler", () => {
+test("Content Rewards radar is automation-first and screens all supported India platforms", () => {
   const rewardsHtml = fs.readFileSync(path.join(root, "content-rewards-assistant", "index.html"), "utf8");
   const rewardsApp = fs.readFileSync(path.join(root, "content-rewards-assistant", "app.js"), "utf8");
-  assert.match(rewardsHtml, /id="discovery-run-github-scan"/);
-  assert.match(rewardsHtml, /actions\/workflows\/scheduled-content-rewards-discovery\.yml/);
-  assert.match(rewardsHtml, /Run GitHub page scan/);
-  assert.match(rewardsHtml, /Test feed in browser/);
-  assert.match(rewardsHtml, /GitHub Actions reads public campaign links from the official Content Rewards Discover page/i);
-  assert.match(rewardsHtml, /Private, join-only, sign-in-gated or unlisted campaigns/i);
-  assert.match(rewardsApp, /First GitHub Actions scan pending/);
-  assert.match(rewardsApp, /cannot start the background crawler/);
-  assert.match(rewardsApp, /Test feed in browser/);
-  assert.doesNotMatch(rewardsHtml, /copy its visible detail text[^<]*then paste here/i);
+  assert.match(rewardsHtml, /AUTOMATION ON/);
+  assert.match(rewardsHtml, /official public Discover page about every six hours/i);
+  assert.match(rewardsHtml, /Instagram, Facebook and YouTube/i);
+  assert.match(rewardsHtml, /AUTO-SCREEN \+ IMPORT ON/);
+  assert.match(rewardsHtml, /Private, invitation-only, sign-in-gated and Join-locked requirements are not accessible/i);
+  assert.match(rewardsHtml, /class="discovery-controls" hidden/);
+  assert.match(rewardsHtml, /class="discovery-backend-config" hidden/);
+  assert.match(rewardsHtml, /id="campaign-scout-form" class="scout-form" hidden/);
+  assert.match(rewardsApp, /const targets = \["Instagram", "Facebook", "YouTube"\]/);
+  assert.match(rewardsApp, /SCHEDULED_SNAPSHOT_REFRESH_MS = 30 \* 60 \* 1000/);
+  assert.match(rewardsApp, /refreshScheduledSnapshotIfDue/);
+  assert.doesNotMatch(rewardsApp, /data-discovery-import/);
 });
 
 

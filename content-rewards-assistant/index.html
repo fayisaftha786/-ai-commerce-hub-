@@ -179,9 +179,9 @@
         <div class="auto-pack-actions">
           <button class="button button-primary" id="auto-content-pack-download-text" type="button" disabled>↓ Download text pack</button>
           <button class="button button-secondary" id="auto-content-pack-download-json" type="button" disabled>Download JSON</button>
-          <button class="button button-quiet" id="auto-content-pack-copy" type="button" disabled>Copy full pack</button>
+          <button class="button button-quiet" id="auto-content-pack-copy" type="button" disabled>Copy full pack</button><button class="button button-primary" id="auto-content-pack-create-video" type="button" disabled>▶ Create video automatically</button>
         </div>
-        <p class="auto-pack-boundary">This is a local template/storyboard pack, not a rendered video or an AI-generated media file. Add your own verified experience and original or expressly approved footage when producing the video. Unknown campaign rules remain unknown.</p>
+        <video id="auto-content-pack-video-preview" class="auto-pack-video-preview" controls playsinline hidden></video><a id="auto-content-pack-download-video" class="button button-secondary auto-pack-video-download" hidden>↓ Download video (WebM)</a><p class="auto-pack-boundary">Automatic export creates a silent, text-only 9:16 WebM from the verified public brief. It does not generate footage or voice. Add your own verified observation before posting; check campaign duration, disclosure and asset rules.</p>
       </section>
       <div id="discovery-deep-list" class="deep-analysis-list"><p class="muted small-text">The ranked shortlist will appear automatically after the public snapshot loads.</p></div>
     </section>
@@ -493,7 +493,7 @@
 <p class="muted small-text deadline-help">To mark a Content Rewards record Submitted, select the platform, use its matching public post link, and record both times. The app checks that the link-submission time is not before the post and is strictly less than 30 minutes later. Enter the time you actually pressed Submit clip; this app still cannot submit or verify the receipt.</p><div class="modal-actions"><button class="button button-quiet" id="cancel-modal" type="button">Cancel</button><button class="button button-primary" type="submit">Save campaign</button></div></form>
 </section></div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
-<script src="./campaign-scout.js"></script><script src="./campaign-feed.js"></script><script src="./discovery-engine.js"></script><script src="./rewards-intelligence.js"></script><script src="./core.js"></script><script src="./submission-alerts.js"></script><script src="./tracker-import.js"></script><script src="./payout-forecast.js"></script><script src="./auto-content-pack.js"></script><script src="./app.js"></script><script src="./video-studio.js"></script><script src="./video-studio-ui.js"></script><script src="./video-analysis.js"></script><script src="./speech-dictation.js"></script><script src="./video-analysis-ui.js"></script><script src="./speech-dictation-ui.js"></script>
+<script src="./campaign-scout.js"></script><script src="./campaign-feed.js"></script><script src="./discovery-engine.js"></script><script src="./rewards-intelligence.js"></script><script src="./core.js"></script><script src="./submission-alerts.js"></script><script src="./tracker-import.js"></script><script src="./payout-forecast.js"></script><script src="./auto-content-pack.js"></script><script src="./auto-video-renderer.js"></script><script src="./app.js"></script><script src="./video-studio.js"></script><script src="./video-studio-ui.js"></script><script src="./video-analysis.js"></script><script src="./speech-dictation.js"></script><script src="./video-analysis-ui.js"></script><script src="./speech-dictation-ui.js"></script>
 <script data-register-service-worker>
   if ("serviceWorker" in navigator && location.protocol !== "file:") {
     window.addEventListener("load", () => {

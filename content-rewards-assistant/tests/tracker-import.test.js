@@ -72,8 +72,9 @@ test("fresh promising campaign with Join-locked requirements is tracked as idea 
   const lockedBrief = Object.assign({}, row("locked").brief, { hiddenRequirements: { locked: true, count: 2 } });
   const plan = Import.buildTrackerImportPlan([
     row("locked", { brief: lockedBrief })
-  ], [], (brief) => brief.hiddenRequirements.locked ? "Creator requirements hidden until Join" : "");
+  ]);
   assert.equal(plan.records.length, 1);
   assert.equal(plan.records[0].status, "idea");
-  assert.match(plan.records[0].rules, /hidden until Join/);
+  assert.match(plan.records[0].rules, /Creator requirements and reference files are hidden until Join/);
+  assert.match(plan.records[0].rules, /No private requirements were inferred/);
 });

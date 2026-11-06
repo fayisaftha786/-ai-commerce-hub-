@@ -649,11 +649,16 @@
     const topPromising = result.campaigns.find((row) => row.state === "promising" &&
       row.pageStatus === "ok" && row.notSeenInLatestScan !== true &&
       !(row.brief && row.brief.hiddenRequirements && row.brief.hiddenRequirements.locked === true));
-    if (topPromising) autoPrepareDraftFromCampaign(topPromising);
+    const draftAreaOccupied = Boolean($("draft-topic").value.trim() || $("draft-output").value.trim());
+    const draftPrepared = topPromising ? autoPrepareDraftFromCampaign(topPromising) : false;
+    if (!topPromising && lockedBriefCount > 0 && !draftAreaOccupied) {
+      $("draft-auto-status").textContent = "Draft held: the available public brief hides creator requirements until Join. No private requirements or claims were invented.";
+    }
     $("discovery-import-status").textContent = autoImport.error
       ? autoImport.error + " Existing Tracker records were preserved."
       : autoImport.imported > 0
-        ? "Automation added " + autoImport.imported + " fresh, readable Promising campaign(s) to your Tracker as Found / idea. Join-locked requirements remain unknown; a draft is prepared only from an unlocked brief."
+        ? "Automation added " + autoImport.imported + " fresh, readable Promising campaign(s) to your Tracker as Found / idea. " +
+          (draftPrepared ? "A bilingual draft is ready." : draftAreaOccupied ? "Your existing draft was preserved." : "Draft preparation waits for an unlocked brief.")
         : autoImport.plan.summary.skippedDuplicate > 0
           ? "All fresh Promising campaigns are already in your Tracker. No duplicates were created."
           : state.campaigns.length >= Core.MAX_CAMPAIGNS

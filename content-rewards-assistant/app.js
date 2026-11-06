@@ -5,12 +5,14 @@
   const AutoContentPack = window.ClipRewardAutoContentPack;
   const AutoVideoRenderer = window.ClipRewardAutoVideoRenderer;
   const ZipExport = window.ClipRewardZipExport;
+  const DiscoveryAlerts = window.ClipRewardDiscoveryAlerts;
   let currentAutoContentPack = null;
   let currentAutoVideoUrl = "";
   let currentAutoMediaVideoUrl = "";
   let currentAutoMediaCampaignUrl = "";
   let autoMediaVideoBusy = false;
   let autoMediaVideoController = null;
+  let discoveryAlertObserver = null;
   const STORAGE_KEY = "clipreward-studio-v1";
   const SUBMISSION_ALERTS_ENABLED_KEY = "clipreward-submission-alerts-enabled-v1";
   const SUBMISSION_ALERTS_SENT_KEY = "clipreward-submission-alerts-sent-v1";
@@ -1436,9 +1438,6 @@
       discoveryState = { campaigns: merged.campaigns, scans: [scan, ...(discoveryState.scans || [])].slice(0, 50) };
       if (!window.ClipRewardDiscovery.writeState(discoveryState)) throw new Error("Browser storage is full or unavailable; discoveries were not saved.");
       $("discovery-status").textContent = result.summary.found + " campaigns checked · " + merged.newCount + " new · " + result.summary.high + " high-information leads. Third-party data, not verified availability.";
-      if (merged.newCount > 0 && discoverySettings.notify && "Notification" in window && Notification.permission === "granted") {
-        new Notification("ClipReward · new campaign leads", { body: merged.newCount + " new lead(s) found. Open the app to review and verify them." });
-      }
       renderDiscovery();
     } catch (error) {
       const message = error && error.message ? error.message : "Discovery scan failed.";
@@ -1450,6 +1449,57 @@
       discoveryBusy = false;
       $("discovery-scan-now").disabled = false;
     }
+  }
+
+  function updateDiscoveryAlertUi() {
+    const button = $("discovery-notify");
+    const status = $("discovery-alert-status");
+    if (!button || !status) return;
+    if (!("Notification" in window)) {
+      button.disabled = true;
+      button.textContent = "Alerts unavailable";
+      status.textContent = "This browser does not support notifications. Official discovery still refreshes while the app is open.";
+      return;
+    }
+    button.disabled = false;
+    if (Notification.permission === "denied") {
+      button.textContent = "Notifications blocked";
+      status.textContent = "Notifications are blocked by the browser. Allow them in site settings to enable campaign alerts.";
+    } else if (discoverySettings.notify && Notification.permission === "granted") {
+      button.textContent = "Turn off official alerts";
+      status.textContent = "Enabled: one alert for each newly discovered official public campaign. The app must be open to check updated snapshots.";
+    } else {
+      button.textContent = "Enable official campaign alerts";
+      status.textContent = "Alerts are off. The first successful scan quietly sets a baseline; later new official campaigns can trigger an alert.";
+    }
+  }
+
+  function notifyNewOfficialCampaigns(campaigns) {
+    if (!discoveryAlertObserver || !DiscoveryAlerts) return;
+    const observed = discoveryAlertObserver.observe(campaigns);
+    if (!observed.ok || observed.baseline || !observed.newCampaigns.length ||
+        !discoverySettings.notify || !("Notification" in window) || Notification.permission !== "granted") return;
+    const found = observed.newCampaigns;
+    const names = found.slice(0, 3).map((item) => item.title).join(", ");
+    const remaining = Math.max(0, found.length - 3);
+    const body = found.length + " new official public campaign(s): " + names +
+      (remaining ? " and " + remaining + " more." : ".") + " Open the official pages to verify current rules and eligibility.";
+    const options = {
+      body,
+      icon: "./icon.svg",
+      badge: "./icon.svg",
+      tag: "clipreward-discovery-" + found.map((item) => item.key).join("|").slice(0, 120),
+      renotify: false,
+      data: { url: "./#campaign-finder" }
+    };
+    try {
+      const notice = new Notification("ClipReward · new official campaigns", options);
+      notice.onclick = () => {
+        window.focus();
+        location.hash = "#campaign-finder";
+        notice.close();
+      };
+    } catch (_) {}
   }
 
   async function syncScheduledSnapshot() {
@@ -1483,6 +1533,7 @@
       const merged = window.ClipRewardDiscovery.mergeHistory(discoveryState.campaigns, result.campaigns);
       discoveryState = { campaigns: merged.campaigns, scans: discoveryState.scans || [] };
       if (!window.ClipRewardDiscovery.writeState(discoveryState)) throw new Error("Snapshot loaded, but the browser could not save its local cache.");
+      if (lastScan.status === "success") notifyNewOfficialCampaigns(result.campaigns);
       const pageDetails = result.campaignDetails || [];
       const fetchedPages = pageDetails.filter((item) => item.status === "ok").length;
       const failedPages = pageDetails.filter((item) => item.status === "unavailable").length;
@@ -1537,6 +1588,7 @@
       discoveryState = { campaigns: merged.campaigns, scans: discoveryState.scans || [] };
       if (!window.ClipRewardDiscovery.writeState(discoveryState)) throw new Error("Backend connected, but the browser could not save its local discovery cache.");
       const lastScan = result.status.lastScan;
+      if (lastScan && lastScan.status === "success") notifyNewOfficialCampaigns(result.campaigns);
       const backendMessage = result.status.lastError
         ? "Backend reachable; last scan reported an error: " + result.status.lastError
         : result.status.enabled
@@ -1568,6 +1620,15 @@
 
   function configureDiscovery() {
     discoverySettings = window.ClipRewardDiscovery.readSettings();
+    discoveryAlertObserver = null;
+    if (DiscoveryAlerts && typeof DiscoveryAlerts.createObserver === "function") {
+      try { discoveryAlertObserver = DiscoveryAlerts.createObserver({ storage: window.localStorage }); }
+      catch (_) {
+        try { discoveryAlertObserver = DiscoveryAlerts.createObserver(); }
+        catch (_) { discoveryAlertObserver = null; }
+      }
+    }
+    updateDiscoveryAlertUi();
     if (scheduledSnapshotRefreshTimer) window.clearInterval(scheduledSnapshotRefreshTimer);
     scheduledSnapshotRefreshTimer = window.setInterval(refreshScheduledSnapshotIfDue, 60 * 1000);
     document.addEventListener("visibilitychange", refreshScheduledSnapshotIfDue);
@@ -1604,11 +1665,25 @@
     });
     $("discovery-scan-now").addEventListener("click", () => runDiscoveryScan(false));
     $("discovery-notify").addEventListener("click", async () => {
+      if (discoverySettings.notify) {
+        discoverySettings.notify = false;
+        window.ClipRewardDiscovery.writeSettings(discoverySettings);
+        updateDiscoveryAlertUi();
+        showToast("Official campaign alerts turned off.");
+        return;
+      }
       if (!("Notification" in window)) { showToast("Browser notifications are not supported here."); return; }
-      const permission = await Notification.requestPermission();
-      discoverySettings.notify = permission === "granted";
-      window.ClipRewardDiscovery.writeSettings(discoverySettings);
-      showToast(discoverySettings.notify ? "New-discovery notifications enabled." : "Notification permission was not granted.");
+      try {
+        const permission = Notification.permission === "granted" ? "granted" : await Notification.requestPermission();
+        discoverySettings.notify = permission === "granted";
+        window.ClipRewardDiscovery.writeSettings(discoverySettings);
+        updateDiscoveryAlertUi();
+        showToast(discoverySettings.notify ? "Official campaign alerts enabled." : "Notification permission was not granted.");
+      } catch (_) {
+        discoverySettings.notify = false;
+        updateDiscoveryAlertUi();
+        showToast("Could not request notification permission in this browser.");
+      }
     });
     renderDiscovery();
     if (discoverySettings.backendUrl) {

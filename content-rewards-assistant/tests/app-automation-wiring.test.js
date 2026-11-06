@@ -10,6 +10,7 @@ const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const packSource = fs.readFileSync(path.join(root, "auto-content-pack.js"), "utf8");
 const videoRenderer = fs.readFileSync(path.join(root, "auto-video-renderer.js"), "utf8");
 const zipExporter = fs.readFileSync(path.join(root, "zip-export.js"), "utf8");
+const discoveryAlerts = fs.readFileSync(path.join(root, "discovery-alerts.js"), "utf8");
 const serviceWorker = fs.readFileSync(path.join(root, "service-worker.js"), "utf8");
 
 test("fresh public Promising campaigns are imported automatically across supported platforms", () => {
@@ -51,7 +52,7 @@ test("the best fresh public campaign automatically generates a bilingual downloa
   assert.ok(videoRenderer.includes("function createSubtitles(pack, language)"));
   assert.ok(html.includes('src="./auto-content-pack.js"'));
   assert.ok(packSource.includes("This is a local template pack, not an AI-generated or rendered video file."));
-  assert.ok(serviceWorker.includes("clipreward-static-v48"));
+  assert.ok(serviceWorker.includes("clipreward-static-v49"));
   assert.ok(serviceWorker.includes("./auto-content-pack.js"));
   assert.ok(serviceWorker.includes("./auto-video-renderer.js"));
   assert.ok(html.includes('id="auto-content-pack-create-video"'));
@@ -78,6 +79,23 @@ test("the best fresh public campaign automatically generates a bilingual downloa
   assert.ok(html.includes('id="auto-content-pack-media-preview"'));
   assert.ok(html.includes('id="auto-content-pack-media-download"'));
   assert.ok(html.includes("Everything renders locally on this device."));
+});
+
+test("official campaign alerts use a quiet first-scan baseline and deduplicate only verified new listings", () => {
+  assert.ok(app.includes("const DiscoveryAlerts = window.ClipRewardDiscoveryAlerts"));
+  assert.ok(app.includes("DiscoveryAlerts.createObserver"));
+  assert.ok(app.includes("function notifyNewOfficialCampaigns(campaigns)"));
+  assert.ok(app.includes('if (lastScan.status === "success") notifyNewOfficialCampaigns(result.campaigns)'));
+  assert.ok(app.includes('if (lastScan && lastScan.status === "success") notifyNewOfficialCampaigns(result.campaigns)'));
+  assert.ok(!app.includes('new Notification("ClipReward · new campaign leads"'));
+  assert.ok(discoveryAlerts.includes('sourceVerification || row.verification'));
+  assert.ok(discoveryAlerts.includes('row.notSeenInLatestScan !== false'));
+  assert.ok(discoveryAlerts.includes("function createObserver(options)"));
+  assert.ok(html.includes('src="./discovery-alerts.js"'));
+  assert.ok(serviceWorker.includes('./discovery-alerts.js'));
+  assert.ok(html.includes('id="discovery-alert-status"'));
+  assert.ok(html.indexOf('id="discovery-notify"') < html.indexOf('<div class="discovery-controls" hidden>'));
+  assert.ok(serviceWorker.includes("clipreward-static-v49"));
 });
 
 test("automatic campaign draft preparation is safe and does not overwrite existing user work", () => {

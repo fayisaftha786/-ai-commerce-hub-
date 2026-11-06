@@ -53,13 +53,13 @@ test("builds a fresh bilingual content pack for every supported accepted platfor
 
 test("uses only tags and mentions explicitly found in the public brief", () => {
   const pack = Pack.create(row());
-  assert.deepEqual(pack.requiredHashtags, ["#SampleCampaign", "#CreatorTips"]);
-  assert.deepEqual(pack.requiredMentions, ["@samplebrand"]);
+  assert.deepEqual(pack.hashtagsFound, ["#SampleCampaign", "#CreatorTips"]);
+  assert.deepEqual(pack.mentionsFound, ["@samplebrand"]);
   const noTags = Pack.create(row({
     brief: { ...row().brief, hashtags: [], mentions: [], requirementLines: [] }
   }));
-  assert.deepEqual(noTags.requiredHashtags, []);
-  assert.deepEqual(noTags.requiredMentions, []);
+  assert.deepEqual(noTags.hashtagsFound, []);
+  assert.deepEqual(noTags.mentionsFound, []);
   assert.match(Pack.toText(noTags), /None detected/);
 });
 

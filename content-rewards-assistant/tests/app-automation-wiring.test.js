@@ -39,7 +39,7 @@ test("the best fresh public campaign automatically generates a bilingual downloa
   assert.ok(html.includes('id="auto-content-pack-copy"'));
   assert.ok(html.includes('src="./auto-content-pack.js"'));
   assert.ok(packSource.includes("This is a local template pack, not an AI-generated or rendered video file."));
-  assert.ok(serviceWorker.includes("clipreward-static-v45"));
+  assert.ok(serviceWorker.includes("clipreward-static-v46"));
   assert.ok(serviceWorker.includes("./auto-content-pack.js"));
   assert.ok(serviceWorker.includes("./auto-video-renderer.js"));
   assert.ok(html.includes('id="auto-content-pack-create-video"'));
@@ -53,6 +53,19 @@ test("the best fresh public campaign automatically generates a bilingual downloa
   assert.ok(videoRenderer.includes("textOnly: true"));
   assert.ok(videoRenderer.includes("video/webm"));
   assert.ok(!videoRenderer.includes("video/mp4"));
+  assert.ok(html.includes("Use your own photos/videos"));
+  assert.ok(html.includes("Optional narration / licensed background audio"));
+  assert.ok(videoRenderer.includes("renderWithMedia"));
+  assert.ok(app.includes("AutoVideoRenderer.renderWithMedia(renderPack"));
+  assert.ok(videoRenderer.includes("Studio.validateFiles(mediaFiles, audioFile || null)"));
+  assert.ok(html.includes('id="auto-content-pack-media"'));
+  assert.ok(html.includes('id="auto-content-pack-audio"'));
+  assert.ok(html.includes('id="auto-content-pack-rights"'));
+  assert.ok(html.includes('id="auto-content-pack-rules"'));
+  assert.ok(html.includes('id="auto-content-pack-create-media-video"'));
+  assert.ok(html.includes('id="auto-content-pack-media-preview"'));
+  assert.ok(html.includes('id="auto-content-pack-media-download"'));
+  assert.ok(html.includes("Everything renders locally on this device."));
 });
 
 test("automatic campaign draft preparation is safe and does not overwrite existing user work", () => {

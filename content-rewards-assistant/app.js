@@ -6,6 +6,10 @@
   const AutoVideoRenderer = window.ClipRewardAutoVideoRenderer;
   let currentAutoContentPack = null;
   let currentAutoVideoUrl = "";
+  let currentAutoMediaVideoUrl = "";
+  let currentAutoMediaCampaignUrl = "";
+  let autoMediaVideoBusy = false;
+  let autoMediaVideoController = null;
   const STORAGE_KEY = "clipreward-studio-v1";
   const SUBMISSION_ALERTS_ENABLED_KEY = "clipreward-submission-alerts-enabled-v1";
   const SUBMISSION_ALERTS_SENT_KEY = "clipreward-submission-alerts-sent-v1";
@@ -919,6 +923,19 @@
       $("auto-content-pack-create-video")
     ];
     if (!section || !status || !meta || !body) return;
+    const nextMediaCampaignUrl = row && row.url ? String(row.url) : "";
+    if (nextMediaCampaignUrl !== currentAutoMediaCampaignUrl) {
+      clearAutoContentPackMediaOutput();
+      const mediaInput = $("auto-content-pack-media");
+      const audioInput = $("auto-content-pack-audio");
+      const rightsConfirm = $("auto-content-pack-rights");
+      const rulesConfirm = $("auto-content-pack-rules");
+      if (mediaInput) mediaInput.value = "";
+      if (audioInput) audioInput.value = "";
+      if (rightsConfirm) rightsConfirm.checked = false;
+      if (rulesConfirm) rulesConfirm.checked = false;
+      currentAutoMediaCampaignUrl = nextMediaCampaignUrl;
+    }
     currentAutoContentPack = null;
     buttons.forEach((button) => { if (button) button.disabled = true; });
     if (currentAutoVideoUrl) { URL.revokeObjectURL(currentAutoVideoUrl); currentAutoVideoUrl = ""; }
@@ -931,10 +948,25 @@
       videoButton.dataset.bound = "true";
       videoButton.addEventListener("click", createAutoContentPackVideo);
     }
+    const mediaVideoButton = $("auto-content-pack-create-media-video");
+    if (mediaVideoButton && mediaVideoButton.dataset.bound !== "true") {
+      mediaVideoButton.dataset.bound = "true";
+      mediaVideoButton.addEventListener("click", createAutoContentPackMediaVideo);
+    }
+    ["auto-content-pack-media", "auto-content-pack-audio", "auto-content-pack-rights", "auto-content-pack-rules"]
+      .forEach((id) => {
+        const control = $(id);
+        if (control && control.dataset.bound !== "true") {
+          control.dataset.bound = "true";
+          control.addEventListener("change", handleAutoContentPackMediaInputChange);
+        }
+      });
+    updateAutoContentPackMediaButton();
     meta.innerHTML = "";
     body.innerHTML = "";
     if (!row) {
       status.textContent = emptyMessage || "Waiting for a fresh, readable and unlocked Promising campaign.";
+      updateAutoContentPackMediaButton();
       return;
     }
     if (!AutoContentPack || typeof AutoContentPack.create !== "function") {
@@ -944,10 +976,12 @@
     const pack = AutoContentPack.create(row);
     if (!pack.ok) {
       status.textContent = pack.error;
+      updateAutoContentPackMediaButton();
       return;
     }
     currentAutoContentPack = pack;
     buttons.forEach((button) => { if (button) button.disabled = false; });
+    updateAutoContentPackMediaButton();
     status.textContent = "Ready · local bilingual template pack · " + pack.platformVariants.length +
       " accepted platform variant(s). Download or copy it; verify the live campaign brief before production.";
     const chips = [
@@ -992,6 +1026,98 @@
       '</div><p class="auto-pack-boundary">This is a video-ready script/storyboard pack, not a rendered video. Use original footage or expressly approved assets. No payout, approval, result or personal-experience claim is invented.</p>';
   }
 
+  function clearAutoContentPackMediaOutput() {
+    if (autoMediaVideoController && autoMediaVideoBusy) autoMediaVideoController.abort();
+    if (currentAutoMediaVideoUrl) { URL.revokeObjectURL(currentAutoMediaVideoUrl); currentAutoMediaVideoUrl = ""; }
+    const preview = $("auto-content-pack-media-preview");
+    const download = $("auto-content-pack-media-download");
+    if (preview) { if (typeof preview.pause === "function") preview.pause(); if (typeof preview.removeAttribute === "function") preview.removeAttribute("src"); preview.hidden = true; }
+    if (download) { if (typeof download.removeAttribute === "function") download.removeAttribute("href"); download.hidden = true; }
+  }
+
+  function updateAutoContentPackMediaButton() {
+    const button = $("auto-content-pack-create-media-video");
+    const status = $("auto-content-pack-media-status");
+    const mediaInput = $("auto-content-pack-media");
+    const audioInput = $("auto-content-pack-audio");
+    const rights = $("auto-content-pack-rights");
+    const rules = $("auto-content-pack-rules");
+    if (!button) return;
+    const files = mediaInput && mediaInput.files ? Array.from(mediaInput.files) : [];
+    const audioFile = audioInput && audioInput.files && audioInput.files[0] ? audioInput.files[0] : null;
+    let validationError = "";
+    const Studio = window.ClipRewardVideoStudio;
+    if (files.length && Studio && typeof Studio.validateFiles === "function") {
+      try { Studio.validateFiles(files, audioFile); } catch (error) { validationError = error.message || "Selected media is not supported."; }
+    }
+    const allowed = !!currentAutoContentPack && files.length > 0 && !!(rights && rights.checked) && !!(rules && rules.checked) && !validationError && !autoMediaVideoBusy;
+    button.disabled = !allowed;
+    if (!status || autoMediaVideoBusy) return;
+    if (validationError) status.textContent = validationError;
+    else if (!files.length) status.textContent = "Choose up to 8 photos/videos. Optional narration or licensed music can be added separately.";
+    else if (!(rights && rights.checked) || !(rules && rules.checked)) status.textContent = files.length + " media file(s) selected. Confirm asset rights and that you checked the live campaign brief.";
+    else status.textContent = files.length + " media file(s)" + (audioFile ? " + audio track selected" : " · no audio track") + ". Ready to render locally.";
+  }
+
+  function handleAutoContentPackMediaInputChange() {
+    clearAutoContentPackMediaOutput();
+    updateAutoContentPackMediaButton();
+  }
+
+  async function createAutoContentPackMediaVideo() {
+    const button = $("auto-content-pack-create-media-video");
+    const status = $("auto-content-pack-media-status");
+    const preview = $("auto-content-pack-media-preview");
+    const download = $("auto-content-pack-media-download");
+    const mediaInput = $("auto-content-pack-media");
+    const audioInput = $("auto-content-pack-audio");
+    const rights = $("auto-content-pack-rights");
+    const rules = $("auto-content-pack-rules");
+    if (!currentAutoContentPack || !AutoVideoRenderer || typeof AutoVideoRenderer.renderWithMedia !== "function") {
+      if (status) status.textContent = "A fresh, unlocked Promising campaign is required before rendering.";
+      return;
+    }
+    const files = mediaInput && mediaInput.files ? Array.from(mediaInput.files) : [];
+    const audioFile = audioInput && audioInput.files && audioInput.files[0] ? audioInput.files[0] : null;
+    if (!files.length || !(rights && rights.checked) || !(rules && rules.checked)) {
+      updateAutoContentPackMediaButton();
+      return;
+    }
+    const renderPack = currentAutoContentPack;
+    autoMediaVideoBusy = true;
+    autoMediaVideoController = new AbortController();
+    if (button) { button.disabled = true; button.textContent = "Rendering…"; }
+    if (status) status.textContent = "Preparing your authorised media and campaign-matched captions…";
+    try {
+      const output = await AutoVideoRenderer.renderWithMedia(renderPack, files, audioFile, {
+        signal: autoMediaVideoController.signal,
+        onProgress: (value) => { if (status) status.textContent = "Rendering locally on this device… " + value + "%"; }
+      });
+      if (!currentAutoContentPack || currentAutoContentPack.campaign.url !== renderPack.campaign.url) {
+        throw new Error("The selected campaign changed during export. Choose media and render again.");
+      }
+      clearAutoContentPackMediaOutput();
+      currentAutoMediaVideoUrl = URL.createObjectURL(output.blob);
+      if (preview) { preview.src = currentAutoMediaVideoUrl; preview.hidden = false; if (typeof preview.load === "function") preview.load(); }
+      if (download) {
+        const slug = renderPack.campaign.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 54) || "campaign";
+        download.href = currentAutoMediaVideoUrl;
+        download.download = "clipreward-campaign-video-" + slug + "." + output.extension;
+        download.hidden = false;
+      }
+      const mb = (Number(output.size || output.blob.size) / (1024 * 1024)).toFixed(2);
+      if (status) status.textContent = "Finished · " + output.width + "×" + output.height + " · " + output.duration.toFixed(1) + " seconds · " + output.formatLabel + " · " + mb + " MB. Preview and download your video.";
+      showToast("Campaign video rendered from your media.");
+    } catch (error) {
+      if (status) status.textContent = error && error.message ? error.message : "Media video rendering failed in this browser.";
+      showToast(error && error.message ? error.message : "Media video rendering failed.");
+    } finally {
+      autoMediaVideoBusy = false;
+      autoMediaVideoController = null;
+      if (button) button.textContent = "▶ Make video from my media";
+      updateAutoContentPackMediaButton();
+    }
+  }
   async function createAutoContentPackVideo() {
     const button = $("auto-content-pack-create-video");
     const status = $("auto-content-pack-status");

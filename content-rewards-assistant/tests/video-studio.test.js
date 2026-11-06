@@ -96,6 +96,14 @@ test("does not report browser rendering support when required APIs are missing",
   assert.equal(supported.formatLabel, "WebM");
 });
 
+test("accepts campaign-matched video durations and rejects unsupported lengths", () => {
+  assert.equal(Studio.validateDuration(45), 45);
+  assert.equal(Studio.validateDuration("30"), 30);
+  assert.throws(() => Studio.validateDuration(14), /15 to 60 seconds/);
+  assert.throws(() => Studio.validateDuration(61), /15 to 60 seconds/);
+  assert.throws(() => Studio.validateDuration(30.5), /whole-number/);
+});
+
 test("validates common media, item limits and total size before rendering", () => {
   const result = Studio.validateFiles([
     video("one.mp4", 10_000, "video/mp4"),
@@ -317,7 +325,7 @@ test("Clip Studio exposes media upload, audio, preflight, progress, preview and 
   assert.match(html, /video-studio-ui\.js/);
   assert.ok(html.includes('id="video-device-test-button"'));
   assert.equal(typeof Studio.renderDeviceTest, "function");
-  assert.match(worker, /clipreward-static-v45/);
+  assert.match(worker, /clipreward-static-v46/);
   assert.match(worker, /video-studio\.js/);
   assert.match(worker, /video-studio-ui\.js/);
   assert.match(packageJson.scripts.check, /content-rewards-assistant\/video-studio\.js/);

@@ -12,7 +12,7 @@ test("fresh public Promising campaigns are imported automatically across support
   assert.ok(app.includes("function autoImportFreshPromisingCampaigns(result)"));
   assert.ok(app.includes('const targets = ["Instagram", "Facebook", "YouTube"]'));
   assert.ok(app.includes("function getDiscoveryAutomationAnalysis()"));
-  assert.ok(app.includes("autoImportFreshPromisingCampaigns(automationResult)"));
+  assert.ok(app.includes("autoImportFreshPromisingCampaigns(result)"));
   assert.ok(app.includes("buildTrackerImportPlan("));
   assert.ok(app.includes("result.campaigns"));
   assert.ok(!app.includes("data-discovery-import"));

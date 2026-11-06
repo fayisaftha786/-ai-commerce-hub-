@@ -1492,21 +1492,14 @@
       renotify: false,
       data: { url: "./#campaign-finder" }
     };
-    (async () => {
-      let delivered = false;
-      if ("serviceWorker" in navigator) {
-        try {
-          const registration = await navigator.serviceWorker.ready;
-          if (registration && typeof registration.showNotification === "function") {
-            await registration.showNotification("ClipReward · new official campaigns", options);
-            delivered = true;
-          }
-        } catch (_) {}
-      }
-      if (!delivered && typeof Notification === "function") {
-        try { new Notification("ClipReward · new official campaigns", options); } catch (_) {}
-      }
-    })();
+    try {
+      const notice = new Notification("ClipReward · new official campaigns", options);
+      notice.onclick = () => {
+        window.focus();
+        location.hash = "#campaign-finder";
+        notice.close();
+      };
+    } catch (_) {}
   }
 
   async function syncScheduledSnapshot() {

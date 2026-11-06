@@ -2,8 +2,8 @@
 
 **Repository:** `fayisaftha786/-ai-commerce-hub-`  
 **App:** `content-rewards-assistant/`  
-**Audited main commit:** `dce04c0db9462cc6bd09e97b66104e74f8405b0a`  
-**Latest verified public snapshot:** `2026-11-05T19:59:17.482Z` (2026-11-06 01:29 IST)  
+**Audited main commit:** `f840bbe83b6ad16f50d50189681a5b1dc2df3a36`  
+**Latest verified public snapshot:** `2026-11-06T00:30:28.904Z` (2026-11-06 06:00 IST)  
 **Audit prepared:** 2026-11-06
 
 ## Executive result
@@ -18,24 +18,26 @@ The committed `content-rewards-assistant/discovery-snapshot.json` reports:
 
 | Measurement | Verified result |
 |---|---:|
-| Saved campaign records | 123 |
+| Saved campaign records | 125 |
 | Present in latest official Discover scan | 69 |
-| Historical / absent from latest scan | 54 |
+| Historical / absent from latest scan | 56 |
 | Official current detail pages attempted | 69 |
 | Official current detail pages readable | 69 / 69 |
 | Current campaigns with Join-locked creator requirements | 69 / 69 |
 | Current campaigns with a detected deadline | 0 / 69 |
 | Current High-information campaigns | 0 |
 | Current Medium-information campaigns | 69 |
-| Newly discovered in this scan | 5 |
+| Newly discovered in this scan | 1 |
 
-Platform counts overlap because a campaign can support multiple platforms: Instagram 61, YouTube 48, Facebook 2, X 10 and TikTok 64. TikTok is not an India posting destination in this app.
+Platform counts overlap because a campaign can support multiple platforms: Instagram 63, YouTube 48, Facebook 2, X 11 and TikTok 63. TikTok is not an India posting destination in this app.
 
 **Interpretation:** public campaign pages were fetched successfully, but this does not mean their full brief, eligibility or creator access is known. Every current campaign remains **Verify first** because the creator requirements are hidden until Join and no deadline was detected. Do not infer eligibility, acceptance, guaranteed earnings or payout from a public CPM figure.
 
+**Loader completeness fix (PR #223):** the scanner stores up to 100 public campaign details, but the app previously retained only the first 60. In the latest 100-detail snapshot, only 29 of 69 current campaign details were in those first 60 records. PR #223 aligned the app loader with the scanner's 100-page cap and added a regression test verifying that all 100 records, including record 100, survive snapshot loading. After the merge, all **69/69** current campaign detail pages are present in the loaded 100 records.
+
 ## 2. Workflow execution evidence
 
-The latest scheduled discovery workflow was run **42099057261**:
+The latest scheduled discovery workflow after the loader fix was run **42137230516**:
 
 - public campaign discovery step: success
 - snapshot quality audit: success
@@ -46,16 +48,18 @@ The latest scheduled discovery workflow was run **42099057261**:
 - Pages artifact upload: success
 - Pages deploy: success
 
-The resulting Pages deployment run **42101794351** also completed successfully, including source validation, creator-program source checks, static-site assembly, artifact upload and deployment.
+The post-PR #222 Pages deployment run **42136343974** completed successfully. After the loader fix was merged, the main Pages deployment **42137230437** also completed successfully.
 
-The latest main-code CI run reviewed for the merged ClipReward change was **42048149604** (PR #221 merge commit `4fc93a03fc2b087ccef8866c8ad9bac752de3bef`). It passed JavaScript syntax checks, 588 main tests, 199 ClipReward tests, Cloudflare Worker bundle validation, local D1/R2 runtime smoke, backend container build and same-origin backend smoke. The later `dce04c0` main commit refreshed the discovery snapshot; its scheduled workflow separately passed snapshot audit and Pages build/deploy. A green CI or Pages workflow is not evidence that a private Cloudflare account or social OAuth publisher was deployed.
+The latest post-fix main CI run was **42137230468** and passed syntax, the full test suite, Cloudflare Worker bundle validation, local D1/R2 runtime smoke, backend container build and same-origin backend smoke. PR [#223](https://github.com/fayisaftha786/-ai-commerce-hub-/pull/223) introduced the loader correction and its CI run **42137074425** passed before merge. The post-fix scheduled discovery run **42137230516** completed official scan, snapshot audit, official creator-program source checks, commit and Pages deployment successfully.
+
+A green CI or Pages workflow is not evidence that a private Cloudflare account or social OAuth publisher was deployed. Cloudflare and Oracle backend jobs remained skipped by their deployment gates on the merge commit.
 
 ## 3. What is automatic now
 
 | Capability | Current state | Important boundary |
 |---|---|---|
 | Official Content Rewards public Discover scan | Active GitHub Actions schedule, nominally every 6 hours UTC | Best-effort GitHub schedule, not an SLA |
-| Read public campaign detail pages | Up to 100 public detail URLs; latest scan read 69/69 | No login, cookies, join-only data or private invitations |
+| Read public campaign detail pages | Up to 100 public URLs; app loader also retains 100; latest 69/69 current pages available after loading | No login, cookies, join-only data or private invitations |
 | Snapshot, dedupe and current-vs-historical separation | Implemented | A public listing is not proof the campaign is still accepting a creator |
 | Campaign rule and payout analysis | Implemented from visible text | Missing and locked fields remain unknown; not an earnings forecast |
 | Viewer-country payout warnings | Implemented | Campaign payout can depend on where views originate, not just the creator's account country |
@@ -134,8 +138,9 @@ Until this real-device test passes, browser-video export on this specific phone 
 
 - [Deployed ClipReward Studio](https://fayisaftha786.github.io/-ai-commerce-hub-/content-rewards-assistant/)
 - [Scheduled discovery workflow](https://github.com/fayisaftha786/-ai-commerce-hub-/actions/workflows/scheduled-content-rewards-discovery.yml)
-- [Successful discovery run 42099057261](https://github.com/fayisaftha786/-ai-commerce-hub-/actions/runs/42099057261)
-- [Successful Pages deployment 42101794351](https://github.com/fayisaftha786/-ai-commerce-hub-/actions/runs/42101794351)
-- [Successful main CI 42048149604](https://github.com/fayisaftha786/-ai-commerce-hub-/actions/runs/42048149604)
+- [Successful post-fix discovery and snapshot deployment 42137230516](https://github.com/fayisaftha786/-ai-commerce-hub-/actions/runs/42137230516)
+- [Successful post-fix main Pages deployment 42137230437](https://github.com/fayisaftha786/-ai-commerce-hub-/actions/runs/42137230437)
+- [Successful post-fix main CI 42137230468](https://github.com/fayisaftha786/-ai-commerce-hub-/actions/runs/42137230468)
+- [Loader fix PR #223 and passing CI](https://github.com/fayisaftha786/-ai-commerce-hub-/pull/223)
 - [Malayalam setup guide](CLIPREWARD_AUTOMATION_SETUP_ML.md)
 - [Cloudflare no-VM setup](CLIPREWARD_CLOUDFLARE_SETUP.md)

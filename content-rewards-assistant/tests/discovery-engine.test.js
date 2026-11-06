@@ -357,12 +357,14 @@ test("ClipReward auto shortlist is wired into the radar and deep findings panel"
   assert.match(app, /analyzePublicCampaigns/);
   assert.match(app, /renderDeepCampaignAnalysis/);
   assert.match(app, /data-deep-open/);
-  assert.match(app, /data-deep-draft/);
-  assert.match(app, /Campaign title and platform prepared/);
-  assert.match(app, /Add only a benefit you can verify/);
+  assert.match(app, /function autoImportFreshPromisingCampaigns/);
+  assert.match(app, /function autoPrepareDraftFromCampaign/);
+  assert.doesNotMatch(app, /data-deep-draft/);
+  assert.match(app, /Automatically prepared from the top fresh Promising campaign/);
+  assert.match(app, /No product benefit or reward claim was invented/);
   assert.match(app, /Brief locked · join required/);
   assert.match(app, /No deadline found/);
-  assert.match(app, /automatic import is blocked/);
+  assert.match(html, /AUTO-IMPORT ON/);
   assert.match(worker, /clipreward-static-v43/);
   assert.match(worker, /discovery-engine\.js/);
 });

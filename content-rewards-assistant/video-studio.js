@@ -91,7 +91,7 @@
     return { count: list.length, mediaBytes: total, audioBytes: audioFile ? audioFile.size : 0 };
   }
 
-  function splitCaptions(value) {
+  function validateDuration(value) {\n    const duration = Number(value);\n    if (!Number.isInteger(duration) || duration < 15 || duration > 60) {\n      throw new Error("Choose a whole-number export duration from 15 to 60 seconds.");\n    }\n    return duration;\n  }\n\n  function splitCaptions(value) {
     return String(value || "").replace(/\r/g, "").split("\n")
       .map((line) => line.trim()).filter(Boolean).slice(0, MAX_MEDIA_FILES);
   }
@@ -710,6 +710,6 @@
 
   return Object.freeze({
     MAX_MEDIA_FILES, MAX_MEDIA_BYTES, MAX_AUDIO_BYTES, MAX_SOCIAL_HANDOFF_BYTES, WIDTH, HEIGHT, FPS, MIME_CANDIDATES,
-    chooseMimeType, createMediaRecorder, getCapabilities, fileKind, validateFiles, splitCaptions, validateRenderedMetadata, verifyBlob, buildSocialHandoff, inspectCampaignRules, render, renderDeviceTest
+    chooseMimeType, createMediaRecorder, getCapabilities, fileKind, validateFiles, validateDuration, splitCaptions, validateRenderedMetadata, verifyBlob, buildSocialHandoff, inspectCampaignRules, render, renderDeviceTest
   });
 });

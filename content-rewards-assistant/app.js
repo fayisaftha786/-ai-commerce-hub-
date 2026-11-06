@@ -4,6 +4,7 @@
   const PayoutForecast = window.ClipRewardPayoutForecast;
   const AutoContentPack = window.ClipRewardAutoContentPack;
   const AutoVideoRenderer = window.ClipRewardAutoVideoRenderer;
+  const ZipExport = window.ClipRewardZipExport;
   let currentAutoContentPack = null;
   let currentAutoVideoUrl = "";
   let currentAutoMediaVideoUrl = "";
@@ -922,6 +923,7 @@
       $("auto-content-pack-copy"),
       $("auto-content-pack-download-srt"),
       $("auto-content-pack-download-vtt"),
+      $("auto-content-pack-download-zip"),
       $("auto-content-pack-create-video")
     ];
     if (!section || !status || !meta || !body) return;
@@ -1155,6 +1157,120 @@
       showToast(error && error.message ? error.message : "Video export failed.");
     } finally {
       if (button) { button.disabled = !currentAutoContentPack; button.textContent = "▶ Create video automatically"; }
+    }
+  }
+
+
+  async function downloadAutoContentPackZip() {
+    const button = $("auto-content-pack-download-zip");
+    const pack = currentAutoContentPack;
+    if (!pack || !ZipExport || typeof ZipExport.createZip !== "function") {
+      showToast("A fresh campaign content pack and the offline ZIP exporter are required.");
+      return;
+    }
+    const videoUrl = currentAutoMediaVideoUrl || currentAutoVideoUrl;
+    const videoLink = currentAutoMediaVideoUrl ? $("auto-content-pack-media-download")
+      : currentAutoVideoUrl ? $("auto-content-pack-download-video") : null;
+    const videoFile = videoLink && videoLink.download ? videoLink.download : "";
+    const slug = pack.campaign.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 54) || "campaign";
+    const folder = "clipreward-" + slug;
+    const generatedAt = new Date().toISOString();
+    let videoIncluded = false;
+    if (button) { button.disabled = true; button.textContent = "Building ZIP…"; }
+    try {
+      const subtitles = AutoVideoRenderer.createSubtitles(pack, "both");
+      const rules = pack.publicRules.length
+        ? pack.publicRules.map((line, index) => (index + 1) + ". " + line).join("\n")
+        : "No explicit rule lines were recognised. Re-open the official campaign page and verify every requirement.";
+      const evidence = {
+        bundleGeneratedAt: generatedAt,
+        contentPackGeneratedAt: pack.createdAt,
+        campaign: pack.campaign,
+        sourceEvidence: pack.sourceEvidence || { pageStatus: "not supplied", pageFetchedAt: "", seenInLatestScan: false },
+        capturedRequirements: {
+          acceptedPlatforms: pack.campaign.acceptedPlatforms,
+          duration: pack.production.duration,
+          format: pack.production.format,
+          aspectRatio: pack.production.aspectRatio,
+          languages: pack.production.languages,
+          hashtagsFound: pack.hashtagsFound,
+          mentionsFound: pack.mentionsFound,
+          publicRules: pack.publicRules,
+          disclosureRules: pack.disclosureRules,
+          prohibitionRules: pack.prohibitionRules
+        },
+        video: { included: false, file: "", note: "" },
+        verificationBoundary: "This archive preserves the public evidence detected when the content pack was prepared. Downloading the ZIP does not re-fetch or verify the live campaign. Open the official URL and confirm current availability, deadline, requirements and eligibility before producing or publishing."
+      };
+      const readme = [
+        "CLIPREWARD STUDIO · COMPLETE CAMPAIGN PACK",
+        "",
+        "Campaign: " + pack.campaign.title,
+        "Official campaign page: " + pack.campaign.url,
+        "ZIP generated: " + generatedAt,
+        "Content pack generated: " + pack.createdAt,
+        "",
+        "CONTENTS",
+        "- content-pack.json: structured bilingual captions, hooks, script and storyboard.",
+        "- content-pack.txt: readable content pack and scene-by-scene voiceover.",
+        "- subtitles.srt and subtitles.vtt: bilingual timed subtitles for the five-scene storyboard.",
+        "- campaign-rules.txt: detected public rule lines; not a substitute for full official terms.",
+        "- campaign-evidence.json: source URL, freshness metadata and captured requirements.",
+        videoUrl ? "- video/: one rendered video file already created in ClipReward." : "- VIDEO-NOT-RENDERED.txt: no rendered video existed when this ZIP was built.",
+        "",
+        "IMPORTANT",
+        "Original uploaded photos, video clips and audio are not included. When present, only the rendered export is included.",
+        "The source URL is provided for re-checking; this ZIP builder does not verify the live page at download time.",
+        "This tool does not Join/Apply, verify connected accounts, publish social posts, submit a clip, read private views, approve a campaign or confirm payouts.",
+        "Use only media you own or are authorised to use. Review every caption, claim, disclosure and campaign requirement before posting."
+      ].join("\n");
+      const archiveFiles = [
+        { name: folder + "/content-pack.json", data: AutoContentPack.toJson(pack) },
+        { name: folder + "/content-pack.txt", data: AutoContentPack.toText(pack) },
+        { name: folder + "/subtitles/subtitles.srt", data: subtitles.srt },
+        { name: folder + "/subtitles/subtitles.vtt", data: subtitles.vtt },
+        { name: folder + "/evidence/campaign-rules.txt", data: rules },
+        { name: folder + "/evidence/campaign-evidence.json", data: JSON.stringify(evidence, null, 2) },
+        { name: folder + "/README.txt", data: readme }
+      ];
+      if (videoUrl) {
+        const response = await fetch(videoUrl);
+        if (!response.ok) throw new Error("The rendered video could not be read for the ZIP. Download it separately and retry.");
+        const videoBlob = await response.blob();
+        if (currentAutoContentPack !== pack || (currentAutoMediaVideoUrl || currentAutoVideoUrl) !== videoUrl) {
+          throw new Error("The campaign or rendered video changed during ZIP creation. Build the ZIP again.");
+        }
+        const match = /\.([a-z0-9]{2,5})$/i.exec(videoFile);
+        const extension = match && ["mp4", "webm"].includes(match[1].toLowerCase()) ? match[1].toLowerCase() : "webm";
+        const videoName = "campaign-video." + extension;
+        archiveFiles.push({ name: folder + "/video/" + videoName, data: videoBlob });
+        evidence.video = { included: true, file: "video/" + videoName, sizeBytes: videoBlob.size, mimeType: videoBlob.type || "unknown" };
+        archiveFiles[5] = { name: folder + "/evidence/campaign-evidence.json", data: JSON.stringify(evidence, null, 2) };
+        videoIncluded = true;
+      } else {
+        archiveFiles.push({
+          name: folder + "/VIDEO-NOT-RENDERED.txt",
+          data: "No rendered video was present when this ZIP was created. Add authorised media, render a video in ClipReward, and build the ZIP again to include it."
+        });
+      }
+      const archive = await ZipExport.createZip(archiveFiles, { date: new Date(generatedAt) });
+      if (currentAutoContentPack !== pack || (currentAutoMediaVideoUrl || currentAutoVideoUrl) !== videoUrl) {
+        throw new Error("The campaign or rendered video changed during ZIP creation. Build the ZIP again.");
+      }
+      const objectUrl = URL.createObjectURL(archive);
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.download = "clipreward-campaign-pack-" + slug + ".zip";
+      link.hidden = true;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 30000);
+      showToast(videoIncluded ? "Complete campaign ZIP downloaded with the rendered video." : "Campaign ZIP downloaded. It includes the script and subtitles; render a video and rebuild to include it.");
+    } catch (error) {
+      showToast(error && error.message ? error.message : "Complete campaign ZIP export failed.");
+    } finally {
+      if (button) { button.disabled = !currentAutoContentPack; button.textContent = "↓ Download complete campaign pack (.zip)"; }
     }
   }
 
@@ -2379,6 +2495,7 @@
   $("auto-content-pack-download-text").addEventListener("click", () => downloadAutoContentPack("text"));
   $("auto-content-pack-download-srt").addEventListener("click", () => downloadAutoContentPackSubtitles("srt"));
   $("auto-content-pack-download-vtt").addEventListener("click", () => downloadAutoContentPackSubtitles("vtt"));
+  $("auto-content-pack-download-zip").addEventListener("click", downloadAutoContentPackZip);
   $("auto-content-pack-download-json").addEventListener("click", () => downloadAutoContentPack("json"));
   $("auto-content-pack-copy").addEventListener("click", copyAutoContentPack);
   $("export-button").addEventListener("click", exportBackup);

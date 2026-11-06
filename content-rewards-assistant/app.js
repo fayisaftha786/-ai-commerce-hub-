@@ -655,7 +655,7 @@
       : autoImport.imported > 0
         ? "Automation added " + autoImport.imported + " fresh, readable Promising campaign(s) to your Tracker as Found / idea. Join-locked requirements remain unknown; a draft is prepared only from an unlocked brief."
         : autoImport.plan.summary.skippedDuplicate > 0
-          ? "All fresh, unlocked Promising campaigns are already in your Tracker. No duplicates were created."
+          ? "All fresh Promising campaigns are already in your Tracker. No duplicates were created."
           : state.campaigns.length >= Core.MAX_CAMPAIGNS
             ? "Tracker capacity reached. Export a backup before adding more campaigns."
             : lockedBriefCount > 0

@@ -941,10 +941,6 @@
       const availability = window.ClipRewardDiscovery.listingStatus(row);
       return '<article class="discovery-card"><div class="discovery-card-head"><strong>' + escapeHtml(row.title) + '</strong><span class="discovery-tier discovery-tier-' + escapeHtml(tier.toLowerCase()) + '">' + escapeHtml(tier) + ' · ' + escapeHtml(row.opportunity ? row.opportunity.score : 0) + '/100</span></div><p>' + escapeHtml(row.brand || "Brand not stated") + ' · ' + escapeHtml((row.platforms || []).join(", ") || "Platform unknown") + '</p><div class="feed-metrics"><span>' + escapeHtml(rate) + '</span><span>' + escapeHtml(minimum || freshness) + '</span></div><small class="discovery-listing-status discovery-listing-status-' + escapeHtml(availability.kind) + '"><strong>' + escapeHtml(availability.label) + '</strong> · ' + escapeHtml(availability.detail) + '</small>' + (poolTerms ? '<small>' + escapeHtml(poolTerms) + '</small>' : '') + '<small>' + escapeHtml(row.opportunity ? row.opportunity.explanation : "Verify source details.") + '</small><div class="feed-card-actions"><button class="button button-secondary" type="button" data-discovery-import="' + index + '">Analyse campaign</button>' + (row.officialUrl ? '<a class="text-button" href="' + escapeHtml(row.officialUrl) + '" target="_blank" rel="noopener noreferrer">Verify official page ↗</a>' : '') + '</div></article>';
     }).join("") : '<p class="muted small-text">No campaigns are confirmed in the latest official Discover scan. Historical records remain in deep analysis and must be rechecked before applying.</p>';
-    $("discovery-list").querySelectorAll("[data-discovery-import]").forEach((button) => button.addEventListener("click", () => {
-      campaignFeedRows = rows;
-      importFeedCampaign(Number(button.dataset.discoveryImport));
-    }));
     const history = discoveryBackendStatus && discoveryBackendStatus.lastScan
       ? [discoveryBackendStatus.lastScan]
       : discoveryStaticScans.length ? discoveryStaticScans : scans;

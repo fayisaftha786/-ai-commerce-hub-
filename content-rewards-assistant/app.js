@@ -653,15 +653,14 @@
     $("discovery-import-status").textContent = autoImport.error
       ? autoImport.error + " Existing Tracker records were preserved."
       : autoImport.imported > 0
-        ? "Automation added " + autoImport.imported + " fresh, readable, unlocked Promising campaign(s) to your Tracker as Found / idea. A safe draft was prepared when the draft area was empty."
-        : autoImport.plan.summary.skippedLocked > 0
-        ? autoImport.plan.summary.skippedLocked + " promising brief(s) are locked until Join and were not imported. " +
-          missingDeadlineCount + " current campaign(s) also have no detected deadline. No private requirements were assumed."
+        ? "Automation added " + autoImport.imported + " fresh, readable Promising campaign(s) to your Tracker as Found / idea. Join-locked requirements remain unknown; a draft is prepared only from an unlocked brief."
         : autoImport.plan.summary.skippedDuplicate > 0
           ? "All fresh, unlocked Promising campaigns are already in your Tracker. No duplicates were created."
           : state.campaigns.length >= Core.MAX_CAMPAIGNS
             ? "Tracker capacity reached. Export a backup before adding more campaigns."
-            : "No fresh, fully assessable and unlocked Promising campaign is available for automatic import. Verify / Blocked findings remain separate.";
+            : lockedBriefCount > 0
+              ? lockedBriefCount + " current campaign brief(s) still hide creator requirements until Join. No private data was guessed; verify the full brief before creating or publishing."
+              : "No fresh, fully assessable Promising campaign is available for automatic import. Verify / Blocked findings remain separate.";
     statusNode.textContent = summary.analysed + " / " + summary.totalCampaigns + " campaign records deeply analysed for " +
       summary.platform + " · checked " + new Date(summary.checkedAt).toLocaleTimeString() +
       (lastScan.source ? " · source: " + lastScan.source : "");

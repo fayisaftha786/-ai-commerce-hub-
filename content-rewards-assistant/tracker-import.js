@@ -33,6 +33,7 @@
     let skippedStale = 0;
     let skippedInvalid = 0;
     let skippedDuplicate = 0;
+    let skippedLocked = 0;
 
     rows.forEach((row) => {
       if (!row || row.state !== "promising") {
@@ -41,6 +42,10 @@
       }
       if (row.pageStatus !== "ok" || row.notSeenInLatestScan === true) {
         skippedStale += 1;
+        return;
+      }
+      if (row.brief && row.brief.hiddenRequirements && row.brief.hiddenRequirements.locked === true) {
+        skippedLocked += 1;
         return;
       }
       const url = canonicalCampaignUrl(row.url);
@@ -94,7 +99,8 @@
         skippedNotPromising,
         skippedStale,
         skippedInvalid,
-        skippedDuplicate
+        skippedDuplicate,
+        skippedLocked
       }
     };
   }

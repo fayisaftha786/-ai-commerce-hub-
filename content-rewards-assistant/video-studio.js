@@ -91,7 +91,14 @@
     return { count: list.length, mediaBytes: total, audioBytes: audioFile ? audioFile.size : 0 };
   }
 
-  function validateDuration(value) {\n    const duration = Number(value);\n    if (!Number.isInteger(duration) || duration < 15 || duration > 60) {\n      throw new Error("Choose a whole-number export duration from 15 to 60 seconds.");\n    }\n    return duration;\n  }\n\n  function splitCaptions(value) {
+  function validateDuration(value) {
+    const duration = Number(value);
+    if (!Number.isInteger(duration) || duration < 15 || duration > 60) {
+      throw new Error("Choose a whole-number export duration from 15 to 60 seconds.");
+    }
+    return duration;
+  }
+  function splitCaptions(value) {
     return String(value || "").replace(/\r/g, "").split("\n")
       .map((line) => line.trim()).filter(Boolean).slice(0, MAX_MEDIA_FILES);
   }

@@ -36,16 +36,24 @@ test("prepares a bilingual text storyboard without inventing evidence", () => {
   assert.deepEqual(result.mentions, ["@samplebrand"]);
 });
 
-test("refuses video and subtitle exports for preliminary Join-locked script packs", async () => {
+test("allows Join-locked review exports only with explicit preliminary watermark and warnings", async () => {
   const preliminary = { ...pack(), preliminaryOnly: true };
-  assert.throws(() => Renderer.prepare(preliminary), /preliminary script/);
-  assert.throws(() => Renderer.createSubtitles(preliminary), /preliminary script/);
-  await assert.rejects(
-    Renderer.renderWithMedia(preliminary, [{ name: "clip.mp4", size: 10, type: "video/mp4" }], null, {
-      studio: { validateFiles() {}, async render() { throw new Error("must not render"); } }
-    }),
-    /preliminary script/
-  );
+  const prepared = Renderer.prepare(preliminary);
+  assert.equal(prepared.preliminaryOnly, true);
+  assert.match(prepared.watermark, /PRELIMINARY.*DO NOT POST/);
+  const subtitles = Renderer.createSubtitles(preliminary);
+  assert.match(subtitles.srt, /PRELIMINARY DRAFT ONLY/);
+  assert.match(subtitles.vtt, /PRELIMINARY DRAFT ONLY/);
+  let captured = null;
+  const output = await Renderer.renderWithMedia(preliminary, [{ name: "clip.mp4", size: 10, type: "video/mp4" }], null, {
+    studio: { validateFiles() {}, async render(options) {
+      captured = options;
+      return { blob: new Blob(["draft"], { type: "video/webm" }), extension: "webm" };
+    } }
+  });
+  assert.equal(output.extension, "webm");
+  assert.equal(captured.preliminaryOnly, true);
+  assert.match(captured.watermark, /PRELIMINARY.*DO NOT POST/);
 });
 
 test("respects stated campaign duration when it fits the renderer", () => {

@@ -995,15 +995,13 @@
       return;
     }
     currentAutoContentPack = pack;
-    buttons.forEach((button, index) => {
-      if (button) button.disabled = Boolean(pack.preliminaryOnly && index >= 3);
-    });
+    buttons.forEach((button) => { if (button) button.disabled = false; });
     updateAutoContentPackMediaButton();
     status.textContent = pack.preliminaryOnly
-      ? "PRELIMINARY SCRIPT ONLY · " + (pack.sourceEvidence.hiddenRequirementCount == null ? "Creator requirements" : pack.sourceEvidence.hiddenRequirementCount + " creator requirement(s)") +
-        " hidden until Join. Text/JSON/copy only; unlock and re-analyse the complete brief before video, subtitles, ZIP or publishing."
+      ? "PRELIMINARY DRAFT ONLY · " + (pack.sourceEvidence.hiddenRequirementCount == null ? "Creator requirements" : pack.sourceEvidence.hiddenRequirementCount + " creator requirement(s)") +
+        " hidden until Join. Review exports are available with permanent warnings; do not post until the complete live brief is verified."
       : "Ready · local bilingual template pack · " + pack.platformVariants.length +
-        " accepted platform variant(s). Download or copy it; verify the live campaign brief before production.";
+        " accepted platform variant(s). Review the live campaign brief before production.";
     const chips = [
       ["Status", pack.preliminaryOnly ? "PRELIMINARY ONLY · NOT CLEARED" : "Public brief readable"],
       ["Campaign", pack.campaign.title],
@@ -1038,7 +1036,7 @@
       ? pack.publicRules.slice(0, 10).map((line) => '<li>' + escapeHtml(line) + '</li>').join("")
       : '<li>No explicit rules were recognised. Review the full official campaign brief.</li>';
     body.innerHTML = (pack.preliminaryOnly
-      ? '<div class="auto-pack-boundary"><strong>PRELIMINARY ONLY · DO NOT PRODUCE OR PUBLISH</strong><p>The official page hides creator requirements and reference files until Join. This script uses only visible public text; it is not proof of eligibility, complete rules, payout or campaign availability.</p><p>After joining, unlock and re-analyse the full brief before making any video or exporting subtitles/ZIP.</p></div>'
+      ? '<div class="auto-pack-boundary"><strong>PRELIMINARY DRAFT · DO NOT POST</strong><p>The official page hides creator requirements and reference files until Join. Draft exports are allowed only for review and carry a permanent warning; this visible-text script is not proof of eligibility, complete rules, payout or campaign availability.</p><p>Open the campaign in Content Rewards, Join, review every locked requirement and reference file, then re-analyse before publishing. Never treat this draft as campaign-cleared.</p></div>'
       : '') + '<div class="auto-pack-subsection"><h5>Platform captions & hooks</h5><div class="auto-pack-variants">' + variants + '</div></div>' +
       '<div class="auto-pack-subsection"><h5>Scene-by-scene video storyboard</h5><div class="auto-pack-scenes">' + scenes + '</div></div>' +
       '<div class="auto-pack-subsection auto-pack-rules"><h5>Campaign requirements captured from public brief</h5><ul>' + ruleLines + '</ul>' +
@@ -1073,13 +1071,14 @@
     if (files.length && Studio && typeof Studio.validateFiles === "function") {
       try { Studio.validateFiles(files, audioFile); } catch (error) { validationError = error.message || "Selected media is not supported."; }
     }
-    const allowed = !!currentAutoContentPack && !currentAutoContentPack.preliminaryOnly && files.length > 0 && !!(rights && rights.checked) && !!(rules && rules.checked) && !validationError && !autoMediaVideoBusy;
+    const allowed = !!currentAutoContentPack && files.length > 0 && !!(rights && rights.checked) && !!(rules && rules.checked) && !validationError && !autoMediaVideoBusy;
     button.disabled = !allowed;
     if (!status || autoMediaVideoBusy) return;
     if (validationError) status.textContent = validationError;
     else if (!files.length) status.textContent = "Choose up to 8 photos/videos. Optional narration or licensed music can be added separately.";
-    else if (!(rights && rights.checked) || !(rules && rules.checked)) status.textContent = files.length + " media file(s) selected. Confirm asset rights and that you checked the live campaign brief.";
-    else status.textContent = files.length + " media file(s)" + (audioFile ? " + audio track selected" : " · no audio track") + ". Ready to render locally.";
+    else if (!(rights && rights.checked) || !(rules && rules.checked)) status.textContent = files.length + " media file(s) selected. Confirm asset rights and acknowledge the visible brief / hidden-rule warning.";
+    else status.textContent = files.length + " media file(s)" + (audioFile ? " + audio track selected" : " · no audio track") +
+      (currentAutoContentPack && currentAutoContentPack.preliminaryOnly ? ". Preliminary draft only; a permanent warning will be burned into the video." : ". Ready to render locally.");
   }
 
   function handleAutoContentPackMediaInputChange() {
@@ -1096,12 +1095,8 @@
     const audioInput = $("auto-content-pack-audio");
     const rights = $("auto-content-pack-rights");
     const rules = $("auto-content-pack-rules");
-    if (currentAutoContentPack && currentAutoContentPack.preliminaryOnly) {
-      if (status) status.textContent = "Video rendering is blocked: the full creator requirements are hidden until Join. Re-analyse the unlocked brief first.";
-      return;
-    }
     if (!currentAutoContentPack || !AutoVideoRenderer || typeof AutoVideoRenderer.renderWithMedia !== "function") {
-      if (status) status.textContent = "A fresh, unlocked Promising campaign is required before rendering.";
+      if (status) status.textContent = "A current, readable public campaign brief is required before rendering.";
       return;
     }
     const files = mediaInput && mediaInput.files ? Array.from(mediaInput.files) : [];
@@ -1114,7 +1109,9 @@
     autoMediaVideoBusy = true;
     autoMediaVideoController = new AbortController();
     if (button) { button.disabled = true; button.textContent = "Rendering…"; }
-    if (status) status.textContent = "Preparing your authorised media and campaign-matched captions…";
+    if (status) status.textContent = renderPack.preliminaryOnly
+      ? "Preparing a PRELIMINARY draft. The exported video will carry a permanent DO NOT POST warning…"
+      : "Preparing your authorised media and campaign-matched captions…";
     try {
       const output = await AutoVideoRenderer.renderWithMedia(renderPack, files, audioFile, {
         signal: autoMediaVideoController.signal,
@@ -1133,8 +1130,9 @@
         download.hidden = false;
       }
       const mb = (Number(output.size || output.blob.size) / (1024 * 1024)).toFixed(2);
-      if (status) status.textContent = "Finished · " + output.width + "×" + output.height + " · " + output.duration.toFixed(1) + " seconds · " + output.formatLabel + " · " + mb + " MB. Preview and download your video.";
-      showToast("Campaign video rendered from your media.");
+      if (status) status.textContent = (renderPack.preliminaryOnly ? "PRELIMINARY DRAFT ONLY · DO NOT POST UNTIL JOIN-ONLY RULES ARE VERIFIED. " : "Finished · ") +
+        output.width + "×" + output.height + " · " + output.duration.toFixed(1) + " seconds · " + output.formatLabel + " · " + mb + " MB. Preview and download your video.";
+      showToast(renderPack.preliminaryOnly ? "Preliminary draft rendered with a permanent warning." : "Campaign video rendered from your media.");
     } catch (error) {
       if (status) status.textContent = error && error.message ? error.message : "Media video rendering failed in this browser.";
       showToast(error && error.message ? error.message : "Media video rendering failed.");
@@ -1150,16 +1148,14 @@
     const status = $("auto-content-pack-status");
     const preview = $("auto-content-pack-video-preview");
     const download = $("auto-content-pack-download-video");
-    if (currentAutoContentPack && currentAutoContentPack.preliminaryOnly) {
-      showToast("Preliminary script only. Unlock and re-analyse the complete campaign brief before creating a video.");
-      return;
-    }
     if (!currentAutoContentPack || !AutoVideoRenderer || typeof AutoVideoRenderer.render !== "function") {
-      showToast("A fresh, unlocked Promising campaign is needed before video creation.");
+      showToast("A current, readable public campaign brief is needed before video creation.");
       return;
     }
     if (button) { button.disabled = true; button.textContent = "Rendering video…"; }
-    if (status) status.textContent = "Rendering a silent 9:16 text video locally. Keep this page open until export finishes.";
+    if (status) status.textContent = currentAutoContentPack.preliminaryOnly
+      ? "Rendering a PRELIMINARY draft video with a permanent DO NOT POST warning. Keep this page open…"
+      : "Rendering a silent 9:16 text video locally. Keep this page open until export finishes.";
     try {
       const output = await AutoVideoRenderer.render(currentAutoContentPack);
       if (currentAutoVideoUrl) URL.revokeObjectURL(currentAutoVideoUrl);
@@ -1173,12 +1169,13 @@
         const slug = currentAutoContentPack.campaign.title.toLowerCase()
           .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 54) || "campaign";
         download.href = currentAutoVideoUrl;
-        download.download = "clipreward-auto-video-" + slug + ".webm";
+        download.download = (currentAutoContentPack.preliminaryOnly ? "PRELIMINARY-DO-NOT-POST-" : "clipreward-auto-video-") + slug + ".webm";
         download.hidden = false;
       }
-      if (status) status.textContent = "Video ready · " + output.durationSeconds + " seconds · 720×1280 · silent text-only WebM. " +
+      if (status) status.textContent = (currentAutoContentPack.preliminaryOnly ? "PRELIMINARY DRAFT ONLY · DO NOT POST UNTIL JOIN-ONLY RULES ARE VERIFIED. " : "Video ready · ") +
+        output.durationSeconds + " seconds · 720×1280 · silent text-only WebM. " +
         (output.durationSource === "campaign brief" ? "Duration follows the public brief." : "15 seconds used because no duration was stated.");
-      showToast("Automatic WebM video created.");
+      showToast(currentAutoContentPack.preliminaryOnly ? "Preliminary draft video created with a permanent warning." : "Automatic WebM video created.");
     } catch (error) {
       if (status) status.textContent = error && error.message ? error.message : "Automatic video export failed in this browser.";
       showToast(error && error.message ? error.message : "Video export failed.");
@@ -1191,10 +1188,6 @@
   async function downloadAutoContentPackZip() {
     const button = $("auto-content-pack-download-zip");
     const pack = currentAutoContentPack;
-    if (pack && pack.preliminaryOnly) {
-      showToast("ZIP export is blocked for preliminary scripts. Unlock and re-analyse the complete campaign brief first.");
-      return;
-    }
     if (!pack || !ZipExport || typeof ZipExport.createZip !== "function") {
       showToast("A fresh campaign content pack and the offline ZIP exporter are required.");
       return;
@@ -1204,7 +1197,7 @@
       : currentAutoVideoUrl ? $("auto-content-pack-download-video") : null;
     const videoFile = videoLink && videoLink.download ? videoLink.download : "";
     const slug = pack.campaign.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 54) || "campaign";
-    const folder = "clipreward-" + slug;
+    const folder = (pack.preliminaryOnly ? "PRELIMINARY-DO-NOT-POST-" : "clipreward-") + slug;
     const generatedAt = new Date().toISOString();
     let videoIncluded = false;
     if (button) { button.disabled = true; button.textContent = "Building ZIP…"; }
@@ -1231,10 +1224,13 @@
           prohibitionRules: pack.prohibitionRules
         },
         video: { included: false, file: "", note: "" },
-        verificationBoundary: "This archive preserves the public evidence detected when the content pack was prepared. Downloading the ZIP does not re-fetch or verify the live campaign. Open the official URL and confirm current availability, deadline, requirements and eligibility before producing or publishing."
+        verificationBoundary: pack.preliminaryOnly
+          ? "PRELIMINARY DRAFT ONLY — DO NOT POST. The public brief is Join-locked; creator requirements and reference files have not been reviewed. This archive is not cleared for production or publishing. Join the campaign, verify all locked requirements and re-analyse before posting."
+          : "This archive preserves the public evidence detected when the content pack was prepared. Downloading the ZIP does not re-fetch or verify the live campaign. Open the official URL and confirm current availability, deadline, requirements and eligibility before producing or publishing."
       };
       const readme = [
-        "CLIPREWARD STUDIO · COMPLETE CAMPAIGN PACK",
+        pack.preliminaryOnly ? "PRELIMINARY DRAFT ONLY · DO NOT POST" : "CLIPREWARD STUDIO · COMPLETE CAMPAIGN PACK",
+        ...(pack.preliminaryOnly ? ["Join-only creator requirements and reference files are hidden. This package is for review only."] : []),
         "",
         "Campaign: " + pack.campaign.title,
         "Official campaign page: " + pack.campaign.url,
@@ -1245,6 +1241,7 @@
         "- content-pack.json: structured bilingual captions, hooks, script and storyboard.",
         "- content-pack.txt: readable content pack and scene-by-scene voiceover.",
         "- subtitles.srt and subtitles.vtt: bilingual timed subtitles for the five-scene storyboard.",
+        ...(pack.preliminaryOnly ? ["- PRELIMINARY-DO-NOT-POST.txt: explains why this is not campaign-cleared and lists the required review gate."] : []),
         "- campaign-rules.txt: detected public rule lines; not a substitute for full official terms.",
         "- campaign-evidence.json: source URL, freshness metadata and captured requirements.",
         videoUrl ? "- video/: one rendered video file already created in ClipReward." : "- VIDEO-NOT-RENDERED.txt: no rendered video existed when this ZIP was built.",
@@ -1253,7 +1250,8 @@
         "Original uploaded photos, video clips and audio are not included. When present, only the rendered export is included.",
         "The source URL is provided for re-checking; this ZIP builder does not verify the live page at download time.",
         "This tool does not Join/Apply, verify connected accounts, publish social posts, submit a clip, read private views, approve a campaign or confirm payouts.",
-        "Use only media you own or are authorised to use. Review every caption, claim, disclosure and campaign requirement before posting."
+        "Use only media you own or are authorised to use. Review every caption, claim, disclosure and campaign requirement before posting.",
+        ...(pack.preliminaryOnly ? ["PRELIMINARY WARNING: do not post this package. Join the campaign, read every hidden requirement/reference file, refresh the live page, and generate a new full pack before any publication."] : [])
       ].join("\n");
       const archiveFiles = [
         { name: folder + "/content-pack.json", data: AutoContentPack.toJson(pack) },
@@ -1262,7 +1260,8 @@
         { name: folder + "/subtitles/subtitles.vtt", data: subtitles.vtt },
         { name: folder + "/evidence/campaign-rules.txt", data: rules },
         { name: folder + "/evidence/campaign-evidence.json", data: JSON.stringify(evidence, null, 2) },
-        { name: folder + "/README.txt", data: readme }
+        { name: folder + "/README.txt", data: readme },
+        ...(pack.preliminaryOnly ? [{ name: folder + "/PRELIMINARY-DO-NOT-POST.txt", data: "PRELIMINARY DRAFT ONLY — DO NOT POST.\n\nThe current public campaign page hides creator requirements and reference files until Join. This package uses visible public text only and is not cleared for production, eligibility or payout.\n\nRequired before posting:\n1. Open the campaign in Content Rewards and Join.\n2. Read every creator requirement and reference file.\n3. Confirm platform, duration, editing, disclosure, deadline, prohibited claims/assets and payout rules.\n4. Refresh and re-analyse the complete campaign brief.\n5. Generate a new full content pack and check that the preliminary watermark is gone.\n" }] : [])
       ];
       if (videoUrl) {
         const response = await fetch(videoUrl);
@@ -1291,13 +1290,15 @@
       const objectUrl = URL.createObjectURL(archive);
       const link = document.createElement("a");
       link.href = objectUrl;
-      link.download = "clipreward-campaign-pack-" + slug + ".zip";
+      link.download = (pack.preliminaryOnly ? "PRELIMINARY-DO-NOT-POST-" : "clipreward-campaign-pack-") + slug + ".zip";
       link.hidden = true;
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.setTimeout(() => URL.revokeObjectURL(objectUrl), 30000);
-      showToast(videoIncluded ? "Complete campaign ZIP downloaded with the rendered video." : "Campaign ZIP downloaded. It includes the script and subtitles; render a video and rebuild to include it.");
+      showToast(pack.preliminaryOnly
+        ? "Preliminary review ZIP downloaded with a DO NOT POST warning and warning file."
+        : videoIncluded ? "Complete campaign ZIP downloaded with the rendered video." : "Campaign ZIP downloaded. It includes the script and subtitles; render a video and rebuild to include it.");
     } catch (error) {
       showToast(error && error.message ? error.message : "Complete campaign ZIP export failed.");
     } finally {
@@ -1306,10 +1307,6 @@
   }
 
   function downloadAutoContentPackSubtitles(format) {
-    if (currentAutoContentPack && currentAutoContentPack.preliminaryOnly) {
-      showToast("Subtitle export is blocked for a preliminary script. Unlock and re-analyse the full brief first.");
-      return;
-    }
     if (!currentAutoContentPack || !AutoVideoRenderer || typeof AutoVideoRenderer.createSubtitles !== "function") {
       showToast("A fresh campaign content pack is required before downloading subtitles.");
       return;
@@ -1323,7 +1320,7 @@
       const link = document.createElement("a");
       const slug = currentAutoContentPack.campaign.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 54) || "campaign";
       link.href = objectUrl;
-      link.download = "clipreward-subtitles-" + slug + (isVtt ? ".vtt" : ".srt");
+      link.download = (currentAutoContentPack.preliminaryOnly ? "PRELIMINARY-DO-NOT-POST-subtitles-" : "clipreward-subtitles-") + slug + (isVtt ? ".vtt" : ".srt");
       link.hidden = true;
       document.body.appendChild(link);
       link.click();

@@ -546,6 +546,15 @@
         context.fillRect(0, 0, WIDTH, HEIGHT);
         try { drawCover(context, scene.element, WIDTH, HEIGHT); } catch (_) {}
         const caption = captions[sceneIndex] || "";
+        if (opts.watermark) {
+          context.fillStyle = "rgba(141, 29, 42, 0.96)";
+          context.fillRect(20, 24, WIDTH - 40, 58);
+          context.fillStyle = "#ffffff";
+          context.font = "bold 25px Arial, sans-serif";
+          context.textAlign = "center";
+          context.textBaseline = "middle";
+          context.fillText(String(opts.watermark).slice(0, 72), WIDTH / 2, 53, WIDTH - 64);
+        }
         if (caption) {
           const lines = wrapText(context, caption, WIDTH - 104);
           const lineHeight = 48;

@@ -541,7 +541,6 @@ async function runScheduledScan(options = {}) {
     return { ok: false, error: "File-backed scheduled discovery scans are unavailable in this runtime." };
   }
   const filePath = path.resolve(options.filePath || DEFAULT_FILE);
-  const feed = options.feed || Feed;
   const now = typeof options.now === "function" ? options.now() : options.now == null ? Date.now() : options.now;
   const startedAt = new Date(now).toISOString();
   let previous;
@@ -577,20 +576,18 @@ async function runScheduledScan(options = {}) {
       };
     } catch (officialError) {
       fallbackReason = officialError && officialError.message ? officialError.message : "Official Discover page could not be read.";
-      const feedResponse = await fetchFeedWithRetry(feed, {
-        platform: "",
-        search: "",
-        fetchImpl: options.fetchImpl,
-        now,
-        retryDelaysMs: options.feedRetryDelaysMs,
-        onAttempt: () => { feedRequestAttempts += 1; }
-      });
-      feedRequestAttempts = Math.max(feedRequestAttempts, feedResponse.attempts);
+      if (!requestedCampaignUrl) {
+        throw new Error("Official Content Rewards Discover is unavailable; third-party feeds are not used for scheduled official discovery. The last known official snapshot will be retained. " + fallbackReason);
+      }
+      // Check an explicitly requested public campaign URL directly, but never mix third-party
+      // campaign rows into an official snapshot when the Discover index is unavailable.
       result = {
-        ...feedResponse.result,
-        sourceLabel: (feedResponse.result.sourceLabel || "Third-party public snapshot") + " · fallback after official Discover page unavailable"
+        campaigns: [],
+        totalReceived: 0,
+        fetchedAt: new Date(now).toISOString(),
+        sourceUrl: OFFICIAL_DISCOVER_URL,
+        sourceLabel: "Official Content Rewards Discover unavailable; checking one explicitly requested public campaign"
       };
-      sourceVerification = "third-party";
     }
 
     if (requestedCampaign) {
@@ -694,7 +691,7 @@ async function runScheduledScan(options = {}) {
       feedRequestAttempts,
       checkedCount: 0,
       newCount: 0,
-      source: "Official Content Rewards Discover with third-party fallback",
+      source: "Official Content Rewards Discover only; last known official snapshot retained",
       error: message
     };
     const snapshot = {

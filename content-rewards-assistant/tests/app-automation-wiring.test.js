@@ -57,7 +57,7 @@ test("the best fresh public campaign automatically generates a bilingual downloa
   assert.ok(html.includes("Optional narration / licensed background audio"));
   assert.ok(videoRenderer.includes("renderWithMedia"));
   assert.ok(app.includes("AutoVideoRenderer.renderWithMedia(renderPack"));
-  assert.ok(videoRenderer.includes("Studio.validateFiles(mediaFiles, audioFile)"));
+  assert.ok(videoRenderer.includes("Studio.validateFiles(mediaFiles, audioFile || null)"));
   assert.ok(html.includes('id="auto-content-pack-media"'));
   assert.ok(html.includes('id="auto-content-pack-audio"'));
   assert.ok(html.includes('id="auto-content-pack-rights"'));

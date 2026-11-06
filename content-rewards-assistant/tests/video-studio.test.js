@@ -96,7 +96,7 @@ test("does not report browser rendering support when required APIs are missing",
   assert.equal(supported.formatLabel, "WebM");
 });
 
-test("validates common media, item limits and total size before rendering", () => {
+test("accepts campaign-matched video durations and rejects unsupported lengths", () => {\n  assert.equal(Studio.validateDuration(45), 45);\n  assert.equal(Studio.validateDuration("30"), 30);\n  assert.throws(() => Studio.validateDuration(14), /15 to 60 seconds/);\n  assert.throws(() => Studio.validateDuration(61), /15 to 60 seconds/);\n  assert.throws(() => Studio.validateDuration(30.5), /whole-number/);\n});\n\ntest("validates common media, item limits and total size before rendering", () => {
   const result = Studio.validateFiles([
     video("one.mp4", 10_000, "video/mp4"),
     video("two.webp", 5_000, "image/webp")

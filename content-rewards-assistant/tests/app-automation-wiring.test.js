@@ -9,6 +9,7 @@ const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
 const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const packSource = fs.readFileSync(path.join(root, "auto-content-pack.js"), "utf8");
 const videoRenderer = fs.readFileSync(path.join(root, "auto-video-renderer.js"), "utf8");
+const zipExporter = fs.readFileSync(path.join(root, "zip-export.js"), "utf8");
 const serviceWorker = fs.readFileSync(path.join(root, "service-worker.js"), "utf8");
 
 test("fresh public Promising campaigns are imported automatically across supported platforms", () => {
@@ -39,12 +40,18 @@ test("the best fresh public campaign automatically generates a bilingual downloa
   assert.ok(html.includes('id="auto-content-pack-copy"'));
   assert.ok(html.includes('id="auto-content-pack-download-srt"'));
   assert.ok(html.includes('id="auto-content-pack-download-vtt"'));
+  assert.ok(html.includes('id="auto-content-pack-download-zip"'));
+  assert.ok(app.includes("function downloadAutoContentPackZip()"));
+  assert.ok(app.includes("ZipExport.createZip(archiveFiles"));
+  assert.ok(html.includes('src="./zip-export.js"'));
+  assert.ok(zipExporter.includes("function createZip(entries, options)"));
+  assert.ok(serviceWorker.includes("./zip-export.js"));
   assert.ok(app.includes("function downloadAutoContentPackSubtitles(format)"));
   assert.ok(app.includes('AutoVideoRenderer.createSubtitles(currentAutoContentPack, "both")'));
   assert.ok(videoRenderer.includes("function createSubtitles(pack, language)"));
   assert.ok(html.includes('src="./auto-content-pack.js"'));
   assert.ok(packSource.includes("This is a local template pack, not an AI-generated or rendered video file."));
-  assert.ok(serviceWorker.includes("clipreward-static-v47"));
+  assert.ok(serviceWorker.includes("clipreward-static-v48"));
   assert.ok(serviceWorker.includes("./auto-content-pack.js"));
   assert.ok(serviceWorker.includes("./auto-video-renderer.js"));
   assert.ok(html.includes('id="auto-content-pack-create-video"'));

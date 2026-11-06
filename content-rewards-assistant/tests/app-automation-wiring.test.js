@@ -31,7 +31,7 @@ test("fresh public Promising campaigns are imported automatically across support
 test("the best fresh public campaign automatically generates a bilingual downloadable content pack", () => {
   assert.ok(app.includes("const AutoContentPack = window.ClipRewardAutoContentPack"));
   assert.ok(app.includes("function renderAutoContentPack(row, emptyMessage)"));
-  assert.ok(app.includes("AutoContentPack.create(row)"));
+  assert.ok(app.includes("AutoContentPack.create(row, { allowPreliminary: true })"));
   assert.ok(app.includes("AutoContentPack.toText(currentAutoContentPack)"));
   assert.ok(app.includes("AutoContentPack.toJson(currentAutoContentPack)"));
   assert.ok(app.includes("renderAutoContentPack(contentPackCampaign"));

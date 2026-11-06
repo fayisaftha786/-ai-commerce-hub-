@@ -31,7 +31,8 @@
 |---|---|
 | Public Content Rewards discovery | GitHub Actions scheduled scan; ഏകദേശം 6 മണിക്കൂറിൽ ഒരിക്കൽ snapshot പുതുക്കുന്നു |
 | Campaign rules / reward analysis | ലഭ്യമായ public text അടിസ്ഥാനമാക്കി auto analysis, evidence, missing fields, Promising / Verify / Blocked |
-| Local tracker autofill / batch import | Fresh readable Promising campaign-ുകൾ മാത്രം; browser-ൽ local |
+| Local tracker auto-import | Fresh readable Promising results സ്വയം Tracker-ൽ Found / idea ആയി ചേർക്കും; duplicate ഒഴിവാക്കും; Join-locked requirements unknown ആയി സൂക്ഷിക്കും |
+| Content draft preparation | Draft area ശൂന്യമെങ്കിൽ top unlocked Promising campaign-ന് bilingual template draft സ്വയം തയ്യാറാക്കും; user-entered draft overwrite ചെയ്യില്ല |
 | Video preparation | Clip Studio-യിൽ local video analysis, captions/draft, export; output review ചെയ്യണം |
 | YouTube publishing | Google OAuth + backend + YouTube API അനുമതി ലഭിച്ചാൽ explicit user confirmation-നുശേഷം |
 | Facebook Page Reels | Meta OAuth + Page permissions + backend സജ്ജമായാൽ explicit confirmation-നുശേഷം |

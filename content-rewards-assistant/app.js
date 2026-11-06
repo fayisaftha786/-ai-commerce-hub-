@@ -640,6 +640,7 @@
       const today = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
       const bestByUrl = new Map();
       const failures = [];
+      let firstReportSummary = null;
       const stateRank = { promising: 3, verify: 2, blocked: 1 };
 
       targets.forEach((platform) => {
@@ -657,6 +658,7 @@
           failures.push(platform + ": " + (error && error.message ? error.message : "analysis failed"));
           return;
         }
+        if (!firstReportSummary && report.summary) firstReportSummary = report.summary;
         (report.campaigns || []).forEach((row) => {
           const url = window.ClipRewardTrackerImport.canonicalCampaignUrl(row.url);
           if (!url) return;
@@ -692,10 +694,19 @@
       discoveryAutomationAnalysisCache = {
         campaigns,
         summary: {
-          totalCampaigns: campaigns.length,
+          totalCampaigns: discoveryStaticCampaigns.length,
+          analysed: campaigns.length,
           promising: campaigns.filter((row) => row.state === "promising").length,
           verify: campaigns.filter((row) => row.state === "verify").length,
           blocked: campaigns.filter((row) => row.state === "blocked").length,
+          notSeenInLatestScanCount: campaigns.filter((row) => row.notSeenInLatestScan === true).length,
+          lockedBriefCount: campaigns.filter((row) => row.brief && row.brief.hiddenRequirements && row.brief.hiddenRequirements.locked === true).length,
+          missingDeadlineCount: campaigns.filter((row) => !row.deadline).length,
+          missingDetailCount: firstReportSummary ? firstReportSummary.missingDetailCount : 0,
+          unreadableDetailCount: firstReportSummary ? firstReportSummary.unreadableDetailCount : 0,
+          parserFailureCount: firstReportSummary ? firstReportSummary.parserFailureCount : 0,
+          staleDetailCount: firstReportSummary ? firstReportSummary.staleDetailCount : 0,
+          platform: targets.join(" + "),
           platforms: targets,
           failures,
           checkedAt: new Date().toISOString()
@@ -717,36 +728,30 @@
     const listNode = $("discovery-deep-list");
     if (!statusNode || !summaryNode || !listNode) return;
     const lastScan = discoveryStaticStatus && discoveryStaticStatus.lastScan || {};
-    const result = getDiscoveryDeepAnalysis();
+    const result = getDiscoveryAutomationAnalysis();
     if (!result) {
       statusNode.textContent = discoveryStaticDetails.length
-        ? "No matching public campaign details are ready for batch analysis."
+        ? "No matching public campaign details are ready for automated screening."
         : "Waiting for the latest official public campaign-page snapshot.";
       summaryNode.innerHTML = "";
-      $("discovery-import-status").textContent = "Waiting for a fresh public campaign analysis.";
-      listNode.innerHTML = '<p class="muted small-text">When the scheduled public snapshot is available, every readable campaign page is analysed automatically for the selected platform.</p>';
+      $("discovery-import-status").textContent = "Waiting for the scheduled public campaign snapshot.";
+      listNode.innerHTML = '<p class="muted small-text">Instagram, Facebook and YouTube campaigns will be screened automatically when the public snapshot loads.</p>';
       return;
     }
     if (result.error) {
       statusNode.textContent = result.error;
       summaryNode.innerHTML = "";
-      $("discovery-import-status").textContent = "Import unavailable because batch analysis failed.";
+      $("discovery-import-status").textContent = "Cross-platform automation failed. Existing Tracker records were preserved.";
       listNode.innerHTML = "";
       return;
     }
     const summary = result.summary;
     const lockedBriefCount = Number(summary.lockedBriefCount || 0);
-    const missingDeadlineCount = Number(summary.missingDeadlineCount || 0);
-    const automationResult = getDiscoveryAutomationAnalysis();
-    const autoImport = automationResult && !automationResult.error
-      ? autoImportFreshPromisingCampaigns(automationResult)
-      : { imported: 0, plan: { summary: { skippedDuplicate: 0 } }, error: automationResult && automationResult.error || "Cross-platform analysis is not ready." };
+    const autoImport = autoImportFreshPromisingCampaigns(result);
     if (autoImport.imported > 0) render();
-    const topPromising = automationResult && Array.isArray(automationResult.campaigns)
-      ? automationResult.campaigns.find((row) => row.state === "promising" &&
-        row.pageStatus === "ok" && row.notSeenInLatestScan !== true &&
-        !(row.brief && row.brief.hiddenRequirements && row.brief.hiddenRequirements.locked === true))
-      : null;
+    const topPromising = result.campaigns.find((row) => row.state === "promising" &&
+      row.pageStatus === "ok" && row.notSeenInLatestScan !== true &&
+      !(row.brief && row.brief.hiddenRequirements && row.brief.hiddenRequirements.locked === true));
     const draftAreaOccupied = Boolean($("draft-topic").value.trim() || $("draft-output").value.trim());
     const draftPrepared = topPromising ? autoPrepareDraftFromCampaign(topPromising) : false;
     if (!topPromising && lockedBriefCount > 0 && !draftAreaOccupied) {
@@ -765,7 +770,7 @@
             : lockedBriefCount > 0
               ? automationScope + " completed. " + lockedBriefCount + " briefs still hide creator requirements until Join; no private data was guessed."
               : automationScope + " completed. No fresh, fully assessable Promising campaign is available; Verify / Blocked findings remain separate.";
-    statusNode.textContent = summary.analysed + " / " + summary.totalCampaigns + " campaign records deeply analysed for " +
+    statusNode.textContent = summary.analysed + " / " + summary.totalCampaigns + " public campaigns screened across " +
       summary.platform + " · checked " + new Date(summary.checkedAt).toLocaleTimeString() +
       (lastScan.source ? " · source: " + lastScan.source : "");
     summaryNode.innerHTML = [
@@ -775,7 +780,7 @@
       ["Historical / recheck", summary.notSeenInLatestScanCount || 0, "unknown"],
       ["Brief locked · join required", summary.lockedBriefCount || 0, "unknown"],
       ["No deadline found", summary.missingDeadlineCount || 0, "unknown"],
-      ["Detail missing", summary.missingDetailCount + summary.unreadableDetailCount, "unknown"]
+      ["Detail missing / unreadable", (summary.missingDetailCount || 0) + (summary.unreadableDetailCount || 0), "unknown"]
     ].map((item) => '<span class="deep-summary-chip deep-summary-' + item[2] + '"><strong>' + item[1] + '</strong><small>' + item[0] + '</small></span>').join("");
     const amountLabel = (amount) => amount && Number.isFinite(amount.value)
       ? ((amount.currency === "INR" ? "₹" : amount.currency === "EUR" ? "€" : amount.currency === "GBP" ? "£" : "$") +
@@ -801,14 +806,14 @@
       return '<article class="deep-campaign-card deep-campaign-' + escapeHtml(row.state) + '">' +
         '<div class="deep-campaign-head"><strong>' + escapeHtml(row.title) + '</strong>' +
         '<span class="deep-state deep-state-' + escapeHtml(row.state) + '">' + escapeHtml(row.stateLabel) + '</span></div>' +
-        '<p>' + escapeHtml(row.brand || "Brand not stated") + ' · ' + escapeHtml(row.platform) + ' · ' + escapeHtml(row.entryMode || "Access route unknown") + '</p>' +
+        '<p>' + escapeHtml(row.brand || "Brand not stated") + ' · best match: ' + escapeHtml(row.platform) + '</p>' +
         '<div class="deep-campaign-metrics"><span>' + escapeHtml(rate) + '</span><span>' + escapeHtml(budget) + '</span>' +
         (minimum ? '<span>' + escapeHtml(minimum) + '</span>' : '') + '</div>' +
         (row.pool && row.pool.paidWhen ? '<small>Pool payment: ' + escapeHtml(row.pool.paidWhen) + '</small>' : '') +
         staleNote + geographyNote + '<small class="deep-missing">Evidence gaps / checks: ' + escapeHtml(missing) + '</small>' +
         '<div class="feed-card-actions"><button class="button button-secondary" type="button" data-deep-open="' + index + '">Open full findings</button>' +
         '<a class="text-button" href="' + escapeHtml(row.url) + '" target="_blank" rel="noopener noreferrer">Verify official page ↗</a></div></article>';
-    }).join("") : '<p class="muted small-text">No readable public campaign detail pages were available for this platform.</p>';
+    }).join("") : '<p class="muted small-text">No readable public campaign detail pages were available for the supported platforms.</p>';
     if (result.campaigns.length > rows.length) {
       listNode.insertAdjacentHTML("beforeend", '<p class="tiny-note">Showing the top ' + rows.length + ' of ' + result.campaigns.length + ' ranked public campaign analyses.</p>');
     }
@@ -830,6 +835,7 @@
       $("scout-results").scrollIntoView({ behavior: "smooth", block: "start" });
     }));
   }
+
 
   function autoImportFreshPromisingCampaigns(result) {
     const remaining = Math.max(0, Core.MAX_CAMPAIGNS - state.campaigns.length);

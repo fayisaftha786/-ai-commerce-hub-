@@ -245,10 +245,10 @@
     lines.push(
       "",
       "HASHTAGS FOUND IN THE PUBLIC BRIEF (CHECK WHETHER EACH IS REQUIRED)",
-      pack.hashtagsFound.length ? pack.requiredHashtags.join(" ") : "None detected. Check the official brief for any required hashtags.",
+      pack.hashtagsFound.length ? pack.hashtagsFound.join(" ") : "None detected. Check the official brief for any required hashtags.",
       "",
       "MENTIONS FOUND IN THE PUBLIC BRIEF (CHECK WHETHER EACH IS REQUIRED)",
-      pack.mentionsFound.length ? pack.requiredMentions.join(" ") : "None detected.",
+      pack.mentionsFound.length ? pack.mentionsFound.join(" ") : "None detected.",
       "",
       "DISCLOSURE RULES DETECTED",
       pack.disclosureRules.length ? pack.disclosureRules.map((line) => "- " + line).join("\n") : "No explicit disclosure line was recognised. Add a clear paid/sponsored/affiliate disclosure where required by the campaign or platform.",

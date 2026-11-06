@@ -131,11 +131,11 @@
     if (source.pageStatus !== "ok" || source.notSeenInLatestScan !== false) {
       return fail("The public campaign detail is stale or not confirmed in the latest scan. Refresh and verify it first.");
     }
-    if (source.state !== "promising" && !preliminary) {
-      return fail("A full content pack requires a fresh Promising campaign. A preliminary draft is available only for a current, readable Join-locked campaign with an explicit supported-platform match.");
-    }
     if (locked && !preliminary) {
       return fail("The brief hides creator requirements until Join. Only a preliminary script can be prepared from the visible public description.");
+    }
+    if (source.state !== "promising" && !preliminary) {
+      return fail("A full content pack requires a fresh Promising campaign. A preliminary draft is available only for a current, readable Join-locked campaign with an explicit supported-platform match.");
     }
     if (closed) {
       return fail("The public brief indicates that this campaign is not currently suitable for a new content pack.");

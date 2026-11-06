@@ -146,6 +146,9 @@ test("exports safe plain text and JSON without reward guarantees", () => {
 test("refuses an incomplete public brief and missing title", () => {
   assert.match(Pack.create(row({
     brief: { ...row().brief, rawText: "" }
-  })).ok ? "" : Pack.create(row({ brief: { ...row().brief, platforms: [] } })).error, /accepted/);
-  assert.equal(Pack.create(row({ title: "", brief: { ...row().brief, title: "" } })).ok, false);
+  })).error, /public campaign brief is incomplete/);
+  assert.match(Pack.create(row({
+    title: "",
+    brief: { ...row().brief, title: "" }
+  })).error, /title is not clear enough/);
 });

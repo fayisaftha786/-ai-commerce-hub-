@@ -13,24 +13,24 @@
   const MIME_CANDIDATES = ["video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm"];
 
   function clean(value, limit) {
-    return String(value == null ? "" : value).replace(/[\\u0000-\\u001f\\u007f]/g, " ")
-      .replace(/\\s+/g, " ").trim().slice(0, limit || 180);
+    return String(value == null ? "" : value).replace(/[\u0000-\u001f\u007f]/g, " ")
+      .replace(/\s+/g, " ").trim().slice(0, limit || 180);
   }
 
   function resolveDuration(label) {
     const value = clean(label, 120);
     if (!value || /not stated/i.test(value)) return 15;
-    let match = value.match(/(\\d+)\\s*[–-]\\s*(\\d+)\\s*seconds?/i);
+    let match = value.match(/(\d+)\s*[–-]\s*(\d+)\s*seconds?/i);
     let min = null;
     let max = null;
     if (match) {
       min = Number(match[1]);
       max = Number(match[2]);
     } else {
-      match = value.match(/at least\\s+(\\d+)\\s*seconds?/i);
+      match = value.match(/at least\s+(\d+)\s*seconds?/i);
       if (match) min = Number(match[1]);
       else {
-        match = value.match(/up to\\s+(\\d+)\\s*seconds?/i);
+        match = value.match(/up to\s+(\d+)\s*seconds?/i);
         if (match) max = Number(match[1]);
       }
     }
@@ -63,7 +63,7 @@
     const scenes = pack.production.scenes.map((scene, index) => {
       const rawMl = clean(scene && scene.voiceoverMl, 220);
       const rawEn = clean(scene && scene.voiceoverEn, 220);
-      const needsEvidence = /\\[insert|\\[സ്ഥിരീകരിച്ച/i.test(rawMl + " " + rawEn);
+      const needsEvidence = /\[insert|\[സ്ഥിരീകരിച്ച/i.test(rawMl + " " + rawEn);
       return {
         index: index + 1,
         label: ["HOOK", "CONTEXT", "VERIFIED POINT", "TAKEAWAY", "NEXT STEP"][index],
@@ -90,7 +90,7 @@
   }
 
   function wrapText(context, text, x, y, maxWidth, lineHeight, maxLines) {
-    const words = String(text || "").split(/\\s+/);
+    const words = String(text || "").split(/\s+/);
     let line = "";
     let lines = 0;
     for (const word of words) {

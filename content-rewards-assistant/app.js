@@ -757,7 +757,11 @@
     if (!topPromising && lockedBriefCount > 0 && !draftAreaOccupied) {
       $("draft-auto-status").textContent = "Draft held: the available public brief hides creator requirements until Join. No private requirements or claims were invented.";
     }
-    const automationScope = "Auto-screened Instagram, Facebook and YouTube";
+    const failedPlatforms = (summary.failures || []).map((item) => String(item).split(":")[0]);
+    const successfulPlatforms = (summary.platforms || []).filter((platform) => !failedPlatforms.includes(platform));
+    const automationScope = failedPlatforms.length
+      ? "Partially screened " + successfulPlatforms.join(", ")
+      : "Auto-screened Instagram, Facebook and YouTube";
     $("discovery-import-status").textContent = autoImport.error
       ? automationScope + " failed: " + autoImport.error + " Existing Tracker records were preserved."
       : autoImport.imported > 0
@@ -772,6 +776,7 @@
               : automationScope + " completed. No fresh, fully assessable Promising campaign is available; Verify / Blocked findings remain separate.";
     statusNode.textContent = summary.analysed + " / " + summary.totalCampaigns + " public campaigns screened across " +
       summary.platform + " · checked " + new Date(summary.checkedAt).toLocaleTimeString() +
+      (summary.failures && summary.failures.length ? " · warnings: " + summary.failures.join("; ") : "") +
       (lastScan.source ? " · source: " + lastScan.source : "");
     summaryNode.innerHTML = [
       ["Promising", summary.promising, "promising"],

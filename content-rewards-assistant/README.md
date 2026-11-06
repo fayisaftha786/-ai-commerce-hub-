@@ -43,7 +43,7 @@ The shortlist is a rules-and-evidence screen, not a probability of approval, ear
 
 ## Campaign analysis to Clip Studio handoff
 
-Each fresh, readable **Promising** result now has a **Prepare content draft** action. It carries the campaign title into the Clip Studio topic field and maps the analysed platform to the corresponding Reels / Shorts / X destination. If the campaign was already imported into the local Tracker, it also selects that local campaign so its saved rules can be included by the existing draft generator. It deliberately leaves the verified-benefit field blank: do not invent product claims, reward promises or campaign facts. Add only a benefit you can substantiate, generate the local-template draft, and review all campaign rules and disclosure requirements before publishing.
+When a fresh, readable, unlocked **Promising** result is found, the app automatically prepares a bilingual local-template draft for the highest-ranked result if the Clip Studio draft area is empty. It carries the campaign title and target platform into the draft and selects the matching Tracker record. The verified-benefit field remains blank: the app does not invent product claims, reward promises or campaign facts. Existing draft text is never overwritten. Review the full official brief, add only a benefit you can substantiate, and edit the generated draft before use.
 
 ## Automatic batch import and draft preparation
 

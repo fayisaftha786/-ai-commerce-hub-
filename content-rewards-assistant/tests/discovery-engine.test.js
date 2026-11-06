@@ -364,7 +364,7 @@ test("ClipReward auto shortlist is wired into the radar and deep findings panel"
   assert.match(app, /No product benefit or reward claim was invented/);
   assert.match(app, /Brief locked · join required/);
   assert.match(app, /No deadline found/);
-  assert.match(html, /AUTO-IMPORT ON/);
+  assert.match(html, /AUTO-SCREEN \\+ IMPORT ON/);
   assert.match(worker, /clipreward-static-v43/);
   assert.match(worker, /discovery-engine\.js/);
 });

@@ -16,22 +16,19 @@ function sample(id) {
   };
 }
 
-test("scheduled scan writes a schema-versioned snapshot and deduplicates new campaign rows", async () => {
+test("scheduled scan writes a schema-versioned official snapshot and deduplicates public Discover links", async () => {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), "clipreward-cron-"));
   const filePath = path.join(directory, "snapshot.json");
   try {
     const result = await runScheduledScan({
       filePath,
       now: Date.parse("2026-10-31T00:00:00Z"),
-      fetchDiscoverImpl: async () => { throw new Error("fixture: official Discover unavailable"); },
+      fetchDiscoverImpl: async (url) => ({
+        ok: true, status: 200, url,
+        headers: { get: () => "text/html" },
+        text: async () => DISCOVER_HTML
+      }),
       discoverRetryDelaysMs: [0, 0],
-      feed: { fetchCampaigns: async () => ({
-        campaigns: [sample("one"), sample("one"), sample("two")],
-        totalReceived: 3,
-        fetchedAt: "2026-10-31T00:00:00.000Z",
-        sourceLabel: "Third-party public snapshot",
-        sourceUrl: "https://contentrewards.xyz/api/cr/campaigns"
-      }) },
       fetchPageImpl: async (url) => ({
         ok: true, status: 200, url,
         headers: { get: () => "text/html" },
@@ -41,6 +38,7 @@ test("scheduled scan writes a schema-versioned snapshot and deduplicates new cam
     assert.equal(result.ok, true);
     assert.equal(result.snapshot.schemaVersion, 1);
     assert.equal(result.snapshot.campaigns.length, 2);
+    assert.equal(result.snapshot.source.verification, "official-public-page");
     assert.equal(result.snapshot.lastScan.status, "success");
     assert.equal(result.snapshot.lastScan.newCount, 2);
     assert.equal(result.snapshot.campaignDetails.length, 2);
@@ -637,7 +635,7 @@ test("unreadable public campaign pages retain safe HTTP and HTML diagnostics", a
   assert.ok(result.details[0].htmlBytes > 0);
 });
 
-test("scheduled scan publishes campaign detail pages beside lead metadata", async () => {
+test("scheduled official scan publishes campaign detail pages beside lead metadata", async () => {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), "clipreward-cron-details-"));
   const filePath = path.join(directory, "snapshot.json");
   try {
@@ -645,13 +643,12 @@ test("scheduled scan publishes campaign detail pages beside lead metadata", asyn
       filePath,
       now: Date.parse("2026-10-31T00:00:00Z"),
       detailLimit: 2,
-      fetchDiscoverImpl: async () => { throw new Error("fixture: official Discover unavailable"); },
+      fetchDiscoverImpl: async (url) => ({
+        ok: true, status: 200, url,
+        headers: { get: () => "text/html" },
+        text: async () => DISCOVER_HTML
+      }),
       discoverRetryDelaysMs: [0, 0],
-      feed: { fetchCampaigns: async () => ({
-        campaigns: [sample("one")], totalReceived: 1,
-        fetchedAt: "2026-10-31T00:00:00.000Z",
-        sourceLabel: "Third-party public snapshot", sourceUrl: "https://contentrewards.xyz/api/cr/campaigns"
-      }) },
       fetchPageImpl: async (url) => ({
         ok: true, status: 200, url,
         headers: { get: () => "text/html" },
@@ -659,11 +656,11 @@ test("scheduled scan publishes campaign detail pages beside lead metadata", asyn
       })
     });
     assert.equal(result.ok, true);
-    assert.equal(result.snapshot.campaignDetails.length, 1);
+    assert.equal(result.snapshot.campaignDetails.length, 2);
     assert.equal(result.snapshot.campaignDetails[0].status, "ok");
-    assert.equal(result.snapshot.lastScan.detailPagesAvailable, 1);
+    assert.equal(result.snapshot.lastScan.detailPagesAvailable, 2);
     assert.equal(result.snapshot.campaignDetails[0].detected.rate.amount.value, 2.5);
-    assert.equal(JSON.parse(await fs.readFile(filePath, "utf8")).campaignDetails.length, 1);
+    assert.equal(JSON.parse(await fs.readFile(filePath, "utf8")).campaignDetails.length, 2);
   } finally {
     await fs.rm(directory, { recursive: true, force: true });
   }

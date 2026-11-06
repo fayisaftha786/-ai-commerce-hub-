@@ -1620,8 +1620,14 @@
 
   function configureDiscovery() {
     discoverySettings = window.ClipRewardDiscovery.readSettings();
-    try { discoveryAlertObserver = DiscoveryAlerts.createObserver({ storage: window.localStorage }); }
-    catch (_) { discoveryAlertObserver = DiscoveryAlerts.createObserver(); }
+    discoveryAlertObserver = null;
+    if (DiscoveryAlerts && typeof DiscoveryAlerts.createObserver === "function") {
+      try { discoveryAlertObserver = DiscoveryAlerts.createObserver({ storage: window.localStorage }); }
+      catch (_) {
+        try { discoveryAlertObserver = DiscoveryAlerts.createObserver(); }
+        catch (_) { discoveryAlertObserver = null; }
+      }
+    }
     updateDiscoveryAlertUi();
     if (scheduledSnapshotRefreshTimer) window.clearInterval(scheduledSnapshotRefreshTimer);
     scheduledSnapshotRefreshTimer = window.setInterval(refreshScheduledSnapshotIfDue, 60 * 1000);

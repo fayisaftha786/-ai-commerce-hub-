@@ -213,6 +213,10 @@ test("retains public-page freshness metadata with generated campaign content", (
     pageStatus: "ok",
     pageFetchedAt: "2026-11-06T08:30:00.000Z",
     seenInLatestScan: true,
+    briefCompleteness: "readable-public-brief",
+    hiddenRequirementsLocked: false,
+    hiddenRequirementCount: null,
+    hiddenReferenceFileCount: null,
     capturedAt: pack.createdAt
   });
 });
@@ -227,6 +231,10 @@ test("retains public-page freshness metadata with generated campaign content", (
     pageStatus: "ok",
     pageFetchedAt: "2026-11-06T08:30:00.000Z",
     seenInLatestScan: true,
+    briefCompleteness: "readable-public-brief",
+    hiddenRequirementsLocked: false,
+    hiddenRequirementCount: null,
+    hiddenReferenceFileCount: null,
     capturedAt: pack.createdAt
   });
 });

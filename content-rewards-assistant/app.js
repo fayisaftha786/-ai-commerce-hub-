@@ -920,6 +920,8 @@
       $("auto-content-pack-download-text"),
       $("auto-content-pack-download-json"),
       $("auto-content-pack-copy"),
+      $("auto-content-pack-download-srt"),
+      $("auto-content-pack-download-vtt"),
       $("auto-content-pack-create-video")
     ];
     if (!section || !status || !meta || !body) return;
@@ -1156,6 +1158,31 @@
     }
   }
 
+  function downloadAutoContentPackSubtitles(format) {
+    if (!currentAutoContentPack || !AutoVideoRenderer || typeof AutoVideoRenderer.createSubtitles !== "function") {
+      showToast("A fresh campaign content pack is required before downloading subtitles.");
+      return;
+    }
+    try {
+      const subtitles = AutoVideoRenderer.createSubtitles(currentAutoContentPack, "both");
+      const isVtt = format === "vtt";
+      const content = isVtt ? subtitles.vtt : subtitles.srt;
+      const blob = new Blob([content], { type: isVtt ? "text/vtt;charset=utf-8" : "application/x-subrip;charset=utf-8" });
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      const slug = currentAutoContentPack.campaign.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 54) || "campaign";
+      link.href = objectUrl;
+      link.download = "clipreward-subtitles-" + slug + (isVtt ? ".vtt" : ".srt");
+      link.hidden = true;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1500);
+      showToast(isVtt ? "WebVTT subtitles downloaded." : "SRT subtitles downloaded.");
+    } catch (error) {
+      showToast(error && error.message ? error.message : "Subtitle export failed.");
+    }
+  }
   function downloadAutoContentPack(kind) {
     if (!currentAutoContentPack) {
       showToast("A fresh, unlocked Promising campaign is needed before downloading.");
@@ -2350,6 +2377,8 @@
   $("draft-form").addEventListener("submit", generateDraft);
   $("copy-draft").addEventListener("click", copyDraft);
   $("auto-content-pack-download-text").addEventListener("click", () => downloadAutoContentPack("text"));
+  $("auto-content-pack-download-srt").addEventListener("click", () => downloadAutoContentPackSubtitles("srt"));
+  $("auto-content-pack-download-vtt").addEventListener("click", () => downloadAutoContentPackSubtitles("vtt"));
   $("auto-content-pack-download-json").addEventListener("click", () => downloadAutoContentPack("json"));
   $("auto-content-pack-copy").addEventListener("click", copyAutoContentPack);
   $("export-button").addEventListener("click", exportBackup);

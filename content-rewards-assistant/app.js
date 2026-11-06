@@ -3,7 +3,9 @@
   const Core = window.ClipRewardCore;
   const PayoutForecast = window.ClipRewardPayoutForecast;
   const AutoContentPack = window.ClipRewardAutoContentPack;
+  const AutoVideoRenderer = window.ClipRewardAutoVideoRenderer;
   let currentAutoContentPack = null;
+  let currentAutoVideoUrl = "";
   const STORAGE_KEY = "clipreward-studio-v1";
   const SUBMISSION_ALERTS_ENABLED_KEY = "clipreward-submission-alerts-enabled-v1";
   const SUBMISSION_ALERTS_SENT_KEY = "clipreward-submission-alerts-sent-v1";
@@ -913,11 +915,22 @@
     const buttons = [
       $("auto-content-pack-download-text"),
       $("auto-content-pack-download-json"),
-      $("auto-content-pack-copy")
+      $("auto-content-pack-copy"),
+      $("auto-content-pack-create-video")
     ];
     if (!section || !status || !meta || !body) return;
     currentAutoContentPack = null;
     buttons.forEach((button) => { if (button) button.disabled = true; });
+    if (currentAutoVideoUrl) { URL.revokeObjectURL(currentAutoVideoUrl); currentAutoVideoUrl = ""; }
+    const videoPreview = $("auto-content-pack-video-preview");
+    const videoDownload = $("auto-content-pack-download-video");
+    if (videoPreview) { videoPreview.pause(); videoPreview.removeAttribute("src"); videoPreview.hidden = true; }
+    if (videoDownload) { videoDownload.removeAttribute("href"); videoDownload.hidden = true; }
+    const videoButton = $("auto-content-pack-create-video");
+    if (videoButton && videoButton.dataset.bound !== "true") {
+      videoButton.dataset.bound = "true";
+      videoButton.addEventListener("click", createAutoContentPackVideo);
+    }
     meta.innerHTML = "";
     body.innerHTML = "";
     if (!row) {
@@ -961,10 +974,10 @@
       '<div class="auto-pack-language"><small>Malayalam VO</small><p>' + escapeHtml(scene.voiceoverMl) + '</p></div></article>'
     ).join("");
     const tagText = pack.hashtagsFound.length
-      ? pack.requiredHashtags.join(" ")
+      ? pack.hashtagsFound.join(" ")
       : "No hashtags were recognised in the public brief. Check the official page.";
     const mentionText = pack.mentionsFound.length
-      ? pack.requiredMentions.join(" ")
+      ? pack.mentionsFound.join(" ")
       : "No campaign mentions were recognised in the public brief.";
     const ruleLines = pack.publicRules.length
       ? pack.publicRules.slice(0, 10).map((line) => '<li>' + escapeHtml(line) + '</li>').join("")
@@ -977,6 +990,44 @@
       (pack.disclosureRules.length ? '<p><strong>Disclosure rules:</strong> ' + escapeHtml(pack.disclosureRules.join(" · ")) + '</p>' :
         '<p><strong>Disclosure:</strong> add paid/sponsored/affiliate disclosure where required by the campaign or platform.</p>') +
       '</div><p class="auto-pack-boundary">This is a video-ready script/storyboard pack, not a rendered video. Use original footage or expressly approved assets. No payout, approval, result or personal-experience claim is invented.</p>';
+  }
+
+  async function createAutoContentPackVideo() {
+    const button = $("auto-content-pack-create-video");
+    const status = $("auto-content-pack-status");
+    const preview = $("auto-content-pack-video-preview");
+    const download = $("auto-content-pack-download-video");
+    if (!currentAutoContentPack || !AutoVideoRenderer || typeof AutoVideoRenderer.render !== "function") {
+      showToast("A fresh, unlocked Promising campaign is needed before video creation.");
+      return;
+    }
+    if (button) { button.disabled = true; button.textContent = "Rendering video…"; }
+    if (status) status.textContent = "Rendering a silent 9:16 text video locally. Keep this page open until export finishes.";
+    try {
+      const output = await AutoVideoRenderer.render(currentAutoContentPack);
+      if (currentAutoVideoUrl) URL.revokeObjectURL(currentAutoVideoUrl);
+      currentAutoVideoUrl = URL.createObjectURL(output.blob);
+      if (preview) {
+        preview.src = currentAutoVideoUrl;
+        preview.hidden = false;
+        preview.load();
+      }
+      if (download) {
+        const slug = currentAutoContentPack.campaign.title.toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 54) || "campaign";
+        download.href = currentAutoVideoUrl;
+        download.download = "clipreward-auto-video-" + slug + ".webm";
+        download.hidden = false;
+      }
+      if (status) status.textContent = "Video ready · " + output.durationSeconds + " seconds · 720×1280 · silent text-only WebM. " +
+        (output.durationSource === "campaign brief" ? "Duration follows the public brief." : "15 seconds used because no duration was stated.");
+      showToast("Automatic WebM video created.");
+    } catch (error) {
+      if (status) status.textContent = error && error.message ? error.message : "Automatic video export failed in this browser.";
+      showToast(error && error.message ? error.message : "Video export failed.");
+    } finally {
+      if (button) { button.disabled = !currentAutoContentPack; button.textContent = "▶ Create video automatically"; }
+    }
   }
 
   function downloadAutoContentPack(kind) {

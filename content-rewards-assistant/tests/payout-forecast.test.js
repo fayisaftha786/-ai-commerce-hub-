@@ -138,7 +138,7 @@ test("ClipReward payout forecast UI and offline cache are wired", () => {
   for (const field of ["payoutModel", "payoutThresholdStatus", "payoutThresholdMetAt", "payoutCycleEndAt", "payoutPoolEndedAt", "payoutFlagOpen"]) {
     assert.ok(core.includes(field), "missing normalized field " + field);
   }
-  assert.match(worker, /clipreward-static-v46/);
+  assert.match(worker, /clipreward-static-v47/);
   assert.match(worker, /payout-forecast\.js/);
   assert.match(app, /payoutModel: old \? old\.payoutModel/);
   assert.match(app, /payoutThresholdMetAt: old \? old\.payoutThresholdMetAt/);

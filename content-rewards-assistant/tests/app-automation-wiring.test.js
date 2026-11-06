@@ -7,6 +7,8 @@ const path = require("node:path");
 const root = path.join(__dirname, "..");
 const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
 const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
+const packSource = fs.readFileSync(path.join(root, "auto-content-pack.js"), "utf8");
+const serviceWorker = fs.readFileSync(path.join(root, "service-worker.js"), "utf8");
 
 test("fresh public Promising campaigns are imported automatically across supported platforms", () => {
   assert.ok(app.includes("function autoImportFreshPromisingCampaigns(result)"));
@@ -20,6 +22,24 @@ test("fresh public Promising campaigns are imported automatically across support
   assert.ok(html.includes("Every readable official public campaign detail is automatically screened against Instagram, Facebook and YouTube."));
   assert.ok(app.includes("Partially screened "));
   assert.ok(app.includes("summary.failures && summary.failures.length"));
+});
+
+
+test("the best fresh public campaign automatically generates a bilingual downloadable content pack", () => {
+  assert.ok(app.includes("const AutoContentPack = window.ClipRewardAutoContentPack"));
+  assert.ok(app.includes("function renderAutoContentPack(row, emptyMessage)"));
+  assert.ok(app.includes("AutoContentPack.create(row)"));
+  assert.ok(app.includes("AutoContentPack.toText(currentAutoContentPack)"));
+  assert.ok(app.includes("AutoContentPack.toJson(currentAutoContentPack)"));
+  assert.ok(app.includes("renderAutoContentPack(topPromising"));
+  assert.ok(html.includes('id="auto-content-pack"'));
+  assert.ok(html.includes('id="auto-content-pack-download-text"'));
+  assert.ok(html.includes('id="auto-content-pack-download-json"'));
+  assert.ok(html.includes('id="auto-content-pack-copy"'));
+  assert.ok(html.includes('src="./auto-content-pack.js"'));
+  assert.ok(packSource.includes("This is a local template pack, not an AI-generated or rendered video file."));
+  assert.ok(serviceWorker.includes("clipreward-static-v44"));
+  assert.ok(serviceWorker.includes("./auto-content-pack.js"));
 });
 
 test("automatic campaign draft preparation is safe and does not overwrite existing user work", () => {

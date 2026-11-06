@@ -43,6 +43,12 @@ After the official public snapshot loads, ClipReward Studio screens every readab
 The shortlist is a rules-and-evidence screen, not a probability of approval, earnings estimate or confirmation that a campaign is still accepting creators. Stale page text is forced into Verify even when its old rules otherwise look promising. Imported tracker items remain **Found / idea**. The app does not join or apply for campaigns.
 
 
+## Automatic bilingual video-ready content pack
+
+When the cross-platform radar finds the highest-ranked fresh, readable, unlocked **Promising** public campaign, it automatically prepares a local content pack for every accepted Instagram, Facebook and YouTube destination identified in the public brief. It includes platform-specific English and Malayalam captions/hooks, a five-part scene storyboard with English/Malayalam voiceover prompts, the captured duration and format (or an explicit “not stated”), public rule lines, and only the hashtags/mentions found in that brief. The pack can be copied or downloaded as plain text or JSON without manual campaign entry.
+
+The generator refuses stale, historical, non-Promising, paused/ended/out-of-budget and Join-locked briefs, and accepts only public Content Rewards campaign URLs. Unknown requirements stay unknown. It does not invent product benefits, creator experience, earnings, hashtags, approvals or eligibility. This is a deterministic local template engine and storyboard, **not a generative-AI model and not a rendered MP4**; a finished video still requires original footage or explicitly licensed campaign assets and a video-rendering step.
+
 ## Campaign analysis to Clip Studio handoff
 
 When a fresh, readable, unlocked **Promising** result is found, the app automatically prepares a bilingual local-template draft for the highest-ranked result if the Clip Studio draft area is empty. It carries the campaign title and target platform into the draft and selects the matching Tracker record. The verified-benefit field remains blank: the app does not invent product claims, reward promises or campaign facts. Existing draft text is never overwritten. Review the full official brief, add only a benefit you can substantiate, and edit the generated draft before use.

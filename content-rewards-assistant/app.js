@@ -2,6 +2,8 @@
   "use strict";
   const Core = window.ClipRewardCore;
   const PayoutForecast = window.ClipRewardPayoutForecast;
+  const AutoContentPack = window.ClipRewardAutoContentPack;
+  let currentAutoContentPack = null;
   const STORAGE_KEY = "clipreward-studio-v1";
   const SUBMISSION_ALERTS_ENABLED_KEY = "clipreward-submission-alerts-enabled-v1";
   const SUBMISSION_ALERTS_SENT_KEY = "clipreward-submission-alerts-sent-v1";
@@ -739,6 +741,7 @@
       summaryNode.innerHTML = "";
       $("discovery-import-status").textContent = "Waiting for the scheduled public campaign snapshot.";
       listNode.innerHTML = '<p class="muted small-text">Instagram, Facebook and YouTube campaigns will be screened automatically when the public snapshot loads.</p>';
+      renderAutoContentPack(null, "Waiting for the first fresh, readable and unlocked Promising campaign.");
       return;
     }
     if (result.error) {
@@ -746,6 +749,7 @@
       summaryNode.innerHTML = "";
       $("discovery-import-status").textContent = "Cross-platform automation failed. Existing Tracker records were preserved.";
       listNode.innerHTML = "";
+      renderAutoContentPack(null, "Content-pack generation waits until campaign analysis is healthy.");
       return;
     }
     const summary = result.summary;
@@ -755,6 +759,7 @@
     const topPromising = result.campaigns.find((row) => row.state === "promising" &&
       row.pageStatus === "ok" && row.notSeenInLatestScan !== true &&
       !(row.brief && row.brief.hiddenRequirements && row.brief.hiddenRequirements.locked === true));
+    renderAutoContentPack(topPromising, "No fresh public campaign has passed the Promising, readable, current and unlocked checks yet.");
     const draftAreaOccupied = Boolean($("draft-topic").value.trim() || $("draft-output").value.trim());
     const draftPrepared = topPromising ? autoPrepareDraftFromCampaign(topPromising) : false;
     if (!topPromising && lockedBriefCount > 0 && !draftAreaOccupied) {
@@ -898,6 +903,136 @@
       return false;
     }
   }
+
+
+  function renderAutoContentPack(row, emptyMessage) {
+    const section = $("auto-content-pack");
+    const status = $("auto-content-pack-status");
+    const meta = $("auto-content-pack-meta");
+    const body = $("auto-content-pack-body");
+    const buttons = [
+      $("auto-content-pack-download-text"),
+      $("auto-content-pack-download-json"),
+      $("auto-content-pack-copy")
+    ];
+    if (!section || !status || !meta || !body) return;
+    currentAutoContentPack = null;
+    buttons.forEach((button) => { if (button) button.disabled = true; });
+    meta.innerHTML = "";
+    body.innerHTML = "";
+    if (!row) {
+      status.textContent = emptyMessage || "Waiting for a fresh, readable and unlocked Promising campaign.";
+      return;
+    }
+    if (!AutoContentPack || typeof AutoContentPack.create !== "function") {
+      status.textContent = "Content-pack generator is unavailable. Refresh the app after the update.";
+      return;
+    }
+    const pack = AutoContentPack.create(row);
+    if (!pack.ok) {
+      status.textContent = pack.error;
+      return;
+    }
+    currentAutoContentPack = pack;
+    buttons.forEach((button) => { if (button) button.disabled = false; });
+    status.textContent = "Ready · local bilingual template pack · " + pack.platformVariants.length +
+      " accepted platform variant(s). Download or copy it; verify the live campaign brief before production.";
+    const chips = [
+      ["Campaign", pack.campaign.title],
+      ["Platforms", pack.campaign.acceptedPlatforms.join(", ")],
+      ["Duration", pack.production.duration],
+      ["Format", pack.production.format]
+    ];
+    meta.innerHTML = chips.map((item) =>
+      '<span class="auto-pack-chip"><small>' + escapeHtml(item[0]) + '</small><strong>' + escapeHtml(item[1]) + '</strong></span>'
+    ).join("");
+    const variants = pack.platformVariants.map((variant) =>
+      '<article class="auto-pack-variant"><div class="auto-pack-card-heading"><strong>' + escapeHtml(variant.format) + '</strong><span>' +
+      escapeHtml(variant.platform) + '</span></div>' +
+      '<div class="auto-pack-language"><small>English caption</small><p>' + escapeHtml(variant.captionEn) + '</p></div>' +
+      '<div class="auto-pack-language"><small>മലയാളം caption</small><p>' + escapeHtml(variant.captionMl) + '</p></div>' +
+      '<div class="auto-pack-language"><small>Hook · English</small><p>' + escapeHtml(variant.hookEn) + '</p></div>' +
+      '<div class="auto-pack-language"><small>Hook · മലയാളം</small><p>' + escapeHtml(variant.hookMl) + '</p></div></article>'
+    ).join("");
+    const scenes = pack.production.scenes.map((scene, index) =>
+      '<article class="auto-pack-scene"><div class="auto-pack-card-heading"><strong>' + (index + 1) + ". " + escapeHtml(scene.part) + '</strong></div>' +
+      '<p>' + escapeHtml(scene.purpose) + '</p><small>Visual direction</small><p>' + escapeHtml(scene.visual) + '</p>' +
+      '<div class="auto-pack-language"><small>English VO</small><p>' + escapeHtml(scene.voiceoverEn) + '</p></div>' +
+      '<div class="auto-pack-language"><small>Malayalam VO</small><p>' + escapeHtml(scene.voiceoverMl) + '</p></div></article>'
+    ).join("");
+    const tagText = pack.hashtagsFound.length
+      ? pack.requiredHashtags.join(" ")
+      : "No hashtags were recognised in the public brief. Check the official page.";
+    const mentionText = pack.mentionsFound.length
+      ? pack.requiredMentions.join(" ")
+      : "No campaign mentions were recognised in the public brief.";
+    const ruleLines = pack.publicRules.length
+      ? pack.publicRules.slice(0, 10).map((line) => '<li>' + escapeHtml(line) + '</li>').join("")
+      : '<li>No explicit rules were recognised. Review the full official campaign brief.</li>';
+    body.innerHTML = '<div class="auto-pack-subsection"><h5>Platform captions & hooks</h5><div class="auto-pack-variants">' + variants + '</div></div>' +
+      '<div class="auto-pack-subsection"><h5>Scene-by-scene video storyboard</h5><div class="auto-pack-scenes">' + scenes + '</div></div>' +
+      '<div class="auto-pack-subsection auto-pack-rules"><h5>Campaign requirements captured from public brief</h5><ul>' + ruleLines + '</ul>' +
+      '<p><strong>Hashtags found in public brief:</strong> ' + escapeHtml(tagText) + '</p>' +
+      '<p><strong>Mentions found in public brief:</strong> ' + escapeHtml(mentionText) + '</p>' +
+      (pack.disclosureRules.length ? '<p><strong>Disclosure rules:</strong> ' + escapeHtml(pack.disclosureRules.join(" · ")) + '</p>' :
+        '<p><strong>Disclosure:</strong> add paid/sponsored/affiliate disclosure where required by the campaign or platform.</p>') +
+      '</div><p class="auto-pack-boundary">This is a video-ready script/storyboard pack, not a rendered video. Use original footage or expressly approved assets. No payout, approval, result or personal-experience claim is invented.</p>';
+  }
+
+  function downloadAutoContentPack(kind) {
+    if (!currentAutoContentPack) {
+      showToast("A fresh, unlocked Promising campaign is needed before downloading.");
+      return;
+    }
+    try {
+      const isJson = kind === "json";
+      const content = isJson ? AutoContentPack.toJson(currentAutoContentPack) : AutoContentPack.toText(currentAutoContentPack);
+      const mime = isJson ? "application/json;charset=utf-8" : "text/plain;charset=utf-8";
+      const blob = new Blob([content], { type: mime });
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      const slug = currentAutoContentPack.campaign.title.toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 54) || "campaign";
+      link.href = objectUrl;
+      link.download = "clipreward-content-pack-" + slug + (isJson ? ".json" : ".txt");
+      link.hidden = true;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1500);
+      showToast(isJson ? "Content pack JSON downloaded." : "Content pack downloaded.");
+    } catch (error) {
+      showToast(error && error.message ? error.message : "Could not download the content pack.");
+    }
+  }
+
+  async function copyAutoContentPack() {
+    if (!currentAutoContentPack) {
+      showToast("A fresh, unlocked Promising campaign is needed before copying.");
+      return;
+    }
+    const text = AutoContentPack.toText(currentAutoContentPack);
+    try {
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const field = document.createElement("textarea");
+        field.value = text;
+        field.setAttribute("readonly", "");
+        field.style.position = "fixed";
+        field.style.opacity = "0";
+        document.body.appendChild(field);
+        field.select();
+        const copied = document.execCommand("copy");
+        field.remove();
+        if (!copied) throw new Error("Clipboard is blocked. Download the text pack instead.");
+      }
+      showToast("Full bilingual content pack copied.");
+    } catch (error) {
+      showToast(error && error.message ? error.message : "Copy is unavailable; download the text pack instead.");
+    }
+  }
+
 
   function renderDiscovery() {
     const campaigns = discoveryState.campaigns || [];
@@ -2037,6 +2172,9 @@
   $("scout-clear-button").addEventListener("click", clearCampaignScout);
   $("draft-form").addEventListener("submit", generateDraft);
   $("copy-draft").addEventListener("click", copyDraft);
+  $("auto-content-pack-download-text").addEventListener("click", () => downloadAutoContentPack("text"));
+  $("auto-content-pack-download-json").addEventListener("click", () => downloadAutoContentPack("json"));
+  $("auto-content-pack-copy").addEventListener("click", copyAutoContentPack);
   $("export-button").addEventListener("click", exportBackup);
   $("import-button").addEventListener("click", () => $("import-file").click());
   $("import-file").addEventListener("change", (event) => importBackup(event.target.files && event.target.files[0]));

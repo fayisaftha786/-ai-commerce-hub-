@@ -39,7 +39,8 @@ test("prepares a bilingual text storyboard without inventing evidence", () => {
 test("respects stated campaign duration when it fits the renderer", () => {
   assert.equal(Renderer.resolveDuration("20–45 seconds"), 30);
   assert.equal(Renderer.resolveDuration("At least 45 seconds"), 45);
-  assert.equal(Renderer.resolveDuration("Up to 20 seconds"), 20);\n  assert.equal(Renderer.resolveDuration("45 seconds"), 45);
+  assert.equal(Renderer.resolveDuration("Up to 20 seconds"), 20);
+  assert.equal(Renderer.resolveDuration("45 seconds"), 45);
   assert.equal(Renderer.resolveDuration("Not stated in the readable public brief"), 15);
   assert.throws(() => Renderer.resolveDuration("Up to 10 seconds"), /15 second minimum/);
   assert.throws(() => Renderer.resolveDuration("At least 120 seconds"), /15–90 second/);
@@ -64,7 +65,7 @@ test("renders campaign-matched captions over user-authorised media through the e
   assert.equal(captured.durationSeconds, 45);
   assert.equal(captured.audioFile, audio);
   assert.equal(captured.files.length, 1);
-  assert.equal(captured.captions.split("\\n").length, 5);
+  assert.equal(captured.captions.split("\n").length, 5);
   assert.match(captured.captions, /പരിചയം/);
   assert.match(captured.captions, /A short introduction/);
   assert.match(captured.captions, /Add your own verified observation/);

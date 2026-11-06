@@ -5,7 +5,7 @@
 })(typeof globalThis !== "undefined" ? globalThis : this, function () {
   "use strict";
   const STORAGE_KEY = "clipreward-discovery-alert-state-v1";
-  const MAX_SEEN_KEYS = 1000;
+  const MAX_SEEN_KEYS = 10000;
 
   function clean(value, max) {
     return String(value == null ? "" : value).replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, max || 300);

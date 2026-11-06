@@ -285,6 +285,8 @@
       const campaignLink = campaignUrl
         ? '<a class="text-button" href="' + escapeHtml(campaignUrl) + '" target="_blank" rel="noopener noreferrer">' +
           (needsSubmit ? "Open campaign to Submit clip ↗" : "View campaign ↗") + '</a>' : "";
+      const viewCampaignLink = campaignUrl
+        ? '<a class="text-button" href="' + escapeHtml(campaignUrl) + '" target="_blank" rel="noopener noreferrer">Verify official campaign ↗</a>' : "";
       const postLink = campaign.postUrl ? '<a class="text-button" href="' + escapeHtml(campaign.postUrl) + '" target="_blank" rel="noopener noreferrer">View post ↗</a>' : "";
       const copyPostLink = needsSubmit && safeExternalUrl(campaign.postUrl)
         ? '<button class="text-button copy-post-link" type="button" data-id="' + escapeHtml(campaign.id) + '">Copy post link</button>' : "";
@@ -293,7 +295,8 @@
         (campaign.deadline && campaign.deadline < new Date().toISOString().slice(0, 10) && campaign.status !== "approved" ? '<span class="mini-tag" style="color:#ffaaaa">Deadline passed</span>' : "") +
         (campaign.postPlatform && campaign.postPlatform !== "Other" ? '<span class="mini-tag">Posted on ' + escapeHtml(campaign.postPlatform) + '</span>' : '') + legacySubmission + payout + budget +
         '</div></div>' + statusBadge(campaign.status) + '</div>' + rules + deadline + submissionDeadlineMarkup(campaign) +
-        '<div class="campaign-actions">' + campaignLink + postLink + copyPostLink +
+        '<div class="campaign-actions">' + viewCampaignLink + postLink + '</div>' +
+        '<div class="campaign-actions" hidden>' + campaignLink + copyPostLink +
         '<button class="text-button edit-campaign" type="button" data-id="' + escapeHtml(campaign.id) + '">Edit</button>' +
         '<button class="text-button danger-button delete-campaign" type="button" data-id="' + escapeHtml(campaign.id) + '">Delete</button></div></article>';
     }).join("");

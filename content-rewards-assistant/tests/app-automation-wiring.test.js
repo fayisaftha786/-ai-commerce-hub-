@@ -38,7 +38,7 @@ test("the best fresh public campaign automatically generates a bilingual downloa
   assert.ok(html.includes('id="auto-content-pack-copy"'));
   assert.ok(html.includes('src="./auto-content-pack.js"'));
   assert.ok(packSource.includes("This is a local template pack, not an AI-generated or rendered video file."));
-  assert.ok(serviceWorker.includes("clipreward-static-v44"));
+  assert.ok(serviceWorker.includes("clipreward-static-v45"));
   assert.ok(serviceWorker.includes("./auto-content-pack.js"));
 });
 

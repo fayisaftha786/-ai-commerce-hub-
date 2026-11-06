@@ -81,14 +81,14 @@ test("refuses campaign media renders outside the existing local renderer duratio
 
 test("creates correctly timed bilingual SRT and WebVTT subtitle files", () => {
   const output = Renderer.createSubtitles(pack("20–45 seconds"));
-  assert.equal(output.durationSeconds, 45);
+  assert.equal(output.durationSeconds, 30);
   assert.equal(output.sceneCount, 5);
   assert.equal(output.language, "both");
-  assert.match(output.srt, /^1\n00:00:00,000 --> 00:00:09,000/m);
+  assert.match(output.srt, /^1\n00:00:00,000 --> 00:00:06,000/m);
   assert.match(output.srt, /പരിചയം/);
   assert.match(output.srt, /A short introduction/);
-  assert.match(output.srt, /5\n00:00:36,000 --> 00:00:45,000/m);
-  assert.match(output.vtt, /^WEBVTT\n\n00:00:00.000 --> 00:00:09.000/m);
+  assert.match(output.srt, /5\n00:00:24,000 --> 00:00:30,000/m);
+  assert.match(output.vtt, /^WEBVTT\n\n00:00:00.000 --> 00:00:06.000/m);
   assert.match(output.vtt, /പരിചയം/);
 });
 

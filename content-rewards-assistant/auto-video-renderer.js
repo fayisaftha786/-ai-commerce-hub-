@@ -222,17 +222,17 @@
       const end = Math.round((index + 1) * durationMs / prepared.scenes.length);
       const text = selectedLanguage === "ml" ? scene.ml
         : selectedLanguage === "en" ? scene.en
-        : scene.ml + "\\n" + scene.en;
+        : scene.ml + "\n" + scene.en;
       return { index: index + 1, start, end, text };
     });
     const srt = cues.map((cue) =>
-      cue.index + "\\n" + formatSubtitleTime(cue.start, ",") + " --> " +
-      formatSubtitleTime(cue.end, ",") + "\\n" + cue.text
-    ).join("\\n\\n") + "\\n";
-    const vtt = "WEBVTT\\n\\n" + cues.map((cue) =>
+      cue.index + "\n" + formatSubtitleTime(cue.start, ",") + " --> " +
+      formatSubtitleTime(cue.end, ",") + "\n" + cue.text
+    ).join("\n\n") + "\n";
+    const vtt = "WEBVTT\n\n" + cues.map((cue) =>
       formatSubtitleTime(cue.start, ".") + " --> " +
-      formatSubtitleTime(cue.end, ".") + "\\n" + cue.text
-    ).join("\\n\\n") + "\\n";
+      formatSubtitleTime(cue.end, ".") + "\n" + cue.text
+    ).join("\n\n") + "\n";
     return { srt, vtt, durationSeconds: prepared.durationSeconds, sceneCount: cues.length, language: selectedLanguage };
   }
 

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-11-20T07:20:16.515Z",
+  "generatedAt": "2026-11-20T20:24:37.570Z",
   "source": {
     "id": "contentrewards-official-discover",
     "verification": "official-public-page",
@@ -38052,8 +38052,8 @@
     }
   ],
   "lastScan": {
-    "at": "2026-11-20T07:20:16.515Z",
-    "completedAt": "2026-11-20T07:20:16.515Z",
+    "at": "2026-11-20T20:24:37.570Z",
+    "completedAt": "2026-11-20T20:24:37.570Z",
     "status": "failed",
     "discoverRequestAttempts": 1,
     "feedRequestAttempts": 0,
@@ -38063,6 +38063,17 @@
     "error": "Official Content Rewards Discover is unavailable; third-party feeds are not used for scheduled official discovery. The last known official snapshot will be retained. The public Content Rewards page is larger than the 1.5 MB safety limit."
   },
   "scans": [
+    {
+      "at": "2026-11-20T20:24:37.570Z",
+      "completedAt": "2026-11-20T20:24:37.570Z",
+      "status": "failed",
+      "discoverRequestAttempts": 1,
+      "feedRequestAttempts": 0,
+      "checkedCount": 0,
+      "newCount": 0,
+      "source": "Official Content Rewards Discover only; last known official snapshot retained",
+      "error": "Official Content Rewards Discover is unavailable; third-party feeds are not used for scheduled official discovery. The last known official snapshot will be retained. The public Content Rewards page is larger than the 1.5 MB safety limit."
+    },
     {
       "at": "2026-11-20T07:20:16.515Z",
       "completedAt": "2026-11-20T07:20:16.515Z",
@@ -39309,32 +39320,6 @@
       "detailPagesAvailable": 68,
       "detailPagesFailed": 0,
       "detailRequestAttempts": 68,
-      "source": "Official Content Rewards public Discover page",
-      "sourceUrl": "https://contentrewards.com/c/discover",
-      "sourceVerification": "official-public-page",
-      "fallbackReason": "",
-      "requestedCampaignUrl": "",
-      "requestedCampaignPageStatus": "",
-      "summary": {
-        "saved": 117,
-        "high": 0,
-        "medium": 116,
-        "low": 1
-      }
-    },
-    {
-      "at": "2026-11-05T12:54:48.015Z",
-      "completedAt": "2026-11-05T12:54:48.015Z",
-      "status": "success",
-      "checkedCount": 69,
-      "newCount": 0,
-      "totalReceived": 69,
-      "discoverRequestAttempts": 1,
-      "feedRequestAttempts": 0,
-      "detailPagesAttempted": 69,
-      "detailPagesAvailable": 69,
-      "detailPagesFailed": 0,
-      "detailRequestAttempts": 69,
       "source": "Official Content Rewards public Discover page",
       "sourceUrl": "https://contentrewards.com/c/discover",
       "sourceVerification": "official-public-page",

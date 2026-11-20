@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-11-19T20:40:49.457Z",
+  "generatedAt": "2026-11-20T07:20:16.515Z",
   "source": {
     "id": "contentrewards-official-discover",
     "verification": "official-public-page",
@@ -38052,32 +38052,28 @@
     }
   ],
   "lastScan": {
-    "at": "2026-11-19T20:40:49.457Z",
-    "completedAt": "2026-11-19T20:40:49.457Z",
-    "status": "success",
-    "checkedCount": 66,
-    "newCount": 6,
-    "totalReceived": 66,
+    "at": "2026-11-20T07:20:16.515Z",
+    "completedAt": "2026-11-20T07:20:16.515Z",
+    "status": "failed",
     "discoverRequestAttempts": 1,
     "feedRequestAttempts": 0,
-    "detailPagesAttempted": 66,
-    "detailPagesAvailable": 66,
-    "detailPagesFailed": 0,
-    "detailRequestAttempts": 66,
-    "source": "Official Content Rewards public Discover page",
-    "sourceUrl": "https://contentrewards.com/c/discover",
-    "sourceVerification": "official-public-page",
-    "fallbackReason": "",
-    "requestedCampaignUrl": "",
-    "requestedCampaignPageStatus": "",
-    "summary": {
-      "saved": 232,
-      "high": 0,
-      "medium": 194,
-      "low": 38
-    }
+    "checkedCount": 0,
+    "newCount": 0,
+    "source": "Official Content Rewards Discover only; last known official snapshot retained",
+    "error": "Official Content Rewards Discover is unavailable; third-party feeds are not used for scheduled official discovery. The last known official snapshot will be retained. The public Content Rewards page is larger than the 1.5 MB safety limit."
   },
   "scans": [
+    {
+      "at": "2026-11-20T07:20:16.515Z",
+      "completedAt": "2026-11-20T07:20:16.515Z",
+      "status": "failed",
+      "discoverRequestAttempts": 1,
+      "feedRequestAttempts": 0,
+      "checkedCount": 0,
+      "newCount": 0,
+      "source": "Official Content Rewards Discover only; last known official snapshot retained",
+      "error": "Official Content Rewards Discover is unavailable; third-party feeds are not used for scheduled official discovery. The last known official snapshot will be retained. The public Content Rewards page is larger than the 1.5 MB safety limit."
+    },
     {
       "at": "2026-11-19T20:40:49.457Z",
       "completedAt": "2026-11-19T20:40:49.457Z",
@@ -39329,32 +39325,6 @@
     {
       "at": "2026-11-05T12:54:48.015Z",
       "completedAt": "2026-11-05T12:54:48.015Z",
-      "status": "success",
-      "checkedCount": 69,
-      "newCount": 0,
-      "totalReceived": 69,
-      "discoverRequestAttempts": 1,
-      "feedRequestAttempts": 0,
-      "detailPagesAttempted": 69,
-      "detailPagesAvailable": 69,
-      "detailPagesFailed": 0,
-      "detailRequestAttempts": 69,
-      "source": "Official Content Rewards public Discover page",
-      "sourceUrl": "https://contentrewards.com/c/discover",
-      "sourceVerification": "official-public-page",
-      "fallbackReason": "",
-      "requestedCampaignUrl": "",
-      "requestedCampaignPageStatus": "",
-      "summary": {
-        "saved": 117,
-        "high": 0,
-        "medium": 116,
-        "low": 1
-      }
-    },
-    {
-      "at": "2026-11-05T10:13:50.282Z",
-      "completedAt": "2026-11-05T10:13:50.282Z",
       "status": "success",
       "checkedCount": 69,
       "newCount": 0,
